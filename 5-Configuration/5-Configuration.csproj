@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>_5_Configuration</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="1-Context\" />
+    <Folder Include="2-JWT\" />
+    <Folder Include="3-Utils\" />
+    <Folder Include="4-DependecyInjection\" />
+    <Folder Include="5-ConfigEnum\" />
+  </ItemGroup>
+
+</Project>
