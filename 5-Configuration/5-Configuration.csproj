@@ -8,11 +8,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="1-Context\" />
-    <Folder Include="2-JWT\" />
-    <Folder Include="3-Utils\" />
-    <Folder Include="4-DependecyInjection\" />
-    <Folder Include="5-ConfigEnum\" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.14" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.14" />
+
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.6.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\4-InfraData\4-InfraData.csproj" />
   </ItemGroup>
 
 </Project>

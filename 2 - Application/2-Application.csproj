@@ -8,8 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="1-Services\" />
-    <Folder Include="2-Dto%27s\" />
+    <ProjectReference Include="..\3-Domain\3-Domain.csproj" />
+    <ProjectReference Include="..\4-InfraData\4-InfraData.csproj" />
   </ItemGroup>
 
 </Project>

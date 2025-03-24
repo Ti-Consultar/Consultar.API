@@ -1,0 +1,6 @@
+@ConsultarAuth.API_HostAddress = http://localhost:5044
+
+GET {{ConsultarAuth.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

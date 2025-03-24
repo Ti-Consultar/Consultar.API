@@ -1,17 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35825.156 d17.13
+VisualStudioVersion = 17.13.35825.156
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "1-Consultar.API", "Consultar.API\1-Consultar.API.csproj", "{FFC915E4-9718-4431-968C-929994DB3F68}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "2-Application", "2 - Application\2-Application.csproj", "{57E8F1F5-38FB-429C-A96F-291A4B9EAC0F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "3-Domain", "3-Domain\3-Domain.csproj", "{A23CAF04-E9EF-499B-9623-73D39434759D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "4-InfraData", "4-InfraData\4-InfraData.csproj", "{06F3F24A-BA0B-4341-91A9-C44B92A274E2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "5-Configuration", "5-Configuration\5-Configuration.csproj", "{FD087024-0903-447F-BC9D-7F8D4850BF60}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CoreService", "CoreService", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsultarAuth.API", "ConsultarAuth.API\ConsultarAuth.API.csproj", "{5B51552E-F9A9-4EA0-9B00-DBD2A456BB9C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,10 +19,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{FFC915E4-9718-4431-968C-929994DB3F68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FFC915E4-9718-4431-968C-929994DB3F68}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FFC915E4-9718-4431-968C-929994DB3F68}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FFC915E4-9718-4431-968C-929994DB3F68}.Release|Any CPU.Build.0 = Release|Any CPU
 		{57E8F1F5-38FB-429C-A96F-291A4B9EAC0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{57E8F1F5-38FB-429C-A96F-291A4B9EAC0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{57E8F1F5-38FB-429C-A96F-291A4B9EAC0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -35,13 +31,18 @@ Global
 		{06F3F24A-BA0B-4341-91A9-C44B92A274E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{06F3F24A-BA0B-4341-91A9-C44B92A274E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{06F3F24A-BA0B-4341-91A9-C44B92A274E2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FD087024-0903-447F-BC9D-7F8D4850BF60}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FD087024-0903-447F-BC9D-7F8D4850BF60}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FD087024-0903-447F-BC9D-7F8D4850BF60}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FD087024-0903-447F-BC9D-7F8D4850BF60}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B51552E-F9A9-4EA0-9B00-DBD2A456BB9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B51552E-F9A9-4EA0-9B00-DBD2A456BB9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B51552E-F9A9-4EA0-9B00-DBD2A456BB9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B51552E-F9A9-4EA0-9B00-DBD2A456BB9C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{57E8F1F5-38FB-429C-A96F-291A4B9EAC0F} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{A23CAF04-E9EF-499B-9623-73D39434759D} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{06F3F24A-BA0B-4341-91A9-C44B92A274E2} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FECA1577-CF36-45BB-8D8A-B36A9C28E472}
