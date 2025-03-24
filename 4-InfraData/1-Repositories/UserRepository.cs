@@ -41,5 +41,18 @@ namespace _4_InfraData._1_Repositories
             return user;
         }
 
+        public async Task<UserModel> GetByUserId(int id)
+        {
+            var user = await _context.Users
+                .Where(x => x.Id == id)
+                .Include(u => u.CompanyUsers)   
+                .ThenInclude(cu => cu.Company) 
+                .ThenInclude(c => c.SubCompanies) 
+                .FirstOrDefaultAsync();
+
+            return user;
+        }
+
+
     }
 }

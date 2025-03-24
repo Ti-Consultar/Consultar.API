@@ -1,5 +1,7 @@
 ﻿
 
+using _2___Application._2_Dto_s.Company;
+using _2___Application._2_Dto_s.Company.SubCompany;
 using _2___Application._2_Dto_s.UserDto.Request;
 using _2___Application._2_Dto_s.UserDto.Response;
 using _3_Domain._1_Entities;
@@ -14,6 +16,7 @@ namespace _2___Application._1_Services.User
     {
         #region Construtor
         private readonly UserRepository _repository;
+        private readonly CompanyRepository _companyRepository;
         private readonly EmailService _emailService;
 
         public UserService(UserRepository repository, EmailService emailService)
@@ -58,6 +61,40 @@ namespace _2___Application._1_Services.User
                 return UserLoginMessage.Error + ex;
             }
         }
+
+        public async Task<object> GetUser(int userId)
+        {
+            try
+            {
+                // Busca o usuário
+                var user = await _repository.GetByUserId(userId);
+
+                // Cria o objeto de resposta
+                var response = new UserResponse
+                {
+                    Id = user.Id,
+                    Email = user.Email,
+                    Name = user.Name,
+                    Companies = user?.CompanyUsers
+                        .Select(a => new CompanyDto
+                        {
+                            Id = a.Company.Id,
+                            Name = a.Company.Name,
+                            DateCreate = a.Company.DateCreate
+                            
+                        }).ToList()
+                };
+                
+                // Retorna o response com as informações do usuário e empresas
+                return response;
+            }
+            catch (Exception ex)
+            {
+                return UserLoginMessage.Error + ex.Message; // Ajuste para mostrar a mensagem de erro
+            }
+        }
+
+
         #endregion
 
         public async Task<ResetPasswordResponse> RedefinePassword(ResetPasswordRequest request)

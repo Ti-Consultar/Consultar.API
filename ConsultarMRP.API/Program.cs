@@ -6,11 +6,7 @@ using _4_InfraData._1_Repositories; // Certifique-se de usar o namespace correto
 var builder = WebApplication.CreateBuilder(args);
 
 // Adiciona os serviços ao contêiner
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-    });
+builder.Services.AddControllers();
 
 // Obtém a connection string do appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -39,9 +35,9 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "ConsultarAuth API",
+        Title = "ConsultarMRP API",
         Version = "v1",
-        Description = "API de Autenticação do sistema ConsultarAuth"
+        Description = "API MRP"
     });
 });
 
@@ -54,7 +50,7 @@ app.UseCors("AllowAll");
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "ConsultarAuth API v1");
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "ConsultarMRP API v1");
     c.RoutePrefix = "swagger"; // O Swagger será acessível em http://localhost:7270/swagger
 });
 

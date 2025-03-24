@@ -23,5 +23,8 @@ namespace _3_Domain._1_Entities
         public string Email { get; set; }
         public string Password { get; set; }
         public string Role { get; set; }
+
+        // Relacionamento Muitos-para-Muitos com Companies
+        public List<CompanyUserModel> CompanyUsers { get; set; }
     }
 }

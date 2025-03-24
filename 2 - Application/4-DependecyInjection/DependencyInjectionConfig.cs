@@ -1,5 +1,6 @@
 ﻿
 using _4_InfraData._1_Context;
+using _4_InfraData._1_Repositories;
 using _4_InfraData._2_AppSettings;
 using _4_InfraData._2_JWT;
 using _4_InfraData._3_Utils.Base;
@@ -11,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-namespace _4_InfraData._4__DependencyInjectionConfig
+namespace _2___Application._4__DependencyInjectionConfig
 {
     public static class DependencyInjectionConfig
     {
@@ -58,10 +59,13 @@ namespace _4_InfraData._4__DependencyInjectionConfig
             services.AddScoped<IAppSettings, AppSettings>(); // Certifique-se de que `AppSettings` não tem dependências não registradas
             services.AddScoped<BaseService>();
             services.AddScoped<EmailService>();
+            services.AddScoped<CompanyService>();
             #endregion
 
             #region Repositories
             // Adicione repositórios, se necessário
+
+            services.AddScoped<CompanyRepository>();
             #endregion
 
             #endregion

@@ -1,7 +1,6 @@
 ﻿using _2___Application._1_Services.User;
 using _2___Application._2_Dto_s.UserDto.Request;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConsultarAuth.API.Controllers
@@ -29,7 +28,6 @@ namespace ConsultarAuth.API.Controllers
 
             return Ok(userResponse);
         }
-
 
         [HttpPost("/register")]
         public async Task<IActionResult> InsertUser([FromBody] InsertDto request)
@@ -70,5 +68,27 @@ namespace ConsultarAuth.API.Controllers
 
             return Ok(user);
         }
-    };
+
+        // Novo método para buscar usuário e suas empresas/subempresas
+        [HttpGet("/{userId}")]
+        [Authorize()]
+        public async Task<IActionResult> GetUser(int userId)
+        {
+            try
+            {
+                var user = await _userService.GetUser(userId);
+
+                if (user == null)
+                {
+                    return NotFound(new { message = "Usuário não encontrado" });
+                }
+
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao buscar usuário", details = ex.Message });
+            }
+        }
+    }
 }
