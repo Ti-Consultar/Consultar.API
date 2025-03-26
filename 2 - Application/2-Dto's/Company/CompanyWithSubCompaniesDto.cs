@@ -9,9 +9,9 @@ namespace _2___Application._2_Dto_s.Company
 {
     public class CompanyWithSubCompaniesDto
     {
-        public int CompanyId { get; set; }  // ID da empresa
-        public string CompanyName { get; set; }  // Nome da empresa
-        public List<SubCompanyDto> SubCompanies { get; set; }  // Lista de subempresas associadas
+        public int CompanyId { get; set; } 
+        public string CompanyName { get; set; }
+        public List<SubCompanyDto> SubCompanies { get; set; }  
     }
 
 }

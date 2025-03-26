@@ -18,70 +18,85 @@ namespace _5_API.Controllers
             _companyService = companyService;
         }
 
-        // Endpoint para criar uma empresa (e possivelmente uma subempresa)
+       
         [HttpPost]
         [Route("create")]
         public async Task<IActionResult> CreateCompany([FromBody] InsertCompanyDto createCompanyDto)
         {
             try
             {
-                // Chama o serviço para criar a empresa
+               
                 var company = await _companyService.CreateCompany(createCompanyDto);
-                return Ok(company);  // Retorna a resposta da criação da empresa
+                return Ok(company);  
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });  // Retorna uma resposta de erro caso ocorra algum problema
+                return BadRequest(new { message = ex.Message });  
             }
         }
-        // Endpoint para criar uma empresa (e possivelmente uma subempresa)
+       
         [HttpPost]
         [Route("create/sub-company")]
         public async Task<IActionResult> CreateSubCompany([FromBody] InsertSubCompanyDto createsubCompanyDto)
         {
             try
             {
-                // Chama o serviço para criar a empresa
+                
                 var company = await _companyService.CreateSubCompany(createsubCompanyDto);
-                return Ok(company);  // Retorna a resposta da criação da empresa
+                return Ok(company); 
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });  // Retorna uma resposta de erro caso ocorra algum problema
+                return BadRequest(new { message = ex.Message });  
             }
         }
 
-        // Endpoint para obter todas as subempresas associadas a um usuário
         [HttpGet]
         [Route("subcompanies/{userId}")]
         public async Task<IActionResult> GetSubCompaniesByUserId(int userId)
         {
             try
             {
-                // Chama o serviço para obter as subempresas
+                
                 var subCompanies = await _companyService.GetSubCompaniesByUserId(userId);
-                return Ok(subCompanies);  // Retorna a lista de subempresas
+                return Ok(subCompanies); 
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });  // Retorna uma resposta de erro
+                return BadRequest(new { message = ex.Message });  
             }
         }
 
-        // Endpoint para obter todas as empresas associadas a um usuário
+      
         [HttpGet]
-        [Route("companies/{userId}")]
+        [Route("companies/user/{userId}")]
         public async Task<IActionResult> GetCompaniesByUserId(int userId)
         {
             try
             {
-                // Chama o serviço para obter as empresas
+               
                 var companies = await _companyService.GetCompaniesByUserId(userId);
-                return Ok(companies);  // Retorna a lista de empresas
+                return Ok(companies);  
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });  // Retorna uma resposta de erro
+                return BadRequest(new { message = ex.Message });  
+            }
+        }
+
+        [HttpGet]
+        [Route("companies-paginated/user/{userId}")]
+        public async Task<IActionResult> GetCompaniesByUserIdPaginated(int userId, int skip, int take)
+        {
+            try
+            {
+               
+                var companies = await _companyService.GetCompaniesByUserIdPaginated(userId, skip, take);
+                return Ok(companies); 
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message }); 
             }
         }
     }

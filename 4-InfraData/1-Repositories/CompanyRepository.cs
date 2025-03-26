@@ -17,7 +17,7 @@ namespace _4_InfraData._1_Repositories
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        // Método para adicionar uma nova empresa
+        
         public async Task AddCompany(CompanyModel companyModel)
         {
             if (companyModel == null)
@@ -27,7 +27,7 @@ namespace _4_InfraData._1_Repositories
             await _context.SaveChangesAsync();
         }
 
-        // Método para buscar todas as subempresas associadas a um usuário específico
+      
         public async Task<List<SubCompanyModel>> GetSubCompaniesByUserId(int userId)
         {
             var subCompanies = await _context.CompanyUsers
@@ -40,7 +40,7 @@ namespace _4_InfraData._1_Repositories
             return subCompanies;
         }
 
-        // Método para adicionar uma subempresa a uma empresa existente
+      
         public async Task AddSubCompany(int companyId, SubCompanyModel subCompanyModel)
         {
             var company = await _context.Companies
@@ -87,11 +87,27 @@ namespace _4_InfraData._1_Repositories
             var companies = await _context.CompanyUsers
                 .Where(cu => cu.UserId == userId)
                 .Include(cu => cu.Company)
+                    .ThenInclude(c => c.SubCompanies) // Aqui incluímos as subempresas
                 .Select(cu => cu.Company)
                 .ToListAsync();
 
             return companies;
         }
+
+        public async Task<List<CompanyModel>> GetCompaniesByUserIdPaginated(int userId, int skip, int take)
+        {
+            var companies = await _context.CompanyUsers
+                .Where(cu => cu.UserId == userId)
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.SubCompanies) // Inclui as subempresas
+                .Select(cu => cu.Company)
+                .Skip(skip)  // Pula os primeiros 'skip' registros
+                .Take(take)  // Limita os resultados a 'take' registros
+                .ToListAsync();
+
+            return companies;
+        }
+
 
         public async Task<List<CompanyModel>> GetById(int id)
         {
@@ -104,7 +120,24 @@ namespace _4_InfraData._1_Repositories
             return companies;
         }
 
-        // Método para adicionar um usuário à uma empresa
+        public async Task<CompanyModel> GetCompanyById(int id)
+        {
+            var companies = await _context.Companies
+                .Where(cu => cu.Id == id)
+                .FirstOrDefaultAsync();
+
+            return companies;
+        }
+
+        public async Task<SubCompanyModel> GetSubCompanyById(int id)
+        {
+            var subCompanies = await _context.SubCompanies
+                .Where(cu => cu.Id == id)
+                .FirstOrDefaultAsync();
+
+            return subCompanies;
+        }
+
         public async Task AddUserToCompany(int userId, int companyId)
         {
             var company = await _context.Companies

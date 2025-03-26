@@ -1,6 +1,6 @@
 ﻿
 
-namespace _4_InfraData._3_Utils.Base
+namespace _2___Application.Base
 {
     public class BaseDto
     {

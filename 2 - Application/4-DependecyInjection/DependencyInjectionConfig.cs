@@ -3,7 +3,7 @@ using _4_InfraData._1_Context;
 using _4_InfraData._1_Repositories;
 using _4_InfraData._2_AppSettings;
 using _4_InfraData._2_JWT;
-using _4_InfraData._3_Utils.Base;
+using _2___Application.Base;
 using _4_InfraData._3_Utils.Email;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;

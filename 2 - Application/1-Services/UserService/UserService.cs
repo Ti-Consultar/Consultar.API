@@ -7,7 +7,7 @@ using _2___Application._2_Dto_s.UserDto.Response;
 using _3_Domain._1_Entities;
 using _4_InfraData._1_Repositories;
 using _4_InfraData._2_JWT;
-using _4_InfraData._3_Utils.Base;
+using _2___Application.Base;
 using _4_InfraData._3_Utils.Email;
 
 namespace _2___Application._1_Services.User
