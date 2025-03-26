@@ -1,7 +1,9 @@
 using Microsoft.OpenApi.Models;
 using _2___Application._4__DependencyInjectionConfig; // Importação da configuração de dependências
 using _2___Application._1_Services.User;
-using _4_InfraData._1_Repositories; // Certifique-se de usar o namespace correto
+using _4_InfraData._1_Repositories;
+using _4_InfraData._1_Context;
+using Microsoft.EntityFrameworkCore; // Certifique-se de usar o namespace correto
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +16,11 @@ builder.Services.AddControllers()
 
 // Obtém a connection string do appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Configuração do DbContext
+builder.Services.AddDbContext<CoreServiceDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
 
 // Chama o método para configurar dependências gerais
 DependencyInjectionConfig.Configure(builder.Services, connectionString);

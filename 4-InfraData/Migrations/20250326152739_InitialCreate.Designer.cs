@@ -12,8 +12,8 @@ using _4_InfraData._1_Context;
 namespace _4_InfraData.Migrations
 {
     [DbContext(typeof(CoreServiceDbContext))]
-    [Migration("20250324173513_AddCompanyUserRelation")]
-    partial class AddCompanyUserRelation
+    [Migration("20250326152739_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
