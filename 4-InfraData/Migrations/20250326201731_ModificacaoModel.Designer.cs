@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using _4_InfraData._1_Context;
 
@@ -11,9 +12,11 @@ using _4_InfraData._1_Context;
 namespace _4_InfraData.Migrations
 {
     [DbContext(typeof(CoreServiceDbContext))]
-    partial class CoreServiceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250326201731_ModificacaoModel")]
+    partial class ModificacaoModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,38 +53,16 @@ namespace _4_InfraData.Migrations
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
 
-                    b.Property<int>("PermissionId")
+                    b.Property<int>("SubCompanyId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("SubCompanyId")
-                        .HasColumnType("int");
-
-                    b.HasKey("UserId", "CompanyId");
+                    b.HasKey("UserId", "CompanyId", "SubCompanyId");
 
                     b.HasIndex("CompanyId");
-
-                    b.HasIndex("PermissionId");
 
                     b.HasIndex("SubCompanyId");
 
                     b.ToTable("CompanyUsers");
-                });
-
-            modelBuilder.Entity("_3_Domain._1_Entities.PermissionModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Permissions");
                 });
 
             modelBuilder.Entity("_3_Domain._1_Entities.SubCompanyModel", b =>
@@ -146,12 +127,6 @@ namespace _4_InfraData.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("_3_Domain._1_Entities.PermissionModel", "Permission")
-                        .WithMany()
-                        .HasForeignKey("PermissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("_3_Domain._1_Entities.SubCompanyModel", "SubCompany")
                         .WithMany("CompanyUsers")
                         .HasForeignKey("SubCompanyId");
@@ -163,8 +138,6 @@ namespace _4_InfraData.Migrations
                         .IsRequired();
 
                     b.Navigation("Company");
-
-                    b.Navigation("Permission");
 
                     b.Navigation("SubCompany");
 

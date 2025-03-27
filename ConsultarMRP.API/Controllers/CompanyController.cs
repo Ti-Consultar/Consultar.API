@@ -99,5 +99,21 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message }); 
             }
         }
+
+        [HttpPost]
+        [Route("bond")]
+        public async Task<IActionResult> CreateUserCompanyorSubCompany([FromBody] CreateCompanyUserDto dto)
+        {
+            try
+            {
+
+                var company = await _companyService.CreateUserCompanyorSubCompany(dto);
+                return Ok(company);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

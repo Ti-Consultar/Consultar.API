@@ -15,7 +15,7 @@ namespace _3_Domain._1_Entities
             Name = name;
             Email = email;
             Password = password;
-            Role = "Admin";
+            Role = "Gestor";
         }
 
         public int Id { get; set; }

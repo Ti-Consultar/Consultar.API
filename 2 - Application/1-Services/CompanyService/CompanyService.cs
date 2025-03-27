@@ -106,6 +106,46 @@ public class CompanyService : BaseService
         }
     }
 
+    public async Task<ResultValue> CreateUserCompanyorSubCompany(CreateCompanyUserDto dto)
+    {
+        try
+        {
+            var user = await _userRepository.GetByUserId(dto.UserId);
+            if (user == null)
+                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+
+            var company = await _companyRepository.GetById(dto.CompanyId);
+            if (company == null)
+                return ErrorResponse(Message.NotFound);
+
+            var model = new CompanyUserModel();
+
+            if(dto.SubCompanyId is null || dto.SubCompanyId == 0)
+            {
+
+                model.CompanyId = dto.CompanyId;
+                model.UserId = user.Id;
+                model.PermissionId = dto.PermissionId;
+
+                await _companyRepository.AddUserToCompany(model.UserId, model.CompanyId, model.PermissionId);
+            }
+            else
+            {
+                model.CompanyId = dto.CompanyId;
+                model.SubCompanyId = dto.SubCompanyId;
+                model.UserId = user.Id;
+                model.PermissionId = dto.PermissionId;
+                await _companyRepository.AddUserToCompanyOrSubCompany(model.UserId, model.CompanyId, model.SubCompanyId, model.PermissionId);
+            }
+           
+            return SuccessResponse(Message.Success);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
+
     public async Task<ResultValue> GetSubCompaniesByUserId(int userId)
     {
         try

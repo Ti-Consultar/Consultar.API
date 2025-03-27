@@ -17,7 +17,7 @@ namespace _4_InfraData._1_Repositories
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        
+
         public async Task AddCompany(CompanyModel companyModel)
         {
             if (companyModel == null)
@@ -27,7 +27,7 @@ namespace _4_InfraData._1_Repositories
             await _context.SaveChangesAsync();
         }
 
-      
+
         public async Task<List<SubCompanyModel>> GetSubCompaniesByUserId(int userId)
         {
             var subCompanies = await _context.CompanyUsers
@@ -40,7 +40,7 @@ namespace _4_InfraData._1_Repositories
             return subCompanies;
         }
 
-      
+
         public async Task AddSubCompany(int companyId, SubCompanyModel subCompanyModel)
         {
             var company = await _context.Companies
@@ -109,13 +109,28 @@ namespace _4_InfraData._1_Repositories
         }
 
 
-        public async Task<List<CompanyModel>> GetById(int id)
+        public async Task<CompanyModel?> GetById(int id)
+        {
+            var company = await _context.Companies
+                .Where(c => c.Id == id) // Filtrando diretamente em Companies
+                .Include(c => c.SubCompanies) // Inclui as subempresas
+                .Include(c => c.CompanyUsers) // Inclui a relação com usuários
+                    .ThenInclude(cu => cu.User) // Inclui os usuários
+                .FirstOrDefaultAsync();
+
+            return company;
+        }
+
+
+        public async Task<CompanyModel> GetByUserId(int userId)
         {
             var companies = await _context.CompanyUsers
-                .Where(cu => cu.CompanyId == id)
+                .Where(cu => cu.UserId == userId)
                 .Include(cu => cu.Company)
+                .ThenInclude(cu => cu.SubCompanies)
+                .Include(cu => cu.User)
                 .Select(cu => cu.Company)
-                .ToListAsync();
+                .FirstOrDefaultAsync();
 
             return companies;
         }
@@ -158,6 +173,34 @@ namespace _4_InfraData._1_Repositories
             {
                 throw new ArgumentException("Empresa não encontrada", nameof(companyId));
             }
+        }
+
+        public async Task AddUserToCompany(int userId, int companyId, int permissionId)
+        {
+             var companyUser = new CompanyUserModel
+                {
+                    UserId = userId,
+                    CompanyId = companyId,
+                    PermissionId = permissionId
+                };
+
+                await _context.CompanyUsers.AddAsync(companyUser);
+                await _context.SaveChangesAsync();
+            
+        }
+        public async Task AddUserToCompanyOrSubCompany(int userId, int companyId, int? subCompanyId, int permissionId)
+        {
+            var companyUser = new CompanyUserModel
+            {
+                UserId = userId,
+                CompanyId = companyId,
+                SubCompanyId = subCompanyId,
+                PermissionId = permissionId
+            };
+
+            await _context.CompanyUsers.AddAsync(companyUser);
+            await _context.SaveChangesAsync();
+
         }
     }
 }

@@ -46,8 +46,8 @@ namespace _2___Application._4__DependencyInjectionConfig
 
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("Admin", policy => policy.RequireRole("Administrador"));
-                options.AddPolicy("Master", policy => policy.RequireRole("Master"));
+                options.AddPolicy("Gestor", policy => policy.RequireRole("Gestor"));
+                options.AddPolicy("Usuario", policy => policy.RequireRole("Usuário"));
                 options.AddPolicy("Consultor", policy => policy.RequireRole("Consultor"));
             });
 
@@ -60,12 +60,14 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<BaseService>();
             services.AddScoped<EmailService>();
             services.AddScoped<CompanyService>();
+            services.AddScoped<PermissionService>();
             #endregion
 
             #region Repositories
             // Adicione repositórios, se necessário
 
             services.AddScoped<CompanyRepository>();
+            services.AddScoped<PermissionRepository>();
             #endregion
 
             #endregion

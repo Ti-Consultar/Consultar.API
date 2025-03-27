@@ -66,7 +66,7 @@ namespace _2___Application._1_Services.User
         {
             try
             {
-                // Busca o usuário
+                // Busca o usuário no banco, garantindo que está trazendo as empresas e subempresas
                 var user = await _repository.GetByUserId(userId);
 
                 // Cria o objeto de resposta
@@ -80,19 +80,26 @@ namespace _2___Application._1_Services.User
                         {
                             Id = a.Company.Id,
                             Name = a.Company.Name,
-                            DateCreate = a.Company.DateCreate
-                            
+                            DateCreate = a.Company.DateCreate,
+
+                            // Adiciona a lista de subempresas
+                            SubCompanies = a.Company.SubCompanies.Select(sub => new SubCompanyDto
+                            {
+                                Id = sub.Id,
+                                Name = sub.Name,
+                                DateCreate = sub.DateCreate
+                            }).ToList()
                         }).ToList()
                 };
-                
-                // Retorna o response com as informações do usuário e empresas
+
                 return response;
             }
             catch (Exception ex)
             {
-                return UserLoginMessage.Error + ex.Message; // Ajuste para mostrar a mensagem de erro
+                return UserLoginMessage.Error + ex.Message; // Retorna a mensagem de erro
             }
         }
+
 
 
         #endregion

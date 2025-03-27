@@ -10,7 +10,7 @@ namespace _3_Domain._1_Entities
     {
         public SubCompanyModel()
         {
-
+            CompanyUsers = new List<CompanyUserModel>(); // Inicializando a lista
         }
 
         public int Id { get; set; }
@@ -19,6 +19,10 @@ namespace _3_Domain._1_Entities
 
         // Chave estrangeira para Company
         public int CompanyId { get; set; }
-        public CompanyModel Company { get; set; }  // Propriedade de navegação
+        public CompanyModel Company { get; set; }
+
+        // Relacionamento com CompanyUserModel
+        public List<CompanyUserModel> CompanyUsers { get; set; }
     }
+
 }
