@@ -25,6 +25,6 @@ namespace _3_Domain._1_Entities
         public string Role { get; set; }
 
         // Relacionamento Muitos-para-Muitos com Companies
-        public List<CompanyUserModel> CompanyUsers { get; set; }
+        public List<CompanyUserModel>? CompanyUsers { get; set; }
     }
 }

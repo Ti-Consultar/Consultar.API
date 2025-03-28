@@ -1,7 +1,4 @@
-﻿using _2___Application._2_Dto_s.Company;
-using _2___Application._2_Dto_s.Company.SubCompany;
-using _3_Domain._1_Entities;
-using _4_InfraData._1_Repositories;
+﻿using _4_InfraData._1_Repositories;
 using _2___Application.Base;
 using _4_InfraData._2_AppSettings;
 using _2___Application._2_Dto_s.Permissions;

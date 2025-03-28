@@ -20,18 +20,20 @@ namespace _4_InfraData._1_Repositories
 
         public async Task AddCompany(CompanyModel companyModel)
         {
-            if (companyModel == null)
-                throw new ArgumentNullException(nameof(companyModel), "Company model cannot be null");
-
+           
             await _context.Companies.AddAsync(companyModel);
             await _context.SaveChangesAsync();
         }
-
-
+        public async Task UpdateCompany(CompanyModel companyModel)
+        {
+            _context.Companies.Update(companyModel);
+            await _context.SaveChangesAsync();
+        }
         public async Task<List<SubCompanyModel>> GetSubCompaniesByUserId(int userId)
         {
             var subCompanies = await _context.CompanyUsers
                 .Where(cu => cu.UserId == userId)
+                .Include(cu => cu.Permission)
                 .Include(cu => cu.Company)
                 .ThenInclude(c => c.SubCompanies)
                 .SelectMany(cu => cu.Company.SubCompanies)
@@ -56,6 +58,12 @@ namespace _4_InfraData._1_Repositories
             {
                 throw new ArgumentException("Empresa não encontrada", nameof(companyId));
             }
+        }
+
+        public async Task UpdateSubCompany(SubCompanyModel subCompanyModel)
+        {
+            _context.SubCompanies.Update(subCompanyModel);
+            await _context.SaveChangesAsync();
         }
 
         // Método para associar um usuário a uma subempresa
@@ -86,18 +94,23 @@ namespace _4_InfraData._1_Repositories
         {
             var companies = await _context.CompanyUsers
                 .Where(cu => cu.UserId == userId)
-                .Include(cu => cu.Company)
-                    .ThenInclude(c => c.SubCompanies) // Aqui incluímos as subempresas
-                .Select(cu => cu.Company)
+                .Include(cu => cu.Company) // Inclui a empresa primeiro
+                    .ThenInclude(c => c.CompanyUsers) // Inclui os usuários da empresa
+                    .ThenInclude(cu => cu.Permission) // Inclui as permissões dos usuários
+                .Select(cu => cu.Company) // Agora, seleciona a empresa
                 .ToListAsync();
 
             return companies;
         }
 
+
+
         public async Task<List<CompanyModel>> GetCompaniesByUserIdPaginated(int userId, int skip, int take)
         {
             var companies = await _context.CompanyUsers
                 .Where(cu => cu.UserId == userId)
+                .Include(cu => cu.Permission)
+                .Include(cu => cu.Company)
                 .Include(cu => cu.Company)
                     .ThenInclude(c => c.SubCompanies) // Inclui as subempresas
                 .Select(cu => cu.Company)
@@ -125,7 +138,21 @@ namespace _4_InfraData._1_Repositories
         public async Task<CompanyModel> GetByUserId(int userId)
         {
             var companies = await _context.CompanyUsers
+                .AsNoTracking() // Evita rastreamento duplicado
                 .Where(cu => cu.UserId == userId)
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.SubCompanies)
+                .Include(cu => cu.User)
+                .Select(cu => cu.Company)
+                .FirstOrDefaultAsync();
+
+            return companies;
+        }
+
+        public async Task<CompanyModel> GetSubCompanieByUserId(int subcompanyId)
+        {
+            var companies = await _context.CompanyUsers
+                .Where(cu => cu.SubCompanyId == subcompanyId)
                 .Include(cu => cu.Company)
                 .ThenInclude(cu => cu.SubCompanies)
                 .Include(cu => cu.User)
@@ -163,7 +190,8 @@ namespace _4_InfraData._1_Repositories
                 var companyUser = new CompanyUserModel
                 {
                     UserId = userId,
-                    CompanyId = companyId
+                    CompanyId = companyId,
+                    PermissionId = 1
                 };
 
                 await _context.CompanyUsers.AddAsync(companyUser);
@@ -178,7 +206,7 @@ namespace _4_InfraData._1_Repositories
         public async Task AddUserToCompany(int userId, int companyId, int permissionId)
         {
              var companyUser = new CompanyUserModel
-                {
+             {
                     UserId = userId,
                     CompanyId = companyId,
                     PermissionId = permissionId
@@ -190,17 +218,37 @@ namespace _4_InfraData._1_Repositories
         }
         public async Task AddUserToCompanyOrSubCompany(int userId, int companyId, int? subCompanyId, int permissionId)
         {
-            var companyUser = new CompanyUserModel
+            // Verifica se já existe uma entidade com os mesmos UserId, CompanyId e SubCompanyId
+            var existingEntity = await _context.CompanyUsers
+                .FirstOrDefaultAsync(cu => cu.UserId == userId && cu.CompanyId == companyId && cu.SubCompanyId == subCompanyId);
+
+            if (existingEntity != null)
             {
-                UserId = userId,
-                CompanyId = companyId,
-                SubCompanyId = subCompanyId,
-                PermissionId = permissionId
-            };
+                // Remove a entidade já rastreada, caso haja alguma
+                _context.Entry(existingEntity).State = EntityState.Detached;
 
-            await _context.CompanyUsers.AddAsync(companyUser);
+                // Atualiza a permissão da entidade existente
+                existingEntity.PermissionId = permissionId;
+                _context.CompanyUsers.Update(existingEntity);
+            }
+            else
+            {
+                // Cria uma nova entidade se não existir
+                var companyUser = new CompanyUserModel
+                {
+                    UserId = userId,
+                    CompanyId = companyId,
+                    SubCompanyId = subCompanyId,
+                    PermissionId = permissionId
+                };
+
+                await _context.CompanyUsers.AddAsync(companyUser);
+            }
+
+            // Salva as alterações no banco de dados
             await _context.SaveChangesAsync();
-
         }
+
+
     }
 }

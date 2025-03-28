@@ -34,7 +34,23 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });  
             }
         }
-       
+
+        [HttpPut]
+        [Route("update/id/{id}")]
+        public async Task<IActionResult> UpdateCompany(int id,[FromBody] UpdateCompanyDto dto)
+        {
+            try
+            {
+
+                var company = await _companyService.UpdateCompany(id,dto);
+                return Ok(company);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPost]
         [Route("create/sub-company")]
         public async Task<IActionResult> CreateSubCompany([FromBody] InsertSubCompanyDto createsubCompanyDto)
@@ -50,6 +66,23 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });  
             }
         }
+
+        [HttpPut]
+        [Route("update/sub-company/id/{id}")]
+        public async Task<IActionResult> UpdateSubCompany(int id, [FromBody] UpdateCompanyDto dto)
+        {
+            try
+            {
+
+                var company = await _companyService.UpdateSubCompany(id, dto);
+                return Ok(company);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
 
         [HttpGet]
         [Route("subcompanies/{userId}")]
@@ -101,13 +134,29 @@ namespace _5_API.Controllers
         }
 
         [HttpPost]
-        [Route("bond")]
+        [Route("bond/Company")]
         public async Task<IActionResult> CreateUserCompanyorSubCompany([FromBody] CreateCompanyUserDto dto)
         {
             try
             {
 
                 var company = await _companyService.CreateUserCompanyorSubCompany(dto);
+                return Ok(company);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [Route("bond/subCompany")]
+        public async Task<IActionResult> CreateUserSubCompany([FromBody] CreateSubCompanyUserDto dto)
+        {
+            try
+            {
+
+                var company = await _companyService.CreateUserSubCompany(dto);
                 return Ok(company);
             }
             catch (Exception ex)

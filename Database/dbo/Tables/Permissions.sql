@@ -1,0 +1,4 @@
+﻿CREATE TABLE Permissions (
+    [Id] INT PRIMARY KEY IDENTITY(1,1),
+    Name NVARCHAR(MAX) NOT NULL
+);
