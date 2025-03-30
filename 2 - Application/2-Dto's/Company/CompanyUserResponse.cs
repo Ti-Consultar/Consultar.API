@@ -10,6 +10,6 @@ namespace _2___Application._2_Dto_s.Company
     public class CompanyUserResponse
     {
         public CompanyDto  Company { get; set; }
-       // public PermissionResponse  Permission { get; set; }
+       //public PermissionResponse  Permission { get; set; }
     }
 }

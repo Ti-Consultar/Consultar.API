@@ -51,6 +51,24 @@ namespace _5_API.Controllers
             }
         }
 
+        [HttpDelete]
+        [Route("user/{userId}/company/{id}")]
+        public async Task<IActionResult> DeleteCompany(int userId, int id)
+        {
+            try
+            {
+
+                var company = await _companyService.DeleteCompany(userId, id);
+                return Ok(company);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
+
         [HttpPost]
         [Route("create/sub-company")]
         public async Task<IActionResult> CreateSubCompany([FromBody] InsertSubCompanyDto createsubCompanyDto)
@@ -83,6 +101,21 @@ namespace _5_API.Controllers
             }
         }
 
+        [HttpDelete]
+        [Route("user/{userId}/company/{id}/sub-company/{subCompanyId}")]
+        public async Task<IActionResult> DeleteCompany(int userId, int id, int subCompanyId)
+        {
+            try
+            {
+
+                var company = await _companyService.DeleteSubCompany(userId, id, subCompanyId);
+                return Ok(company);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
         [HttpGet]
         [Route("subcompanies/{userId}")]

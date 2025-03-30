@@ -82,6 +82,27 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+
+    public async Task<ResultValue> DeleteCompany(int userId, int id)
+    {
+        try
+        {
+            var user = await _userRepository.GetByUserId(userId);
+            if (user == null)
+                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+
+            var company = await _companyRepository.GetById(id);
+
+            await _companyRepository.DeleteCompany(company.Id);
+
+            return SuccessResponse(Message.DeleteSuccess);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
+
     public async Task<ResultValue> GetCompaniesById(int id)
     {
         try
@@ -192,6 +213,39 @@ public class CompanyService : BaseService
             await _companyRepository.UpdateSubCompany(subCompany);
 
             return SuccessResponse(Message.Success);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
+
+    public async Task<ResultValue> DeleteSubCompany(int userId, int companyId, int subcompanyId)
+    {
+        try
+        {
+            var user = await _userRepository.GetByUserId(userId);
+            if (user == null)
+                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+
+            var company = await _companyRepository.GetById(companyId);
+
+            if (company == null)
+            {
+                return ErrorResponse(Message.NotFound);
+            }
+
+            var subcompany = company.SubCompanies.Where(a => a.Id == subcompanyId).FirstOrDefault();
+
+            if (subcompany == null)
+            {
+                return ErrorResponse(Message.NotFound);
+            }
+
+
+            await _companyRepository.DeleteSubCompany(company.Id, subcompany.Id);
+
+            return SuccessResponse(Message.DeleteSuccess);
         }
         catch (Exception ex)
         {

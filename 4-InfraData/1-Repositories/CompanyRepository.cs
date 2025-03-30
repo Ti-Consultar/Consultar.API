@@ -29,6 +29,23 @@ namespace _4_InfraData._1_Repositories
             _context.Companies.Update(companyModel);
             await _context.SaveChangesAsync();
         }
+
+        public async Task DeleteCompany(int id)
+        {
+            var company = await _context.Companies.FindAsync(id);
+
+            _context.Companies.Remove(company);
+            await _context.SaveChangesAsync();
+        }
+        public async Task DeleteSubCompany(int companyId, int subcompanyId)
+        {
+            var subCompany = await _context.SubCompanies
+                .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.Id == subcompanyId);
+
+            _context.SubCompanies.Remove(subCompany);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<List<SubCompanyModel>> GetSubCompaniesByUserId(int userId)
         {
             var subCompanies = await _context.CompanyUsers
@@ -45,19 +62,10 @@ namespace _4_InfraData._1_Repositories
 
         public async Task AddSubCompany(int companyId, SubCompanyModel subCompanyModel)
         {
-            var company = await _context.Companies
-                .FirstOrDefaultAsync(c => c.Id == companyId);
-
-            if (company != null)
-            {
                 subCompanyModel.CompanyId = companyId;
                 await _context.SubCompanies.AddAsync(subCompanyModel);
                 await _context.SaveChangesAsync();
-            }
-            else
-            {
-                throw new ArgumentException("Empresa não encontrada", nameof(companyId));
-            }
+            
         }
 
         public async Task UpdateSubCompany(SubCompanyModel subCompanyModel)

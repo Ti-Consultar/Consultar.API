@@ -13,11 +13,6 @@ namespace _4_InfraData._1_Context
         public DbSet<CompanyUserModel> CompanyUsers { get; set; }
         public DbSet<PermissionModel> Permissions { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            
-
-            base.OnModelCreating(modelBuilder);
-        }
+       
     }
 }
