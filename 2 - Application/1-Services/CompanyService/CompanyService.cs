@@ -5,6 +5,8 @@ using _4_InfraData._1_Repositories;
 using _2___Application.Base;
 using _4_InfraData._2_AppSettings;
 using _2___Application._2_Dto_s.Permissions;
+using _2___Application._2_Dto_s.Company.CompanyUser;
+using Microsoft.EntityFrameworkCore;
 
 
 public class CompanyService : BaseService
@@ -52,7 +54,7 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-    public async Task<ResultValue> UpdateCompany( int id, UpdateCompanyDto dto)
+    public async Task<ResultValue> UpdateCompany(int id, UpdateCompanyDto dto)
     {
         try
         {
@@ -149,9 +151,10 @@ public class CompanyService : BaseService
 
             return SuccessResponse(Message.Success);
         }
-        catch (Exception ex)
+        catch (DbUpdateException ex)
         {
-            return ErrorResponse(ex);
+            var innerException = ex.InnerException?.Message ?? "No inner exception";
+            throw new Exception($"Erro ao salvar no banco. Detalhes: {innerException}");
         }
     }
 
@@ -179,6 +182,8 @@ public class CompanyService : BaseService
 
             await _companyRepository.AddSubCompany(subcompany.CompanyId, subcompany);
 
+
+
             return SuccessResponse(Message.Success);
         }
         catch (Exception ex)
@@ -197,10 +202,10 @@ public class CompanyService : BaseService
 
             // Obtém as empresas relacionadas ao usuário
             var companies = await _companyRepository.GetSubCompanieByUserId(dto.UserId);
-            
+
             var subCompany = companies.SubCompanies.Where(a => a.Id == id).FirstOrDefault();
 
-         
+
             if (subCompany == null)
             {
                 return ErrorResponse(Message.NotFound);
@@ -315,54 +320,44 @@ public class CompanyService : BaseService
 
             // Obtém as empresas relacionadas ao usuário
             var companies = await _companyRepository.GetCompaniesByUserId(userId);
-
-            // Se não houver empresas, retorna um erro
             if (companies == null || !companies.Any())
                 return ErrorResponse(Message.NotFound);
 
             // Mapeia as empresas e permissões para o response
-            var companyResponses = companies.Select(company => new CompanyUserResponse
+            var companyResponses = companies.Select(company => new CompanyUsersimpleDto
             {
-                // Mapeia informações da empresa
-                Company = new CompanyDto
+                CompanyId = company.Id,
+                CompanyName = company.Name,
+                DateCreate = company.DateCreate,
+                Permission = company.CompanyUsers?.FirstOrDefault()?.Permission != null ? new PermissionResponse
                 {
-                    Id = company.Id,
-                    Name = company.Name,
-                    DateCreate = company.DateCreate,
-                    Permission = company.CompanyUsers
-                        .Select(cu => new PermissionResponse
-                        {
-                            Id = cu.Permission.Id,
-                            Name = cu.Permission.Name
-                        }).FirstOrDefault() // Inclui a permissão diretamente dentro de CompanyDto
-                }
+                    Id = company.CompanyUsers.FirstOrDefault().Permission.Id,
+                    Name = company.CompanyUsers.FirstOrDefault().Permission.Name
+                } : null,
+                SubCompanies = company.SubCompanies?
+                    .Where(subCompany => subCompany.CompanyUsers.Any(cu => cu.UserId == userId)) // Filtra apenas as vinculadas ao usuário
+                    .Select(subCompany => new SubCompanyUsersimpleDto
+                    {
+                        SubCompanyId = subCompany.Id,
+                        SubCompanyName = subCompany.Name,
+                        CompanyId = company.Id,
+                        DateCreate = subCompany.DateCreate,
+                        Permission = subCompany.CompanyUsers?
+                            .FirstOrDefault(cu => cu.UserId == userId)?.Permission != null ? new PermissionResponse
+                            {
+                                Id = subCompany.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId).Permission.Id,
+                                Name = subCompany.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId).Permission.Name
+                            } : null
+                    }).ToList() ?? new List<SubCompanyUsersimpleDto>()
+             
             }).ToList();
 
-            // Para tratar as subempresas, se houver
-            var subCompanyResponses = companies.SelectMany(company => company.SubCompanies)
-                .Select(subCompany => new SubCompanyUserResponse
-                {
-                    // Mapeia informações da subempresa
-                    SubCompany = new SubCompanyDto
-                    {
-                        Id = subCompany.Id,
-                        Name = subCompany.Name,
-                        DateCreate = subCompany.DateCreate
-                    },
-
-                    // Mapeia permissões associadas à subempresa (uma permissão por vínculo)
-                    Permission = subCompany.CompanyUsers.Select(cu => new PermissionResponse
-                    {
-                        Id = cu.Permission.Id,
-                        Name = cu.Permission.Name
-                    }).FirstOrDefault() // Um único vínculo de permissão, então pegamos o primeiro ou null
-                }).ToList();
-
             // Resposta final
-            var response = new
+            var response = new CompanyUserDto
             {
-                Companies = companyResponses,
-                SubCompanies = subCompanyResponses
+                UserId = userId,
+                Name = user.Name,
+                companies = companyResponses ?? new List<CompanyUsersimpleDto>()
             };
 
             return SuccessResponse(response);
@@ -372,6 +367,8 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+
+
 
     public async Task<ResultValue> GetCompaniesByUserIdPaginated(int userId, int skip, int take)
     {

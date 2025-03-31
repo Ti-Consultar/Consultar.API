@@ -20,7 +20,7 @@ namespace _4_InfraData._1_Repositories
 
         public async Task AddCompany(CompanyModel companyModel)
         {
-           
+
             await _context.Companies.AddAsync(companyModel);
             await _context.SaveChangesAsync();
         }
@@ -62,10 +62,10 @@ namespace _4_InfraData._1_Repositories
 
         public async Task AddSubCompany(int companyId, SubCompanyModel subCompanyModel)
         {
-                subCompanyModel.CompanyId = companyId;
-                await _context.SubCompanies.AddAsync(subCompanyModel);
-                await _context.SaveChangesAsync();
-            
+            subCompanyModel.CompanyId = companyId;
+            await _context.SubCompanies.AddAsync(subCompanyModel);
+            await _context.SaveChangesAsync();
+
         }
 
         public async Task UpdateSubCompany(SubCompanyModel subCompanyModel)
@@ -101,12 +101,16 @@ namespace _4_InfraData._1_Repositories
         public async Task<List<CompanyModel>> GetCompaniesByUserId(int userId)
         {
             var companies = await _context.CompanyUsers
-                .Where(cu => cu.UserId == userId)
-                .Include(cu => cu.Company) // Inclui a empresa primeiro
-                    .ThenInclude(c => c.CompanyUsers) // Inclui os usuários da empresa
-                    .ThenInclude(cu => cu.Permission) // Inclui as permissões dos usuários
-                .Select(cu => cu.Company) // Agora, seleciona a empresa
-                .ToListAsync();
+     .Where(cu => cu.UserId == userId)
+     .Include(cu => cu.Company)
+         .ThenInclude(c => c.CompanyUsers)
+         .ThenInclude(cu => cu.Permission)
+     .Include(cu => cu.Company)
+         .ThenInclude(c => c.SubCompanies
+             .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == userId))) // Filtra subempresas no banco
+     .Select(cu => cu.Company)
+     .Distinct()
+     .ToListAsync();
 
             return companies;
         }
@@ -213,48 +217,50 @@ namespace _4_InfraData._1_Repositories
 
         public async Task AddUserToCompany(int userId, int companyId, int permissionId)
         {
-             var companyUser = new CompanyUserModel
-             {
-                    UserId = userId,
-                    CompanyId = companyId,
-                    PermissionId = permissionId
-                };
+            var companyUser = new CompanyUserModel
+            {
+                UserId = userId,
+                CompanyId = companyId,
+                PermissionId = permissionId
+            };
 
-                await _context.CompanyUsers.AddAsync(companyUser);
-                await _context.SaveChangesAsync();
-            
+            await _context.CompanyUsers.AddAsync(companyUser);
+            await _context.SaveChangesAsync();
+
         }
         public async Task AddUserToCompanyOrSubCompany(int userId, int companyId, int? subCompanyId, int permissionId)
         {
-            // Verifica se já existe uma entidade com os mesmos UserId, CompanyId e SubCompanyId
-            var existingEntity = await _context.CompanyUsers
-                .FirstOrDefaultAsync(cu => cu.UserId == userId && cu.CompanyId == companyId && cu.SubCompanyId == subCompanyId);
-
-            if (existingEntity != null)
+            try
             {
-                // Remove a entidade já rastreada, caso haja alguma
-                _context.Entry(existingEntity).State = EntityState.Detached;
+                var existingEntity = await _context.CompanyUsers
+                    .FirstOrDefaultAsync(cu => cu.UserId == userId && cu.CompanyId == companyId && cu.SubCompanyId == subCompanyId);
 
-                // Atualiza a permissão da entidade existente
-                existingEntity.PermissionId = permissionId;
-                _context.CompanyUsers.Update(existingEntity);
-            }
-            else
-            {
-                // Cria uma nova entidade se não existir
-                var companyUser = new CompanyUserModel
+                if (existingEntity != null)
                 {
-                    UserId = userId,
-                    CompanyId = companyId,
-                    SubCompanyId = subCompanyId,
-                    PermissionId = permissionId
-                };
+                    _context.Entry(existingEntity).State = EntityState.Detached;
+                    existingEntity.PermissionId = permissionId;
+                    _context.CompanyUsers.Update(existingEntity);
+                }
+                else
+                {
+                    var companyUser = new CompanyUserModel
+                    {
+                        UserId = userId,
+                        CompanyId = companyId,
+                        SubCompanyId = subCompanyId,
+                        PermissionId = permissionId
+                    };
 
-                await _context.CompanyUsers.AddAsync(companyUser);
+                    await _context.CompanyUsers.AddAsync(companyUser);
+                }
+
+                await _context.SaveChangesAsync();
             }
-
-            // Salva as alterações no banco de dados
-            await _context.SaveChangesAsync();
+            catch (DbUpdateException ex)
+            {
+                var innerExceptionMessage = ex.InnerException?.Message ?? "Sem exceção interna";
+                throw new Exception($"Erro ao salvar no banco. Detalhes: {innerExceptionMessage}", ex);
+            }
         }
 
 
