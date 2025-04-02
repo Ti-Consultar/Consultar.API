@@ -23,7 +23,7 @@ namespace _4_InfraData._2_JWT
                 {
             new Claim(ClaimTypes.Name, user.Name.ToString()),
             new Claim(ClaimTypes.Role, user.Role.ToString()),
-            new Claim("userId", user.Id.ToString()) // ✅ Adiciona o ID do usuário
+            new Claim("userId", user.Id.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddHours(2),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)

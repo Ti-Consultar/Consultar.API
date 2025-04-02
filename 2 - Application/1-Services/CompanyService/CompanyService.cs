@@ -127,7 +127,7 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-    public async Task<ResultValue> CreateUserCompanyorSubCompany(CreateCompanyUserDto dto)
+    public async Task<ResultValue> CreateUserCompany(CreateCompanyUserDto dto)
     {
         try
         {

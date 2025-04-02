@@ -68,74 +68,8 @@ namespace _5_API.Controllers
         }
 
 
-
-        [HttpPost]
-        [Route("create/sub-company")]
-        public async Task<IActionResult> CreateSubCompany([FromBody] InsertSubCompanyDto createsubCompanyDto)
-        {
-            try
-            {
-                
-                var company = await _companyService.CreateSubCompany(createsubCompanyDto);
-                return Ok(company); 
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });  
-            }
-        }
-
-        [HttpPut]
-        [Route("update/sub-company/id/{id}")]
-        public async Task<IActionResult> UpdateSubCompany(int id, [FromBody] UpdateCompanyDto dto)
-        {
-            try
-            {
-
-                var company = await _companyService.UpdateSubCompany(id, dto);
-                return Ok(company);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
-        [HttpDelete]
-        [Route("user/{userId}/company/{id}/sub-company/{subCompanyId}")]
-        public async Task<IActionResult> DeleteCompany(int userId, int id, int subCompanyId)
-        {
-            try
-            {
-
-                var company = await _companyService.DeleteSubCompany(userId, id, subCompanyId);
-                return Ok(company);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
         [HttpGet]
-        [Route("subcompanies/{userId}")]
-        public async Task<IActionResult> GetSubCompaniesByUserId(int userId)
-        {
-            try
-            {
-                
-                var subCompanies = await _companyService.GetSubCompaniesByUserId(userId);
-                return Ok(subCompanies); 
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });  
-            }
-        }
-
-      
-        [HttpGet]
-        [Route("companies/user/{userId}")]
+        [Route("user/{userId}")]
         public async Task<IActionResult> GetCompaniesByUserId(int userId)
         {
             try
@@ -151,7 +85,7 @@ namespace _5_API.Controllers
         }
 
         [HttpGet]
-        [Route("companies-paginated/user/{userId}")]
+        [Route("paginated/user/{userId}")]
         public async Task<IActionResult> GetCompaniesByUserIdPaginated(int userId, int skip, int take)
         {
             try
@@ -167,13 +101,13 @@ namespace _5_API.Controllers
         }
 
         [HttpPost]
-        [Route("bond/Company")]
-        public async Task<IActionResult> CreateUserCompanyorSubCompany([FromBody] CreateCompanyUserDto dto)
+        [Route("bond")]
+        public async Task<IActionResult> CreateUserCompany([FromBody] CreateCompanyUserDto dto)
         {
             try
             {
 
-                var company = await _companyService.CreateUserCompanyorSubCompany(dto);
+                var company = await _companyService.CreateUserCompany(dto);
                 return Ok(company);
             }
             catch (Exception ex)
@@ -182,20 +116,6 @@ namespace _5_API.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("bond/subCompany")]
-        public async Task<IActionResult> CreateUserSubCompany([FromBody] CreateSubCompanyUserDto dto)
-        {
-            try
-            {
-
-                var company = await _companyService.CreateUserSubCompany(dto);
-                return Ok(company);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
+       
     }
 }

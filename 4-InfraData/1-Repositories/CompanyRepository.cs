@@ -54,6 +54,7 @@ namespace _4_InfraData._1_Repositories
                 .Include(cu => cu.Company)
                 .ThenInclude(c => c.SubCompanies)
                 .SelectMany(cu => cu.Company.SubCompanies)
+                 .Distinct()
                 .ToListAsync();
 
             return subCompanies;
@@ -115,7 +116,16 @@ namespace _4_InfraData._1_Repositories
             return companies;
         }
 
-
+        public async Task<bool> ExistsCompanyUser(int userId, int companyId)
+        {
+            return await _context.CompanyUsers
+                .AnyAsync(cu => cu.UserId == userId && cu.CompanyId == companyId);
+        }
+        public async Task<bool> ExistsSubCompanyUser(int userId, int companyId, int subCompanyId)
+        {
+            return await _context.CompanyUsers
+                .AnyAsync(cu => cu.UserId == userId && cu.CompanyId == companyId && cu.SubCompanyId == subCompanyId);
+        }
 
         public async Task<List<CompanyModel>> GetCompaniesByUserIdPaginated(int userId, int skip, int take)
         {

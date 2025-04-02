@@ -100,7 +100,22 @@ namespace _2___Application._1_Services.User
             }
         }
 
+        public async Task<object> GetAllUsers()
+        {
+             var users = await _repository.GetUsers();
 
+            
+                var response = users.Select(user => new UserResponse
+                {
+                    Id = user.Id,
+                    Email = user.Email,
+                    Name = user.Name
+                }).ToList();
+
+                return response;
+            
+           
+        }
 
         #endregion
 

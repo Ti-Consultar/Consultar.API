@@ -90,5 +90,26 @@ namespace ConsultarAuth.API.Controllers
                 return StatusCode(500, new { message = "Erro ao buscar usuário", details = ex.Message });
             }
         }
+
+        [HttpGet("")]
+       // [Authorize()]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            try
+            {
+                var user = await _userService.GetAllUsers();
+
+                if (user == null)
+                {
+                    return NotFound(new { message = "Usuário não encontrado" });
+                }
+
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao buscar usuário", details = ex.Message });
+            }
+        }
     }
 }

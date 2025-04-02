@@ -49,6 +49,11 @@ namespace _4_InfraData._1_Repositories
                         .ThenInclude(c => c.SubCompanies) 
                 .FirstOrDefaultAsync(u => u.Id == userId);
         }
+        public async Task<List<UserModel>> GetUsers()
+        {
+            return await _context.Users
+                .ToListAsync();
+        }
 
 
 

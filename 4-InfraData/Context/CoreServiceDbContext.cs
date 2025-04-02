@@ -12,7 +12,15 @@ namespace _4_InfraData._1_Context
         public DbSet<SubCompanyModel> SubCompanies { get; set; }
         public DbSet<CompanyUserModel> CompanyUsers { get; set; }
         public DbSet<PermissionModel> Permissions { get; set; }
+        public DbSet<InvitationToCompany> InvitationToCompany { get; set; }
 
-       
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<InvitationToCompany>()
+                .Property(i => i.InvitedById)
+                .HasColumnName("InvitedById");
+        }
+
+
     }
 }
