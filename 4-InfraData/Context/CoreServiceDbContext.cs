@@ -13,6 +13,7 @@ namespace _4_InfraData._1_Context
         public DbSet<CompanyUserModel> CompanyUsers { get; set; }
         public DbSet<PermissionModel> Permissions { get; set; }
         public DbSet<InvitationToCompany> InvitationToCompany { get; set; }
+        public DbSet<GroupModel> Groups { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

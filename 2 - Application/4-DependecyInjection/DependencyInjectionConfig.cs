@@ -62,6 +62,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<CompanyService>();
             services.AddScoped<PermissionService>();
             services.AddScoped<InvitationService>();
+            services.AddScoped<GroupService>();
             #endregion
 
             #region Repositories
@@ -70,6 +71,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<CompanyRepository>();
             services.AddScoped<PermissionRepository>();
             services.AddScoped<InvitationRepository>();
+            services.AddScoped<GroupRepository>();
             #endregion
 
             #endregion
