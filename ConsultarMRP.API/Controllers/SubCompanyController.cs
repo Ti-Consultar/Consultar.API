@@ -35,7 +35,7 @@ namespace _5_API.Controllers
 
         [HttpPut]
         [Route("update/{id}")]
-        public async Task<IActionResult> UpdateSubCompany(int id, [FromBody] UpdateCompanyDto dto)
+        public async Task<IActionResult> UpdateSubCompany(int id, [FromBody] UpdateSubCompanyDto dto)
         {
             try
             {

@@ -9,6 +9,7 @@ namespace _2___Application.Base
         public const string DeleteSuccess = "Removido com Sucesso";
         public const string MessageError = "Dados Inválidos";
         public const string NotFound = "Não encontrado";
+        public const string Unauthorized = "Sem permissão para Realizar esta ação";
 
     }
 

@@ -115,7 +115,16 @@ namespace _4_InfraData._1_Repositories
 
             return companies;
         }
-
+        public async Task<bool> ExistsEditCompanyUser(int userId, int companyId)
+        {
+            return await _context.CompanyUsers
+                .AnyAsync(cu => cu.UserId == userId && cu.CompanyId == companyId && cu.PermissionId == 1);
+        }
+        public async Task<bool> ExistsEditSubCompanyUser(int userId, int companyId, int subCompanyId)
+        {
+            return await _context.CompanyUsers
+                .AnyAsync(cu => cu.UserId == userId && cu.CompanyId == companyId && cu.SubCompanyId == subCompanyId && cu.PermissionId == 1);
+        }
         public async Task<bool> ExistsCompanyUser(int userId, int companyId)
         {
             return await _context.CompanyUsers
