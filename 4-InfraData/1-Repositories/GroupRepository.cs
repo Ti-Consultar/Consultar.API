@@ -29,15 +29,15 @@ namespace _4_InfraData._1_Repositories
         {
             return await _context.Groups
                 .Where(g => g.Id == id)
-                .Include(g => g.Companies)
+             //   .Include(g => g.Companies)
                 .FirstOrDefaultAsync();
         }
 
         public async Task<GroupModel> GetByCompanyId(int companyId)
         {
             return await _context.Groups
-                .Where(g => g.Companies.Any(c => c.Id == companyId))
-                .Include(g => g.Companies)
+            //    .Where(g => g.Companies.Any(c => c.Id == companyId))
+              //  .Include(g => g.Companies)
                 .FirstOrDefaultAsync();
         }
 
