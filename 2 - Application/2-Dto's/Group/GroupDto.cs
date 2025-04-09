@@ -1,4 +1,5 @@
-﻿using _2___Application._2_Dto_s.Company;
+﻿using _2___Application._2_Dto_s.BusinesEntity;
+using _2___Application._2_Dto_s.Company;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,9 @@ namespace _2___Application._2_Dto_s.Group
         public int Id { get; set; }
         public string Name { get; set; }
         public DateTime DateCreate { get; set; }
-      //  public List<CompanyDto> Companies { get; set; }
+        public BusinessEntityDto BusinessEntity { get; set; }
+
+        public List<CompanyDto> Companies { get; set; }
     }
 
 }

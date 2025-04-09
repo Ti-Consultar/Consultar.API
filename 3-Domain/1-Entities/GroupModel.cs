@@ -12,6 +12,9 @@ namespace _3_Domain._1_Entities
         public string Name { get; set; }
         public DateTime DateCreate { get; set; } = DateTime.UtcNow;
 
+        public int BusinessEntityId { get; set; }
+        public BusinessEntity BusinessEntity { get; set; }
+
         public ICollection<CompanyModel> Companies { get; set; } = new List<CompanyModel>();
     }
 }

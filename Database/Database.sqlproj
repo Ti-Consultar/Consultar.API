@@ -69,6 +69,7 @@
     <Build Include="dbo\Tables\InvitationToCompany.sql" />
     <None Include="Scripts\ScriptsIgnoredOnImport.sql" />
     <Build Include="dbo\Tables\Groups.sql" />
+    <Build Include="dbo\Tables\BusinessEntity.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="Database.refactorlog" />

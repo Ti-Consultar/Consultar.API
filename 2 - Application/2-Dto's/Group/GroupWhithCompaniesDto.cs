@@ -1,4 +1,6 @@
-﻿using _2___Application._2_Dto_s.Permissions;
+﻿using _2___Application._2_Dto_s.BusinesEntity;
+using _2___Application._2_Dto_s.Permissions;
+using _3_Domain._1_Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,5 +20,6 @@ namespace _2___Application._2_Dto_s.Group
 
         public List<CompanyUsersimpleDto> Companies { get; set; }
         public PermissionResponse GroupPermission { get; set; }
+        public BusinessEntityDto BusinessEntity { get; set; }
     }
 }
