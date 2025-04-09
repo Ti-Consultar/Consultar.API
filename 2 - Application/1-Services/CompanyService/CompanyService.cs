@@ -8,6 +8,7 @@ using _2___Application._2_Dto_s.Permissions;
 using _2___Application._2_Dto_s.Company.CompanyUser;
 using Microsoft.EntityFrameworkCore;
 using _2___Application._2_Dto_s.Group;
+using _2___Application._2_Dto_s.CNPJ;
 
 
 public class CompanyService : BaseService
@@ -454,6 +455,20 @@ public class CompanyService : BaseService
         }
     }
 
+    //public async Task SaveCompanyFromCnpj(CnpjResponseDto dto)
+    //{
+    //    var company = new CompanyModel
+    //    {
+    //        Name = dto.Nome,
+    //        FantasyName = dto.Fantasia,
+    //        Cnpj = dto.Cnpj,
+    //        Address = $"{dto.Logradouro}, {dto.Numero}, {dto.Bairro} - {dto.Municipio}/{dto.Uf}",
+    //        DateCreate = DateTime.UtcNow
+    //    };
+
+    //    await _companyRepository.AddAsync(company);
+    //    await _unitOfWork.SaveChangesAsync();
+    //}
 
     #endregion
 }

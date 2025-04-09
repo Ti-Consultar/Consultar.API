@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
+
 namespace _2___Application._4__DependencyInjectionConfig
 {
     public static class DependencyInjectionConfig
@@ -63,6 +64,8 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<PermissionService>();
             services.AddScoped<InvitationService>();
             services.AddScoped<GroupService>();
+            services.AddScoped<CnpjService>();
+            services.AddScoped<CepService>();
             #endregion
 
             #region Repositories
