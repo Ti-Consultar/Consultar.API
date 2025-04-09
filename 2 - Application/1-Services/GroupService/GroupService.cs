@@ -38,6 +38,13 @@ public class GroupService : BaseService
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
+            var cnpjExists = await _businessEntityRepository.CnpjExists(createGroupDto.BusinessEntity.Cnpj);
+
+            if (cnpjExists)
+            {
+                return ErrorResponse("Já existe um cadastro com este CNPJ.");
+            }
+
             // Cria a entidade empresarial
             var businessEntity = new BusinessEntity
             {
@@ -84,47 +91,7 @@ public class GroupService : BaseService
     }
 
 
-    public async Task<ResultValue> UpdateGroup(int id, UpdateGroupDto dto)
-    {
-        try
-        {
-            var group = await _groupRepository.GetById(id);
-            if (group == null)
-                return ErrorResponse(Message.NotFound);
 
-            group.Name = dto.Name;
-
-         
-            if (dto.BusinessEntity != null)
-            {
-                var entity = await _businessEntityRepository.GetById(group.BusinessEntityId);
-                if (entity == null)
-                    return ErrorResponse("Entidade empresarial não encontrada.");
-
-                entity.NomeFantasia = dto.BusinessEntity.NomeFantasia;
-                entity.RazaoSocial = dto.BusinessEntity.RazaoSocial;
-                entity.Cnpj = dto.BusinessEntity.Cnpj;
-                entity.Logradouro = dto.BusinessEntity.Logradouro;
-                entity.Numero = dto.BusinessEntity.Numero;
-                entity.Bairro = dto.BusinessEntity.Bairro;
-                entity.Municipio = dto.BusinessEntity.Municipio;
-                entity.Uf = dto.BusinessEntity.Uf;
-                entity.Cep = dto.BusinessEntity.Cep;
-                entity.Telefone = dto.BusinessEntity.Telefone;
-                entity.Email = dto.BusinessEntity.Email;
-
-                await _businessEntityRepository.Update(entity);
-            }
-
-            await _groupRepository.Update(group);
-
-            return SuccessResponse(Message.Success);
-        }
-        catch (Exception ex)
-        {
-            return ErrorResponse(ex);
-        }
-    }
 
 
     public async Task<ResultValue> UpdateGroup(int id, int userId, UpdateGroupDto dto)
@@ -141,6 +108,14 @@ public class GroupService : BaseService
 
             if (!string.IsNullOrWhiteSpace(dto.Name))
                 group.Name = dto.Name;
+
+            var cnpjExists = await _businessEntityRepository.CnpjExists(dto.BusinessEntity.Cnpj);
+
+            if (cnpjExists)
+            {
+                return ErrorResponse("Já existe um cadastro com este CNPJ.");
+            }
+
 
             if (group.BusinessEntity != null && dto.BusinessEntity != null)
             {

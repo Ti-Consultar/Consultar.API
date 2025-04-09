@@ -32,12 +32,12 @@ namespace _5_API.Controllers
         }
 
         [HttpPut]
-        [Route("update/id/{id}")]
-        public async Task<IActionResult> UpdateGroup(int id, [FromBody] UpdateGroupDto dto)
+        [Route("update/id/{id}/user/{userId}")]
+        public async Task<IActionResult> UpdateGroup(int id, int userId, [FromBody] UpdateGroupDto dto)
         {
             try
             {
-                var result = await _groupService.UpdateGroup(id, dto);
+                var result = await _groupService.UpdateGroup(id,userId, dto);
                 return Ok(result);
             }
             catch (Exception ex)

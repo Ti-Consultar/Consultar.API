@@ -21,7 +21,10 @@ namespace _4_InfraData._1_Repositories
             await _context.BusinessEntity.AddAsync(entity);
             await _context.SaveChangesAsync();
         }
-
+        public async Task<bool> CnpjExists(string cnpj)
+        {
+            return await _context.BusinessEntity.AnyAsync(be => be.Cnpj == cnpj);
+        }
         public async Task Update(BusinessEntity entity)
         {
             _context.BusinessEntity.Update(entity);
