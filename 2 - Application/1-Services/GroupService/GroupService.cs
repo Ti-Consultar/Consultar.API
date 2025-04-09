@@ -42,7 +42,7 @@ public class GroupService : BaseService
 
             if (cnpjExists)
             {
-                return ErrorResponse("Já existe um cadastro com este CNPJ.");
+                return SuccessResponse("Já existe um cadastro com este CNPJ.");
             }
 
             // Cria a entidade empresarial
@@ -100,7 +100,7 @@ public class GroupService : BaseService
         {
             var hasPermission = await _groupRepository.UserHasManagerPermissionInGroup(userId, id);
             if (!hasPermission)
-                return ErrorResponse("Você não tem permissão para editar este grupo.");
+                return SuccessResponse("Você não tem permissão para editar este grupo.");
 
             var group = await _groupRepository.GetById(id);
             if (group == null)
@@ -113,7 +113,7 @@ public class GroupService : BaseService
 
             if (cnpjExists)
             {
-                return ErrorResponse("Já existe um cadastro com este CNPJ.");
+                return SuccessResponse("Já existe um cadastro com este CNPJ.");
             }
 
 
