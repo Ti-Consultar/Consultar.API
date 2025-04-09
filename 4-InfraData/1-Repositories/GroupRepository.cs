@@ -105,6 +105,11 @@ namespace _4_InfraData._1_Repositories
             return groups;
         }
 
+        public async Task<bool> UserHasManagerPermissionInGroup(int userId, int groupId)
+        {
+            return await _context.CompanyUsers
+                .AnyAsync(cu => cu.UserId == userId && cu.GroupId == groupId && cu.PermissionId == 1);
+        }
 
 
 

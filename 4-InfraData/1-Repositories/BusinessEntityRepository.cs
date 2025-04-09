@@ -22,7 +22,7 @@ namespace _4_InfraData._1_Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(BusinessEntity entity)
+        public async Task Update(BusinessEntity entity)
         {
             _context.BusinessEntity.Update(entity);
             await _context.SaveChangesAsync();
@@ -38,7 +38,7 @@ namespace _4_InfraData._1_Repositories
             }
         }
 
-        public async Task<BusinessEntity> GetByIdAsync(int id)
+        public async Task<BusinessEntity> GetById(int id)
         {
             return await _context.BusinessEntity
                 .AsNoTracking()

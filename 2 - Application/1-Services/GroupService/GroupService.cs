@@ -93,6 +93,29 @@ public class GroupService : BaseService
                 return ErrorResponse(Message.NotFound);
 
             group.Name = dto.Name;
+
+         
+            if (dto.BusinessEntity != null)
+            {
+                var entity = await _businessEntityRepository.GetById(group.BusinessEntityId);
+                if (entity == null)
+                    return ErrorResponse("Entidade empresarial não encontrada.");
+
+                entity.NomeFantasia = dto.BusinessEntity.NomeFantasia;
+                entity.RazaoSocial = dto.BusinessEntity.RazaoSocial;
+                entity.Cnpj = dto.BusinessEntity.Cnpj;
+                entity.Logradouro = dto.BusinessEntity.Logradouro;
+                entity.Numero = dto.BusinessEntity.Numero;
+                entity.Bairro = dto.BusinessEntity.Bairro;
+                entity.Municipio = dto.BusinessEntity.Municipio;
+                entity.Uf = dto.BusinessEntity.Uf;
+                entity.Cep = dto.BusinessEntity.Cep;
+                entity.Telefone = dto.BusinessEntity.Telefone;
+                entity.Email = dto.BusinessEntity.Email;
+
+                await _businessEntityRepository.Update(entity);
+            }
+
             await _groupRepository.Update(group);
 
             return SuccessResponse(Message.Success);
@@ -102,6 +125,7 @@ public class GroupService : BaseService
             return ErrorResponse(ex);
         }
     }
+
 
     public async Task<ResultValue> DeleteGroup(int id, int userId)
     {
@@ -120,6 +144,71 @@ public class GroupService : BaseService
         }
     }
 
+    public async Task<ResultValue> UpdateGroup(int id, int userId, UpdateGroupDto dto)
+    {
+        try
+        {
+            var hasPermission = await _groupRepository.UserHasManagerPermissionInGroup(userId, id);
+            if (!hasPermission)
+                return ErrorResponse("Você não tem permissão para editar este grupo.");
+
+            var group = await _groupRepository.GetById(id);
+            if (group == null)
+                return ErrorResponse(Message.NotFound);
+
+            if (!string.IsNullOrWhiteSpace(dto.Name))
+                group.Name = dto.Name;
+
+            if (group.BusinessEntity != null && dto.BusinessEntity != null)
+            {
+                UpdateBusinessEntityFieldsIfPresent(group.BusinessEntity, dto.BusinessEntity);
+            }
+
+            await _groupRepository.Update(group);
+            return SuccessResponse(Message.Success);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
+
+
+
+    public async Task<ResultValue> GetAllGroups()
+    {
+        try
+        {
+            var groups = await _groupRepository.GetAll();
+            var groupDtos = groups.Select(g => new GroupDto
+            {
+                Id = g.Id,
+                Name = g.Name,
+                DateCreate = g.DateCreate,
+                BusinessEntity = g.BusinessEntity == null ? null : new BusinessEntityDto
+                {
+                    Id = g.BusinessEntity.Id,
+                    NomeFantasia = g.BusinessEntity.NomeFantasia,
+                    RazaoSocial = g.BusinessEntity.RazaoSocial,
+                    Cnpj = g.BusinessEntity.Cnpj,
+                    Logradouro = g.BusinessEntity.Logradouro,
+                    Numero = g.BusinessEntity.Numero,
+                    Bairro = g.BusinessEntity.Bairro,
+                    Municipio = g.BusinessEntity.Municipio,
+                    Uf = g.BusinessEntity.Uf,
+                    Cep = g.BusinessEntity.Cep,
+                    Telefone = g.BusinessEntity.Telefone,
+                    Email = g.BusinessEntity.Email
+                }
+            }).ToList();
+
+            return SuccessResponse(groupDtos);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
     public async Task<ResultValue> GetGroupById(int id)
     {
         try
@@ -151,41 +240,6 @@ public class GroupService : BaseService
             };
 
             return SuccessResponse(response);
-        }
-        catch (Exception ex)
-        {
-            return ErrorResponse(ex);
-        }
-    }
-
-    public async Task<ResultValue> GetAllGroups()
-    {
-        try
-        {
-            var groups = await _groupRepository.GetAll();
-            var groupDtos = groups.Select(g => new GroupDto
-            {
-                Id = g.Id,
-                Name = g.Name,
-                DateCreate = g.DateCreate,
-                BusinessEntity = g.BusinessEntity == null ? null : new BusinessEntityDto
-                {
-                    Id = g.BusinessEntity.Id,
-                    NomeFantasia = g.BusinessEntity.NomeFantasia,
-                    RazaoSocial = g.BusinessEntity.RazaoSocial,
-                    Cnpj = g.BusinessEntity.Cnpj,
-                    Logradouro = g.BusinessEntity.Logradouro,
-                    Numero = g.BusinessEntity.Numero,
-                    Bairro = g.BusinessEntity.Bairro,
-                    Municipio = g.BusinessEntity.Municipio,
-                    Uf = g.BusinessEntity.Uf,
-                    Cep = g.BusinessEntity.Cep,
-                    Telefone = g.BusinessEntity.Telefone,
-                    Email = g.BusinessEntity.Email
-                }
-            }).ToList();
-
-            return SuccessResponse(groupDtos);
         }
         catch (Exception ex)
         {
@@ -276,6 +330,41 @@ public class GroupService : BaseService
         {
             return ErrorResponse(ex);
         }
+    }
+    private void UpdateBusinessEntityFieldsIfPresent(BusinessEntity entity, BusinessEntityDto dto)
+    {
+        if (!string.IsNullOrWhiteSpace(dto.NomeFantasia))
+            entity.NomeFantasia = dto.NomeFantasia;
+
+        if (!string.IsNullOrWhiteSpace(dto.RazaoSocial))
+            entity.RazaoSocial = dto.RazaoSocial;
+
+        if (!string.IsNullOrWhiteSpace(dto.Cnpj))
+            entity.Cnpj = dto.Cnpj;
+
+        if (!string.IsNullOrWhiteSpace(dto.Logradouro))
+            entity.Logradouro = dto.Logradouro;
+
+        if (!string.IsNullOrWhiteSpace(dto.Numero))
+            entity.Numero = dto.Numero;
+
+        if (!string.IsNullOrWhiteSpace(dto.Bairro))
+            entity.Bairro = dto.Bairro;
+
+        if (!string.IsNullOrWhiteSpace(dto.Municipio))
+            entity.Municipio = dto.Municipio;
+
+        if (!string.IsNullOrWhiteSpace(dto.Uf))
+            entity.Uf = dto.Uf;
+
+        if (!string.IsNullOrWhiteSpace(dto.Cep))
+            entity.Cep = dto.Cep;
+
+        if (!string.IsNullOrWhiteSpace(dto.Telefone))
+            entity.Telefone = dto.Telefone;
+
+        if (!string.IsNullOrWhiteSpace(dto.Email))
+            entity.Email = dto.Email;
     }
 
 
