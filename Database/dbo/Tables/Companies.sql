@@ -1,5 +1,10 @@
-﻿CREATE TABLE Companies (
+﻿CREATE TABLE [dbo].[Companies] (
     [Id] INT PRIMARY KEY IDENTITY(1,1),
-    Name NVARCHAR(MAX) NOT NULL,
-    DateCreate DATETIME2(7) NOT NULL DEFAULT GETDATE()
+    [Name] NVARCHAR(MAX) NOT NULL,
+    [DateCreate] DATETIME2(7) NOT NULL DEFAULT GETDATE(),
+    [GroupId] INT NOT NULL,
+
+    CONSTRAINT FK_Company_Group FOREIGN KEY ([GroupId]) 
+        REFERENCES [dbo].[Groups] ([Id]) 
+        ON DELETE NO ACTION
 );

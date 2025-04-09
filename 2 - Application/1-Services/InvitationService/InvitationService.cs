@@ -109,7 +109,7 @@ public class InvitationService : BaseService
         }
     }
 
-    public async Task<ResultValue> UpdateInvitationStatus(int invitationId, UpdateStatus dto)
+    public async Task<ResultValue> UpdateInvitationStatus(int invitationId,int groupId, UpdateStatus dto)
     {
         try
         {
@@ -133,7 +133,7 @@ public class InvitationService : BaseService
             }
             else
             {
-                var result = await HandleSubCompanyInvitation(user.Id, invitation);
+                var result = await HandleSubCompanyInvitation(user.Id, groupId, invitation);
                 if (!result.Success)
                     return result;
             }
@@ -237,14 +237,14 @@ public class InvitationService : BaseService
         return SuccessResponse(Message.Success);
     }
 
-    private async Task<ResultValue> HandleSubCompanyInvitation(int userId, InvitationToCompany invitation)
+    private async Task<ResultValue> HandleSubCompanyInvitation(int userId,int groupId, InvitationToCompany invitation)
     {
         var exists = await _companyRepository.ExistsSubCompanyUser(userId, invitation.CompanyId, (int)invitation.SubCompanyId);
 
         if (exists)
             return ErrorResponse(Message.MessageError);
 
-        await _companyRepository.AddUserToCompanyOrSubCompany(userId, invitation.CompanyId, invitation.SubCompanyId, invitation.PermissionId);
+        await _companyRepository.AddUserToCompanyOrSubCompany(userId, groupId,invitation.CompanyId, invitation.SubCompanyId, invitation.PermissionId);
         return SuccessResponse(Message.Success);
     }
 

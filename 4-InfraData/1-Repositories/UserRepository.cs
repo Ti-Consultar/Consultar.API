@@ -45,8 +45,16 @@ namespace _4_InfraData._1_Repositories
         {
             return await _context.Users
                 .Include(u => u.CompanyUsers)
+                    .ThenInclude(cu => cu.Group)
+                .Include(u => u.CompanyUsers)
                     .ThenInclude(cu => cu.Company)
-                        .ThenInclude(c => c.SubCompanies) 
+                        .ThenInclude(c => c.SubCompanies)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+        }
+
+        public async Task<UserModel> GetById(int userId)
+        {
+            return await _context.Users
                 .FirstOrDefaultAsync(u => u.Id == userId);
         }
         public async Task<List<UserModel>> GetUsers()

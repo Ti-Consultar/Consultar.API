@@ -73,5 +73,20 @@ namespace _4_InfraData._1_Repositories
                 await _context.SaveChangesAsync();
             }
         }
+        public async Task<GroupModel> GetGroupWithCompanies(int userId)
+        {
+            return await _context.Groups
+                .Include(g => g.Companies)
+                    .ThenInclude(c => c.CompanyUsers)
+                        .ThenInclude(cu => cu.Permission)
+                .Include(g => g.Companies)
+                    .ThenInclude(c => c.SubCompanies)
+                        .ThenInclude(sc => sc.CompanyUsers)
+                            .ThenInclude(cu => cu.Permission)
+                .FirstOrDefaultAsync(g => g.Companies
+                    .Any(c => c.CompanyUsers.Any(cu => cu.UserId == userId)));
+        }
+       
+
     }
 }

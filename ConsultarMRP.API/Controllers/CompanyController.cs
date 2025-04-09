@@ -52,13 +52,13 @@ namespace _5_API.Controllers
         }
 
         [HttpDelete]
-        [Route("user/{userId}/company/{id}")]
-        public async Task<IActionResult> DeleteCompany(int userId, int id)
+        [Route("user/{userId}/group/{groupId}/company/{id}")]
+        public async Task<IActionResult> DeleteCompany(int userId, int id, int groupId)
         {
             try
             {
 
-                var company = await _companyService.DeleteCompany(userId, id);
+                var company = await _companyService.DeleteCompany(userId, id, groupId);
                 return Ok(company);
             }
             catch (Exception ex)
@@ -69,13 +69,13 @@ namespace _5_API.Controllers
 
 
         [HttpGet]
-        [Route("user/{userId}")]
-        public async Task<IActionResult> GetCompaniesByUserId(int userId)
+        [Route("user/{userId}/group/{groupId}")]
+        public async Task<IActionResult> GetGroupCompaniesByUserId(int userId, int groupId)
         {
             try
             {
                
-                var companies = await _companyService.GetCompaniesByUserId(userId);
+                var companies = await _companyService.GetGroupCompaniesByUserId(userId, groupId);
                 return Ok(companies);  
             }
             catch (Exception ex)

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace _4_InfraData._1_Repositories
@@ -99,10 +100,10 @@ namespace _4_InfraData._1_Repositories
         }
 
         // Método para buscar todas as empresas associadas a um usuário
-        public async Task<List<CompanyModel>> GetCompaniesByUserId(int userId)
+        public async Task<List<CompanyModel>> GetCompaniesByUserId(int userId, int groupId)
         {
             var companies = await _context.CompanyUsers
-     .Where(cu => cu.UserId == userId)
+     .Where(cu => cu.UserId == userId && cu.GroupId == groupId)
      .Include(cu => cu.Company)
          .ThenInclude(c => c.CompanyUsers)
          .ThenInclude(cu => cu.Permission)
@@ -115,16 +116,39 @@ namespace _4_InfraData._1_Repositories
 
             return companies;
         }
-        public async Task<bool> ExistsEditCompanyUser(int userId, int companyId)
+
+        public async Task<CompanyModel> GetCompanyByUserId(int id, int userId, int groupId)
+        {
+            var companies = await _context.CompanyUsers
+     .Where(cu => cu.UserId == userId && cu.GroupId == groupId && cu.Id == id)
+     .Include(cu => cu.Company)
+         .ThenInclude(c => c.CompanyUsers)
+         .ThenInclude(cu => cu.Permission)
+     .Include(cu => cu.Company)
+         .ThenInclude(c => c.SubCompanies
+             .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == userId))) // Filtra subempresas no banco
+     .Select(cu => cu.Company)
+     .Distinct()
+     .FirstOrDefaultAsync();
+
+            return companies;
+        }
+        public async Task<bool> ExistsEditCompanyUser(int userId, int companyId, int groupId)
         {
             return await _context.CompanyUsers
-                .AnyAsync(cu => cu.UserId == userId && cu.CompanyId == companyId && cu.PermissionId == 1);
+                .AnyAsync(cu => cu.UserId == userId && cu.CompanyId == companyId && cu.GroupId == groupId && cu.PermissionId == 1);
         }
         public async Task<bool> ExistsEditSubCompanyUser(int userId, int companyId, int subCompanyId)
         {
             return await _context.CompanyUsers
                 .AnyAsync(cu => cu.UserId == userId && cu.CompanyId == companyId && cu.SubCompanyId == subCompanyId && cu.PermissionId == 1);
         }
+        public async Task<bool> ExistsCompanyUser(int userId, int companyId, int groupId)
+        {
+            return await _context.CompanyUsers
+                .AnyAsync(cu => cu.UserId == userId && cu.CompanyId == companyId && cu.GroupId == groupId);
+        }
+
         public async Task<bool> ExistsCompanyUser(int userId, int companyId)
         {
             return await _context.CompanyUsers
@@ -193,13 +217,16 @@ namespace _4_InfraData._1_Repositories
             return companies;
         }
 
-        public async Task<CompanyModel> GetCompanyById(int id)
+        public async Task<CompanyModel> GetCompanyById(int userId, int groupId, int companyId)
         {
-            var companies = await _context.Companies
-                .Where(cu => cu.Id == id)
+            var company = await _context.CompanyUsers
+                .Where(cu => cu.UserId == userId && cu.GroupId == groupId && cu.CompanyId == companyId)
+                .Include(cu => cu.Company)
+                .Select(cu => cu.Company)
+                .Distinct()
                 .FirstOrDefaultAsync();
 
-            return companies;
+            return company;
         }
 
         public async Task<SubCompanyModel> GetSubCompanyById(int id)
@@ -211,7 +238,7 @@ namespace _4_InfraData._1_Repositories
             return subCompanies;
         }
 
-        public async Task AddUserToCompany(int userId, int companyId)
+        public async Task AddUserToCompany(int userId, int? companyId, int groupId)
         {
             var company = await _context.Companies
                 .FirstOrDefaultAsync(c => c.Id == companyId);
@@ -222,7 +249,8 @@ namespace _4_InfraData._1_Repositories
                 {
                     UserId = userId,
                     CompanyId = companyId,
-                    PermissionId = 1
+                    PermissionId = 1,
+                    GroupId = groupId
                 };
 
                 await _context.CompanyUsers.AddAsync(companyUser);
@@ -233,7 +261,28 @@ namespace _4_InfraData._1_Repositories
                 throw new ArgumentException("Empresa não encontrada", nameof(companyId));
             }
         }
+        public async Task AddUserToGroup(int userId, int groupId)
+        {
+            var group = await _context.Groups
+                .FirstOrDefaultAsync(c => c.Id == groupId);
 
+            if (group != null)
+            {
+                var companyUser = new CompanyUserModel
+                {
+                    UserId = userId,
+                    PermissionId = 1,
+                    GroupId = groupId
+                };
+
+                await _context.CompanyUsers.AddAsync(companyUser);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                throw new ArgumentException("Grupo não encontrado", nameof(groupId));
+            }
+        }
         public async Task AddUserToCompany(int userId, int companyId, int permissionId)
         {
             var companyUser = new CompanyUserModel
@@ -247,12 +296,12 @@ namespace _4_InfraData._1_Repositories
             await _context.SaveChangesAsync();
 
         }
-        public async Task AddUserToCompanyOrSubCompany(int userId, int companyId, int? subCompanyId, int permissionId)
+        public async Task AddUserToCompanyOrSubCompany(int userId,int groupId ,int? companyId, int? subCompanyId, int permissionId)
         {
             try
             {
                 var existingEntity = await _context.CompanyUsers
-                    .FirstOrDefaultAsync(cu => cu.UserId == userId && cu.CompanyId == companyId && cu.SubCompanyId == subCompanyId);
+                    .FirstOrDefaultAsync(cu => cu.UserId == userId && cu.CompanyId == companyId && cu.SubCompanyId == subCompanyId && cu.GroupId == groupId);
 
                 if (existingEntity != null)
                 {
@@ -267,7 +316,8 @@ namespace _4_InfraData._1_Repositories
                         UserId = userId,
                         CompanyId = companyId,
                         SubCompanyId = subCompanyId,
-                        PermissionId = permissionId
+                        PermissionId = permissionId,
+                        GroupId = groupId
                     };
 
                     await _context.CompanyUsers.AddAsync(companyUser);
@@ -282,6 +332,30 @@ namespace _4_InfraData._1_Repositories
             }
         }
 
+        public async Task<GroupModel> GetGroupWithCompaniesAndSubCompanies(int userId, int groupId)
+        {
+            var group = await _context.Groups
+                .Where(g => g.Id == groupId)
+                .Include(g => g.Companies
+                    .Where(c => c.CompanyUsers.Any(cu => cu.UserId == userId)))
+                    .ThenInclude(c => c.CompanyUsers)
+                        .ThenInclude(cu => cu.Permission)
+                .Include(g => g.Companies)
+                    .ThenInclude(c => c.SubCompanies
+                        .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == userId)))
+                        .ThenInclude(sc => sc.CompanyUsers)
+                            .ThenInclude(cu => cu.Permission)
+                .FirstOrDefaultAsync();
+
+            return group;
+        }
+
+        public async Task<CompanyUserModel> GetUserGroupPermission(int userId, int groupId)
+        {
+            return await _context.CompanyUsers
+                .Include(cu => cu.Permission)
+                .FirstOrDefaultAsync(cu => cu.UserId == userId && cu.GroupId == groupId);
+        }
 
     }
 }

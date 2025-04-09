@@ -11,6 +11,7 @@ namespace _2___Application._2_Dto_s.Company
     {
 
         public int UserId { get; set; }
+        public int GroupId { get; set; }
         public string Name { get; set; }
    
     }
