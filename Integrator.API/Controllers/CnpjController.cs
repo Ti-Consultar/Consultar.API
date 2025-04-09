@@ -19,7 +19,7 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpGet]
-        [Route("cnpj/{cnpj}")]
+        [Route("{cnpj}")]
         public async Task<IActionResult> GetCnpjData(string cnpj)
         {
             try
