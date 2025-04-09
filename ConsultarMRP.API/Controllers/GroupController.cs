@@ -52,7 +52,7 @@ namespace _5_API.Controllers
         {
             try
             {
-                var result = await _groupService.DeleteGroup(userId, id);
+                var result = await _groupService.Delete(userId, id);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -61,20 +61,7 @@ namespace _5_API.Controllers
             }
         }
 
-        //[HttpGet]
-        //[Route("user/{userId}")]
-        //public async Task<IActionResult> GetGroupsByUserId(int userId)
-        //{
-        //    try
-        //    {
-        //        var result = await _groupService.GetGroupsByUserId(userId);
-        //        return Ok(result);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(new { message = ex.Message });
-        //    }
-        //}
+      
 
         //[HttpGet]
         //[Route("paginated/user/{userId}")]

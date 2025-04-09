@@ -127,23 +127,6 @@ public class GroupService : BaseService
     }
 
 
-    public async Task<ResultValue> DeleteGroup(int id, int userId)
-    {
-        try
-        {
-            var group = await _groupRepository.GetById(id);
-            if (group == null)
-                return ErrorResponse(Message.NotFound);
-
-            await _groupRepository.Delete(id);
-            return SuccessResponse(Message.DeleteSuccess);
-        }
-        catch (Exception ex)
-        {
-            return ErrorResponse(ex);
-        }
-    }
-
     public async Task<ResultValue> UpdateGroup(int id, int userId, UpdateGroupDto dto)
     {
         try
@@ -331,6 +314,41 @@ public class GroupService : BaseService
             return ErrorResponse(ex);
         }
     }
+
+    public async Task<ResultValue> Delete(int userId, int groupId)
+    {
+        try
+        {
+            // Verifica se o usuário tem permissão de gestor no grupo
+            var hasPermission = await _groupRepository.UserHasManagerPermissionInGroup(userId, groupId);
+            if (!hasPermission)
+                return ErrorResponse("Você não tem permissão para excluir este grupo.");
+
+            var group = await _groupRepository.GetById(groupId);
+            if (group == null)
+                return ErrorResponse(Message.NotFound);
+
+            // Remove o BusinessEntity associado, se houver
+            
+                var businessEntity = await _businessEntityRepository.GetById(group.BusinessEntityId);
+                if (businessEntity != null)
+                {
+                    await _businessEntityRepository.Delete(businessEntity.Id);
+               }
+            
+
+            // Remove o grupo
+            await _groupRepository.Delete(group.Id);
+
+            return SuccessResponse(Message.Success);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
+
+
     private void UpdateBusinessEntityFieldsIfPresent(BusinessEntity entity, BusinessEntityDto dto)
     {
         if (!string.IsNullOrWhiteSpace(dto.NomeFantasia))

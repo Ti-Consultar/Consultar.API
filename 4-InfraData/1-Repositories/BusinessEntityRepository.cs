@@ -28,7 +28,7 @@ namespace _4_InfraData._1_Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task Delete(int id)
         {
             var entity = await _context.BusinessEntity.FindAsync(id);
             if (entity != null)
