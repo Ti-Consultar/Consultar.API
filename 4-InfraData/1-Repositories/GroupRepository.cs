@@ -33,12 +33,20 @@ namespace _4_InfraData._1_Repositories
             return await _context.Groups
                 .Where(g => g.Id == id)
                 .Include(g => g.BusinessEntity)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<GroupModel> GetByIdByCompanies(int id)
+        {
+            return await _context.Groups
+                .Where(g => g.Id == id)
+                .Include(g => g.BusinessEntity)
+                .Include(g => g.Companies)
+                    .ThenInclude(c => c.BusinessEntity)
                 .Include(g => g.Companies)
                     .ThenInclude(c => c.SubCompanies)
                 .FirstOrDefaultAsync();
         }
-
-
 
         public async Task<GroupModel> GetByCompanyId(int companyId)
         {
@@ -103,6 +111,32 @@ namespace _4_InfraData._1_Repositories
                 .ToListAsync();
 
             return groups;
+        }
+        public async Task<GroupModel?> GetGroupWithCompaniesById(int groupId, int userId)
+        {
+            var isUserInGroup = await _context.CompanyUsers
+                .AnyAsync(cu => cu.UserId == userId && cu.GroupId == groupId);
+
+            if (!isUserInGroup)
+                return null;
+
+            var group = await _context.Groups
+                .Where(g => g.Id == groupId)
+                .Include(g => g.BusinessEntity)
+                .Include(g => g.CompanyUsers)
+                    .ThenInclude(cu => cu.Permission)
+                .Include(g => g.Companies)
+                    .ThenInclude(c => c.CompanyUsers)
+                        .ThenInclude(cu => cu.Permission)
+                         .Include(g => g.Companies)
+                    .ThenInclude(c => c.BusinessEntity)
+                .Include(g => g.Companies)
+                    .ThenInclude(c => c.SubCompanies)
+                        .ThenInclude(sc => sc.CompanyUsers)
+                            .ThenInclude(cu => cu.Permission)
+                .FirstOrDefaultAsync();
+
+            return group;
         }
 
         public async Task<bool> UserHasManagerPermissionInGroup(int userId, int groupId)

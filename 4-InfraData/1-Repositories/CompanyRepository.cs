@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace _4_InfraData._1_Repositories
 {
@@ -213,21 +214,23 @@ namespace _4_InfraData._1_Repositories
                 .Include(cu => cu.User)
                 .Select(cu => cu.Company)
                 .FirstOrDefaultAsync();
-
             return companies;
         }
 
         public async Task<CompanyModel> GetCompanyById(int userId, int groupId, int companyId)
         {
-            var company = await _context.CompanyUsers
-                .Where(cu => cu.UserId == userId && cu.GroupId == groupId && cu.CompanyId == companyId)
-                .Include(cu => cu.Company)
-                .Select(cu => cu.Company)
-                .Distinct()
+            return await _context.Companies
+                .Include(c => c.BusinessEntity)
+                .Include(c => c.CompanyUsers)
+                    .ThenInclude(cu => cu.Permission) // Isso aqui é o segredo pra trazer a Permission junto
+                .Where(c =>
+                    c.Id == companyId &&
+                    c.GroupId == groupId &&
+                    c.CompanyUsers.Any(cu => cu.UserId == userId && cu.GroupId == groupId))
                 .FirstOrDefaultAsync();
-
-            return company;
         }
+
+
 
         public async Task<SubCompanyModel> GetSubCompanyById(int id)
         {

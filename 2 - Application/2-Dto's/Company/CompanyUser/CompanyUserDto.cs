@@ -1,4 +1,5 @@
-﻿using _2___Application._2_Dto_s.Company.SubCompany;
+﻿using _2___Application._2_Dto_s.BusinesEntity;
+using _2___Application._2_Dto_s.Company.SubCompany;
 using _2___Application._2_Dto_s.Permissions;
 using System;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ public class CompanyUsersimpleDto
     public int CompanyId { get; set; }
     public string CompanyName { get; set; }
     public DateTime DateCreate { get; set; }
-
+    public BusinessEntityDto BusinessEntity { get; set; }
     public List<SubCompanyUsersimpleDto>? SubCompanies { get; set; }
     public PermissionResponse Permission { get; set; }
 

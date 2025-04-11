@@ -121,6 +121,21 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        [HttpGet]
+        [Route("user/{userId}/group/{groupId}")]
+        public async Task<IActionResult> GetGroupDetailsById(int userId, int groupId)
+        {
+            try
+            {
+                var result = await _groupService.GetGroupDetailsById(groupId, userId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
 
     }
 }

@@ -9,18 +9,23 @@ using _2___Application._2_Dto_s.Company.CompanyUser;
 using Microsoft.EntityFrameworkCore;
 using _2___Application._2_Dto_s.Group;
 using _2___Application._2_Dto_s.CNPJ;
+using _2___Application._2_Dto_s.BusinesEntity;
 
 
 public class CompanyService : BaseService
 {
     private readonly CompanyRepository _companyRepository;
     private readonly UserRepository _userRepository;
+    private readonly BusinessEntityRepository _businessEntityRepository;
+    private readonly GroupRepository _groupRepository;
 
-    public CompanyService(CompanyRepository companyRepository, UserRepository userRepository, IAppSettings appSettings)
+    public CompanyService(CompanyRepository companyRepository, UserRepository userRepository, BusinessEntityRepository businessEntityRepository, GroupRepository groupRepository, IAppSettings appSettings)
         : base(appSettings)
     {
         _companyRepository = companyRepository;
         _userRepository = userRepository;
+        _businessEntityRepository = businessEntityRepository;
+        _groupRepository = groupRepository;
     }
 
 
@@ -33,16 +38,43 @@ public class CompanyService : BaseService
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
+            // Verifica se o CNPJ já existe
+            var cnpjExists = await _businessEntityRepository.CnpjExists(createCompanyDto.BusinessEntity.Cnpj);
+            if (cnpjExists)
+            {
+                return SuccessResponse("Já existe um cadastro com este CNPJ.");
+            }
+
+            // Cria a entidade empresarial
+            var businessEntity = new BusinessEntity
+            {
+                NomeFantasia = createCompanyDto.BusinessEntity.NomeFantasia,
+                RazaoSocial = createCompanyDto.BusinessEntity.RazaoSocial,
+                Cnpj = createCompanyDto.BusinessEntity.Cnpj,
+                Logradouro = createCompanyDto.BusinessEntity.Logradouro,
+                Numero = createCompanyDto.BusinessEntity.Numero,
+                Bairro = createCompanyDto.BusinessEntity.Bairro,
+                Municipio = createCompanyDto.BusinessEntity.Municipio,
+                Uf = createCompanyDto.BusinessEntity.Uf,
+                Cep = createCompanyDto.BusinessEntity.Cep,
+                Telefone = createCompanyDto.BusinessEntity.Telefone,
+                Email = createCompanyDto.BusinessEntity.Email
+            };
+
+            await _businessEntityRepository.AddAsync(businessEntity);
+
+            // Cria a empresa
             var company = new CompanyModel
             {
                 Name = createCompanyDto.Name,
                 DateCreate = DateTime.Now,
                 GroupId = createCompanyDto.GroupId,
-
+                BusinessEntityId = businessEntity.Id
             };
 
             await _companyRepository.AddCompany(company);
 
+            // Vincula o usuário à empresa
             var companyUser = new CompanyUserModel
             {
                 UserId = createCompanyDto.UserId,
@@ -50,7 +82,7 @@ public class CompanyService : BaseService
                 GroupId = createCompanyDto.GroupId
             };
 
-            await _companyRepository.AddUserToCompany(companyUser.UserId, companyUser?.CompanyId, companyUser.GroupId);
+            await _companyRepository.AddUserToCompany(companyUser.UserId, companyUser.CompanyId, companyUser.GroupId);
 
             return SuccessResponse(Message.Success);
         }
@@ -59,6 +91,8 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+
+
     public async Task<ResultValue> UpdateCompany(int id, UpdateCompanyDto dto)
     {
         try
@@ -115,19 +149,45 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-    public async Task<ResultValue> GetCompaniesById(int userId, int groupId, int id)
+    public async Task<ResultValue> GetCompanyById(int companyId, int userId, int groupId)
     {
         try
         {
-            var model = await _companyRepository.GetCompanyById(userId, groupId, id);
-            if (model == null)
+            var company = await _companyRepository.GetCompanyById(userId, groupId, companyId);
+            if (company == null)
                 return ErrorResponse(Message.NotFound);
+
+            // Buscar a CompanyUser para pegar a Permission
+            var companyUser = company.CompanyUsers?
+                .FirstOrDefault(cu => cu.UserId == userId && cu.GroupId == groupId);
 
             var response = new CompanyDto
             {
-                Id = model.Id,
-                Name = model.Name,
-                DateCreate = model.DateCreate
+                Id = company.Id,
+                Name = company.Name,
+                DateCreate = company.DateCreate,
+                BusinessEntity = company.BusinessEntity == null ? null : new BusinessEntityDto
+                {
+                    Id = company.BusinessEntity.Id,
+                    NomeFantasia = company.BusinessEntity.NomeFantasia,
+                    RazaoSocial = company.BusinessEntity.RazaoSocial,
+                    Cnpj = company.BusinessEntity.Cnpj,
+                    Logradouro = company.BusinessEntity.Logradouro,
+                    Numero = company.BusinessEntity.Numero,
+                    Bairro = company.BusinessEntity.Bairro,
+                    Municipio = company.BusinessEntity.Municipio,
+                    Uf = company.BusinessEntity.Uf,
+                    Cep = company.BusinessEntity.Cep,
+                    Telefone = company.BusinessEntity.Telefone,
+                    Email = company.BusinessEntity.Email
+                },
+                Permission = companyUser?.Permission != null
+                    ? new PermissionResponse
+                    {
+                        Id = companyUser.Permission.Id,
+                        Name = companyUser.Permission.Name
+                    }
+                    : null
             };
 
             return SuccessResponse(response);
@@ -137,6 +197,7 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+
     public async Task<ResultValue> CreateUserCompany(CreateCompanyUserDto dto)
     {
         try
@@ -326,71 +387,90 @@ public class CompanyService : BaseService
     #endregion
 
     #region Get By User
-    public async Task<ResultValue> GetGroupCompaniesByUserId(int userId, int groupId)
+    public async Task<ResultValue> GetCompaniesByUserId(int userId, int groupId)
     {
         try
         {
-            var user = await _userRepository.GetById(userId);
+            var user = await _userRepository.GetByUserId(userId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
-            var group = await _companyRepository.GetGroupWithCompaniesAndSubCompanies(userId, groupId);
+            var group = await _groupRepository.GetByIdByCompanies(groupId);
             if (group == null)
                 return ErrorResponse(Message.NotFound);
 
-            var userGroupPermission = await _companyRepository.GetUserGroupPermission(userId, groupId);
+            var companies = group.Companies?
+                .Where(c => c.CompanyUsers.Any(cu => cu.UserId == userId))
+                .ToList();
 
-            var groupResponse = new GroupWithCompaniesDto
+            var companyDtos = companies?.Select(company => new CompanyUsersimpleDto
+            {
+                CompanyId = company.Id,
+                CompanyName = company.Name,
+                DateCreate = company.DateCreate,
+
+                BusinessEntity = company.BusinessEntity == null ? null : new BusinessEntityDto
+                {
+                    Id = company.BusinessEntity.Id,
+                    NomeFantasia = company.BusinessEntity.NomeFantasia,
+                    RazaoSocial = company.BusinessEntity.RazaoSocial,
+                    Cnpj = company.BusinessEntity.Cnpj,
+                    Logradouro = company.BusinessEntity.Logradouro,
+                    Numero = company.BusinessEntity.Numero,
+                    Bairro = company.BusinessEntity.Bairro,
+                    Municipio = company.BusinessEntity.Municipio,
+                    Uf = company.BusinessEntity.Uf,
+                    Cep = company.BusinessEntity.Cep,
+                    Telefone = company.BusinessEntity.Telefone,
+                    Email = company.BusinessEntity.Email
+                },
+
+                Permission = company.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
+                    ? new PermissionResponse
+                    {
+                        Id = company.CompanyUsers.First(cu => cu.UserId == userId).Permission.Id,
+                        Name = company.CompanyUsers.First(cu => cu.UserId == userId).Permission.Name
+                    }
+                    : null,
+
+                SubCompanies = company.SubCompanies?
+                    .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == userId))
+                    .Select(subCompany => new SubCompanyUsersimpleDto
+                    {
+                        SubCompanyId = subCompany.Id,
+                        SubCompanyName = subCompany.Name,
+                        CompanyId = company.Id,
+                        DateCreate = subCompany.DateCreate,
+                        Permission = subCompany.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
+                            ? new PermissionResponse
+                            {
+                                Id = subCompany.CompanyUsers.First(cu => cu.UserId == userId).Permission.Id,
+                                Name = subCompany.CompanyUsers.First(cu => cu.UserId == userId).Permission.Name
+                            }
+                            : null
+                    }).ToList()
+            }).ToList();
+
+            var groupDto = new GroupWithCompaniesDto
             {
                 GroupId = group.Id,
                 GroupName = group.Name,
-                UserId = user.Id,
+                DateCreate = group.DateCreate,
+                UserId = userId,
                 UserName = user.Name,
-                GroupPermission = userGroupPermission?.Permission != null
-                    ? new PermissionResponse
-                    {
-                        Id = userGroupPermission.Permission.Id,
-                        Name = userGroupPermission.Permission.Name
-                    }
-                    : null,
-                Companies = group.Companies.Select(company => new CompanyUsersimpleDto
-                {
-                    CompanyId = company.Id,
-                    CompanyName = company.Name,
-                    DateCreate = company.DateCreate,
-                    Permission = company.CompanyUsers?.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
-                        ? new PermissionResponse
-                        {
-                            Id = company.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId).Permission.Id,
-                            Name = company.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId).Permission.Name
-                        }
-                        : null,
-                    SubCompanies = company.SubCompanies?
-                        .Where(subCompany => subCompany.CompanyUsers.Any(cu => cu.UserId == userId))
-                        .Select(subCompany => new SubCompanyUsersimpleDto
-                        {
-                            SubCompanyId = subCompany.Id,
-                            SubCompanyName = subCompany.Name,
-                            CompanyId = company.Id,
-                            DateCreate = subCompany.DateCreate,
-                            Permission = subCompany.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
-                                ? new PermissionResponse
-                                {
-                                    Id = subCompany.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId).Permission.Id,
-                                    Name = subCompany.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId).Permission.Name
-                                }
-                                : null
-                        }).ToList()
-                }).ToList()
+                Companies = companyDtos ?? new List<CompanyUsersimpleDto>()
+
             };
 
-            return SuccessResponse(groupResponse);
+            return SuccessResponse(groupDto);
         }
         catch (Exception ex)
         {
             return ErrorResponse(ex);
         }
     }
+
+
 
 
 

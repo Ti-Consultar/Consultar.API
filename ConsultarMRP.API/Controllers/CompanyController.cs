@@ -70,12 +70,12 @@ namespace _5_API.Controllers
 
         [HttpGet]
         [Route("user/{userId}/group/{groupId}")]
-        public async Task<IActionResult> GetGroupCompaniesByUserId(int userId, int groupId)
+        public async Task<IActionResult> GetCompaniesByUserId(int userId, int groupId)
         {
             try
             {
                
-                var companies = await _companyService.GetGroupCompaniesByUserId(userId, groupId);
+                var companies = await _companyService.GetCompaniesByUserId(userId, groupId);
                 return Ok(companies);  
             }
             catch (Exception ex)
@@ -83,6 +83,23 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });  
             }
         }
+
+        [HttpGet]
+        [Route("{id}/user/{userId}/group/{groupId}")]
+        public async Task<IActionResult> GetCompanyById(int id,int userId, int groupId)
+        {
+            try
+            {
+
+                var companies = await _companyService.GetCompanyById(id, userId, groupId);
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
 
         [HttpGet]
         [Route("paginated/user/{userId}")]

@@ -17,9 +17,8 @@ namespace _2___Application._2_Dto_s.Group
 
         public int UserId { get; set; }
         public string UserName { get; set; }
-
-        public List<CompanyUsersimpleDto> Companies { get; set; }
         public PermissionResponse GroupPermission { get; set; }
+        public List<CompanyUsersimpleDto> Companies { get; set; }
         public BusinessEntityDto BusinessEntity { get; set; }
     }
 }

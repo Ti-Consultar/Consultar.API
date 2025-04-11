@@ -8,9 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Text.RegularExpressions;
 using _2___Application._2_Dto_s.Permissions;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using _2___Application._2_Dto_s.BusinesEntity;
 
 public class GroupService : BaseService
@@ -30,57 +28,30 @@ public class GroupService : BaseService
     }
 
     #region Groups
-    public async Task<ResultValue> CreateGroup(InsertGroupDto createGroupDto)
+
+    public async Task<ResultValue> CreateGroup(InsertGroupDto dto)
     {
         try
         {
-            var user = await _userRepository.GetById(createGroupDto.UserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await _userRepository.GetById(dto.UserId);
+            if (user == null) return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
-            var cnpjExists = await _businessEntityRepository.CnpjExists(createGroupDto.BusinessEntity.Cnpj);
-
-            if (cnpjExists)
-            {
+            if (await _businessEntityRepository.CnpjExists(dto.BusinessEntity.Cnpj))
                 return SuccessResponse("Já existe um cadastro com este CNPJ.");
-            }
 
-            // Cria a entidade empresarial
-            var businessEntity = new BusinessEntity
-            {
-                NomeFantasia = createGroupDto.BusinessEntity.NomeFantasia,
-                RazaoSocial = createGroupDto.BusinessEntity.RazaoSocial,
-                Cnpj = createGroupDto.BusinessEntity.Cnpj,
-                Logradouro = createGroupDto.BusinessEntity.Logradouro,
-                Numero = createGroupDto.BusinessEntity.Numero,
-                Bairro = createGroupDto.BusinessEntity.Bairro,
-                Municipio = createGroupDto.BusinessEntity.Municipio,
-                Uf = createGroupDto.BusinessEntity.Uf,
-                Cep = createGroupDto.BusinessEntity.Cep,
-                Telefone = createGroupDto.BusinessEntity.Telefone,
-                Email = createGroupDto.BusinessEntity.Email
-            };
-
+            var businessEntity = MapToBusinessEntity(dto.BusinessEntity);
             await _businessEntityRepository.AddAsync(businessEntity);
-
 
             var group = new GroupModel
             {
-                Name = createGroupDto.Name,
+                Name = dto.Name,
                 DateCreate = DateTime.Now,
                 BusinessEntityId = businessEntity.Id
             };
 
             await _groupRepository.Add(group);
 
-
-            var companyUser = new CompanyUserModel
-            {
-                UserId = createGroupDto.UserId,
-                GroupId = group.Id
-            };
-
-            await _companyRepository.AddUserToGroup(companyUser.UserId, companyUser.GroupId);
+            await _companyRepository.AddUserToGroup(dto.UserId, group.Id);
 
             return SuccessResponse(Message.Success);
         }
@@ -89,40 +60,28 @@ public class GroupService : BaseService
             return ErrorResponse(ex);
         }
     }
-
-
-
-
 
     public async Task<ResultValue> UpdateGroup(int id, int userId, UpdateGroupDto dto)
     {
         try
         {
-            var hasPermission = await _groupRepository.UserHasManagerPermissionInGroup(userId, id);
-            if (!hasPermission)
+            if (!await _groupRepository.UserHasManagerPermissionInGroup(userId, id))
                 return SuccessResponse("Você não tem permissão para editar este grupo.");
 
             var group = await _groupRepository.GetById(id);
-            if (group == null)
-                return ErrorResponse(Message.NotFound);
+            if (group == null) return ErrorResponse(Message.NotFound);
 
             if (!string.IsNullOrWhiteSpace(dto.Name))
                 group.Name = dto.Name;
 
-            var cnpjExists = await _businessEntityRepository.CnpjExists(dto.BusinessEntity.Cnpj);
-
-            if (cnpjExists)
-            {
+            if (await _businessEntityRepository.CnpjExists(dto.BusinessEntity.Cnpj))
                 return SuccessResponse("Já existe um cadastro com este CNPJ.");
-            }
-
 
             if (group.BusinessEntity != null && dto.BusinessEntity != null)
-            {
                 UpdateBusinessEntityFieldsIfPresent(group.BusinessEntity, dto.BusinessEntity);
-            }
 
             await _groupRepository.Update(group);
+
             return SuccessResponse(Message.Success);
         }
         catch (Exception ex)
@@ -130,159 +89,71 @@ public class GroupService : BaseService
             return ErrorResponse(ex);
         }
     }
-
-
 
     public async Task<ResultValue> GetAllGroups()
     {
         try
         {
             var groups = await _groupRepository.GetAll();
-            var groupDtos = groups.Select(g => new GroupDto
-            {
-                Id = g.Id,
-                Name = g.Name,
-                DateCreate = g.DateCreate,
-                BusinessEntity = g.BusinessEntity == null ? null : new BusinessEntityDto
-                {
-                    Id = g.BusinessEntity.Id,
-                    NomeFantasia = g.BusinessEntity.NomeFantasia,
-                    RazaoSocial = g.BusinessEntity.RazaoSocial,
-                    Cnpj = g.BusinessEntity.Cnpj,
-                    Logradouro = g.BusinessEntity.Logradouro,
-                    Numero = g.BusinessEntity.Numero,
-                    Bairro = g.BusinessEntity.Bairro,
-                    Municipio = g.BusinessEntity.Municipio,
-                    Uf = g.BusinessEntity.Uf,
-                    Cep = g.BusinessEntity.Cep,
-                    Telefone = g.BusinessEntity.Telefone,
-                    Email = g.BusinessEntity.Email
-                }
-            }).ToList();
 
-            return SuccessResponse(groupDtos);
+            var result = groups.Select(MapToGroupDto).ToList();
+
+            return SuccessResponse(result);
         }
         catch (Exception ex)
         {
             return ErrorResponse(ex);
         }
     }
+
     public async Task<ResultValue> GetGroupById(int id)
     {
         try
         {
             var group = await _groupRepository.GetById(id);
-            if (group == null)
-                return ErrorResponse(Message.NotFound);
+            if (group == null) return ErrorResponse(Message.NotFound);
 
-            var response = new GroupDto
-            {
-                Id = group.Id,
-                Name = group.Name,
-                DateCreate = group.DateCreate,
-                BusinessEntity = group.BusinessEntity == null ? null : new BusinessEntityDto
-                {
-                    Id = group.BusinessEntity.Id,
-                    NomeFantasia = group.BusinessEntity.NomeFantasia,
-                    RazaoSocial = group.BusinessEntity.RazaoSocial,
-                    Cnpj = group.BusinessEntity.Cnpj,
-                    Logradouro = group.BusinessEntity.Logradouro,
-                    Numero = group.BusinessEntity.Numero,
-                    Bairro = group.BusinessEntity.Bairro,
-                    Municipio = group.BusinessEntity.Municipio,
-                    Uf = group.BusinessEntity.Uf,
-                    Cep = group.BusinessEntity.Cep,
-                    Telefone = group.BusinessEntity.Telefone,
-                    Email = group.BusinessEntity.Email
-                }
-            };
-
-            return SuccessResponse(response);
+            return SuccessResponse(MapToGroupDto(group));
         }
         catch (Exception ex)
         {
             return ErrorResponse(ex);
         }
     }
-
 
     public async Task<ResultValue> GetGroupsWithCompaniesByUserId(int userId)
     {
         try
         {
             var user = await _userRepository.GetByUserId(userId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            if (user == null) return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
             var groups = await _groupRepository.GetGroupsByUserId(userId);
-            if (groups == null || !groups.Any())
-                return ErrorResponse(Message.NotFound);
+            if (groups == null || !groups.Any()) return ErrorResponse(Message.NotFound);
 
-            var groupDtos = groups.Select(group =>
-            {
-                var companies = group.Companies?
-                    .Where(c => c.CompanyUsers.Any(cu => cu.UserId == userId))
-                    .ToList();
+            var result = groups.Select(g => MapToGroupWithCompaniesDto(g, userId, user.Name)).ToList();
 
-                var companyDtos = companies?.Select(company => new CompanyUsersimpleDto
-                {
-                    CompanyId = company.Id,
-                    CompanyName = company.Name,
-                    DateCreate = company.DateCreate,
-                    Permission = company.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
-                        ? new PermissionResponse
-                        {
-                            Id = company.CompanyUsers.First(cu => cu.UserId == userId).Permission.Id,
-                            Name = company.CompanyUsers.First(cu => cu.UserId == userId).Permission.Name
-                        }
-                        : null,
+            return SuccessResponse(result);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
 
-                    SubCompanies = company.SubCompanies?
-                        .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == userId))
-                        .Select(subCompany => new SubCompanyUsersimpleDto
-                        {
-                            SubCompanyId = subCompany.Id,
-                            SubCompanyName = subCompany.Name,
-                            CompanyId = company.Id,
-                            DateCreate = subCompany.DateCreate,
-                            Permission = subCompany.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
-                                ? new PermissionResponse
-                                {
-                                    Id = subCompany.CompanyUsers.First(cu => cu.UserId == userId).Permission.Id,
-                                    Name = subCompany.CompanyUsers.First(cu => cu.UserId == userId).Permission.Name
-                                }
-                                : null
-                        }).ToList()
-                }).ToList();
+    public async Task<ResultValue> GetGroupDetailsById(int groupId, int userId)
+    {
+        try
+        {
+            var group = await _groupRepository.GetGroupWithCompaniesById(groupId, userId);
+            if (group == null) return ErrorResponse(Message.NotFound);
 
-                return new GroupWithCompaniesDto
-                {
-                    GroupId = group.Id,
-                    GroupName = group.Name,
-                    DateCreate = group.DateCreate,
-                    UserId = userId,
-                    UserName = user.Name,
-                    Companies = companyDtos ?? new List<CompanyUsersimpleDto>(),
+            if (!group.CompanyUsers.Any(cu => cu.UserId == userId))
+                return ErrorResponse(UserLoginMessage.Error);
 
-                    BusinessEntity = group.BusinessEntity == null ? null : new BusinessEntityDto
-                    {
-                        Id = group.BusinessEntity.Id,
-                        NomeFantasia = group.BusinessEntity.NomeFantasia,
-                        RazaoSocial = group.BusinessEntity.RazaoSocial,
-                        Cnpj = group.BusinessEntity.Cnpj,
-                        Logradouro = group.BusinessEntity.Logradouro,
-                        Numero = group.BusinessEntity.Numero,
-                        Bairro = group.BusinessEntity.Bairro,
-                        Municipio = group.BusinessEntity.Municipio,
-                        Uf = group.BusinessEntity.Uf,
-                        Cep = group.BusinessEntity.Cep,
-                        Telefone = group.BusinessEntity.Telefone,
-                        Email = group.BusinessEntity.Email
-                    }
-                };
-            }).ToList();
+            var userName = group.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.User?.Name ?? string.Empty;
 
-            return SuccessResponse(groupDtos);
+            return SuccessResponse(MapToGroupWithCompaniesDto(group, userId, userName));
         }
         catch (Exception ex)
         {
@@ -294,25 +165,19 @@ public class GroupService : BaseService
     {
         try
         {
-            // Verifica se o usuário tem permissão de gestor no grupo
-            var hasPermission = await _groupRepository.UserHasManagerPermissionInGroup(userId, groupId);
-            if (!hasPermission)
+            if (!await _groupRepository.UserHasManagerPermissionInGroup(userId, groupId))
                 return ErrorResponse("Você não tem permissão para excluir este grupo.");
 
             var group = await _groupRepository.GetById(groupId);
-            if (group == null)
-                return ErrorResponse(Message.NotFound);
+            if (group == null) return ErrorResponse(Message.NotFound);
 
-            // Remove o BusinessEntity associado, se houver
-            
-                var businessEntity = await _businessEntityRepository.GetById(group.BusinessEntityId);
-                if (businessEntity != null)
-                {
-                    await _businessEntityRepository.Delete(businessEntity.Id);
-               }
-            
+            if (group.BusinessEntityId != 0)
+            {
+                var entity = await _businessEntityRepository.GetById(group.BusinessEntityId);
+                if (entity != null)
+                    await _businessEntityRepository.Delete(entity.Id);
+            }
 
-            // Remove o grupo
             await _groupRepository.Delete(group.Id);
 
             return SuccessResponse(Message.Success);
@@ -323,43 +188,107 @@ public class GroupService : BaseService
         }
     }
 
+    #endregion
+
+    #region Helpers
+
+    private static BusinessEntity MapToBusinessEntity(InsertBusinessEntityDto dto) => new()
+    {
+        NomeFantasia = dto.NomeFantasia,
+        RazaoSocial = dto.RazaoSocial,
+        Cnpj = dto.Cnpj,
+        Logradouro = dto.Logradouro,
+        Numero = dto.Numero,
+        Bairro = dto.Bairro,
+        Municipio = dto.Municipio,
+        Uf = dto.Uf,
+        Cep = dto.Cep,
+        Telefone = dto.Telefone,
+        Email = dto.Email
+    };
+
+    private static GroupDto MapToGroupDto(GroupModel group) => new()
+    {
+        Id = group.Id,
+        Name = group.Name,
+        DateCreate = group.DateCreate,
+        BusinessEntity = group.BusinessEntity == null ? null : MapToBusinessEntityDto(group.BusinessEntity)
+    };
+
+    private static GroupWithCompaniesDto MapToGroupWithCompaniesDto(GroupModel group, int userId, string userName) => new()
+    {
+        GroupId = group.Id,
+        GroupName = group.Name,
+        DateCreate = group.DateCreate,
+        UserId = userId,
+        UserName = userName,
+        GroupPermission = MapPermission(group.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission),
+        Companies = group.Companies?
+            .Where(c => c.CompanyUsers.Any(cu => cu.UserId == userId))
+            .Select(c => MapToCompanyUserSimpleDto(c, userId))
+            .ToList() ?? new List<CompanyUsersimpleDto>(),
+        BusinessEntity = group.BusinessEntity == null ? null : MapToBusinessEntityDto(group.BusinessEntity)
+    };
+
+    private static CompanyUsersimpleDto MapToCompanyUserSimpleDto(CompanyModel company, int userId) => new()
+    {
+        CompanyId = company.Id,
+        CompanyName = company.Name,
+        DateCreate = company.DateCreate,
+        Permission = MapPermission(company.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission),
+        BusinessEntity = company.BusinessEntity == null ? null : MapToBusinessEntityDto(company.BusinessEntity),
+        SubCompanies = company.SubCompanies?
+            .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == userId))
+            .Select(sc => new SubCompanyUsersimpleDto
+            {
+                SubCompanyId = sc.Id,
+                SubCompanyName = sc.Name,
+                CompanyId = company.Id,
+                DateCreate = sc.DateCreate,
+                Permission = MapPermission(sc.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission)
+            }).ToList()
+    };
+
+    private static BusinessEntityDto MapToBusinessEntityDto(BusinessEntity entity) => new()
+    {
+        Id = entity.Id,
+        NomeFantasia = entity.NomeFantasia,
+        RazaoSocial = entity.RazaoSocial,
+        Cnpj = entity.Cnpj,
+        Logradouro = entity.Logradouro,
+        Numero = entity.Numero,
+        Bairro = entity.Bairro,
+        Municipio = entity.Municipio,
+        Uf = entity.Uf,
+        Cep = entity.Cep,
+        Telefone = entity.Telefone,
+        Email = entity.Email
+    };
+
+    private static PermissionResponse MapPermission(PermissionModel permission)
+    {
+        if (permission == null) return null;
+        return new PermissionResponse
+        {
+            Id = permission.Id,
+            Name = permission.Name
+        };
+    }
 
     private void UpdateBusinessEntityFieldsIfPresent(BusinessEntity entity, BusinessEntityDto dto)
     {
-        if (!string.IsNullOrWhiteSpace(dto.NomeFantasia))
-            entity.NomeFantasia = dto.NomeFantasia;
-
-        if (!string.IsNullOrWhiteSpace(dto.RazaoSocial))
-            entity.RazaoSocial = dto.RazaoSocial;
-
-        if (!string.IsNullOrWhiteSpace(dto.Cnpj))
-            entity.Cnpj = dto.Cnpj;
-
-        if (!string.IsNullOrWhiteSpace(dto.Logradouro))
-            entity.Logradouro = dto.Logradouro;
-
-        if (!string.IsNullOrWhiteSpace(dto.Numero))
-            entity.Numero = dto.Numero;
-
-        if (!string.IsNullOrWhiteSpace(dto.Bairro))
-            entity.Bairro = dto.Bairro;
-
-        if (!string.IsNullOrWhiteSpace(dto.Municipio))
-            entity.Municipio = dto.Municipio;
-
-        if (!string.IsNullOrWhiteSpace(dto.Uf))
-            entity.Uf = dto.Uf;
-
-        if (!string.IsNullOrWhiteSpace(dto.Cep))
-            entity.Cep = dto.Cep;
-
-        if (!string.IsNullOrWhiteSpace(dto.Telefone))
-            entity.Telefone = dto.Telefone;
-
-        if (!string.IsNullOrWhiteSpace(dto.Email))
-            entity.Email = dto.Email;
+        if (!string.IsNullOrWhiteSpace(dto.NomeFantasia)) entity.NomeFantasia = dto.NomeFantasia;
+        if (!string.IsNullOrWhiteSpace(dto.RazaoSocial)) entity.RazaoSocial = dto.RazaoSocial;
+        if (!string.IsNullOrWhiteSpace(dto.Cnpj)) entity.Cnpj = dto.Cnpj;
+        if (!string.IsNullOrWhiteSpace(dto.Logradouro)) entity.Logradouro = dto.Logradouro;
+        if (!string.IsNullOrWhiteSpace(dto.Numero)) entity.Numero = dto.Numero;
+        if (!string.IsNullOrWhiteSpace(dto.Bairro)) entity.Bairro = dto.Bairro;
+        if (!string.IsNullOrWhiteSpace(dto.Municipio)) entity.Municipio = dto.Municipio;
+        if (!string.IsNullOrWhiteSpace(dto.Uf)) entity.Uf = dto.Uf;
+        if (!string.IsNullOrWhiteSpace(dto.Cep)) entity.Cep = dto.Cep;
+        if (!string.IsNullOrWhiteSpace(dto.Telefone)) entity.Telefone = dto.Telefone;
+        if (!string.IsNullOrWhiteSpace(dto.Email)) entity.Email = dto.Email;
     }
-
 
     #endregion
 }

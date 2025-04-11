@@ -35,7 +35,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "ConsultarMRP API",
+        Title = "Consultar MRP API",
         Version = "v1",
         Description = "API MRP"
     });

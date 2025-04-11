@@ -46,7 +46,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "ConsultarAuth API",
+        Title = "Consultar Auth API",
         Version = "v1",
         Description = "API de Autenticação do sistema ConsultarAuth"
     });
