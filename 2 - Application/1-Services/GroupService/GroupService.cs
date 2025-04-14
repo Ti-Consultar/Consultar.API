@@ -74,8 +74,7 @@ public class GroupService : BaseService
             if (!string.IsNullOrWhiteSpace(dto.Name))
                 group.Name = dto.Name;
 
-            if (await _businessEntityRepository.CnpjExists(dto.BusinessEntity.Cnpj))
-                return SuccessResponse("Já existe um cadastro com este CNPJ.");
+           
 
             if (group.BusinessEntity != null && dto.BusinessEntity != null)
                 UpdateBusinessEntityFieldsIfPresent(group.BusinessEntity, dto.BusinessEntity);
