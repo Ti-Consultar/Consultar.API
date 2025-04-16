@@ -1,5 +1,6 @@
 ﻿using _3_Domain._1_Entities;
 using _4_InfraData._1_Context;
+using _4_InfraData._3_Utils;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -44,9 +45,47 @@ namespace _4_InfraData._1_Repositories
                 .Include(g => g.Companies)
                     .ThenInclude(c => c.BusinessEntity)
                 .Include(g => g.Companies)
-                    .ThenInclude(c => c.SubCompanies)
+                    .ThenInclude(c => c.CompanyUsers)
+                        .ThenInclude(cu => cu.Permission) // <- pega a permissão da empresa
                 .FirstOrDefaultAsync();
         }
+        public async Task<PaginatedResult<CompanyModel>> GetCompaniesByUserIdPaginatedAsync(int userId, int groupId, int skip, int take)
+        {
+            var group = await _context.Groups
+                .Where(g => g.Id == groupId)
+                .Include(g => g.Companies)
+                    .ThenInclude(c => c.BusinessEntity)
+                .Include(g => g.Companies)
+                    .ThenInclude(c => c.CompanyUsers)
+                .FirstOrDefaultAsync();
+
+            if (group == null || group.Companies == null)
+            {
+                return new PaginatedResult<CompanyModel>
+                {
+                    TotalCount = 0,
+                    Items = new List<CompanyModel>()
+                };
+            }
+
+            var companiesQuery = group.Companies
+                .Where(c => c.CompanyUsers != null && c.CompanyUsers.Any(cu => cu.UserId == userId))
+                .AsQueryable();
+
+            var totalCount = companiesQuery.Count();
+            var companies = companiesQuery
+                .Skip(skip)
+                .Take(take)
+                .ToList();
+
+            return new PaginatedResult<CompanyModel>
+            {
+                TotalCount = totalCount,
+                Items = companies
+            };
+        }
+
+
 
         public async Task<GroupModel> GetByCompanyId(int companyId)
         {

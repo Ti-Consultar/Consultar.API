@@ -144,18 +144,22 @@ namespace _4_InfraData._1_Repositories
             return await _context.CompanyUsers
                 .AnyAsync(cu => cu.UserId == userId && cu.CompanyId == companyId && cu.SubCompanyId == subCompanyId && cu.PermissionId == 1);
         }
-        public async Task<bool> ExistsCompanyUser(int userId, int companyId, int groupId)
+        public async Task<bool> ExistsCompanyUser(int userId, int? companyId, int groupId)
         {
             return await _context.CompanyUsers
                 .AnyAsync(cu => cu.UserId == userId && cu.CompanyId == companyId && cu.GroupId == groupId);
         }
-
+        public async Task<bool> ExistsGroupUser(int userId, int groupId)
+        {
+            return await _context.CompanyUsers
+                .AnyAsync(cu => cu.UserId == userId && cu.GroupId == groupId);
+        }
         public async Task<bool> ExistsCompanyUser(int userId, int companyId)
         {
             return await _context.CompanyUsers
                 .AnyAsync(cu => cu.UserId == userId && cu.CompanyId == companyId);
         }
-        public async Task<bool> ExistsSubCompanyUser(int userId, int companyId, int subCompanyId)
+        public async Task<bool> ExistsSubCompanyUser(int userId, int? companyId, int subCompanyId)
         {
             return await _context.CompanyUsers
                 .AnyAsync(cu => cu.UserId == userId && cu.CompanyId == companyId && cu.SubCompanyId == subCompanyId);
@@ -178,7 +182,7 @@ namespace _4_InfraData._1_Repositories
         }
 
 
-        public async Task<CompanyModel?> GetById(int id)
+        public async Task<CompanyModel?> GetById(int? id)
         {
             var company = await _context.Companies
                 .Where(c => c.Id == id) // Filtrando diretamente em Companies

@@ -1,6 +1,7 @@
 ﻿CREATE TABLE [dbo].[InvitationToCompany] (
     [Id] INT IDENTITY(1,1) PRIMARY KEY,
-    [CompanyId] INT NOT NULL,
+    [GroupId] INT NOT NULL,
+    [CompanyId] INT NULL,
     [SubCompanyId] INT NULL,
     [UserId] INT NOT NULL,
     [InvitedById] INT NOT NULL,
@@ -9,8 +10,11 @@
     [CreatedAt] DATETIME NOT NULL DEFAULT GETDATE(),
     [UpdatedAt] DATETIME NULL,
 
+     CONSTRAINT FK_Invitation_groups FOREIGN KEY ([GroupId]) 
+        REFERENCES [dbo].[Groups] ([Id]) ON DELETE CASCADE,
+
     CONSTRAINT FK_Invitation_Company FOREIGN KEY ([CompanyId]) 
-        REFERENCES [dbo].[Companies] ([Id]) ON DELETE CASCADE,
+        REFERENCES [dbo].[Companies] ([Id]) ON DELETE NO ACTION,
     
     CONSTRAINT FK_Invitation_SubCompany FOREIGN KEY ([SubCompanyId]) 
         REFERENCES [dbo].[SubCompanies] ([Id]) ON DELETE NO ACTION, 

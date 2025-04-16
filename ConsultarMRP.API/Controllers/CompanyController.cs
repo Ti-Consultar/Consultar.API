@@ -102,13 +102,13 @@ namespace _5_API.Controllers
 
 
         [HttpGet]
-        [Route("paginated/user/{userId}")]
-        public async Task<IActionResult> GetCompaniesByUserIdPaginated(int userId, int skip, int take)
+        [Route("paginated/user/{userId}/group/{groupId}")]
+        public async Task<IActionResult> GetCompaniesByUserIdPaginated(int userId, int groupId ,int skip, int take)
         {
             try
             {
                
-                var companies = await _companyService.GetCompaniesByUserIdPaginated(userId, skip, take);
+                var companies = await _companyService.GetCompaniesByUserIdPaginated(userId, groupId, skip, take);
                 return Ok(companies); 
             }
             catch (Exception ex)
@@ -132,7 +132,6 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-
-       
+ 
     }
 }

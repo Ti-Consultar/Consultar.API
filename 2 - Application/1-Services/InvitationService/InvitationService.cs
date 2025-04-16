@@ -14,22 +14,26 @@ using _2___Application._2_Dto_s.Permissions;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System.Security;
+using _2___Application._2_Dto_s.Group;
 
 public class InvitationService : BaseService
 {
     private readonly InvitationRepository _invitationRepository;
     private readonly UserRepository _userRepository;
     private readonly CompanyRepository _companyRepository;
+    private readonly GroupRepository _groupRepository;
 
     public InvitationService(
         InvitationRepository invitationRepository,
         UserRepository userRepository,
         CompanyRepository companyRepository,
+        GroupRepository groupRepository,
         IAppSettings appSettings) : base(appSettings)
     {
         _invitationRepository = invitationRepository;
         _userRepository = userRepository;
         _companyRepository = companyRepository;
+        _groupRepository = groupRepository;
     }
 
     public async Task<ResultValue> CreateInvitation(CreateInvitationDto dto)
@@ -38,14 +42,17 @@ public class InvitationService : BaseService
         {
             var invitedUser = await _userRepository.GetByUserId(dto.UserId);
             var invitingUser = await _userRepository.GetByUserId(dto.InvitedByUserId);
+
+            var group = await _groupRepository.GetById(dto.GroupId);
             var company = await _companyRepository.GetById(dto.CompanyId);
 
-            if (invitedUser == null || invitingUser == null || company == null)
+            if (invitedUser == null || invitingUser == null || group == null)
                 return ErrorResponse(Message.NotFound);
 
             var invitation = new InvitationToCompany
             {
                 UserId = dto.UserId,
+                GroupId = dto.GroupId,
                 CompanyId = dto.CompanyId,
                 InvitedById = dto.InvitedByUserId,
                 PermissionId = dto.PermissionId,
@@ -109,7 +116,7 @@ public class InvitationService : BaseService
         }
     }
 
-    public async Task<ResultValue> UpdateInvitationStatus(int invitationId,int groupId, UpdateStatus dto)
+    public async Task<ResultValue> UpdateInvitationStatus(int invitationId, int groupId, UpdateStatus dto)
     {
         try
         {
@@ -125,18 +132,9 @@ public class InvitationService : BaseService
             invitation.Status = dto.Status;
             invitation.UpdatedAt = DateTime.UtcNow;
 
-            if (invitation.SubCompanyId == null)
-            {
-                var result = await HandleCompanyInvitation(user.Id, invitation);
-                if (!result.Success)
-                    return result;
-            }
-            else
-            {
-                var result = await HandleSubCompanyInvitation(user.Id, groupId, invitation);
-                if (!result.Success)
-                    return result;
-            }
+            var result = await HandleInvitationByContext(user.Id, groupId, invitation);
+            if (!result.Success)
+                return result;
 
             await _invitationRepository.Update(invitation);
             return SuccessResponse(Message.Success);
@@ -146,6 +144,9 @@ public class InvitationService : BaseService
             return ErrorResponse(ex);
         }
     }
+
+   
+
 
     public async Task<ResultValue> GetInvitationById(int id)
     {
@@ -163,6 +164,11 @@ public class InvitationService : BaseService
             var response = new InvitationDetailDto
             {
                 Id = invitation.Id,
+                Group = invitation.Group != null ? new GroupSimpleDto
+                {
+                    Id = invitation.Company.Id,
+                    Name = invitation.Company.Name
+                } : null,
                 Company = invitation.Company != null ? new CompanyDto
                 {
                     Id = invitation.Company.Id,
@@ -226,9 +232,39 @@ public class InvitationService : BaseService
     }
 
     #region Métodos Privados
+    private async Task<ResultValue> HandleInvitationByContext(int userId, int groupId, InvitationToCompany invitation)
+    {
+        if (invitation.GroupId != null && invitation.CompanyId == null)
+        {
+            return await HandleGroupInvitation(userId, invitation);
+        }
+
+        if (invitation.SubCompanyId != null)
+        {
+            return await HandleSubCompanyInvitation(userId, groupId, invitation);
+        }
+
+        if (invitation.CompanyId != null)
+        {
+            return await HandleCompanyInvitation(userId, invitation);
+        }
+
+        return ErrorResponse("Tipo de convite inválido ou incompleto.");
+    }
+    private async Task<ResultValue> HandleGroupInvitation(int userId, InvitationToCompany invitation)
+    {
+        var exists = await _companyRepository.ExistsGroupUser(userId, invitation.GroupId);
+
+        if (exists)
+            return ErrorResponse(Message.MessageError);
+
+        await _companyRepository.AddUserToGroup(userId, invitation.GroupId);
+        return SuccessResponse(Message.Success);
+    }
+
     private async Task<ResultValue> HandleCompanyInvitation(int userId, InvitationToCompany invitation)
     {
-        var exists = await _companyRepository.ExistsCompanyUser(userId, invitation.CompanyId);
+        var exists = await _companyRepository.ExistsCompanyUser(userId, (int)invitation.CompanyId);
 
         if (exists)
             return ErrorResponse(Message.MessageError);
@@ -253,6 +289,7 @@ public class InvitationService : BaseService
         return new InvitationDetailDto
         {
             Id = invitation.Id,
+            Group = MapToGroupDto(invitation.Group),
             Company = MapToCompanyDto(invitation.Company),
             SubCompany = MapToSubCompanyDto(invitation.SubCompany),
             User = MapToUserDto(invitation.User),
@@ -263,7 +300,10 @@ public class InvitationService : BaseService
             UpdatedAt = invitation.UpdatedAt
         };
     }
-
+    private GroupSimpleDto MapToGroupDto(GroupModel group)
+    {
+        return group != null ? new GroupSimpleDto { Id = group.Id, Name = group.Name } : null;
+    }
     private CompanyDto MapToCompanyDto(CompanyModel company)
     {
         return company != null ? new CompanyDto { Id = company.Id, Name = company.Name } : null;

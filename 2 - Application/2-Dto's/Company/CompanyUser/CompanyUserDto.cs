@@ -37,6 +37,7 @@ public class SubCompanyUsersimpleDto
     public string SubCompanyName { get; set; }
     public int CompanyId { get; set; }
     public DateTime DateCreate { get; set; }
+    public BusinessEntityDto BusinessEntity { get; set; }
     public PermissionResponse Permission { get; set; }
 
 

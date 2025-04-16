@@ -1,4 +1,6 @@
-﻿using System;
+﻿using _2___Application._2_Dto_s.BusinesEntity;
+using _2___Application._2_Dto_s.Permissions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +14,9 @@ namespace _2___Application._2_Dto_s.Company.SubCompany
         public string Name { get; set; } 
         public DateTime DateCreate { get; set; }  
         public int CompanyId { get; set; } 
-        public string CompanyName { get; set; } 
+        public string CompanyName { get; set; }
+        public BusinessEntityDto BusinessEntity { get; set; }
+        public PermissionResponse Permission { get; set; }
     }
 
 }

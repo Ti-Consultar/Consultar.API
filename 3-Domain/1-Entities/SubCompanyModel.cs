@@ -16,6 +16,8 @@ namespace _3_Domain._1_Entities
         public int Id { get; set; }
         public string Name { get; set; }
         public DateTime DateCreate { get; set; }
+        public int BusinessEntityId { get; set; }
+        public BusinessEntity BusinessEntity { get; set; }
 
         // Chave estrangeira para Company
         public int CompanyId { get; set; }

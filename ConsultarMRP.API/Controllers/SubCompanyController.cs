@@ -95,6 +95,20 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        [HttpGet]
+        [Route("paginated/user/{userId}/company/{companyId}")]
+        public async Task<IActionResult> GetCompaniesByUserIdPaginated(int userId, int companyId,int skip, int take)
+        {
+            try
+            {
 
+                var companies = await _companyService.GetSubCompaniesByUserIdPaginated(userId,companyId ,skip, take);
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

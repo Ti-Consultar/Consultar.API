@@ -26,6 +26,7 @@ namespace _4_InfraData._1_Repositories
         {
             return await _context.InvitationToCompany
                 .Where(i => i.Id == id)
+                .Include(i => i.Group)
                 .Include(i => i.Company)
                 .Include(i => i.SubCompany)
                 .Include(i => i.User)
@@ -38,6 +39,7 @@ namespace _4_InfraData._1_Repositories
         {
             return await _context.InvitationToCompany
                 .Where(i => i.UserId == userId)
+                .Include(a => a.Group)
                 .Include(a => a.Company)
                 .Include(a => a.SubCompany)
                 .Include(a => a.User)
@@ -50,6 +52,7 @@ namespace _4_InfraData._1_Repositories
         {
             return await _context.InvitationToCompany
                 .Where(i => i.Id == invitationId && i.UserId == userId)
+                .Include(a => a.Group)
                 .Include(a => a.Company)
                 .Include(a => a.SubCompany)
                 .Include(a => a.User)
@@ -62,6 +65,7 @@ namespace _4_InfraData._1_Repositories
         {
             return await _context.InvitationToCompany
                 .Where(i => i.InvitedById == userId)
+                .Include(a => a.Group)
                 .Include(a => a.Company)
                 .Include(a => a.SubCompany)
                 .Include(a => a.User)
