@@ -55,7 +55,7 @@ public class GroupService : BaseService
             await _groupRepository.Add(group);
 
             await _companyRepository.AddUserToGroup(dto.UserId, group.Id);
-            await _emailService.SendWelcomeAsync(group.BusinessEntity.Email, group.Name, user.Name);
+            await _emailService.SendWelcomeAsync(user.Email, group.Name, user.Name);
 
             return SuccessResponse(Message.Success);
         }
