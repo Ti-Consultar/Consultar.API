@@ -28,7 +28,6 @@ public class CompanyService : BaseService
         _groupRepository = groupRepository;
     }
 
-
     #region Companies
     public async Task<ResultValue> CreateCompany(InsertCompanyDto createCompanyDto)
     {
@@ -91,8 +90,6 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-
-
     public async Task<ResultValue> UpdateCompany(int id, UpdateCompanyDto dto)
     {
         try
@@ -199,7 +196,6 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-
     public async Task<ResultValue> CreateUserCompany(CreateCompanyUserDto dto)
     {
         try
@@ -306,7 +302,6 @@ public class CompanyService : BaseService
         }
     }
 
-
     public async Task<ResultValue> UpdateSubCompany(int id, UpdateSubCompanyDto dto)
     {
         try
@@ -342,8 +337,6 @@ public class CompanyService : BaseService
         }
     }
 
-
-
     public async Task<ResultValue> DeleteSubCompany(int userId, int companyId, int subCompanyId)
     {
         try
@@ -374,7 +367,6 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-
 
     public async Task<ResultValue> CreateUserSubCompany(CreateSubCompanyUserDto dto)
     {
@@ -543,7 +535,6 @@ public class CompanyService : BaseService
         }
     }
 
-
     public async Task<ResultValue> GetCompaniesByUserIdPaginated(int userId, int groupId, int skip = 0, int take = 10)
     {
         try
@@ -607,10 +598,6 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-
-
-
-
 
     public async Task<ResultValue> GetSubCompaniesByUserIdPaginated(int userId, int companyId, int skip = 0, int take = 10)
     {
@@ -681,9 +668,6 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-
-
-
 
     #endregion
 }

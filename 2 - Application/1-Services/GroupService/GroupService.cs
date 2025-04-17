@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using _2___Application._2_Dto_s.Permissions;
 using _2___Application._2_Dto_s.BusinesEntity;
+using _4_InfraData._3_Utils.Email;
 
 public class GroupService : BaseService
 {
@@ -17,14 +18,16 @@ public class GroupService : BaseService
     private readonly UserRepository _userRepository;
     private readonly CompanyRepository _companyRepository;
     private readonly BusinessEntityRepository _businessEntityRepository;
+    private readonly EmailService _emailService;
 
-    public GroupService(GroupRepository groupRepository, UserRepository userRepository, CompanyRepository companyRepository, BusinessEntityRepository businessEntityRepository, IAppSettings appSettings)
+    public GroupService(GroupRepository groupRepository, UserRepository userRepository, CompanyRepository companyRepository, EmailService emailService,BusinessEntityRepository businessEntityRepository, IAppSettings appSettings)
         : base(appSettings)
     {
         _groupRepository = groupRepository;
         _userRepository = userRepository;
         _companyRepository = companyRepository;
         _businessEntityRepository = businessEntityRepository;
+        _emailService = emailService;
     }
 
     #region Groups
@@ -52,6 +55,7 @@ public class GroupService : BaseService
             await _groupRepository.Add(group);
 
             await _companyRepository.AddUserToGroup(dto.UserId, group.Id);
+            await _emailService.SendWelcomeAsync(group.BusinessEntity.Email, group.Name, user.Name);
 
             return SuccessResponse(Message.Success);
         }

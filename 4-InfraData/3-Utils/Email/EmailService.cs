@@ -20,43 +20,169 @@ namespace _4_InfraData._3_Utils.Email
                 var email = _configuration["EmailSettings:Email"];
                 var password = _configuration["EmailSettings:Password"];
 
-                var smtpClient = new SmtpClient("smtp.outlook.com")
-                {
-                    Port = 587,
-                    Credentials = new NetworkCredential(email, password),
-                    EnableSsl = true
-                };
+                var smtpClient = CreateSmtpClient(email, password);
 
                 var mailMessage = new MailMessage
                 {
                     From = new MailAddress(email),
-                    Subject = "Redefinição de Senha",
+                    Subject = "🔐 Redefinição de Senha - MRP",
                     IsBodyHtml = true,
-                    Body = $@"
-                                <html>
-                                <body>
-                                    <p>Olá,</p>
-                                    <p>Recebemos uma solicitação para redefinir a sua senha. Aqui está a sua nova senha:</p>
-                                    <p><strong>Nova senha:</strong> {newPassword}</p>
-                                    <p>Lembre-se de atualizar sua senha ao fazer login para garantir a segurança da sua conta.</p>
-                                    <p>Obrigado,</p>
-                                    <p>Consultar Consultoria</p>
-                                </body>
-                                </html>"
-                                
+                    Body = BuildPasswordResetEmailHtml(newPassword)
                 };
 
                 mailMessage.To.Add(emailAddress);
-
                 await smtpClient.SendMailAsync(mailMessage);
             }
             catch (Exception ex)
             {
-                // Aqui você pode tratar a exceção de acordo com os requisitos do seu aplicativo.
-                // Por exemplo, registrar a exceção ou notificar o administrador do sistema.
                 Console.WriteLine($"Erro ao enviar e-mail de redefinição de senha: {ex.Message}");
-                throw; // Lança a exceção para que o chamador possa lidar com ela conforme necessário.
+                throw;
             }
         }
+
+        public async Task SendWelcomeAsync(string emailAddress, string company, string name)
+        {
+            try
+            {
+                var email = _configuration["EmailSettings:Email"];
+                var password = _configuration["EmailSettings:Password"];
+
+                var smtpClient = CreateSmtpClient(email, password);
+
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(email),
+                    Subject = "🎉 Bem-vindo ao MRP!",
+                    IsBodyHtml = true,
+                    Body = BuildWelcomeEmailHtml(company, name)
+                };
+
+                mailMessage.To.Add(emailAddress);
+                await smtpClient.SendMailAsync(mailMessage);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao enviar e-mail de boas-vindas: {ex.Message}");
+                throw;
+            }
+        }
+
+        private SmtpClient CreateSmtpClient(string email, string password)
+        {
+            return new SmtpClient("smtp.outlook.com")
+            {
+                Port = 587,
+                Credentials = new NetworkCredential(email, password),
+                EnableSsl = true
+            };
+        }
+
+        private string GetEmailStyles() => @"
+            <style>
+                body {
+                    background-color: #f4f9fc;
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 50px auto;
+                    background-color: #ffffff;
+                    border-radius: 12px;
+                    box-shadow: 0 8px 16px rgba(0, 123, 255, 0.2);
+                    padding: 30px;
+                    color: #333;
+                }
+                .header {
+                    text-align: center;
+                    padding-bottom: 20px;
+                }
+                .header h1 {
+                    color: #007BFF;
+                    font-size: 26px;
+                }
+                .content p {
+                    font-size: 16px;
+                    line-height: 1.6;
+                }
+                .password-box {
+                    margin: 20px 0;
+                    padding: 15px;
+                    background-color: #e6f0ff;
+                    border-left: 6px solid #007BFF;
+                    font-size: 18px;
+                    font-weight: bold;
+                    color: #007BFF;
+                    text-align: center;
+                    border-radius: 6px;
+                }
+                .footer {
+                    margin-top: 30px;
+                    text-align: center;
+                    font-size: 12px;
+                    color: #999;
+                }
+                .title {
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #007BFF;
+                    margin-bottom: 10px;
+                }
+                .subtitle {
+                    font-size: 16px;
+                    margin-bottom: 20px;
+                }
+                .card {
+                    background-color: #fff;
+                    padding: 30px;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                    color: #333;
+                }
+            </style>";
+
+        private string BuildPasswordResetEmailHtml(string password) => $@"
+            <html>
+            <head>
+                {GetEmailStyles()}
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h1>Redefinição de Senha</h1>
+                    </div>
+                    <div class='content'>
+                        <p>Olá,</p>
+                        <p>Recebemos uma solicitação para redefinir a sua senha. Aqui está a sua nova senha de acesso ao sistema MRP:</p>
+                        <div class='password-box'>{password}</div>
+                        <p>Recomendamos que você altere esta senha após fazer login, para manter sua conta segura.</p>
+                        <p>Se você não solicitou esta alteração, entre em contato com o suporte imediatamente.</p>
+                        <p>Abraços,<br>Equipe MRP</p>
+                    </div>
+                    <div class='footer'>
+                        © {DateTime.Now.Year} MRP Systems - Todos os direitos reservados.
+                    </div>
+                </div>
+            </body>
+            </html>";
+
+        private string BuildWelcomeEmailHtml(string company, string name) => $@"
+            <html>
+            <head>
+                {GetEmailStyles()}
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='card'>
+                        <div class='title'>Bem-vindo ao MRP!</div>
+                        <div class='subtitle'>Parabéns {name} por criar sua nova empresa <strong>{company}</strong> no nosso sistema.</div>
+                        <p>Estamos felizes em ter você com a gente. Explore todos os recursos do MRP e otimize a gestão do seu negócio!</p>
+                        <p>Se precisar de ajuda, nossa equipe está à disposição.</p>
+                        <div class='footer'>© {DateTime.Now.Year} MRP Systems - Todos os direitos reservados.</div>
+                    </div>
+                </div>
+            </body>
+            </html>";
     }
 }
