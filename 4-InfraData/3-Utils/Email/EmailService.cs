@@ -161,7 +161,7 @@ namespace _4_InfraData._3_Utils.Email
                         <p>Abraços,<br>Equipe MRP</p>
                     </div>
                     <div class='footer'>
-                        © {DateTime.Now.Year} MRP Systems - Todos os direitos reservados.
+                      {DateTime.Now.Year} MRP © - Todos os direitos reservados.
                     </div>
                 </div>
             </body>
@@ -179,7 +179,7 @@ namespace _4_InfraData._3_Utils.Email
                         <div class='subtitle'>Parabéns {name} por criar sua nova empresa <strong>{company}</strong> no nosso sistema.</div>
                         <p>Estamos felizes em ter você com a gente. Explore todos os recursos do MRP e otimize a gestão do seu negócio!</p>
                         <p>Se precisar de ajuda, nossa equipe está à disposição.</p>
-                        <div class='footer'>© {DateTime.Now.Year} MRP Systems - Todos os direitos reservados.</div>
+                        <div class='footer'> {DateTime.Now.Year} MRP © - Todos os direitos reservados.</div>
                     </div>
                 </div>
             </body>
