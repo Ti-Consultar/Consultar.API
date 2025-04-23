@@ -67,6 +67,33 @@ namespace _4_InfraData._3_Utils.Email
             }
         }
 
+        public async Task SendWelcomeSubCompanyAsync(string emailAddress, string company, string subcompany, string name)
+        {
+            try
+            {
+                var email = _configuration["EmailSettings:Email"];
+                var password = _configuration["EmailSettings:Password"];
+
+                var smtpClient = CreateSmtpClient(email, password);
+
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(email),
+                    Subject = "🎉 Bem-vindo ao MRP!",
+                    IsBodyHtml = true,
+                    Body = BuildWelcomeSubCompanyEmailHtml(company, name, subcompany)
+                };
+
+                mailMessage.To.Add(emailAddress);
+                await smtpClient.SendMailAsync(mailMessage);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao enviar e-mail de boas-vindas: {ex.Message}");
+                throw;
+            }
+        }
+
         private SmtpClient CreateSmtpClient(string email, string password)
         {
             return new SmtpClient("smtp.outlook.com")
@@ -176,7 +203,7 @@ namespace _4_InfraData._3_Utils.Email
                 <div class='container'>
                     <div class='card'>
                         <div class='title'>Bem-vindo ao MRP!</div>
-                        <div class='subtitle'>Parabéns {name} por criar sua nova empresa <strong>{company}</strong> no nosso sistema.</div>
+                        <div class='subtitle'>Parabéns {name} por cadastrar sua nova empresa <strong>{company}</strong> no nosso sistema.</div>
                         <p>Estamos felizes em ter você com a gente. Explore todos os recursos do MRP e otimize a gestão do seu negócio!</p>
                         <p>Se precisar de ajuda, nossa equipe está à disposição.</p>
                         <div class='footer'> {DateTime.Now.Year} MRP © - Todos os direitos reservados.</div>
@@ -184,5 +211,33 @@ namespace _4_InfraData._3_Utils.Email
                 </div>
             </body>
             </html>";
+
+        private string BuildWelcomeSubCompanyEmailHtml(string company, string name, string subcompany) => $@"
+            <html>
+            <head>
+                {GetEmailStyles()}
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='card'>
+                        <div class='title'>Bem-vindo ao MRP!</div>
+                        <div class='subtitle'>
+                            Olá {name}, parabéns por expandir seus negócios! 🎉<br />
+                            A nova filial <strong>{subcompany}</strong> da empresa <strong>{company}</strong> foi cadastrada com sucesso em nossa plataforma.
+                        </div>
+                        <p>
+                            É um prazer fazer parte do crescimento da sua empresa. Aproveite todos os recursos que o MRP oferece para tornar sua gestão ainda mais eficiente.
+                        </p>
+                        <p>
+                            Caso precise de suporte ou tenha dúvidas, nossa equipe está sempre pronta para ajudar.
+                        </p>
+                        <div class='footer'>
+                            {DateTime.Now.Year} MRP © - Todos os direitos reservados.
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>";
+
     }
 }

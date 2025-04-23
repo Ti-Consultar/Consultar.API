@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using _2___Application._2_Dto_s.Group;
 using _2___Application._2_Dto_s.CNPJ;
 using _2___Application._2_Dto_s.BusinesEntity;
+using _4_InfraData._3_Utils.Email;
 
 
 public class CompanyService : BaseService
@@ -18,14 +19,16 @@ public class CompanyService : BaseService
     private readonly UserRepository _userRepository;
     private readonly BusinessEntityRepository _businessEntityRepository;
     private readonly GroupRepository _groupRepository;
+    private readonly EmailService _emailService;
 
-    public CompanyService(CompanyRepository companyRepository, UserRepository userRepository, BusinessEntityRepository businessEntityRepository, GroupRepository groupRepository, IAppSettings appSettings)
+    public CompanyService(CompanyRepository companyRepository, UserRepository userRepository, BusinessEntityRepository businessEntityRepository, GroupRepository groupRepository, EmailService emailService,IAppSettings appSettings)
         : base(appSettings)
     {
         _companyRepository = companyRepository;
         _userRepository = userRepository;
         _businessEntityRepository = businessEntityRepository;
         _groupRepository = groupRepository;
+        _emailService = emailService;
     }
 
     #region Companies
@@ -82,7 +85,7 @@ public class CompanyService : BaseService
             };
 
             await _companyRepository.AddUserToCompany(companyUser.UserId, companyUser.CompanyId, companyUser.GroupId);
-
+            await _emailService.SendWelcomeAsync(user.Email, company.Name, user.Name);
             return SuccessResponse(Message.Success);
         }
         catch (Exception ex)
@@ -293,6 +296,8 @@ public class CompanyService : BaseService
                 subCompany.Id,
                 companyUser.PermissionId
             );
+
+            await _emailService.SendWelcomeSubCompanyAsync(user.Email,company.Name ,subCompany.Name, user.Name);
 
             return SuccessResponse(Message.Success);
         }
