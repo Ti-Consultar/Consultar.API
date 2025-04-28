@@ -135,23 +135,73 @@ namespace _4_InfraData._1_Repositories
 
         public async Task Delete(int id)
         {
-            var group = await GetById(id);
-            if (group != null)
+            var group = await _context.Groups
+                .Include(g => g.Companies)
+                    .ThenInclude(c => c.SubCompanies)
+                .FirstOrDefaultAsync(g => g.Id == id);
+
+            if (group == null)
+                throw new Exception("Grupo não encontrado.");
+
+            // Marca o Group como deletado
+            group.Deleted = true;
+
+            // Marca todas as Companies como deletadas
+            if (group.Companies != null)
             {
-                group.Deleted = true;
-                await _context.SaveChangesAsync();
+                foreach (var company in group.Companies)
+                {
+                    company.Deleted = true;
+
+                    // Marca todas as SubCompanies da Company como deletadas
+                    if (company.SubCompanies != null)
+                    {
+                        foreach (var subCompany in company.SubCompanies)
+                        {
+                            subCompany.Deleted = true;
+                        }
+                    }
+                }
             }
+
+            await _context.SaveChangesAsync();
         }
 
-        public async Task Restore(int id)
+
+        public async Task Delete(int id)
         {
-            var group = await GetById(id);
-            if (group != null)
+            var group = await _context.Groups
+                .Include(g => g.Companies)
+                    .ThenInclude(c => c.SubCompanies)
+                .FirstOrDefaultAsync(g => g.Id == id);
+
+            if (group == null)
+                throw new Exception("Grupo não encontrado.");
+
+            // Marca o Group como deletado
+            group.Deleted = true;
+
+            // Marca todas as Companies como deletadas
+            if (group.Companies != null)
             {
-                group.Deleted = false;
-                await _context.SaveChangesAsync();
+                foreach (var company in group.Companies)
+                {
+                    company.Deleted = true;
+
+                    // Marca todas as SubCompanies da Company como deletadas
+                    if (company.SubCompanies != null)
+                    {
+                        foreach (var subCompany in company.SubCompanies)
+                        {
+                            subCompany.Deleted = true;
+                        }
+                    }
+                }
             }
+
+            await _context.SaveChangesAsync();
         }
+
 
         public async Task<List<GroupModel>> GetGroupsByUserId(int userId)
         {

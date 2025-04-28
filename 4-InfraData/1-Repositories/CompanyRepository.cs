@@ -34,23 +34,55 @@ namespace _4_InfraData._1_Repositories
 
         public async Task DeleteCompany(int id)
         {
-            var company = await _context.Companies.FindAsync(id);
+            var company = await _context.Companies
+                .Include(c => c.SubCompanies) // Inclui as SubCompanies
+                .FirstOrDefaultAsync(c => c.Id == id);
 
+            if (company == null)
+                throw new Exception("Empresa não encontrada.");
+
+            // Marca a Company como deletada
             company.Deleted = true;
+
+            // Marca todas as SubCompanies como deletadas
+            if (company.SubCompanies != null)
+            {
+                foreach (var subCompany in company.SubCompanies)
+                {
+                    subCompany.Deleted = true;
+                }
+            }
 
             _context.Companies.Update(company);
             await _context.SaveChangesAsync();
         }
+
 
         public async Task RestoreCompany(int id)
         {
-            var company = await _context.Companies.FindAsync(id);
+            var company = await _context.Companies
+                .Include(c => c.SubCompanies) // Traz também as SubCompanies
+                .FirstOrDefaultAsync(c => c.Id == id);
 
+            if (company == null)
+                throw new Exception("Empresa não encontrada.");
+
+            // Marca a Company como restaurada
             company.Deleted = false;
+
+            // Marca todas as SubCompanies como restauradas
+            if (company.SubCompanies != null)
+            {
+                foreach (var subCompany in company.SubCompanies)
+                {
+                    subCompany.Deleted = false;
+                }
+            }
 
             _context.Companies.Update(company);
             await _context.SaveChangesAsync();
         }
+
         public async Task DeleteSubCompany(int companyId, int subcompanyId)
         {
             var subCompany = await _context.SubCompanies
