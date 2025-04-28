@@ -144,6 +144,27 @@ public class GroupService : BaseService
         }
     }
 
+    public async Task<ResultValue> GetGroupsDeletedWithCompaniesByUserId(int userId)
+    {
+        try
+        {
+            var user = await _userRepository.GetByUserId(userId);
+            if (user == null) return ErrorResponse(UserLoginMessage.InvalidCredentials);
+
+            var groups = await _groupRepository.GetGroupsDeletedByUserId(userId);
+            if (groups == null || !groups.Any())
+                return SuccessResponse(new List<ResultValue>());
+
+            var result = groups.Select(g => MapToGroupWithCompaniesDto(g, userId, user.Name)).ToList();
+
+            return SuccessResponse(result);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
+
     public async Task<ResultValue> GetGroupDetailsById(int groupId, int userId)
     {
         try
@@ -183,14 +204,39 @@ public class GroupService : BaseService
 
             await _groupRepository.Delete(group.Id);
 
-            return SuccessResponse(Message.Success);
+            return SuccessResponse(Message.DeleteSuccess);
         }
         catch (Exception ex)
         {
             return ErrorResponse(ex);
         }
     }
+    public async Task<ResultValue> Restore(int userId, int groupId)
+    {
+        try
+        {
+            if (!await _groupRepository.UserHasManagerPermissionInGroup(userId, groupId))
+                return ErrorResponse("Você não tem permissão para excluir este grupo.");
 
+            var group = await _groupRepository.GetById(groupId);
+            if (group == null) return ErrorResponse(Message.NotFound);
+
+            if (group.BusinessEntityId != 0)
+            {
+                var entity = await _businessEntityRepository.GetById(group.BusinessEntityId);
+                if (entity != null)
+                    await _businessEntityRepository.Restore(entity.Id);
+            }
+
+            await _groupRepository.Restore(group.Id);
+
+            return SuccessResponse(Message.RestoreSuccess);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
     #endregion
 
     #region Helpers

@@ -22,6 +22,7 @@ namespace _4_InfraData._1_Repositories
         public async Task<List<GroupModel>> GetAll()
         {
             return await _context.Groups
+                .Where(a => a.Deleted == false)
                  .Include(g => g.BusinessEntity)
                  .Include(g => g.Companies)
                    .ThenInclude(c => c.SubCompanies)
@@ -40,22 +41,23 @@ namespace _4_InfraData._1_Repositories
         public async Task<GroupModel> GetByIdByCompanies(int id)
         {
             return await _context.Groups
-                .Where(g => g.Id == id)
+                .Where(g => g.Id == id && !g.Deleted)
                 .Include(g => g.BusinessEntity)
-                .Include(g => g.Companies)
+                .Include(g => g.Companies.Where(c => !c.Deleted)) // só Companies não deletadas
                     .ThenInclude(c => c.BusinessEntity)
-                .Include(g => g.Companies)
+                .Include(g => g.Companies.Where(c => !c.Deleted)) // precisa repetir para manter o filtro
                     .ThenInclude(c => c.CompanyUsers)
-                        .ThenInclude(cu => cu.Permission) // <- pega a permissão da empresa
+                        .ThenInclude(cu => cu.Permission)
                 .FirstOrDefaultAsync();
         }
+
         public async Task<PaginatedResult<CompanyModel>> GetCompaniesByUserIdPaginatedAsync(int userId, int groupId, int skip, int take)
         {
             var group = await _context.Groups
-                .Where(g => g.Id == groupId)
-                .Include(g => g.Companies)
+                .Where(g => g.Id == groupId && !g.Deleted)
+                .Include(g => g.Companies.Where(c => !c.Deleted)) // Só companies ativas
                     .ThenInclude(c => c.BusinessEntity)
-                .Include(g => g.Companies)
+                .Include(g => g.Companies.Where(c => !c.Deleted)) // Precisa repetir o filtro
                     .ThenInclude(c => c.CompanyUsers)
                 .FirstOrDefaultAsync();
 
@@ -90,6 +92,7 @@ namespace _4_InfraData._1_Repositories
         public async Task<GroupModel> GetByCompanyId(int companyId)
         {
             return await _context.Groups
+                .Where(a => a.Deleted == false)
                 //    .Where(g => g.Companies.Any(c => c.Id == companyId))
                 //  .Include(g => g.Companies)
                 .FirstOrDefaultAsync();
@@ -123,10 +126,21 @@ namespace _4_InfraData._1_Repositories
             var group = await GetById(id);
             if (group != null)
             {
-                _context.Groups.Remove(group);
+                group.Deleted = true;
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task Restore(int id)
+        {
+            var group = await GetById(id);
+            if (group != null)
+            {
+                group.Deleted = false;
+                await _context.SaveChangesAsync();
+            }
+        }
+
         public async Task<List<GroupModel>> GetGroupsByUserId(int userId)
         {
             // Busca todos os GroupIds distintos onde o usuário está vinculado em CompanyUsers
@@ -136,21 +150,47 @@ namespace _4_InfraData._1_Repositories
                 .Distinct()
                 .ToListAsync();
 
-            // Busca todos os grupos com os includes, baseado nos IDs únicos encontrados
+            // Busca todos os grupos ativos com includes
             var groups = await _context.Groups
-                .Where(g => groupIds.Contains(g.Id))
+                .Where(g => groupIds.Contains(g.Id) && !g.Deleted) // Só grupos ativos
                 .Include(g => g.BusinessEntity)
-                .Include(g => g.Companies)
+                .Include(g => g.Companies.Where(c => !c.Deleted)) // Só Companies ativas
                     .ThenInclude(c => c.CompanyUsers)
                         .ThenInclude(cu => cu.Permission)
-                .Include(g => g.Companies)
-                    .ThenInclude(c => c.SubCompanies)
+                .Include(g => g.Companies.Where(c => !c.Deleted)) // Precisa repetir pra continuar o filtro
+                    .ThenInclude(c => c.SubCompanies.Where(sc => !sc.Deleted)) // Só SubCompanies ativas
                         .ThenInclude(sc => sc.CompanyUsers)
                             .ThenInclude(cu => cu.Permission)
                 .ToListAsync();
 
             return groups;
         }
+
+        public async Task<List<GroupModel>> GetGroupsDeletedByUserId(int userId)
+        {
+            // Busca todos os GroupIds distintos onde o usuário está vinculado em CompanyUsers
+            var groupIds = await _context.CompanyUsers
+                .Where(cu => cu.UserId == userId)
+                .Select(cu => cu.GroupId)
+                .Distinct()
+                .ToListAsync();
+
+            // Busca todos os grupos ativos com includes
+            var groups = await _context.Groups
+                .Where(g => groupIds.Contains(g.Id) && g.Deleted) // Só grupos ativos
+                .Include(g => g.BusinessEntity)
+                .Include(g => g.Companies.Where(c => c.Deleted)) // Só Companies ativas
+                    .ThenInclude(c => c.CompanyUsers)
+                        .ThenInclude(cu => cu.Permission)
+                .Include(g => g.Companies.Where(c => c.Deleted)) // Precisa repetir pra continuar o filtro
+                    .ThenInclude(c => c.SubCompanies.Where(sc => sc.Deleted)) // Só SubCompanies ativas
+                        .ThenInclude(sc => sc.CompanyUsers)
+                            .ThenInclude(cu => cu.Permission)
+                .ToListAsync();
+
+            return groups;
+        }
+
         public async Task<GroupModel?> GetGroupWithCompaniesById(int groupId, int userId)
         {
             var isUserInGroup = await _context.CompanyUsers
@@ -160,23 +200,24 @@ namespace _4_InfraData._1_Repositories
                 return null;
 
             var group = await _context.Groups
-                .Where(g => g.Id == groupId)
+                .Where(g => g.Id == groupId && !g.Deleted) // Filtra grupo ativo
                 .Include(g => g.BusinessEntity)
                 .Include(g => g.CompanyUsers)
                     .ThenInclude(cu => cu.Permission)
-                .Include(g => g.Companies)
+                .Include(g => g.Companies.Where(c => !c.Deleted)) // Só Companies ativas
                     .ThenInclude(c => c.CompanyUsers)
                         .ThenInclude(cu => cu.Permission)
-                         .Include(g => g.Companies)
+                .Include(g => g.Companies.Where(c => !c.Deleted)) // Repetição para pegar BusinessEntity das Companies
                     .ThenInclude(c => c.BusinessEntity)
-                .Include(g => g.Companies)
-                    .ThenInclude(c => c.SubCompanies)
+                .Include(g => g.Companies.Where(c => !c.Deleted)) // Repetição para SubCompanies
+                    .ThenInclude(c => c.SubCompanies.Where(sc => !sc.Deleted)) // Só SubCompanies ativas
                         .ThenInclude(sc => sc.CompanyUsers)
                             .ThenInclude(cu => cu.Permission)
                 .FirstOrDefaultAsync();
 
             return group;
         }
+
 
         public async Task<bool> UserHasManagerPermissionInGroup(int userId, int groupId)
         {

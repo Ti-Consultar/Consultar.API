@@ -10,5 +10,6 @@
     Uf CHAR(2) NULL,
     Cep CHAR(8) NULL,
     Telefone NVARCHAR(20) NULL,
-    Email NVARCHAR(255) NULL
+    Email NVARCHAR(255) NULL,
+    Deleted bit DEFAULT 0 NOT NULL,
 );

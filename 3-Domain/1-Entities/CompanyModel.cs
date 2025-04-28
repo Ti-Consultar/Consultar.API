@@ -17,6 +17,7 @@ namespace _3_Domain._1_Entities
         public int Id { get; set; }
         public string Name { get; set; }
         public DateTime DateCreate { get; set; }
+        public bool Deleted { get; set; } = false;
         public int BusinessEntityId { get; set; }
         public BusinessEntity BusinessEntity { get; set; }
         public int GroupId { get; set; }

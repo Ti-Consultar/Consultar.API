@@ -6,6 +6,8 @@ namespace _2___Application.Base
     {
 
         public const string Success = "Inserido com Sucesso";
+        public const string DeletedSuccess = "Removido com Sucesso";
+        public const string RestoreSuccess = "Restaurado com Sucesso";
         public const string DeleteSuccess = "Removido com Sucesso";
         public const string MessageError = "Dados Inválidos";
         public const string NotFound = "Não encontrado";

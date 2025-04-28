@@ -22,6 +22,7 @@ namespace _3_Domain._1_Entities
 
         public string Telefone { get; set; }
         public string Email { get; set; }
+        public bool Deleted { get; set; }
     }
 
 }

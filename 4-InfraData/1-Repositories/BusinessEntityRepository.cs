@@ -36,11 +36,23 @@ namespace _4_InfraData._1_Repositories
             var entity = await _context.BusinessEntity.FindAsync(id);
             if (entity != null)
             {
-                _context.BusinessEntity.Remove(entity);
+                entity.Deleted = true; // Marcar como deletado
+
+                _context.BusinessEntity.Update(entity);
                 await _context.SaveChangesAsync();
             }
         }
+        public async Task Restore(int id)
+        {
+            var entity = await _context.BusinessEntity.FindAsync(id);
+            if (entity != null)
+            {
+                entity.Deleted = false; 
 
+                _context.BusinessEntity.Update(entity);
+                await _context.SaveChangesAsync();
+            }
+        }
         public async Task<BusinessEntity> GetById(int id)
         {
             return await _context.BusinessEntity
@@ -51,6 +63,15 @@ namespace _4_InfraData._1_Repositories
         public async Task<List<BusinessEntity>> GetAllAsync()
         {
             return await _context.BusinessEntity
+                .Where(a => a.Deleted == false)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<List<BusinessEntity>> GetAllDeletedAsync()
+        {
+            return await _context.BusinessEntity
+                .Where(a => a.Deleted == true)
                 .AsNoTracking()
                 .ToListAsync();
         }

@@ -46,8 +46,8 @@ namespace _5_API.Controllers
             }
         }
 
-        [HttpDelete]
-        [Route("user/{userId}/group/{id}")]
+        [HttpPatch]
+        [Route("user/{userId}/group/{id}/delete")]
         public async Task<IActionResult> DeleteGroup(int userId, int id)
         {
             try
@@ -61,7 +61,20 @@ namespace _5_API.Controllers
             }
         }
 
-      
+        [HttpPatch]
+        [Route("user/{userId}/group/{id}/restore")]
+        public async Task<IActionResult> RestoreGroup(int userId, int id)
+        {
+            try
+            {
+                var result = await _groupService.Restore(userId, id);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
         //[HttpGet]
         //[Route("paginated/user/{userId}")]
@@ -114,6 +127,21 @@ namespace _5_API.Controllers
             try
             {
                 var result = await _groupService.GetGroupsWithCompaniesByUserId(userId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        [Route("user/{userId}/groups/deleted")]
+        public async Task<IActionResult> GetGroupsDeletedWithCompaniesByUserId(int userId)
+        {
+            try
+            {
+                var result = await _groupService.GetGroupsDeletedWithCompaniesByUserId(userId);
                 return Ok(result);
             }
             catch (Exception ex)
