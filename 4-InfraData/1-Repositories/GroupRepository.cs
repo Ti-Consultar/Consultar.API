@@ -143,17 +143,14 @@ namespace _4_InfraData._1_Repositories
             if (group == null)
                 throw new Exception("Grupo não encontrado.");
 
-            // Marca o Group como deletado
             group.Deleted = true;
 
-            // Marca todas as Companies como deletadas
             if (group.Companies != null)
             {
                 foreach (var company in group.Companies)
                 {
                     company.Deleted = true;
 
-                    // Marca todas as SubCompanies da Company como deletadas
                     if (company.SubCompanies != null)
                     {
                         foreach (var subCompany in company.SubCompanies)
@@ -167,8 +164,7 @@ namespace _4_InfraData._1_Repositories
             await _context.SaveChangesAsync();
         }
 
-
-        public async Task Delete(int id)
+        public async Task Restore(int id)
         {
             var group = await _context.Groups
                 .Include(g => g.Companies)
@@ -178,22 +174,19 @@ namespace _4_InfraData._1_Repositories
             if (group == null)
                 throw new Exception("Grupo não encontrado.");
 
-            // Marca o Group como deletado
-            group.Deleted = true;
+            group.Deleted = false;
 
-            // Marca todas as Companies como deletadas
             if (group.Companies != null)
             {
                 foreach (var company in group.Companies)
                 {
-                    company.Deleted = true;
+                    company.Deleted = false;
 
-                    // Marca todas as SubCompanies da Company como deletadas
                     if (company.SubCompanies != null)
                     {
                         foreach (var subCompany in company.SubCompanies)
                         {
-                            subCompany.Deleted = true;
+                            subCompany.Deleted = false;
                         }
                     }
                 }
@@ -201,6 +194,7 @@ namespace _4_InfraData._1_Repositories
 
             await _context.SaveChangesAsync();
         }
+
 
 
         public async Task<List<GroupModel>> GetGroupsByUserId(int userId)
