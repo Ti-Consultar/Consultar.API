@@ -49,7 +49,7 @@ namespace _5_API.Controllers
             }
         }
 
-        [HttpDelete]
+        [HttpPatch]
         [Route("{subCompanyId}/user/{userId}/company/{id}")]
         public async Task<IActionResult> DeleteCompany(int userId, int id, int subCompanyId)
         {
@@ -65,6 +65,21 @@ namespace _5_API.Controllers
             }
         }
 
+        [HttpPatch]
+        [Route("{subCompanyId}/user/{userId}/company/{id}/restore")]
+        public async Task<IActionResult> RestoreSubCompany(int userId, int id, int subCompanyId)
+        {
+            try
+            {
+
+                var company = await _companyService.RestoreSubCompany(userId, id, subCompanyId);
+                return Ok(company);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
         [HttpGet]
         [Route("user/{userId}")]
         public async Task<IActionResult> GetSubCompaniesByUserId(int userId)
@@ -73,6 +88,21 @@ namespace _5_API.Controllers
             {
 
                 var subCompanies = await _companyService.GetSubCompaniesByUserId(userId);
+                return Ok(subCompanies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        [HttpGet]
+        [Route("user/{userId}/deleted")]
+        public async Task<IActionResult> GetSubCompaniesDeletedByUserId(int userId)
+        {
+            try
+            {
+
+                var subCompanies = await _companyService.GetSubCompaniesDeletedByUserId(userId);
                 return Ok(subCompanies);
             }
             catch (Exception ex)
@@ -103,6 +133,21 @@ namespace _5_API.Controllers
             {
 
                 var companies = await _companyService.GetSubCompaniesByUserIdPaginated(userId,companyId ,skip, take);
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        [HttpGet]
+        [Route("paginated/user/{userId}/company/{companyId}/deleted")]
+        public async Task<IActionResult> GetSubCompaniesDeletedByUserIdPaginated(int userId, int companyId, int skip, int take)
+        {
+            try
+            {
+
+                var companies = await _companyService.GetSubCompaniesDeletedByUserIdPaginated(userId, companyId, skip, take);
                 return Ok(companies);
             }
             catch (Exception ex)

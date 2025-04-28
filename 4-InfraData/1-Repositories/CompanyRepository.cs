@@ -36,7 +36,19 @@ namespace _4_InfraData._1_Repositories
         {
             var company = await _context.Companies.FindAsync(id);
 
-            _context.Companies.Remove(company);
+            company.Deleted = true;
+
+            _context.Companies.Update(company);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RestoreCompany(int id)
+        {
+            var company = await _context.Companies.FindAsync(id);
+
+            company.Deleted = false;
+
+            _context.Companies.Update(company);
             await _context.SaveChangesAsync();
         }
         public async Task DeleteSubCompany(int companyId, int subcompanyId)
@@ -44,24 +56,49 @@ namespace _4_InfraData._1_Repositories
             var subCompany = await _context.SubCompanies
                 .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.Id == subcompanyId);
 
-            _context.SubCompanies.Remove(subCompany);
+            subCompany.Deleted = true;
+
+            _context.SubCompanies.Update(subCompany);
             await _context.SaveChangesAsync();
         }
+        public async Task RestoreSubCompany(int companyId, int subcompanyId)
+        {
+            var subCompany = await _context.SubCompanies
+                .FirstOrDefaultAsync(a => a.CompanyId == companyId && a.Id == subcompanyId);
 
+            subCompany.Deleted = false;
+
+            _context.SubCompanies.Update(subCompany);
+            await _context.SaveChangesAsync();
+        }
         public async Task<List<SubCompanyModel>> GetSubCompaniesByUserId(int userId)
         {
             var subCompanies = await _context.CompanyUsers
                 .Where(cu => cu.UserId == userId)
                 .Include(cu => cu.Permission)
                 .Include(cu => cu.Company)
-                .ThenInclude(c => c.SubCompanies)
+                    .ThenInclude(c => c.SubCompanies)
                 .SelectMany(cu => cu.Company.SubCompanies)
-                 .Distinct()
+                .Where(sc => !sc.Deleted) // Filtra SubCompanies ativas
+                .Distinct()
                 .ToListAsync();
 
             return subCompanies;
         }
+        public async Task<List<SubCompanyModel>> GetSubCompaniesDeletedByUserId(int userId)
+        {
+            var subCompanies = await _context.CompanyUsers
+                .Where(cu => cu.UserId == userId)
+                .Include(cu => cu.Permission)
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.SubCompanies)
+                .SelectMany(cu => cu.Company.SubCompanies)
+                .Where(sc => sc.Deleted) // Filtra SubCompanies Inativas
+                .Distinct()
+                .ToListAsync();
 
+            return subCompanies;
+        }
 
         public async Task AddSubCompany(int companyId, SubCompanyModel subCompanyModel)
         {
@@ -104,36 +141,74 @@ namespace _4_InfraData._1_Repositories
         public async Task<List<CompanyModel>> GetCompaniesByUserId(int userId, int groupId)
         {
             var companies = await _context.CompanyUsers
-     .Where(cu => cu.UserId == userId && cu.GroupId == groupId)
-     .Include(cu => cu.Company)
-         .ThenInclude(c => c.CompanyUsers)
-         .ThenInclude(cu => cu.Permission)
-     .Include(cu => cu.Company)
-         .ThenInclude(c => c.SubCompanies
-             .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == userId))) // Filtra subempresas no banco
-     .Select(cu => cu.Company)
-     .Distinct()
-     .ToListAsync();
+                .Where(cu => cu.UserId == userId && cu.GroupId == groupId)
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.CompanyUsers)
+                        .ThenInclude(cu => cu.Permission)
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.SubCompanies
+                        .Where(sc => !sc.Deleted && sc.CompanyUsers.Any(cu => cu.UserId == userId))) // Filtra subempresas ativas e do usuário
+                .Select(cu => cu.Company)
+                .Where(c => !c.Deleted) // Filtra companies ativas
+                .Distinct()
+                .ToListAsync();
 
             return companies;
         }
+        public async Task<List<CompanyModel>> GetDeletedCompaniesByUserId(int userId, int groupId)
+        {
+            var companies = await _context.CompanyUsers
+                .Where(cu => cu.UserId == userId && cu.GroupId == groupId)
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.CompanyUsers)
+                        .ThenInclude(cu => cu.Permission)
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.SubCompanies
+                        .Where(sc => sc.Deleted && sc.CompanyUsers.Any(cu => cu.UserId == userId))) // SubCompanies DELETADAS
+                .Select(cu => cu.Company)
+                .Where(c => c.Deleted) // Companies DELETADAS
+                .Distinct()
+                .ToListAsync();
+
+            return companies;
+        }
+
 
         public async Task<CompanyModel> GetCompanyByUserId(int id, int userId, int groupId)
         {
-            var companies = await _context.CompanyUsers
-     .Where(cu => cu.UserId == userId && cu.GroupId == groupId && cu.Id == id)
-     .Include(cu => cu.Company)
-         .ThenInclude(c => c.CompanyUsers)
-         .ThenInclude(cu => cu.Permission)
-     .Include(cu => cu.Company)
-         .ThenInclude(c => c.SubCompanies
-             .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == userId))) // Filtra subempresas no banco
-     .Select(cu => cu.Company)
-     .Distinct()
-     .FirstOrDefaultAsync();
+            var company = await _context.CompanyUsers
+                .Where(cu => cu.UserId == userId && cu.GroupId == groupId && cu.Id == id)
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.CompanyUsers)
+                        .ThenInclude(cu => cu.Permission)
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.SubCompanies
+                        .Where(sc => !sc.Deleted && sc.CompanyUsers.Any(cu => cu.UserId == userId))) // Filtra SubCompanies ativas
+                .Select(cu => cu.Company)
+                .Where(c => !c.Deleted) // Filtra Companies ativas
+                .Distinct()
+                .FirstOrDefaultAsync();
 
-            return companies;
+            return company;
         }
+        public async Task<CompanyModel> GetDeletedCompanyByUserId(int id, int userId, int groupId)
+        {
+            var company = await _context.CompanyUsers
+                .Where(cu => cu.UserId == userId && cu.GroupId == groupId && cu.Id == id)
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.CompanyUsers)
+                        .ThenInclude(cu => cu.Permission)
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.SubCompanies
+                        .Where(sc => sc.Deleted && sc.CompanyUsers.Any(cu => cu.UserId == userId))) // Filtra SubCompanies deletadas
+                .Select(cu => cu.Company)
+                .Where(c => c.Deleted) // Filtra Companies deletadas
+                .Distinct()
+                .FirstOrDefaultAsync();
+
+            return company;
+        }
+
         public async Task<bool> ExistsEditCompanyUser(int userId, int companyId, int groupId)
         {
             return await _context.CompanyUsers
@@ -174,6 +249,24 @@ namespace _4_InfraData._1_Repositories
                 .Include(cu => cu.Company)
                     .ThenInclude(c => c.SubCompanies) // Inclui as subempresas
                 .Select(cu => cu.Company)
+                .Where(c => !c.Deleted) // Filtra Companies ativas
+                .Skip(skip)  // Pula os primeiros 'skip' registros
+                .Take(take)  // Limita os resultados a 'take' registros
+                .ToListAsync();
+
+            return companies;
+        }
+
+        public async Task<List<CompanyModel>> GetDeletedCompaniesByUserIdPaginated(int userId, int skip, int take)
+        {
+            var companies = await _context.CompanyUsers
+                .Where(cu => cu.UserId == userId)
+                .Include(cu => cu.Permission)
+                .Include(cu => cu.Company)
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.SubCompanies) // Inclui as subempresas
+                .Select(cu => cu.Company)
+                .Where(c => c.Deleted) // Filtra Companies deletadas
                 .Skip(skip)  // Pula os primeiros 'skip' registros
                 .Take(take)  // Limita os resultados a 'take' registros
                 .ToListAsync();

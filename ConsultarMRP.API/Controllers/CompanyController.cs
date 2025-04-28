@@ -51,7 +51,7 @@ namespace _5_API.Controllers
             }
         }
 
-        [HttpDelete]
+        [HttpPatch]
         [Route("user/{userId}/group/{groupId}/company/{id}")]
         public async Task<IActionResult> DeleteCompany(int userId, int id, int groupId)
         {
@@ -66,7 +66,21 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        [HttpPatch]
+        [Route("user/{userId}/group/{groupId}/company/{id}/restore")]
+        public async Task<IActionResult> RestoreCompany(int userId, int id, int groupId)
+        {
+            try
+            {
 
+                var company = await _companyService.RestoreCompany(userId, id, groupId);
+                return Ok(company);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
         [HttpGet]
         [Route("user/{userId}/group/{groupId}")]
@@ -83,7 +97,21 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });  
             }
         }
+        [HttpGet]
+        [Route("user/{userId}/group/{groupId}/deleted")]
+        public async Task<IActionResult> GetByIdByCompaniesDeleted(int userId, int groupId)
+        {
+            try
+            {
 
+                var companies = await _companyService.GetByIdByCompaniesDeleted(userId, groupId);
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
         [HttpGet]
         [Route("{id}/user/{userId}/group/{groupId}")]
         public async Task<IActionResult> GetCompanyById(int id,int userId, int groupId)
@@ -116,7 +144,21 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message }); 
             }
         }
+        [HttpGet]
+        [Route("paginated/user/{userId}/group/{groupId}/deleted")]
+        public async Task<IActionResult> GetByIdByCompaniesDeletedPaginated(int userId, int groupId, int skip, int take)
+        {
+            try
+            {
 
+                var companies = await _companyService.GetByIdByCompaniesDeletedPaginated(userId, groupId, skip, take);
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
         [HttpPost]
         [Route("bond")]
         public async Task<IActionResult> CreateUserCompany([FromBody] CreateCompanyUserDto dto)

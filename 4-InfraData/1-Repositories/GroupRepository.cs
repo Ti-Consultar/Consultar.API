@@ -50,6 +50,18 @@ namespace _4_InfraData._1_Repositories
                         .ThenInclude(cu => cu.Permission)
                 .FirstOrDefaultAsync();
         }
+        public async Task<GroupModel> GetByIdByCompaniesDeleted(int id)
+        {
+            return await _context.Groups
+                .Where(g => g.Id == id)
+                .Include(g => g.BusinessEntity)
+                .Include(g => g.Companies.Where(c => c.Deleted)) // Apenas Companies deletadas
+                    .ThenInclude(c => c.BusinessEntity)
+                .Include(g => g.Companies.Where(c => c.Deleted)) // Repetir para manter o filtro
+                    .ThenInclude(c => c.CompanyUsers)
+                        .ThenInclude(cu => cu.Permission)
+                .FirstOrDefaultAsync();
+        }
 
         public async Task<PaginatedResult<CompanyModel>> GetCompaniesByUserIdPaginatedAsync(int userId, int groupId, int skip, int take)
         {
