@@ -40,16 +40,25 @@ namespace _4_InfraData._1_Repositories
 
         public async Task<GroupModel> GetByIdByCompanies(int id)
         {
-            return await _context.Groups
+            var group = await _context.Groups
                 .Where(g => g.Id == id && !g.Deleted)
                 .Include(g => g.BusinessEntity)
-                .Include(g => g.Companies) // só Companies não deletadas
+                .Include(g => g.Companies)
                     .ThenInclude(c => c.BusinessEntity)
-                .Include(g => g.Companies )// precisa repetir para manter o filtro
+                .Include(g => g.Companies)
                     .ThenInclude(c => c.CompanyUsers)
                         .ThenInclude(cu => cu.Permission)
                 .FirstOrDefaultAsync();
+
+            if (group == null)
+                return null;
+
+            // Remove as Companies deletadas
+            group.Companies = group.Companies.Where(c => !c.Deleted).ToList();
+
+            return group;
         }
+
         public async Task<GroupModel> GetByIdByCompaniesDeleted(int id)
         {
             return await _context.Groups
