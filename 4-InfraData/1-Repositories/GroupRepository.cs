@@ -43,9 +43,9 @@ namespace _4_InfraData._1_Repositories
             return await _context.Groups
                 .Where(g => g.Id == id && !g.Deleted)
                 .Include(g => g.BusinessEntity)
-                .Include(g => g.Companies.Where(c => !c.Deleted)) // só Companies não deletadas
+                .Include(g => g.Companies) // só Companies não deletadas
                     .ThenInclude(c => c.BusinessEntity)
-                .Include(g => g.Companies.Where(c => !c.Deleted)) // precisa repetir para manter o filtro
+                .Include(g => g.Companies )// precisa repetir para manter o filtro
                     .ThenInclude(c => c.CompanyUsers)
                         .ThenInclude(cu => cu.Permission)
                 .FirstOrDefaultAsync();
