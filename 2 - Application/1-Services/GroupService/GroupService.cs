@@ -132,7 +132,7 @@ public class GroupService : BaseService
             if (user == null) return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
             var groups = await _groupRepository.GetGroupsByUserId(userId);
-            if (groups == null || !groups.Any()) return ErrorResponse(Message.NotFound);
+            if (groups == null || !groups.Any()) return SuccessResponse(new List<ResultValue>());
 
             var result = groups.Select(g => MapToGroupWithCompaniesDto(g, userId, user.Name)).ToList();
 
