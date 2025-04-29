@@ -209,7 +209,7 @@ namespace _4_InfraData._1_Repositories
         public async Task<CompanyModel> GetCompanyByUserId(int id, int userId, int groupId)
         {
             var company = await _context.CompanyUsers
-                .Where(cu => cu.UserId == userId && cu.GroupId == groupId && cu.Id == id)
+                .Where(cu => cu.UserId == userId && cu.GroupId == groupId && cu.CompanyId == id)
                 .Include(cu => cu.Company)
                     .ThenInclude(c => c.CompanyUsers)
                         .ThenInclude(cu => cu.Permission)

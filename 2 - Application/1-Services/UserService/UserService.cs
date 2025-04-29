@@ -62,6 +62,8 @@ namespace _2___Application._1_Services.User
             }
         }
 
+
+
         public async Task<object> GetUser(int userId)
         {
             try

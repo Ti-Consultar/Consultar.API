@@ -125,7 +125,7 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-    public async Task<ResultValue> DeleteCompany(int id, int userId, int groupId)
+    public async Task<ResultValue> DeleteCompany(int userId, int id, int groupId)
     {
         try
         {
@@ -152,7 +152,7 @@ public class CompanyService : BaseService
         }
     }
 
-    public async Task<ResultValue> RestoreCompany(int id, int userId, int groupId)
+    public async Task<ResultValue> RestoreCompany(int userId, int id, int groupId)
     {
         try
         {
