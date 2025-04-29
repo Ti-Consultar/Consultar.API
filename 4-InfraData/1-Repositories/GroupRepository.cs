@@ -1,6 +1,7 @@
 ﻿using _3_Domain._1_Entities;
 using _4_InfraData._1_Context;
 using _4_InfraData._3_Utils;
+using _4_InfraData._6_Dto_sSQL;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -59,18 +60,33 @@ namespace _4_InfraData._1_Repositories
             return group;
         }
 
-        public async Task<GroupModel> GetByIdByCompaniesDeleted(int id)
+
+
+        public async Task<List<GroupCompanyDeletedDto>> GetByIdByCompaniesDeleted(int groupId)
         {
-            return await _context.Groups
-                .Where(g => g.Id == id)
-                .Include(g => g.BusinessEntity)
-                .Include(g => g.Companies.Where(c => c.Deleted)) // Apenas Companies deletadas
-                    .ThenInclude(c => c.BusinessEntity)
-                .Include(g => g.Companies.Where(c => c.Deleted)) // Repetir para manter o filtro
-                    .ThenInclude(c => c.CompanyUsers)
-                        .ThenInclude(cu => cu.Permission)
-                .FirstOrDefaultAsync();
+            var sql = @"
+            SELECT 
+                g.Id AS GroupId,
+                g.Name AS GroupName,
+                c.Id AS CompanyId,
+                be.NomeFantasia AS CompanyName,
+                be.Cnpj AS CompanyCnpj,
+                cu.UserId,
+                p.Id AS PermissionId,
+                p.Name AS PermissionName
+            FROM Groups g
+            INNER JOIN CompanyUsers cu ON cu.GroupId = g.Id
+            INNER JOIN Companies c ON c.Id = cu.CompanyId
+            INNER JOIN BusinessEntity be ON be.Id = c.BusinessEntityId
+            LEFT JOIN Permissions p ON p.Id = cu.PermissionId
+            WHERE g.Id = {0}
+              AND c.Deleted = 1";
+
+            return await _context.Set<GroupCompanyDeletedDto>()
+                .FromSqlRaw(sql, groupId)
+                .ToListAsync();
         }
+
 
         public async Task<PaginatedResult<CompanyModel>> GetCompaniesByUserIdPaginatedAsync(int userId, int groupId, int skip, int take)
         {

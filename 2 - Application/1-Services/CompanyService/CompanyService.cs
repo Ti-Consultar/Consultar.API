@@ -648,89 +648,58 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-    public async Task<ResultValue> GetByIdByCompaniesDeleted(int userId, int groupId)
+   public async Task<ResultValue> GetByIdByCompaniesDeleted(int userId, int groupId)
+{
+    try
     {
-        try
-        {
-            var user = await _userRepository.GetByUserId(userId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+        var user = await _userRepository.GetByUserId(userId);
+        if (user == null)
+            return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
-            var group = await _groupRepository.GetByIdByCompaniesDeleted(groupId);
-            if (group == null)
-                return ErrorResponse(Message.NotFound);
+        var dtos = await _groupRepository.GetByIdByCompaniesDeleted(groupId);
+        if (dtos == null || !dtos.Any())
+            return ErrorResponse(Message.NotFound);
 
-            var companies = group.Companies?
-                .Where(c => c.CompanyUsers.Any(cu => cu.UserId == userId))
-                .Where(a => a.Deleted == true)
-                .ToList();
-
-            var companyDtos = companies?.Select(company => new CompanyUsersimpleDto
+        var companies = dtos
+            .Where(c => c.UserId == userId) // filtra as empresas em que o user aparece
+            .GroupBy(c => c.CompanyId)
+            .Select(g => new CompanyUsersimpleDto
             {
-                CompanyId = company.Id,
-                CompanyName = company.Name,
-                DateCreate = company.DateCreate,
-
-                BusinessEntity = company.BusinessEntity == null ? null : new BusinessEntityDto
+                CompanyId = g.Key,
+                CompanyName = g.First().CompanyName,
+                BusinessEntity = new BusinessEntityDto
                 {
-                    Id = company.BusinessEntity.Id,
-                    NomeFantasia = company.BusinessEntity.NomeFantasia,
-                    RazaoSocial = company.BusinessEntity.RazaoSocial,
-                    Cnpj = company.BusinessEntity.Cnpj,
-                    Logradouro = company.BusinessEntity.Logradouro,
-                    Numero = company.BusinessEntity.Numero,
-                    Bairro = company.BusinessEntity.Bairro,
-                    Municipio = company.BusinessEntity.Municipio,
-                    Uf = company.BusinessEntity.Uf,
-                    Cep = company.BusinessEntity.Cep,
-                    Telefone = company.BusinessEntity.Telefone,
-                    Email = company.BusinessEntity.Email
+                    Cnpj = g.First().CompanyCnpj,
+                    NomeFantasia = g.First().CompanyName
                 },
-
-                Permission = company.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
+                Permission = g.First().PermissionId != null
                     ? new PermissionResponse
                     {
-                        Id = company.CompanyUsers.First(cu => cu.UserId == userId).Permission.Id,
-                        Name = company.CompanyUsers.First(cu => cu.UserId == userId).Permission.Name
+                        Id = g.First().PermissionId.Value,
+                        Name = g.First().PermissionName
                     }
-                    : null,
+                    : null
+            })
+            .ToList();
 
-                SubCompanies = company.SubCompanies?
-                    .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == userId))
-                    .Select(subCompany => new SubCompanyUsersimpleDto
-                    {
-                        SubCompanyId = subCompany.Id,
-                        SubCompanyName = subCompany.Name,
-                        CompanyId = company.Id,
-                        DateCreate = subCompany.DateCreate,
-                        Permission = subCompany.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
-                            ? new PermissionResponse
-                            {
-                                Id = subCompany.CompanyUsers.First(cu => cu.UserId == userId).Permission.Id,
-                                Name = subCompany.CompanyUsers.First(cu => cu.UserId == userId).Permission.Name
-                            }
-                            : null
-                    }).ToList()
-            }).ToList();
-
-            var groupDto = new GroupWithCompaniesDto
-            {
-                GroupId = group.Id,
-                GroupName = group.Name,
-                DateCreate = group.DateCreate,
-                UserId = userId,
-                UserName = user.Name,
-                Companies = companyDtos ?? new List<CompanyUsersimpleDto>()
-
-            };
-
-            return SuccessResponse(groupDto);
-        }
-        catch (Exception ex)
+        var groupDto = new GroupWithCompaniesDto
         {
-            return ErrorResponse(ex);
-        }
+            GroupId = dtos.First().GroupId,
+            GroupName = dtos.First().GroupName,
+            DateCreate = DateTime.Now, // não vem na query, defina conforme necessidade
+            UserId = userId,
+            UserName = user.Name,
+            Companies = companies
+        };
+
+        return SuccessResponse(groupDto);
     }
+    catch (Exception ex)
+    {
+        return ErrorResponse(ex);
+    }
+}
+
 
     public async Task<ResultValue> GetCompaniesByUserIdPaginated(int userId, int groupId, int skip = 0, int take = 10)
     {
