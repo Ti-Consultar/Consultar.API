@@ -50,7 +50,7 @@ namespace _5_API.Controllers
         }
 
         [HttpPatch]
-        [Route("{subCompanyId}/user/{userId}/company/{id}")]
+        [Route("{subCompanyId}/user/{userId}/company/{id}/delete")]
         public async Task<IActionResult> DeleteCompany(int userId, int id, int subCompanyId)
         {
             try
