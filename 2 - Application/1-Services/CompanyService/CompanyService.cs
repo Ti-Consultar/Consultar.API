@@ -125,7 +125,7 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-    public async Task<ResultValue> DeleteCompany(int userId, int id, int groupId)
+    public async Task<ResultValue> DeleteCompanies(int userId, List<int> companyIds, int groupId)
     {
         try
         {
@@ -133,24 +133,46 @@ public class CompanyService : BaseService
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
-            // Verifica se o usuário tem permissão para excluir a empresa
-            var hasPermission = await _companyRepository.ExistsCompanyUser(userId, id, groupId);
-            if (!hasPermission)
-                return ErrorResponse(Message.Unauthorized);
+            var notAuthorizedIds = new List<int>();
+            var notFoundIds = new List<int>();
+            var deletedIds = new List<int>();
 
-            var company = await _companyRepository.GetCompanyByUserId(id, userId, groupId);
-            if (company == null)
-                return SuccessResponse(new List<ResultValue>());
+            foreach (var companyId in companyIds)
+            {
+                // Verifica permissão do usuário
+                var hasPermission = await _companyRepository.ExistsCompanyUser(userId, companyId, groupId);
+                if (!hasPermission)
+                {
+                    notAuthorizedIds.Add(companyId);
+                    continue;
+                }
 
-            await _companyRepository.DeleteCompany(company.Id);
+                var company = await _companyRepository.GetCompanyByUserId(companyId, userId, groupId);
+                if (company == null)
+                {
+                    notFoundIds.Add(companyId);
+                    continue;
+                }
 
-            return SuccessResponse(Message.DeletedSuccess);
+                await _companyRepository.DeleteCompany(company.Id);
+                deletedIds.Add(company.Id);
+            }
+
+            // Retorno detalhado com o resultado das operações
+            return SuccessResponse(new
+            {
+                Deleted = deletedIds,
+                NotFound = notFoundIds,
+                Unauthorized = notAuthorizedIds,
+                Message = Message.DeletedSuccess
+            });
         }
         catch (Exception ex)
         {
             return ErrorResponse(ex);
         }
     }
+
 
     public async Task<ResultValue> RestoreCompany(int userId, int id, int groupId)
     {

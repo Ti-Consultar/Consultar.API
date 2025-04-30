@@ -50,22 +50,21 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-
         [HttpPatch]
-        [Route("user/{userId}/group/{groupId}/company/{id}/delete")]
-        public async Task<IActionResult> DeleteCompany(int userId, int id, int groupId)
+        [Route("user/{userId}/group/{groupId}/companies/delete")]
+        public async Task<IActionResult> DeleteCompanies(int userId, int groupId, [FromBody] List<int> companyIds)
         {
             try
             {
-
-                var company = await _companyService.DeleteCompany(userId, id, groupId);
-                return Ok(company);
+                var result = await _companyService.DeleteCompanies(userId, companyIds, groupId);
+                return Ok(result);
             }
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
         }
+
         [HttpPatch]
         [Route("user/{userId}/group/{groupId}/company/{id}/restore")]
         public async Task<IActionResult> RestoreCompany(int userId, int id, int groupId)
