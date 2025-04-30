@@ -173,7 +173,7 @@ public class CompanyService : BaseService
                     continue;
                 }
 
-                var company = await _companyRepository.GetCompanyByUserId(companyId, userId, groupId);
+                var company = await _companyRepository.GetById(companyId);
                 if (company == null)
                 {
                     notFoundIds.Add(companyId);
