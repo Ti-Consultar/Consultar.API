@@ -125,56 +125,7 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-    public async Task<ResultValue> DeleteCompanies(int userId, List<int> companyIds, int groupId)
-    {
-        try
-        {
-            var user = await _userRepository.GetByUserId(userId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
-
-            var notAuthorizedIds = new List<int>();
-            var notFoundIds = new List<int>();
-            var deletedIds = new List<int>();
-
-            foreach (var companyId in companyIds)
-            {
-                // Verifica permissão do usuário
-                var hasPermission = await _companyRepository.ExistsCompanyUser(userId, companyId, groupId);
-                if (!hasPermission)
-                {
-                    notAuthorizedIds.Add(companyId);
-                    continue;
-                }
-
-                var company = await _companyRepository.GetCompanyByUserId(companyId, userId, groupId);
-                if (company == null)
-                {
-                    notFoundIds.Add(companyId);
-                    continue;
-                }
-
-                await _companyRepository.DeleteCompany(company.Id);
-                deletedIds.Add(company.Id);
-            }
-
-            // Retorno detalhado com o resultado das operações
-            return SuccessResponse(new
-            {
-                Deleted = deletedIds,
-                NotFound = notFoundIds,
-                Unauthorized = notAuthorizedIds,
-                Message = Message.DeletedSuccess
-            });
-        }
-        catch (Exception ex)
-        {
-            return ErrorResponse(ex);
-        }
-    }
-
-
-    public async Task<ResultValue> RestoreCompany(int userId, int id, int groupId)
+    public async Task<ResultValue> DeleteCompany(int userId, int id, int groupId)
     {
         try
         {
@@ -191,7 +142,7 @@ public class CompanyService : BaseService
             if (company == null)
                 return SuccessResponse(new List<ResultValue>());
 
-            await _companyRepository.RestoreCompany(company.Id);
+            await _companyRepository.DeleteCompany(company.Id);
 
             return SuccessResponse(Message.DeletedSuccess);
         }
@@ -200,6 +151,53 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+
+    public async Task<ResultValue> RestoreCompanies(int userId, List<int> companyIds, int groupId)
+    {
+        try
+        {
+            var user = await _userRepository.GetByUserId(userId);
+            if (user == null)
+                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+
+            var notAuthorizedIds = new List<int>();
+            var notFoundIds = new List<int>();
+            var restoredIds = new List<int>();
+
+            foreach (var companyId in companyIds)
+            {
+                var hasPermission = await _companyRepository.ExistsCompanyUser(userId, companyId, groupId);
+                if (!hasPermission)
+                {
+                    notAuthorizedIds.Add(companyId);
+                    continue;
+                }
+
+                var company = await _companyRepository.GetCompanyByUserId(companyId, userId, groupId);
+                if (company == null)
+                {
+                    notFoundIds.Add(companyId);
+                    continue;
+                }
+
+                await _companyRepository.RestoreCompany(company.Id);
+                restoredIds.Add(company.Id);
+            }
+
+            return SuccessResponse(new
+            {
+                Restored = restoredIds,
+                NotFound = notFoundIds,
+                Unauthorized = notAuthorizedIds,
+                Message = "Empresas restauradas com sucesso"
+            });
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
+
     public async Task<ResultValue> GetCompanyById(int companyId, int userId, int groupId)
     {
         try
