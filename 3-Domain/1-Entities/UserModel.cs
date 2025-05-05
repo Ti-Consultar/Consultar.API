@@ -10,17 +10,19 @@ namespace _3_Domain._1_Entities
     {
         public UserModel() { }
 
-        public UserModel(string name, string email, string password)
+        public UserModel(string name, string email, string contact ,string password)
         {
             Name = name;
             Email = email;
             Password = password;
             Role = "Gestor";
+            Contact = contact;
         }
 
         public int Id { get; set; }
         public string Name { get; set; }
         public string Email { get; set; }
+        public string? Contact { get; set; }
         public string Password { get; set; }
         public string Role { get; set; }
 

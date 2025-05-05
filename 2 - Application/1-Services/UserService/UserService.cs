@@ -9,6 +9,7 @@ using _4_InfraData._1_Repositories;
 using _4_InfraData._2_JWT;
 using _2___Application.Base;
 using _4_InfraData._3_Utils.Email;
+using _2___Application._2_Dto_s.Group;
 
 namespace _2___Application._1_Services.User
 {
@@ -51,7 +52,7 @@ namespace _2___Application._1_Services.User
                     return UserLoginMessage.EmailExists;
                 }
 
-                var user = new UserModel(request.Name, request.Email, request.Password.EncryptPassword());
+                var user = new UserModel(request.Name, request.Email,request.Contact ,request.Password.EncryptPassword());
                 await _repository.AddUser(user);
 
                 return Message.Success;
@@ -77,19 +78,26 @@ namespace _2___Application._1_Services.User
                     Id = user.Id,
                     Email = user.Email,
                     Name = user.Name,
-                    Companies = user?.CompanyUsers
-                        .Select(a => new CompanyDto
+                    Contact = user.Contact,
+                    Groups = user?.CompanyUsers
+                        .Select(a => new GroupDto
                         {
-                            Id = a.Company.Id,
-                            Name = a.Company.Name,
-                            DateCreate = a.Company.DateCreate,
-
+                            Id = a.Group.Id,
+                            Name = a.Group.Name,
+                            DateCreate = a.Group.DateCreate,
+                            
                             // Adiciona a lista de subempresas
-                            SubCompanies = a.Company.SubCompanies.Select(sub => new SubCompanyDto
+                            Companies = a.Group.Companies.Select(company => new CompanyDto
                             {
-                                Id = sub.Id,
-                                Name = sub.Name,
-                                DateCreate = sub.DateCreate
+                                Id = company.Id,
+                                Name = company.Name,
+                                DateCreate = company.DateCreate,
+                                SubCompanies = company.SubCompanies.Select(subCompany => new SubCompanyDto
+                                {
+                                    Id = subCompany.Id,
+                                    Name = subCompany.Name,
+                                    DateCreate = subCompany.DateCreate
+                                }).ToList()
                             }).ToList()
                         }).ToList()
                 };
@@ -111,14 +119,27 @@ namespace _2___Application._1_Services.User
                 {
                     Id = user.Id,
                     Email = user.Email,
-                    Name = user.Name
+                    Name = user.Name,
+                    Contact = user.Contact
                 }).ToList();
 
                 return response;
-            
-           
         }
+        public async Task<object> GetById(int id)
+        {
+            var model = await _repository.GetById(id);
 
+
+            var response = new UserSimpleResponse
+            {
+                Id = model.Id,
+                Email = model.Email,
+                Name = model.Name,
+                Contact= model.Contact
+            };
+
+            return response;
+        }
         #endregion
 
         public async Task<ResetPasswordResponse> RedefinePassword(ResetPasswordRequest request)

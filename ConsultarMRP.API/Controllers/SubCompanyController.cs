@@ -66,20 +66,20 @@ namespace _5_API.Controllers
         }
 
         [HttpPatch]
-        [Route("{subCompanyId}/user/{userId}/company/{id}/restore")]
-        public async Task<IActionResult> RestoreSubCompany(int userId, int id, int subCompanyId)
+        [Route("user/{userId}/company/{companyId}/subcompanies/restore")]
+        public async Task<IActionResult> RestoreSubCompanies(int userId, int companyId, [FromBody] List<int> subCompanyIds)
         {
             try
             {
-
-                var company = await _companyService.RestoreSubCompany(userId, id, subCompanyId);
-                return Ok(company);
+                var result = await _companyService.RestoreSubCompanies(userId, companyId, subCompanyIds);
+                return Ok(result);
             }
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
         }
+
         [HttpGet]
         [Route("user/{userId}")]
         public async Task<IActionResult> GetSubCompaniesByUserId(int userId)

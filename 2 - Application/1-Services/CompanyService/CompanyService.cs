@@ -101,20 +101,24 @@ public class CompanyService : BaseService
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
-            // Verifica se o usuário tem permissão para atualizar a empresa
             var hasPermission = await _companyRepository.ExistsEditCompanyUser(dto.UserId, id, dto.GroupId);
             if (!hasPermission)
                 return ErrorResponse(Message.Unauthorized);
 
-            // Obtém a empresa relacionada ao usuários
             var company = await _companyRepository.GetCompanyByUserId(id, dto.UserId, dto.GroupId);
-
             if (company == null)
                 return ErrorResponse(Message.NotFound);
 
             // Atualiza os dados da empresa
-            company.Name = dto.Name;
-            company.BusinessEntity.NomeFantasia = dto.Name;
+            if (!string.IsNullOrWhiteSpace(dto.Name))
+            {
+                company.Name = dto.Name;
+                company.BusinessEntity.NomeFantasia = dto.Name; // Ou mantenha separado se quiser lógica diferente
+            }
+
+            if (company.BusinessEntity != null && dto.BusinessEntity != null)
+                UpdateBusinessEntityFieldsIfPresent(company.BusinessEntity, dto.BusinessEntity);
+
             await _companyRepository.UpdateCompany(company);
             await _businessEntityRepository.Update(company.BusinessEntity);
 
@@ -124,6 +128,20 @@ public class CompanyService : BaseService
         {
             return ErrorResponse(ex);
         }
+    }
+    private void UpdateBusinessEntityFieldsIfPresent(BusinessEntity entity, BusinessEntityDto dto)
+    {
+        if (!string.IsNullOrWhiteSpace(dto.NomeFantasia)) entity.NomeFantasia = dto.NomeFantasia;
+        if (!string.IsNullOrWhiteSpace(dto.RazaoSocial)) entity.RazaoSocial = dto.RazaoSocial;
+        if (!string.IsNullOrWhiteSpace(dto.Cnpj)) entity.Cnpj = dto.Cnpj;
+        if (!string.IsNullOrWhiteSpace(dto.Logradouro)) entity.Logradouro = dto.Logradouro;
+        if (!string.IsNullOrWhiteSpace(dto.Numero)) entity.Numero = dto.Numero;
+        if (!string.IsNullOrWhiteSpace(dto.Bairro)) entity.Bairro = dto.Bairro;
+        if (!string.IsNullOrWhiteSpace(dto.Municipio)) entity.Municipio = dto.Municipio;
+        if (!string.IsNullOrWhiteSpace(dto.Uf)) entity.Uf = dto.Uf;
+        if (!string.IsNullOrWhiteSpace(dto.Cep)) entity.Cep = dto.Cep;
+        if (!string.IsNullOrWhiteSpace(dto.Telefone)) entity.Telefone = dto.Telefone;
+        if (!string.IsNullOrWhiteSpace(dto.Email)) entity.Email = dto.Email;
     }
     public async Task<ResultValue> DeleteCompany(int userId, int id, int groupId)
     {
@@ -420,7 +438,7 @@ public class CompanyService : BaseService
         }
     }
 
-    public async Task<ResultValue> RestoreSubCompany(int userId, int companyId, int subCompanyId)
+    public async Task<ResultValue> RestoreSubCompanies(int userId, int companyId, List<int> subCompanyIds)
     {
         try
         {
@@ -428,28 +446,48 @@ public class CompanyService : BaseService
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
-            // Verifica se o usuário tem permissão para excluir a subempresa
-            var hasPermission = await _companyRepository.ExistsEditSubCompanyUser(userId, companyId, subCompanyId);
-            if (!hasPermission)
-                return ErrorResponse(Message.Unauthorized);
-
             var company = await _companyRepository.GetById(companyId);
             if (company == null)
                 return ErrorResponse(Message.NotFound);
 
-            var subCompany = company.SubCompanies.FirstOrDefault(a => a.Id == subCompanyId);
-            if (subCompany == null)
-                return SuccessResponse(new List<ResultValue>());
+            var restoredIds = new List<int>();
+            var notFoundIds = new List<int>();
+            var unauthorizedIds = new List<int>();
 
-            await _companyRepository.RestoreSubCompany(company.Id, subCompany.Id);
+            foreach (var subCompanyId in subCompanyIds)
+            {
+                var hasPermission = await _companyRepository.ExistsEditSubCompanyUser(userId, companyId, subCompanyId);
+                if (!hasPermission)
+                {
+                    unauthorizedIds.Add(subCompanyId);
+                    continue;
+                }
 
-            return SuccessResponse(Message.DeleteSuccess);
+                var subCompany = company.SubCompanies.FirstOrDefault(a => a.Id == subCompanyId);
+                if (subCompany == null)
+                {
+                    notFoundIds.Add(subCompanyId);
+                    continue;
+                }
+
+                await _companyRepository.RestoreSubCompany(company.Id, subCompany.Id);
+                restoredIds.Add(subCompany.Id);
+            }
+
+            return SuccessResponse(new
+            {
+                Restored = restoredIds,
+                NotFound = notFoundIds,
+                Unauthorized = unauthorizedIds,
+                Message = "Subempresas restauradas com sucesso"
+            });
         }
         catch (Exception ex)
         {
             return ErrorResponse(ex);
         }
     }
+
 
     public async Task<ResultValue> CreateUserSubCompany(CreateSubCompanyUserDto dto)
     {

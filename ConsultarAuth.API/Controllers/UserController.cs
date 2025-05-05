@@ -71,7 +71,7 @@ namespace ConsultarAuth.API.Controllers
 
         // Novo método para buscar usuário e suas empresas/subempresas
         [HttpGet("/{userId}")]
-        [Authorize()]
+        //[Authorize()]
         public async Task<IActionResult> GetUser(int userId)
         {
             try
@@ -98,6 +98,27 @@ namespace ConsultarAuth.API.Controllers
             try
             {
                 var user = await _userService.GetAllUsers();
+
+                if (user == null)
+                {
+                    return NotFound(new { message = "Usuário não encontrado" });
+                }
+
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao buscar usuário", details = ex.Message });
+            }
+        }
+
+        [HttpGet("/{id}/simple")]
+        // [Authorize()]
+        public async Task<IActionResult> GetUserbyId(int id)
+        {
+            try
+            {
+                var user = await _userService.GetById(id);
 
                 if (user == null)
                 {
