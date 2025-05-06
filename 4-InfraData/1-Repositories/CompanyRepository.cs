@@ -210,6 +210,8 @@ namespace _4_InfraData._1_Repositories
         {
             var company = await _context.CompanyUsers
                 .Where(cu => cu.UserId == userId && cu.GroupId == groupId && cu.CompanyId == id)
+                      .Include(cu => cu.Company)
+                    .ThenInclude(c => c.BusinessEntity)
                 .Include(cu => cu.Company)
                     .ThenInclude(c => c.CompanyUsers)
                         .ThenInclude(cu => cu.Permission)
