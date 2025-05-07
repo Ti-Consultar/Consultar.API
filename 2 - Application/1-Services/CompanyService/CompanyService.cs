@@ -385,16 +385,22 @@ public class CompanyService : BaseService
             if (!hasPermission)
                 return ErrorResponse(Message.Unauthorized);
 
-            // Obtém a subempresa
-            var subCompanies = await _companyRepository.GetSubCompanieByUserId(dto.UserId);
-            var subCompany = subCompanies.SubCompanies.FirstOrDefault(a => a.Id == id);
-
+            // Obtém a subempresa diretamente pelo ID e pelo usuário
+            var subCompany = await _companyRepository.GetSubCompanyByUserId(id, dto.UserId);
             if (subCompany == null)
                 return ErrorResponse(Message.NotFound);
 
-            // Atualiza o nome da SubCompany
-            subCompany.Name = dto.Name;
-            subCompany.BusinessEntity.NomeFantasia = dto.Name;
+            // Atualiza os dados da SubCompany
+            if (!string.IsNullOrWhiteSpace(dto.Name))
+            {
+                subCompany.Name = dto.Name;
+                if (subCompany.BusinessEntity != null)
+                    subCompany.BusinessEntity.NomeFantasia = dto.Name;
+            }
+
+            // Atualiza os campos da BusinessEntity, se houver
+            if (subCompany.BusinessEntity != null && dto.BusinessEntity != null)
+                UpdateBusinessEntityFieldsIfPresent(subCompany.BusinessEntity, dto.BusinessEntity);
 
             await _companyRepository.UpdateSubCompany(subCompany);
             await _businessEntityRepository.Update(subCompany.BusinessEntity);
@@ -406,6 +412,8 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+
+    
 
     public async Task<ResultValue> DeleteSubCompany(int userId, int companyId, int subCompanyId)
     {

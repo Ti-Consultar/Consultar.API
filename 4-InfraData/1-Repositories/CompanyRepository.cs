@@ -122,6 +122,26 @@ namespace _4_InfraData._1_Repositories
 
             return subCompanies;
         }
+        public async Task<SubCompanyModel> GetSubCompanyByUserId(int id, int userId)
+        {
+            var companyUser = await _context.CompanyUsers
+                .Where(cu => cu.UserId == userId && cu.SubCompanyId == id)
+                .Include(cu => cu.Permission)  // Inclui a permissão do usuário
+                .Include(cu => cu.Company)     // Inclui a empresa associada
+                    .ThenInclude(c => c.SubCompanies)  // Inclui as subempresas
+                        .ThenInclude(sc => sc.BusinessEntity)  // Inclui a BusinessEntity da SubCompany
+                .FirstOrDefaultAsync();
+
+            // Verifica se encontrou o usuário e a subempresa está vinculada
+            if (companyUser?.Company?.SubCompanies == null)
+                return null;
+
+            // Busca a SubCompany específica pelo ID
+            var subCompany = companyUser.Company.SubCompanies
+                .FirstOrDefault(sc => sc.Id == id && !sc.Deleted);
+
+            return subCompany;
+        }
 
         public async Task<List<SubCompanyModel>> GetSubCompaniesDeletedByUserId(int userId)
         {
