@@ -105,18 +105,24 @@ namespace _4_InfraData._1_Repositories
         }
         public async Task<List<SubCompanyModel>> GetSubCompaniesByUserId(int userId)
         {
-            var subCompanies = await _context.CompanyUsers
+            var companyUsers = await _context.CompanyUsers
                 .Where(cu => cu.UserId == userId)
                 .Include(cu => cu.Permission)
                 .Include(cu => cu.Company)
                     .ThenInclude(c => c.SubCompanies)
-                .SelectMany(cu => cu.Company.SubCompanies)
-                .Where(sc => !sc.Deleted) // Filtra SubCompanies ativas
-                .Distinct()
+                        .ThenInclude(sc => sc.BusinessEntity) // Certifique-se de que o nome está correto
                 .ToListAsync();
+
+            var subCompanies = companyUsers
+                .Where(cu => cu.Company != null && cu.Company.SubCompanies != null) // Garante que não sejam nulos
+                .SelectMany(cu => cu.Company.SubCompanies)
+                .Where(sc => !sc.Deleted)
+                .Distinct()
+                .ToList();
 
             return subCompanies;
         }
+
         public async Task<List<SubCompanyModel>> GetSubCompaniesDeletedByUserId(int userId)
         {
             var subCompanies = await _context.CompanyUsers
