@@ -150,13 +150,15 @@ namespace _4_InfraData._1_Repositories
                 .Include(cu => cu.Permission)
                 .Include(cu => cu.Company)
                     .ThenInclude(c => c.SubCompanies)
+                        .ThenInclude(sc => sc.BusinessEntity)  // <-- Include das BusinessEntities
                 .SelectMany(cu => cu.Company.SubCompanies)
-                .Where(sc => sc.Deleted) // Filtra SubCompanies Inativas
+                .Where(sc => sc.Deleted) // SubCompanies inativas
                 .Distinct()
                 .ToListAsync();
 
             return subCompanies;
         }
+
 
         public async Task AddSubCompany(int companyId, SubCompanyModel subCompanyModel)
         {
