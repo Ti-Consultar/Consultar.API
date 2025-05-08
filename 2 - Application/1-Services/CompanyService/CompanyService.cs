@@ -413,8 +413,6 @@ public class CompanyService : BaseService
         }
     }
 
-    
-
     public async Task<ResultValue> DeleteSubCompany(int userId, int companyId, int subCompanyId)
     {
         try
@@ -496,7 +494,6 @@ public class CompanyService : BaseService
         }
     }
 
-
     public async Task<ResultValue> CreateUserSubCompany(CreateSubCompanyUserDto dto)
     {
         try
@@ -569,6 +566,58 @@ public class CompanyService : BaseService
                     }
                     : null
             }).ToList();
+
+            return SuccessResponse(subCompanyDtos);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
+    public async Task<ResultValue> GetSubCompaniesById(int userId, int companyId, int subcompanyId)
+    {
+        try
+        {
+            var user = await _userRepository.GetByUserId(userId);
+            if (user == null)
+                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+
+            var sc = await _companyRepository.GetSubCompanyId(userId, companyId, subcompanyId);
+
+            if (sc == null)
+                return SuccessResponse(Message.NotFound);
+
+            var subCompanyDtos = new SubCompanyUsersimpleDto
+            {
+                SubCompanyId = sc.Id,
+                SubCompanyName = sc.Name,
+                DateCreate = sc.DateCreate,
+                CompanyId = sc.Company.Id,
+
+                BusinessEntity = sc.BusinessEntity == null ? null : new BusinessEntityDto
+                {
+                    Id = sc.BusinessEntity.Id,
+                    NomeFantasia = sc.BusinessEntity.NomeFantasia,
+                    RazaoSocial = sc.BusinessEntity.RazaoSocial,
+                    Cnpj = sc.BusinessEntity.Cnpj,
+                    Logradouro = sc.BusinessEntity.Logradouro,
+                    Numero = sc.BusinessEntity.Numero,
+                    Bairro = sc.BusinessEntity.Bairro,
+                    Municipio = sc.BusinessEntity.Municipio,
+                    Uf = sc.BusinessEntity.Uf,
+                    Cep = sc.BusinessEntity.Cep,
+                    Telefone = sc.BusinessEntity.Telefone,
+                    Email = sc.BusinessEntity.Email
+                },
+
+                Permission = sc.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
+                    ? new PermissionResponse
+                    {
+                        Id = sc.CompanyUsers.First(cu => cu.UserId == userId).Permission.Id,
+                        Name = sc.CompanyUsers.First(cu => cu.UserId == userId).Permission.Name
+                    }
+                    : null
+            };
 
             return SuccessResponse(subCompanyDtos);
         }
@@ -765,8 +814,6 @@ public class CompanyService : BaseService
         return ErrorResponse(ex);
     }
 }
-
-
     public async Task<ResultValue> GetCompaniesByUserIdPaginated(int userId, int groupId, int skip = 0, int take = 10)
     {
         try
