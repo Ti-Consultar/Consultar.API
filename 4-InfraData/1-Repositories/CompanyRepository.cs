@@ -400,6 +400,62 @@ namespace _4_InfraData._1_Repositories
 
             return subCompanies;
         }
+        public async Task<CompanyUserModel> GetCompanyUser(int userId,int groupId, int? companyId, int? subCompanyId)
+        {
+            if(companyId is null  && subCompanyId is null)
+            {
+                var group = await _context.CompanyUsers
+                .Where(cu => cu.GroupId == groupId && cu.UserId == userId)
+                .FirstOrDefaultAsync();
+
+                return group;
+            }
+            if(companyId != null && subCompanyId is null)
+            {
+                var model = await _context.CompanyUsers
+               .Where(cu => cu.GroupId == groupId && cu.CompanyId == companyId && cu.UserId == userId)
+               .FirstOrDefaultAsync();
+
+                return model;
+            }
+            if(subCompanyId != null)
+            {
+                var model = await _context.CompanyUsers
+              .Where(cu => cu.GroupId == groupId && cu.CompanyId == companyId && cu.SubCompanyId == subCompanyId && cu.UserId == userId)
+              .FirstOrDefaultAsync();
+                return model;
+            }
+            return null;
+            
+        }
+
+
+        public async Task DeleteCompanyUser(int userId, int groupId, int? companyId, int? subCompanyId)
+        {
+            // Monta a query base
+            var query = _context.CompanyUsers
+                .Where(cu => cu.UserId == userId && cu.GroupId == groupId);
+
+            // Refinamentos conforme parâmetros
+            if (companyId.HasValue && !subCompanyId.HasValue)
+            {
+                query = query.Where(cu => cu.CompanyId == companyId.Value);
+            }
+            else if (subCompanyId.HasValue)
+            {
+                query = query.Where(cu =>
+                    cu.CompanyId == companyId.Value &&
+                    cu.SubCompanyId == subCompanyId.Value);
+            }
+            var toRemove = await query.ToListAsync();
+            if (toRemove.Any())
+            {
+                _context.CompanyUsers.RemoveRange(toRemove);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+
 
         public async Task AddUserToCompany(int userId, int? companyId, int groupId)
         {

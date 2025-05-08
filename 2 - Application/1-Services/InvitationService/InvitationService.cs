@@ -145,7 +145,23 @@ public class InvitationService : BaseService
         }
     }
 
-   
+    public async Task<ResultValue> DeleteCompanyUser(int userId, int groupId,int? companyId, int? subCompanyId)
+    {
+        try
+        {
+            var companyUser = await _companyRepository.GetCompanyUser(userId, groupId, companyId, subCompanyId);
+
+            if (companyUser == null )
+                return ErrorResponse(Message.NotFound);
+
+            await _companyRepository.DeleteCompanyUser(userId, groupId, companyId, subCompanyId);
+            return SuccessResponse("Removido com sucesso.");
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
 
 
     public async Task<ResultValue> GetInvitationById(int id)

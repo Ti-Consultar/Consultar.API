@@ -97,7 +97,23 @@ namespace _4_InfraData._1_Repositories
             await _context.SaveChangesAsync();
         }
 
-       
+
+        public async Task DeleteCompanyUser(int id)
+        {
+            // cria um stub só com o Id
+            var stub = new InvitationToCompany { Id = id };
+
+            // anexa ao contexto (sem buscar no banco)
+            _context.InvitationToCompany.Attach(stub);
+
+            // marca pra remoção
+            _context.InvitationToCompany.Remove(stub);
+
+            await _context.SaveChangesAsync();
+        }
+
+
+
         public async Task Delete(int id)
         {
             var invitation = await GetById(id);

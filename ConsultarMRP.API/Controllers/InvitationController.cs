@@ -106,5 +106,14 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpDelete]
+        [Route("companyuser/{userId}/group/{groupId}")]
+        public async Task<IActionResult> RemoveCompanyUser( int userId,int groupId,[FromQuery] int? companyId,[FromQuery] int? subCompanyId)
+        {
+            var result = await _invitationService.DeleteCompanyUser(userId, groupId, companyId, subCompanyId);
+            if (!result.Success) return BadRequest(result);
+            return Ok(result);
+        }
     }
 }
