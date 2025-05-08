@@ -33,7 +33,7 @@ public class BreadcrumbService : BaseService
 
             switch (type)
             {
-                case "Group":
+                case "group":
                     var group = await _groupRepository.GetById(id);
                     if (group != null)
                     {
@@ -42,12 +42,12 @@ public class BreadcrumbService : BaseService
                             Id = group.Id,
                             Name = group.Name,
                             Link = $"/groups/{group.Id}",
-                            Type = "Group"
+                            Type = "group"
                         };
                     }
                     break;
 
-                case "Company":
+                case "company":
                     var company = await _companyRepository.GetById(id);
                     if (company != null)
                     {
@@ -57,16 +57,16 @@ public class BreadcrumbService : BaseService
                             Name = company.Name,
                             Link = $"/companies/{company.Id}",
                             ParentId = company.GroupId,
-                            Type = "Company"
+                            Type = "company"
                         };
 
                         // prepara para buscar o Group na próxima iteração
                         id = company.GroupId;
-                        type = "Group";
+                        type = "group";
                     }
                     break;
 
-                case "SubCompany":
+                case "subcompany":
                     var subCompany = await _companyRepository.GetSubCompanyById(id);
                     if (subCompany != null)
                     {
@@ -76,12 +76,12 @@ public class BreadcrumbService : BaseService
                             Name = subCompany.Name,
                             Link = $"/subcompanies/{subCompany.Id}",
                             ParentId = subCompany.CompanyId,
-                            Type = "SubCompany"
+                            Type = "subcompany"
                         };
 
                         // prepara para buscar a Company na próxima iteração
                         id = subCompany.CompanyId;
-                        type = "Company";
+                        type = "company";
                     }
                     break;
             }
@@ -93,7 +93,7 @@ public class BreadcrumbService : BaseService
             breadcrumb.Insert(0, currentItem);
 
             // agora sim: se adicionamos um Group, paramos
-            if (currentItem.Type == "Group")
+            if (currentItem.Type == "group")
                 break;
         }
 
