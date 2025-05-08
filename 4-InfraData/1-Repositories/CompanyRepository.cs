@@ -339,6 +339,7 @@ namespace _4_InfraData._1_Repositories
         {
             var company = await _context.Companies
                 .Where(c => c.Id == id) // Filtrando diretamente em Companies
+                .Include(c => c.Group) // Inclui as subempresas
                 .Include(c => c.SubCompanies) // Inclui as subempresas
                 .Include(c => c.CompanyUsers) // Inclui a relação com usuários
                     .ThenInclude(cu => cu.User) // Inclui os usuários

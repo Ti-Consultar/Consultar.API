@@ -97,6 +97,7 @@ namespace _4_InfraData._1_Repositories
             await _context.SaveChangesAsync();
         }
 
+       
         public async Task Delete(int id)
         {
             var invitation = await GetById(id);

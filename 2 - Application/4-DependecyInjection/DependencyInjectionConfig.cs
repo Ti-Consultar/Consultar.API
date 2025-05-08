@@ -66,6 +66,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<GroupService>();
             services.AddScoped<CnpjService>();
             services.AddScoped<CepService>();
+            services.AddScoped<BreadcrumbService>();
             #endregion
 
             #region Repositories
