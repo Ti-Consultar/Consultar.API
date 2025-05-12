@@ -887,9 +887,16 @@ public class CompanyService : BaseService
             if (group == null)
                 return ErrorResponse(Message.NotFound);
 
-            var paginated = await _groupRepository.GetCompaniesByUserIdPaginatedAsync(userId, groupId, skip, take);
+            // Obtém as empresas vinculadas ao usuário no grupo específico
+            var companies = await _groupRepository.GetCompaniesByUserIdAndGroupId(userId, groupId);
 
-            var companyDtos = paginated.Items.Select(company =>
+            // Paginação manual para evitar sobrecarga no banco
+            var paginatedCompanies = companies
+                .Skip(skip)
+                .Take(take)
+                .ToList();
+
+            var companyDtos = paginatedCompanies.Select(company =>
             {
                 var userCompany = company.CompanyUsers?.FirstOrDefault(cu => cu.UserId == userId);
 
@@ -898,7 +905,7 @@ public class CompanyService : BaseService
                     CompanyId = company.Id,
                     CompanyName = company.Name,
                     DateCreate = company.DateCreate,
-                    BusinessEntity = company.BusinessEntity == null ? null : new BusinessEntityDto
+                    BusinessEntity = company.BusinessEntity != null ? new BusinessEntityDto
                     {
                         Id = company.BusinessEntity.Id,
                         NomeFantasia = company.BusinessEntity.NomeFantasia,
@@ -912,20 +919,18 @@ public class CompanyService : BaseService
                         Cep = company.BusinessEntity.Cep,
                         Telefone = company.BusinessEntity.Telefone,
                         Email = company.BusinessEntity.Email
-                    },
-                    Permission = userCompany?.Permission != null
-                        ? new PermissionResponse
-                        {
-                            Id = userCompany.Permission.Id,
-                            Name = userCompany.Permission.Name
-                        }
-                        : null
+                    } : null,
+                    Permission = userCompany?.Permission != null ? new PermissionResponse
+                    {
+                        Id = userCompany.Permission.Id,
+                        Name = userCompany.Permission.Name
+                    } : null
                 };
             }).ToList();
 
             var result = new
             {
-                TotalCount = paginated.TotalCount,
+                TotalCount = companies.Count,
                 Skip = skip,
                 Take = take,
                 Companies = companyDtos
@@ -938,6 +943,7 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+
     public async Task<ResultValue> GetByIdByCompaniesDeletedPaginated(int userId, int groupId, int skip = 0, int take = 10)
     {
         try
