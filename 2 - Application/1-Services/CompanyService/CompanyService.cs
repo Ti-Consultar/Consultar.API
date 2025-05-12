@@ -1009,9 +1009,10 @@ public class CompanyService : BaseService
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
-            // Busca todas as subempresas da company que o usuário tem vínculo
+            // Obtém as subempresas filtradas diretamente do repositório
             var allSubCompanies = await _companyRepository.GetSubCompaniesByUserId(userId);
 
+            // Filtra pelo ID da empresa
             var filteredSubCompanies = allSubCompanies
                 .Where(sc => sc.CompanyId == companyId)
                 .ToList();
@@ -1029,7 +1030,6 @@ public class CompanyService : BaseService
                 Name = sc.Name,
                 DateCreate = sc.DateCreate,
                 CompanyId = sc.CompanyId,
-
                 BusinessEntity = sc.BusinessEntity == null ? null : new BusinessEntityDto
                 {
                     Id = sc.BusinessEntity.Id,
@@ -1045,7 +1045,6 @@ public class CompanyService : BaseService
                     Telefone = sc.BusinessEntity.Telefone,
                     Email = sc.BusinessEntity.Email
                 },
-
                 Permission = sc.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
                     ? new PermissionResponse
                     {
@@ -1070,6 +1069,7 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+
     public async Task<ResultValue> GetSubCompaniesDeletedByUserIdPaginated(int userId, int companyId, int skip = 0, int take = 10)
     {
         try

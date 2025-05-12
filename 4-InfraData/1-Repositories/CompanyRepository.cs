@@ -105,26 +105,30 @@ namespace _4_InfraData._1_Repositories
         }
         public async Task<List<SubCompanyModel>> GetSubCompaniesByUserId(int userId)
         {
-            // Obtenha os dados das empresas e subempresas relacionadas ao usuário
-            var companyUsers = await _context.CompanyUsers
-                .Where(cu => cu.UserId == userId)
+            var subCompanies = await _context.CompanyUsers
+                .Where(cu => cu.UserId == userId && cu.Company != null)
+                .Include(cu => cu.Permission) // Inclui a permissão diretamente
                 .Include(cu => cu.Company)
                     .ThenInclude(c => c.SubCompanies
-                        .Where(sc => !sc.Deleted) // Filtra as SubCompanies ativas
-                        .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == userId)) // Garante que a SubCompany está associada ao usuário
+                        .Where(sc => !sc.Deleted) // Filtra subempresas ativas
                     )
-                    .ThenInclude(sc => sc.BusinessEntity)
-                .ToListAsync();
-
-            // Agora, para garantir que não estamos pegando subempresas deletadas, podemos selecionar as subempresas ativas
-            var subCompanies = companyUsers
-                .Where(cu => cu.Company != null && cu.Company.SubCompanies != null) // Garante que Company e SubCompanies não sejam nulos
-                .SelectMany(cu => cu.Company.SubCompanies) // Achata a lista de SubCompanies
+                    .ThenInclude(sc => sc.BusinessEntity) // Inclui o BusinessEntity da SubCompany
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.SubCompanies)
+                        .ThenInclude(sc => sc.CompanyUsers
+                            .Where(cu => cu.UserId == userId) // Garante que o usuário está vinculado à subempresa
+                        )
+                        .ThenInclude(cu => cu.Permission) // Inclui a permissão da subempresa
+                .SelectMany(cu => cu.Company.SubCompanies
+                    .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == userId))) // Garante a associação do usuário
                 .Distinct()
-                .ToList();
+                .ToListAsync();
 
             return subCompanies;
         }
+
+
+
 
         public async Task<SubCompanyModel> GetSubCompanyByUserId(int id, int userId)
         {
