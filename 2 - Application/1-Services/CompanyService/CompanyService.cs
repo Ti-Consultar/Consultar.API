@@ -956,9 +956,18 @@ public class CompanyService : BaseService
             if (group == null)
                 return ErrorResponse(Message.NotFound);
 
-            var paginated = await _groupRepository.GetCompaniesByUserIdPaginatedAsync(userId, groupId, skip, take);
+            // Busca todas as empresas deletadas vinculadas ao usuário e grupo
+            var allDeletedCompanies = await _groupRepository.GetDeletedCompaniesByUserIdAndGroupId(userId, groupId);
 
-            var companyDtos = paginated.Items.Select(company =>
+            var totalCount = allDeletedCompanies.Count;
+
+            // Realiza a paginação manualmente
+            var paginatedCompanies = allDeletedCompanies
+                .Skip(skip)
+                .Take(take)
+                .ToList();
+
+            var companyDtos = paginatedCompanies.Select(company =>
             {
                 var userCompany = company.CompanyUsers?.FirstOrDefault(cu => cu.UserId == userId);
 
@@ -994,7 +1003,7 @@ public class CompanyService : BaseService
 
             var result = new
             {
-                TotalCount = paginated.TotalCount,
+                TotalCount = totalCount,
                 Skip = skip,
                 Take = take,
                 Companies = companyDtos
@@ -1007,6 +1016,7 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+
     public async Task<ResultValue> GetSubCompaniesByUserIdPaginated(int userId, int companyId, int skip = 0, int take = 10)
     {
         try
@@ -1084,11 +1094,11 @@ public class CompanyService : BaseService
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
-            // Busca todas as subempresas da company que o usuário tem vínculo
+            // Busca todas as subempresas deletadas da company que o usuário tem vínculo
             var allSubCompanies = await _companyRepository.GetSubCompaniesDeletedByUserId(userId);
 
             var filteredSubCompanies = allSubCompanies
-                .Where(sc => sc.CompanyId == companyId)
+                .Where(sc => sc.CompanyId == companyId && sc.Deleted) // Garante que estejam deletadas
                 .ToList();
 
             var totalCount = filteredSubCompanies.Count;
@@ -1098,36 +1108,41 @@ public class CompanyService : BaseService
                 .Take(take)
                 .ToList();
 
-            var subCompanyDtos = paginatedSubCompanies.Select(sc => new _2___Application._2_Dto_s.Company.SubCompany.SubCompanyDto
+            var subCompanyDtos = paginatedSubCompanies.Select(sc =>
             {
-                Id = sc.Id,
-                Name = sc.Name,
-                DateCreate = sc.DateCreate,
-                CompanyId = sc.CompanyId,
+                var userCompany = sc.CompanyUsers?.FirstOrDefault(cu => cu.UserId == userId);
 
-                BusinessEntity = sc.BusinessEntity == null ? null : new BusinessEntityDto
+                return new _2___Application._2_Dto_s.Company.SubCompany.SubCompanyDto
                 {
-                    Id = sc.BusinessEntity.Id,
-                    NomeFantasia = sc.BusinessEntity.NomeFantasia,
-                    RazaoSocial = sc.BusinessEntity.RazaoSocial,
-                    Cnpj = sc.BusinessEntity.Cnpj,
-                    Logradouro = sc.BusinessEntity.Logradouro,
-                    Numero = sc.BusinessEntity.Numero,
-                    Bairro = sc.BusinessEntity.Bairro,
-                    Municipio = sc.BusinessEntity.Municipio,
-                    Uf = sc.BusinessEntity.Uf,
-                    Cep = sc.BusinessEntity.Cep,
-                    Telefone = sc.BusinessEntity.Telefone,
-                    Email = sc.BusinessEntity.Email
-                },
+                    Id = sc.Id,
+                    Name = sc.Name,
+                    DateCreate = sc.DateCreate,
+                    CompanyId = sc.CompanyId,
 
-                Permission = sc.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
-                    ? new PermissionResponse
+                    BusinessEntity = sc.BusinessEntity == null ? null : new BusinessEntityDto
                     {
-                        Id = sc.CompanyUsers.First(cu => cu.UserId == userId).Permission.Id,
-                        Name = sc.CompanyUsers.First(cu => cu.UserId == userId).Permission.Name
-                    }
-                    : null
+                        Id = sc.BusinessEntity.Id,
+                        NomeFantasia = sc.BusinessEntity.NomeFantasia,
+                        RazaoSocial = sc.BusinessEntity.RazaoSocial,
+                        Cnpj = sc.BusinessEntity.Cnpj,
+                        Logradouro = sc.BusinessEntity.Logradouro,
+                        Numero = sc.BusinessEntity.Numero,
+                        Bairro = sc.BusinessEntity.Bairro,
+                        Municipio = sc.BusinessEntity.Municipio,
+                        Uf = sc.BusinessEntity.Uf,
+                        Cep = sc.BusinessEntity.Cep,
+                        Telefone = sc.BusinessEntity.Telefone,
+                        Email = sc.BusinessEntity.Email
+                    },
+
+                    Permission = userCompany?.Permission != null
+                        ? new PermissionResponse
+                        {
+                            Id = userCompany.Permission.Id,
+                            Name = userCompany.Permission.Name
+                        }
+                        : null
+                };
             }).ToList();
 
             var result = new
@@ -1145,5 +1160,6 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+
     #endregion
 }

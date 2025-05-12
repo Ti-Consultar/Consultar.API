@@ -173,18 +173,27 @@ namespace _4_InfraData._1_Repositories
         public async Task<List<SubCompanyModel>> GetSubCompaniesDeletedByUserId(int userId)
         {
             var subCompanies = await _context.CompanyUsers
-                .Where(cu => cu.UserId == userId)
-                .Include(cu => cu.Permission)
+                .Where(cu => cu.UserId == userId && cu.Company != null)
+                .Include(cu => cu.Permission) // Inclui a permissão diretamente
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.SubCompanies
+                        .Where(sc => sc.Deleted) // Filtra subempresas inativas
+                    )
+                    .ThenInclude(sc => sc.BusinessEntity) // Inclui o BusinessEntity da SubCompany
                 .Include(cu => cu.Company)
                     .ThenInclude(c => c.SubCompanies)
-                        .ThenInclude(sc => sc.BusinessEntity)  // <-- Include das BusinessEntities
-                .SelectMany(cu => cu.Company.SubCompanies)
-                .Where(sc => sc.Deleted) // SubCompanies inativas
+                        .ThenInclude(sc => sc.CompanyUsers
+                            .Where(cu => cu.UserId == userId) // Garante que o usuário está vinculado à subempresa
+                        )
+                        .ThenInclude(cu => cu.Permission) // Inclui a permissão da subempresa
+                .SelectMany(cu => cu.Company.SubCompanies
+                    .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == userId) && sc.Deleted)) // Garante a associação e o status de deletado
                 .Distinct()
                 .ToListAsync();
 
             return subCompanies;
         }
+
 
 
         public async Task AddSubCompany(int companyId, SubCompanyModel subCompanyModel)

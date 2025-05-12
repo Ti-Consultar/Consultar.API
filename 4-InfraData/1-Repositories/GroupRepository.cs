@@ -170,6 +170,25 @@ namespace _4_InfraData._1_Repositories
 
             return companies;
         }
+        public async Task<List<CompanyModel>> GetDeletedCompaniesByUserIdAndGroupId(int userId, int groupId)
+        {
+            var companies = await _context.CompanyUsers
+                .Where(cu => cu.UserId == userId && cu.Company != null && cu.GroupId == groupId) // Filtro para usuários vinculados a uma empresa do grupo
+                .Include(cu => cu.Permission) // Inclui a permissão diretamente
+                .Include(cu => cu.Company) // Inclui a Company vinculada ao usuário
+                    .ThenInclude(c => c.BusinessEntity) // Inclui o BusinessEntity da Company
+                .Include(cu => cu.Company) // Inclui novamente para garantir os CompanyUsers
+                    .ThenInclude(c => c.CompanyUsers
+                        .Where(cu => cu.UserId == userId) // Garante que o usuário está vinculado à empresa
+                    )
+                    .ThenInclude(cu => cu.Permission) // Inclui a permissão do usuário na empresa
+                .Select(cu => cu.Company) // Seleciona diretamente as Companies
+                .Where(c => c.Deleted) // Filtra apenas as empresas deletadas
+                .Distinct() // Remove duplicatas
+                .ToListAsync();
+
+            return companies;
+        }
 
         public async Task<GroupModel> GetByCompanyId(int companyId)
         {
