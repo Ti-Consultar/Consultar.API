@@ -105,23 +105,27 @@ namespace _4_InfraData._1_Repositories
         }
         public async Task<List<SubCompanyModel>> GetSubCompaniesByUserId(int userId)
         {
+            // Obtenha os dados das empresas e subempresas relacionadas ao usuário
             var companyUsers = await _context.CompanyUsers
                 .Where(cu => cu.UserId == userId)
-                .Include(cu => cu.Permission)
                 .Include(cu => cu.Company)
-                    .ThenInclude(c => c.SubCompanies)
-                        .ThenInclude(sc => sc.BusinessEntity) // Certifique-se de que o nome está correto
+                    .ThenInclude(c => c.SubCompanies
+                        .Where(sc => !sc.Deleted) // Filtra as SubCompanies ativas
+                        .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == userId)) // Garante que a SubCompany está associada ao usuário
+                    )
+                    .ThenInclude(sc => sc.BusinessEntity)
                 .ToListAsync();
 
+            // Agora, para garantir que não estamos pegando subempresas deletadas, podemos selecionar as subempresas ativas
             var subCompanies = companyUsers
-                .Where(cu => cu.Company != null && cu.Company.SubCompanies != null) // Garante que não sejam nulos
-                .SelectMany(cu => cu.Company.SubCompanies)
-                .Where(sc => !sc.Deleted)
+                .Where(cu => cu.Company != null && cu.Company.SubCompanies != null) // Garante que Company e SubCompanies não sejam nulos
+                .SelectMany(cu => cu.Company.SubCompanies) // Achata a lista de SubCompanies
                 .Distinct()
                 .ToList();
 
             return subCompanies;
         }
+
         public async Task<SubCompanyModel> GetSubCompanyByUserId(int id, int userId)
         {
             var companyUser = await _context.CompanyUsers

@@ -11,6 +11,8 @@ using _2___Application._2_Dto_s.Group;
 using _2___Application._2_Dto_s.CNPJ;
 using _2___Application._2_Dto_s.BusinesEntity;
 using _4_InfraData._3_Utils.Email;
+using _2___Application._2_Dto_s.Invitation;
+using _2___Application._2_Dto_s.Users;
 
 
 public class CompanyService : BaseService
@@ -228,7 +230,7 @@ public class CompanyService : BaseService
             var companyUser = company.CompanyUsers?
                 .FirstOrDefault(cu => cu.UserId == userId && cu.GroupId == groupId);
 
-            var response = new CompanyDto
+            var response = new _2___Application._2_Dto_s.Company.CompanyDto
             {
                 Id = company.Id,
                 Name = company.Name,
@@ -295,6 +297,36 @@ public class CompanyService : BaseService
             throw new Exception($"Erro ao salvar no banco. Detalhes: {innerException}");
         }
     }
+
+    public async Task<ResultValue> GetUsersByCompanyId(int groupId, int companyId)
+    {
+        try
+        {
+            var users = await _groupRepository.GetUsersByCompanyId(groupId, companyId);
+            if (users == null) return ErrorResponse(Message.NotFound);
+
+            var response = new List<UserListDto>();
+            response.AddRange(users.Select(u => new UserListDto
+            {
+                Id = u.Id,
+                Name = u.User.Name,
+                Email = u.User.Email,
+                Contact = u.User.Name,
+                Permission = new PermissionDto
+                {
+                    Id = u.Permission.Id,
+                    Name = u.Permission.Name
+                }
+            }));
+
+            return SuccessResponse(response);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
+
 
     #endregion
 
@@ -678,6 +710,35 @@ public class CompanyService : BaseService
         }
     }
 
+    public async Task<ResultValue> GetUsersBySubCompanyId(int groupId, int companyId, int subCompanyId)
+    {
+        try
+        {
+            var users = await _groupRepository.GetUsersBySubCompanyId(groupId, companyId, subCompanyId);
+            if (users == null) return ErrorResponse(Message.NotFound);
+
+            var response = new List<UserListDto>();
+            response.AddRange(users.Select(u => new UserListDto
+            {
+                Id = u.Id,
+                Name = u.User.Name,
+                Email = u.User.Email,
+                Contact = u.User.Name,
+                Permission = new PermissionDto
+                {
+                    Id = u.Permission.Id,
+                    Name = u.Permission.Name
+                }
+            }));
+
+            return SuccessResponse(response);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
+
     #endregion
 
     #region Get By User
@@ -962,7 +1023,7 @@ public class CompanyService : BaseService
                 .Take(take)
                 .ToList();
 
-            var subCompanyDtos = paginatedSubCompanies.Select(sc => new SubCompanyDto
+            var subCompanyDtos = paginatedSubCompanies.Select(sc => new _2___Application._2_Dto_s.Company.SubCompany.SubCompanyDto
             {
                 Id = sc.Id,
                 Name = sc.Name,
@@ -1031,7 +1092,7 @@ public class CompanyService : BaseService
                 .Take(take)
                 .ToList();
 
-            var subCompanyDtos = paginatedSubCompanies.Select(sc => new SubCompanyDto
+            var subCompanyDtos = paginatedSubCompanies.Select(sc => new _2___Application._2_Dto_s.Company.SubCompany.SubCompanyDto
             {
                 Id = sc.Id,
                 Name = sc.Name,

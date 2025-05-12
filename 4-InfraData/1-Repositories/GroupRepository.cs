@@ -39,6 +39,34 @@ namespace _4_InfraData._1_Repositories
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<List<CompanyUserModel>> GetUsersByGroupId(int id)
+        {
+            return await _context.CompanyUsers
+            .Where(g => g.GroupId == id && g.CompanyId == null && g.SubCompanyId == null)
+            .Include(g => g.User)
+            .Include(a => a.Permission)
+            .ToListAsync();
+
+        }
+        public async Task<List<CompanyUserModel>> GetUsersByCompanyId(int groupId, int companyId)
+        {
+            return await _context.CompanyUsers
+            .Where(g => g.GroupId == groupId && g.CompanyId == companyId && g.SubCompanyId == null)
+            .Include(g => g.User)
+            .Include(a => a.Permission)
+            .ToListAsync();
+
+        }
+
+        public async Task<List<CompanyUserModel>> GetUsersBySubCompanyId(int groupId, int companyId, int subCompanyId)
+        {
+            return await _context.CompanyUsers
+            .Where(g => g.GroupId == groupId && g.CompanyId == companyId && g.SubCompanyId == subCompanyId)
+            .Include(g => g.User)
+            .Include(a => a.Permission)
+            .ToListAsync();
+
+        }
         public async Task<GroupModel> GetByIdByCompanies(int id)
         {
             var group = await _context.Groups

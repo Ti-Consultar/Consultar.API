@@ -105,7 +105,20 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-
+        [HttpGet]
+        [Route("id/{id}/users")]
+        public async Task<IActionResult> GetUsersByGroupId(int id)
+        {
+            try
+            {
+                var result = await _groupService.GetUsersByGroupId(id);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
         [HttpGet]
         [Route("all")]
         public async Task<IActionResult> GetAllGroups()

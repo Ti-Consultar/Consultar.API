@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using _2___Application._2_Dto_s.Permissions;
 using _2___Application._2_Dto_s.BusinesEntity;
 using _4_InfraData._3_Utils.Email;
+using _2___Application._2_Dto_s.Invitation;
+using _2___Application._2_Dto_s.Users;
 
 public class GroupService : BaseService
 {
@@ -123,7 +125,34 @@ public class GroupService : BaseService
             return ErrorResponse(ex);
         }
     }
+    public async Task<ResultValue> GetUsersByGroupId(int id)
+    {
+        try
+        {
+            var users = await _groupRepository.GetUsersByGroupId(id);
+            if (users == null) return ErrorResponse(Message.NotFound);
 
+            var response = new List<UserListDto>();
+            response.AddRange(users.Select(u => new UserListDto
+            {
+                Id = u.Id,
+                Name = u.User.Name,
+                Email = u.User.Email,
+                Contact = u.User.Name,
+                Permission = new PermissionDto
+                {
+                    Id = u.Permission.Id,
+                    Name = u.Permission.Name
+                }
+            }));
+
+            return SuccessResponse(response);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
     public async Task<ResultValue> GetGroupsWithCompaniesByUserId(int userId)
     {
         try

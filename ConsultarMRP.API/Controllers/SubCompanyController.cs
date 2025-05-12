@@ -114,6 +114,22 @@ namespace _5_API.Controllers
         }
 
         [HttpGet]
+        [Route("{id}/company/{companyId}/users")]
+        public async Task<IActionResult> GetUsersBySubCompanyId(int groupId, int companyId, int id)
+        {
+            try
+            {
+
+                var subCompanies = await _companyService.GetUsersBySubCompanyId(groupId, companyId, id);
+                return Ok(subCompanies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
         [Route("user/{userId}/deleted")]
         public async Task<IActionResult> GetSubCompaniesDeletedByUserId(int userId)
         {

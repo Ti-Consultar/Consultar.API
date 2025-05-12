@@ -128,7 +128,21 @@ namespace _5_API.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("{id}/group/{groupId}/users")]
+        public async Task<IActionResult> GetUsersByCompanyId(int groupId, int id)
+        {
+            try
+            {
 
+                var companies = await _companyService.GetUsersByCompanyId(groupId, id);
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
         [HttpGet]
         [Route("paginated/user/{userId}/group/{groupId}")]
         public async Task<IActionResult> GetCompaniesByUserIdPaginated(int userId, int groupId ,int skip, int take)
