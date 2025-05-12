@@ -110,7 +110,7 @@ namespace _4_InfraData._1_Repositories
                 .Include(cu => cu.Permission) // Inclui a permissão diretamente
                 .Include(cu => cu.Company)
                     .ThenInclude(c => c.SubCompanies
-                        .Where(sc => !sc.Deleted) // Filtra subempresas ativas
+                        .Where(sc => !sc.Deleted) // Filtra subempresas ativas (Deleted == false)
                     )
                     .ThenInclude(sc => sc.BusinessEntity) // Inclui o BusinessEntity da SubCompany
                 .Include(cu => cu.Company)
@@ -120,12 +120,13 @@ namespace _4_InfraData._1_Repositories
                         )
                         .ThenInclude(cu => cu.Permission) // Inclui a permissão da subempresa
                 .SelectMany(cu => cu.Company.SubCompanies
-                    .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == userId))) // Garante a associação do usuário
+                    .Where(sc => !sc.Deleted && sc.CompanyUsers.Any(cu => cu.UserId == userId))) // Garante a associação do usuário e SubCompany ativa
                 .Distinct()
                 .ToListAsync();
 
             return subCompanies;
         }
+
 
 
 
