@@ -21,6 +21,7 @@ public class GroupService : BaseService
     private readonly CompanyRepository _companyRepository;
     private readonly BusinessEntityRepository _businessEntityRepository;
     private readonly EmailService _emailService;
+    private readonly int _currentUserId;
 
     public GroupService(GroupRepository groupRepository, UserRepository userRepository, CompanyRepository companyRepository, EmailService emailService,BusinessEntityRepository businessEntityRepository, IAppSettings appSettings)
         : base(appSettings)
@@ -30,6 +31,9 @@ public class GroupService : BaseService
         _companyRepository = companyRepository;
         _businessEntityRepository = businessEntityRepository;
         _emailService = emailService;
+
+        // Obtendo o ID do usuário autenticado uma única vez no construtor
+        _currentUserId = GetCurrentUserId();
     }
 
     #region Groups
@@ -66,12 +70,11 @@ public class GroupService : BaseService
             return ErrorResponse(ex);
         }
     }
-
-    public async Task<ResultValue> UpdateGroup(int id, int userId, UpdateGroupDto dto)
+    public async Task<ResultValue> UpdateGroup(int id, UpdateGroupDto dto)
     {
         try
         {
-            if (!await _groupRepository.UserHasManagerPermissionInGroup(userId, id))
+            if (!await _groupRepository.UserHasManagerPermissionInGroup(_currentUserId, id))
                 return SuccessResponse("Você não tem permissão para editar este grupo.");
 
             var group = await _groupRepository.GetById(id);
@@ -94,7 +97,6 @@ public class GroupService : BaseService
             return ErrorResponse(ex);
         }
     }
-
     public async Task<ResultValue> GetAllGroups()
     {
         try
@@ -110,7 +112,6 @@ public class GroupService : BaseService
             return ErrorResponse(ex);
         }
     }
-
     public async Task<ResultValue> GetGroupById(int id)
     {
         try
@@ -153,38 +154,42 @@ public class GroupService : BaseService
             return ErrorResponse(ex);
         }
     }
-    public async Task<ResultValue> GetGroupsWithCompaniesByUserId(int userId)
-    {
-        try
+   public async Task<ResultValue> GetGroupsWithCompaniesByUserId()
+{
+    try
         {
-            var user = await _userRepository.GetByUserId(userId);
-            if (user == null) return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            if (_currentUserId == 0)
+                return ErrorResponse("Usuário não autenticado.");
 
-            var groups = await _groupRepository.GetGroupsByUserId(userId);
-            if (groups == null || !groups.Any()) return SuccessResponse(new List<ResultValue>());
+            if (_currentUserId == 0) return ErrorResponse("Usuário não autenticado.");
 
-            var result = groups.Select(g => MapToGroupWithCompaniesDto(g, userId, user.Name)).ToList();
+        var user = await _userRepository.GetByUserId(_currentUserId);
+        if (user == null) return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
-            return SuccessResponse(result);
-        }
-        catch (Exception ex)
-        {
-            return ErrorResponse(ex);
-        }
+        var groups = await _groupRepository.GetGroupsByUserId(_currentUserId);
+        if (groups == null || !groups.Any()) return SuccessResponse(new List<ResultValue>());
+
+        var result = groups.Select(g => MapToGroupWithCompaniesDto(g, _currentUserId, user.Name)).ToList();
+
+        return SuccessResponse(result);
     }
-
-    public async Task<ResultValue> GetGroupsDeletedWithCompaniesByUserId(int userId)
+    catch (Exception ex)
+    {
+        return ErrorResponse(ex);
+    }
+}
+    public async Task<ResultValue> GetGroupsDeletedWithCompaniesByUserId()
     {
         try
         {
-            var user = await _userRepository.GetByUserId(userId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null) return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
-            var groups = await _groupRepository.GetGroupsDeletedByUserId(userId);
+            var groups = await _groupRepository.GetGroupsDeletedByUserId(_currentUserId);
             if (groups == null || !groups.Any())
                 return SuccessResponse(new List<ResultValue>());
 
-            var result = groups.Select(g => MapToGroupWithCompaniesDto(g, userId, user.Name)).ToList();
+            var result = groups.Select(g => MapToGroupWithCompaniesDto(g, _currentUserId, user.Name)).ToList();
 
             return SuccessResponse(result);
         }
@@ -193,32 +198,30 @@ public class GroupService : BaseService
             return ErrorResponse(ex);
         }
     }
-
-    public async Task<ResultValue> GetGroupDetailsById(int groupId, int userId)
+    public async Task<ResultValue> GetGroupDetailsById(int groupId)
     {
         try
         {
-            var group = await _groupRepository.GetGroupWithCompaniesById(groupId, userId);
+            var group = await _groupRepository.GetGroupWithCompaniesById(groupId, _currentUserId);
             if (group == null) return ErrorResponse(Message.NotFound);
 
-            if (!group.CompanyUsers.Any(cu => cu.UserId == userId))
+            if (!group.CompanyUsers.Any(cu => cu.UserId == _currentUserId))
                 return ErrorResponse(UserLoginMessage.Error);
 
-            var userName = group.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.User?.Name ?? string.Empty;
+            var userName = group.CompanyUsers.FirstOrDefault(cu => cu.UserId == _currentUserId)?.User?.Name ?? string.Empty;
 
-            return SuccessResponse(MapToGroupWithCompaniesDto(group, userId, userName));
+            return SuccessResponse(MapToGroupWithCompaniesDto(group, _currentUserId, userName));
         }
         catch (Exception ex)
         {
             return ErrorResponse(ex);
         }
     }
-
-    public async Task<ResultValue> Delete(int userId, int groupId)
+    public async Task<ResultValue> Delete( int groupId)
     {
         try
         {
-            if (!await _groupRepository.UserHasManagerPermissionInGroup(userId, groupId))
+            if (!await _groupRepository.UserHasManagerPermissionInGroup(_currentUserId, groupId))
                 return ErrorResponse("Você não tem permissão para excluir este grupo.");
 
             var group = await _groupRepository.GetById(groupId);
@@ -240,11 +243,11 @@ public class GroupService : BaseService
             return ErrorResponse(ex);
         }
     }
-    public async Task<ResultValue> Restore(int userId, int groupId)
+    public async Task<ResultValue> Restore(int groupId)
     {
         try
         {
-            if (!await _groupRepository.UserHasManagerPermissionInGroup(userId, groupId))
+            if (!await _groupRepository.UserHasManagerPermissionInGroup(_currentUserId, groupId))
                 return ErrorResponse("Você não tem permissão para excluir este grupo.");
 
             var group = await _groupRepository.GetById(groupId);
@@ -269,7 +272,6 @@ public class GroupService : BaseService
     #endregion
 
     #region Helpers
-
     private static BusinessEntity MapToBusinessEntity(InsertBusinessEntityDto dto) => new()
     {
         NomeFantasia = dto.NomeFantasia,
@@ -284,7 +286,6 @@ public class GroupService : BaseService
         Telefone = dto.Telefone,
         Email = dto.Email
     };
-
     private static GroupDto MapToGroupDto(GroupModel group) => new()
     {
         Id = group.Id,
@@ -292,7 +293,6 @@ public class GroupService : BaseService
         DateCreate = group.DateCreate,
         BusinessEntity = group.BusinessEntity == null ? null : MapToBusinessEntityDto(group.BusinessEntity)
     };
-
     private static GroupWithCompaniesDto MapToGroupWithCompaniesDto(GroupModel group, int userId, string userName) => new()
     {
         GroupId = group.Id,
@@ -307,7 +307,6 @@ public class GroupService : BaseService
             .ToList() ?? new List<CompanyUsersimpleDto>(),
         BusinessEntity = group.BusinessEntity == null ? null : MapToBusinessEntityDto(group.BusinessEntity)
     };
-
     private static CompanyUsersimpleDto MapToCompanyUserSimpleDto(CompanyModel company, int userId) => new()
     {
         CompanyId = company.Id,
@@ -326,7 +325,6 @@ public class GroupService : BaseService
                 Permission = MapPermission(sc.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission)
             }).ToList()
     };
-
     private static BusinessEntityDto MapToBusinessEntityDto(BusinessEntity entity) => new()
     {
         Id = entity.Id,
@@ -342,7 +340,6 @@ public class GroupService : BaseService
         Telefone = entity.Telefone,
         Email = entity.Email
     };
-
     private static PermissionResponse MapPermission(PermissionModel permission)
     {
         if (permission == null) return null;
@@ -352,7 +349,6 @@ public class GroupService : BaseService
             Name = permission.Name
         };
     }
-
     private void UpdateBusinessEntityFieldsIfPresent(BusinessEntity entity, BusinessEntityDto dto)
     {
         if (!string.IsNullOrWhiteSpace(dto.NomeFantasia)) entity.NomeFantasia = dto.NomeFantasia;

@@ -11,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using _2___Application._1_Services.AccountPlans;
+using _4_Application._1_Services;
 
 
 namespace _2___Application._4__DependencyInjectionConfig
@@ -67,6 +69,13 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<CnpjService>();
             services.AddScoped<CepService>();
             services.AddScoped<BreadcrumbService>();
+
+            services.AddScoped<AccountPlansService>();
+            services.AddScoped<BalanceteService>();
+            services.AddScoped<BalanceteDataService>();
+            services.AddScoped<InteractionService>();
+
+
             #endregion
 
             #region Repositories

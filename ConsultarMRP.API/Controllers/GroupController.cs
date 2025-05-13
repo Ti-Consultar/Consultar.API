@@ -1,4 +1,5 @@
 ﻿using _2___Application._2_Dto_s.Group;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -16,6 +17,11 @@ namespace _5_API.Controllers
             _groupService = groupService;
         }
 
+        /// <summary>
+        /// Cria um novo grupo.
+        /// </summary>
+        /// <param name="createGroupDto">Dados para criação do grupo.</param>
+        [Authorize]
         [HttpPost]
         [Route("create")]
         public async Task<IActionResult> CreateGroup([FromBody] InsertGroupDto createGroupDto)
@@ -31,13 +37,19 @@ namespace _5_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Atualiza as informações de um grupo.
+        /// </summary>
+        /// <param name="id">ID do grupo.</param>
+        /// <param name="dto">Dados para atualização.</param>
+        [Authorize]
         [HttpPut]
-        [Route("update/id/{id}/user/{userId}")]
-        public async Task<IActionResult> UpdateGroup(int id, int userId, [FromBody] UpdateGroupDto dto)
+        [Route("{id}/update")]
+        public async Task<IActionResult> UpdateGroup(int id, [FromBody] UpdateGroupDto dto)
         {
             try
             {
-                var result = await _groupService.UpdateGroup(id,userId, dto);
+                var result = await _groupService.UpdateGroup(id, dto);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -46,13 +58,18 @@ namespace _5_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Exclui um grupo (soft delete).
+        /// </summary>
+        /// <param name="id">ID do grupo.</param>
+        [Authorize]
         [HttpPatch]
-        [Route("user/{userId}/group/{id}/delete")]
-        public async Task<IActionResult> DeleteGroup(int userId, int id)
+        [Route("{id}/delete")]
+        public async Task<IActionResult> DeleteGroup(int id)
         {
             try
             {
-                var result = await _groupService.Delete(userId, id);
+                var result = await _groupService.Delete(id);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -61,13 +78,18 @@ namespace _5_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Restaura um grupo excluído.
+        /// </summary>
+        /// <param name="id">ID do grupo.</param>
+        [Authorize]
         [HttpPatch]
-        [Route("user/{userId}/group/{id}/restore")]
-        public async Task<IActionResult> RestoreGroup(int userId, int id)
+        [Route("{id}/restore")]
+        public async Task<IActionResult> RestoreGroup(int id)
         {
             try
             {
-                var result = await _groupService.Restore(userId, id);
+                var result = await _groupService.Restore(id);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -76,23 +98,13 @@ namespace _5_API.Controllers
             }
         }
 
-        //[HttpGet]
-        //[Route("paginated/user/{userId}")]
-        //public async Task<IActionResult> GetGroupsByUserIdPaginated(int userId, int skip, int take)
-        //{
-        //    try
-        //    {
-        //        var result = await _groupService.GetGroupsByUserIdPaginated(userId, skip, take);
-        //        return Ok(result);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(new { message = ex.Message });
-        //    }
-        //}
-
+        /// <summary>
+        /// Obtém um grupo pelo ID.
+        /// </summary>
+        /// <param name="id">ID do grupo.</param>
+        [Authorize]
         [HttpGet]
-        [Route("id/{id}")]
+        [Route("{id}")]
         public async Task<IActionResult> GetGroupById(int id)
         {
             try
@@ -105,8 +117,14 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Obtém os usuários de um grupo.
+        /// </summary>
+        /// <param name="id">ID do grupo.</param>
+        [Authorize]
         [HttpGet]
-        [Route("id/{id}/users")]
+        [Route("{id}/users")]
         public async Task<IActionResult> GetUsersByGroupId(int id)
         {
             try
@@ -119,6 +137,11 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Lista todos os grupos.
+        /// </summary>
+        [Authorize]
         [HttpGet]
         [Route("all")]
         public async Task<IActionResult> GetAllGroups()
@@ -133,13 +156,18 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Obtém os grupos associados ao usuário autenticado.
+        /// </summary>
+        [Authorize]
         [HttpGet]
-        [Route("user/{userId}/groups")]
-        public async Task<IActionResult> GetGroupsWithCompaniesByUserId(int userId)
+        [Route("users")]
+        public async Task<IActionResult> GetGroupsWithCompaniesByUserId()
         {
             try
             {
-                var result = await _groupService.GetGroupsWithCompaniesByUserId(userId);
+                var result = await _groupService.GetGroupsWithCompaniesByUserId();
                 return Ok(result);
             }
             catch (Exception ex)
@@ -148,27 +176,17 @@ namespace _5_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Obtém os grupos excluídos associados ao usuário autenticado.
+        /// </summary>
+        [Authorize]
         [HttpGet]
-        [Route("user/{userId}/groups/deleted")]
-        public async Task<IActionResult> GetGroupsDeletedWithCompaniesByUserId(int userId)
+        [Route("deleted")]
+        public async Task<IActionResult> GetGroupsDeletedWithCompaniesByUserId()
         {
             try
             {
-                var result = await _groupService.GetGroupsDeletedWithCompaniesByUserId(userId);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-        [HttpGet]
-        [Route("user/{userId}/group/{groupId}")]
-        public async Task<IActionResult> GetGroupDetailsById(int userId, int groupId)
-        {
-            try
-            {
-                var result = await _groupService.GetGroupDetailsById(groupId, userId);
+                var result = await _groupService.GetGroupsDeletedWithCompaniesByUserId();
                 return Ok(result);
             }
             catch (Exception ex)
@@ -177,6 +195,24 @@ namespace _5_API.Controllers
             }
         }
 
-
+        /// <summary>
+        /// Obtém os detalhes de um grupo pelo ID.
+        /// </summary>
+        /// <param name="groupId">ID do grupo.</param>
+        [Authorize]
+        [HttpGet]
+        [Route("detail/{groupId}")]
+        public async Task<IActionResult> GetGroupDetailsById(int groupId)
+        {
+            try
+            {
+                var result = await _groupService.GetGroupDetailsById(groupId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

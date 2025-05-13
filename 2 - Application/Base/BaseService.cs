@@ -23,7 +23,37 @@ namespace _2___Application.Base
         public string GetEnvironmentName() =>
             _appSettings.GetHostingEnvironment()?.EnvironmentName ?? "dev";
 
-        public int GetCurrentUserId() => _currentUserId;
+        // Método atualizado para obter o ID do usuário autenticado via JWT
+        public int GetCurrentUserId()
+        {
+            var http = _appSettings.GetHttpContext()?.HttpContext;
+            var headerAuthorization = http?.Request.Headers["Authorization"].ToString();
+
+            if (string.IsNullOrWhiteSpace(headerAuthorization) || !headerAuthorization.StartsWith("Bearer "))
+                return 0;
+
+            var token = headerAuthorization.Substring(7); // Remover "Bearer " do início
+            var handler = new JwtSecurityTokenHandler();
+
+            try
+            {
+                var jwtToken = handler.ReadJwtToken(token);
+                var userIdClaim = jwtToken.Claims.FirstOrDefault(c =>
+                    c.Type == "sub" || c.Type == "userId" || c.Type == "nameid");
+
+                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    _currentUserId = userId;
+                    return userId;
+                }
+
+                return 0;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
 
         private string GetRouterName()
         {
