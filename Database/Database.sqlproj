@@ -70,6 +70,11 @@
     <None Include="Scripts\ScriptsIgnoredOnImport.sql" />
     <Build Include="dbo\Tables\Groups.sql" />
     <Build Include="dbo\Tables\BusinessEntity.sql" />
+    <Build Include="dbo\Tables\AccountPlans.sql" />
+    <Build Include="dbo\Tables\Balancete.sql" />
+    <Build Include="dbo\Tables\BalanceteData.sql" />
+    <Build Include="dbo\Tables\Interaction.sql" />
+    <Build Include="dbo\Tables\PlansAccountUsers.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="Database.refactorlog" />

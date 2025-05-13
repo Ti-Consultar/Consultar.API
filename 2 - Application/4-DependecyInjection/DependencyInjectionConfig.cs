@@ -77,6 +77,12 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<InvitationRepository>();
             services.AddScoped<GroupRepository>();
             services.AddScoped<BusinessEntityRepository>();
+
+            services.AddScoped<AccountPlansRepository>();
+            services.AddScoped<BalanceteRepository>();
+            services.AddScoped<BalanceteDataRepository>();
+            services.AddScoped<InteractionRepository>();
+            services.AddScoped<PlansAccountUserRepository>();
             #endregion
 
             #endregion
