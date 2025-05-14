@@ -27,6 +27,8 @@ DependencyInjectionConfig.Configure(builder.Services, connectionString);
 
 // Adiciona o UserService diretamente
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<AuthorizationService>();
+
 builder.Services.AddScoped<UserRepository>();
 
 // Configuração de CORS (permitindo todas as origens, ajuste conforme necessário)

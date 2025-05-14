@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace _4_InfraData._5_ConfigEnum
 {
@@ -13,12 +12,23 @@ namespace _4_InfraData._5_ConfigEnum
         {
             FieldInfo fieldInfo = enumValue.GetType().GetField(enumValue.ToString());
 
-            if (fieldInfo.GetCustomAttribute(typeof(EnumDescriptionAttribute)) is EnumDescriptionAttribute attribute)
+            if (fieldInfo != null &&
+                fieldInfo.GetCustomAttribute(typeof(DescriptionAttribute)) is DescriptionAttribute attribute)
             {
                 return attribute.Description;
             }
 
             return enumValue.ToString();
+        }
+
+        public static List<KeyValuePair<int, string>> ToDropdown<TEnum>() where TEnum : Enum
+        {
+            return Enum.GetValues(typeof(TEnum))
+                       .Cast<TEnum>()
+                       .Select(value => new KeyValuePair<int, string>(
+                           Convert.ToInt32(value),
+                           value.GetDescription()))
+                       .ToList();
         }
     }
 }

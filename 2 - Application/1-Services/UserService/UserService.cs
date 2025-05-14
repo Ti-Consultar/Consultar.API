@@ -10,6 +10,8 @@ using _4_InfraData._2_JWT;
 using _2___Application.Base;
 using _4_InfraData._3_Utils.Email;
 using _2___Application._2_Dto_s.Group;
+using _3_Domain._2_Enum_s;
+using _4_InfraData._5_ConfigEnum;
 
 namespace _2___Application._1_Services.User
 {
@@ -52,7 +54,7 @@ namespace _2___Application._1_Services.User
                     return UserLoginMessage.EmailExists;
                 }
 
-                var user = new UserModel(request.Name, request.Email,request.Contact ,request.Password.EncryptPassword());
+                var user = new UserModel(request.Name, request.Email,request?.Contact ,request?.Role,request.Password.EncryptPassword());
                 await _repository.AddUser(user);
 
                 return Message.Success;
@@ -216,6 +218,7 @@ namespace _2___Application._1_Services.User
                 };
             }
         }
+
 
         #region Metodos Privados
         private LoginResponse CreateUserResponseAuthorized(UserModel user)

@@ -132,5 +132,13 @@ namespace ConsultarAuth.API.Controllers
                 return StatusCode(500, new { message = "Erro ao buscar usuário", details = ex.Message });
             }
         }
+       
+        [HttpGet("/policies")]
+        
+        public async Task<IActionResult> GetPolicies([FromServices] AuthorizationService authorizationService)
+        {
+            var policies = await authorizationService.GetAllPoliciesAsync();
+            return Ok(policies);
+        }
     }
 }
