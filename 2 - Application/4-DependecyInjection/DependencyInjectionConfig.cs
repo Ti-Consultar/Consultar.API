@@ -49,9 +49,13 @@ namespace _2___Application._4__DependencyInjectionConfig
 
             services.AddAuthorization(options =>
             {
+                options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
                 options.AddPolicy("Gestor", policy => policy.RequireRole("Gestor"));
                 options.AddPolicy("Usuario", policy => policy.RequireRole("Usuário"));
                 options.AddPolicy("Consultor", policy => policy.RequireRole("Consultor"));
+                options.AddPolicy("Comercial", policy => policy.RequireRole("Comercial"));
+                options.AddPolicy("Desenvolvedor", policy => policy.RequireRole("Desenvolvedor"));
+                options.AddPolicy("Designer", policy => policy.RequireRole("Designer"));
             });
 
             services.AddCors();

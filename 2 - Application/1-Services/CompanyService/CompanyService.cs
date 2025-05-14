@@ -22,6 +22,7 @@ public class CompanyService : BaseService
     private readonly BusinessEntityRepository _businessEntityRepository;
     private readonly GroupRepository _groupRepository;
     private readonly EmailService _emailService;
+    private readonly int _currentUserId;
 
     public CompanyService(CompanyRepository companyRepository, UserRepository userRepository, BusinessEntityRepository businessEntityRepository, GroupRepository groupRepository, EmailService emailService,IAppSettings appSettings)
         : base(appSettings)
@@ -31,6 +32,8 @@ public class CompanyService : BaseService
         _businessEntityRepository = businessEntityRepository;
         _groupRepository = groupRepository;
         _emailService = emailService;
+
+        _currentUserId = GetCurrentUserId();
     }
 
     #region Companies
@@ -38,7 +41,7 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetById(createCompanyDto.UserId);
+            var user = await _userRepository.GetById(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
@@ -81,7 +84,7 @@ public class CompanyService : BaseService
             // Vincula o usuário à empresa
             var companyUser = new CompanyUserModel
             {
-                UserId = createCompanyDto.UserId,
+                UserId = user.Id,
                 CompanyId = company.Id,
                 GroupId = createCompanyDto.GroupId
             };
@@ -99,15 +102,15 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(dto.UserId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
-            var hasPermission = await _companyRepository.ExistsEditCompanyUser(dto.UserId, id, dto.GroupId);
+            var hasPermission = await _companyRepository.ExistsEditCompanyUser(user.Id, id, dto.GroupId);
             if (!hasPermission)
                 return ErrorResponse(Message.Unauthorized);
 
-            var company = await _companyRepository.GetCompanyByUserId(id, dto.UserId, dto.GroupId);
+            var company = await _companyRepository.GetCompanyByUserId(id, user.Id, dto.GroupId);
             if (company == null)
                 return ErrorResponse(Message.NotFound);
 
@@ -145,20 +148,20 @@ public class CompanyService : BaseService
         if (!string.IsNullOrWhiteSpace(dto.Telefone)) entity.Telefone = dto.Telefone;
         if (!string.IsNullOrWhiteSpace(dto.Email)) entity.Email = dto.Email;
     }
-    public async Task<ResultValue> DeleteCompany(int userId, int id, int groupId)
+    public async Task<ResultValue> DeleteCompany( int id, int groupId)
     {
         try
         {
-            var user = await _userRepository.GetByUserId(userId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
             // Verifica se o usuário tem permissão para excluir a empresa
-            var hasPermission = await _companyRepository.ExistsCompanyUser(userId, id, groupId);
+            var hasPermission = await _companyRepository.ExistsCompanyUser(user.Id, id, groupId);
             if (!hasPermission)
                 return ErrorResponse(Message.Unauthorized);
 
-            var company = await _companyRepository.GetCompanyByUserId(id, userId, groupId);
+            var company = await _companyRepository.GetCompanyByUserId(id, user.Id, groupId);
             if (company == null)
                 return SuccessResponse(new List<ResultValue>());
 
@@ -172,11 +175,11 @@ public class CompanyService : BaseService
         }
     }
 
-    public async Task<ResultValue> RestoreCompanies(int userId, List<int> companyIds, int groupId)
+    public async Task<ResultValue> RestoreCompanies( List<int> companyIds, int groupId)
     {
         try
         {
-            var user = await _userRepository.GetByUserId(userId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
@@ -186,7 +189,7 @@ public class CompanyService : BaseService
 
             foreach (var companyId in companyIds)
             {
-                var hasPermission = await _companyRepository.ExistsCompanyUser(userId, companyId, groupId);
+                var hasPermission = await _companyRepository.ExistsCompanyUser(user.Id, companyId, groupId);
                 if (!hasPermission)
                 {
                     notAuthorizedIds.Add(companyId);
@@ -218,17 +221,17 @@ public class CompanyService : BaseService
         }
     }
 
-    public async Task<ResultValue> GetCompanyById(int companyId, int userId, int groupId)
+    public async Task<ResultValue> GetCompanyById(int companyId, int groupId)
     {
         try
         {
-            var company = await _companyRepository.GetCompanyById(userId, groupId, companyId);
+            var company = await _companyRepository.GetCompanyById(_currentUserId, groupId, companyId);
             if (company == null)
                 return ErrorResponse(Message.NotFound);
 
             // Buscar a CompanyUser para pegar a Permission
             var companyUser = company.CompanyUsers?
-                .FirstOrDefault(cu => cu.UserId == userId && cu.GroupId == groupId);
+                .FirstOrDefault(cu => cu.UserId == _currentUserId && cu.GroupId == groupId);
 
             var response = new _2___Application._2_Dto_s.Company.CompanyDto
             {
@@ -270,7 +273,7 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(dto.UserId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
@@ -281,7 +284,7 @@ public class CompanyService : BaseService
             var model = new CompanyUserModel();
 
             model.CompanyId = dto.CompanyId;
-            model.UserId = user.Id;
+            model.UserId = dto.UserId;
             model.PermissionId = dto.PermissionId;
             model.GroupId = dto.GroupId;
 
@@ -335,7 +338,7 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(createSubCompanyDto.UserId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
@@ -380,7 +383,7 @@ public class CompanyService : BaseService
             // Vincula o usuário à SubCompany
             var companyUser = new CompanyUserModel
             {
-                UserId = createSubCompanyDto.UserId,
+                UserId = user.Id,
                 CompanyId = company.Id,
                 GroupId = company.GroupId,
                 PermissionId = 1 // gestor
@@ -408,17 +411,17 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(dto.UserId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
             // Verifica se o usuário tem permissão para editar a subempresa
-            var hasPermission = await _companyRepository.ExistsEditSubCompanyUser(dto.UserId, dto.CompanyId, id);
+            var hasPermission = await _companyRepository.ExistsEditSubCompanyUser(user.Id, dto.CompanyId, id);
             if (!hasPermission)
                 return ErrorResponse(Message.Unauthorized);
 
             // Obtém a subempresa diretamente pelo ID e pelo usuário
-            var subCompany = await _companyRepository.GetSubCompanyByUserId(id, dto.UserId);
+            var subCompany = await _companyRepository.GetSubCompanyByUserId(id, user.Id);
             if (subCompany == null)
                 return ErrorResponse(Message.NotFound);
 
@@ -445,16 +448,16 @@ public class CompanyService : BaseService
         }
     }
 
-    public async Task<ResultValue> DeleteSubCompany(int userId, int companyId, int subCompanyId)
+    public async Task<ResultValue> DeleteSubCompany( int companyId, int subCompanyId)
     {
         try
         {
-            var user = await _userRepository.GetByUserId(userId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
             // Verifica se o usuário tem permissão para excluir a subempresa
-            var hasPermission = await _companyRepository.ExistsEditSubCompanyUser(userId, companyId, subCompanyId);
+            var hasPermission = await _companyRepository.ExistsEditSubCompanyUser(user.Id, companyId, subCompanyId);
             if (!hasPermission)
                 return ErrorResponse(Message.Unauthorized);
 
@@ -476,11 +479,11 @@ public class CompanyService : BaseService
         }
     }
 
-    public async Task<ResultValue> RestoreSubCompanies(int userId, int companyId, List<int> subCompanyIds)
+    public async Task<ResultValue> RestoreSubCompanies( int companyId, List<int> subCompanyIds)
     {
         try
         {
-            var user = await _userRepository.GetByUserId(userId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
@@ -494,7 +497,7 @@ public class CompanyService : BaseService
 
             foreach (var subCompanyId in subCompanyIds)
             {
-                var hasPermission = await _companyRepository.ExistsEditSubCompanyUser(userId, companyId, subCompanyId);
+                var hasPermission = await _companyRepository.ExistsEditSubCompanyUser(user.Id, companyId, subCompanyId);
                 if (!hasPermission)
                 {
                     unauthorizedIds.Add(subCompanyId);
@@ -556,15 +559,15 @@ public class CompanyService : BaseService
         }
     }
 
-    public async Task<ResultValue> GetSubCompaniesByUserId(int userId)
+    public async Task<ResultValue> GetSubCompaniesByUserId()
     {
         try
         {
-            var user = await _userRepository.GetByUserId(userId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
-            var subCompanies = await _companyRepository.GetSubCompaniesByUserId(userId);
+            var subCompanies = await _companyRepository.GetSubCompaniesByUserId(user.Id);
 
             var subCompanyDtos = subCompanies.Select(sc => new SubCompanyUsersimpleDto
             {
@@ -590,11 +593,11 @@ public class CompanyService : BaseService
                     Email = sc.BusinessEntity.Email
                 },
 
-                Permission = sc.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
+                Permission = sc.CompanyUsers.FirstOrDefault(cu => cu.UserId == user.Id)?.Permission != null
                     ? new PermissionResponse
                     {
-                        Id = sc.CompanyUsers.First(cu => cu.UserId == userId).Permission.Id,
-                        Name = sc.CompanyUsers.First(cu => cu.UserId == userId).Permission.Name
+                        Id = sc.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Id,
+                        Name = sc.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Name
                     }
                     : null
             }).ToList();
@@ -606,15 +609,15 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-    public async Task<ResultValue> GetSubCompaniesById(int userId, int companyId, int subcompanyId)
+    public async Task<ResultValue> GetSubCompaniesById( int companyId, int subcompanyId)
     {
         try
         {
-            var user = await _userRepository.GetByUserId(userId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
-            var sc = await _companyRepository.GetSubCompanyId(userId, companyId, subcompanyId);
+            var sc = await _companyRepository.GetSubCompanyId(user.Id, companyId, subcompanyId);
 
             if (sc == null)
                 return SuccessResponse(Message.NotFound);
@@ -642,11 +645,11 @@ public class CompanyService : BaseService
                     Email = sc.BusinessEntity.Email
                 },
 
-                Permission = sc.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
+                Permission = sc.CompanyUsers.FirstOrDefault(cu => cu.UserId == user.Id)?.Permission != null
                     ? new PermissionResponse
                     {
-                        Id = sc.CompanyUsers.First(cu => cu.UserId == userId).Permission.Id,
-                        Name = sc.CompanyUsers.First(cu => cu.UserId == userId).Permission.Name
+                        Id = sc.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Id,
+                        Name = sc.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Name
                     }
                     : null
             };
@@ -659,15 +662,15 @@ public class CompanyService : BaseService
         }
     }
 
-    public async Task<ResultValue> GetSubCompaniesDeletedByUserId(int userId)
+    public async Task<ResultValue> GetSubCompaniesDeletedByUserId()
     {
         try
         {
-            var user = await _userRepository.GetByUserId(userId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
-            var subCompanies = await _companyRepository.GetSubCompaniesDeletedByUserId(userId);
+            var subCompanies = await _companyRepository.GetSubCompaniesDeletedByUserId(user.Id);
 
             var subCompanyDtos = subCompanies.Select(sc => new SubCompanyUsersimpleDto
             {
@@ -693,11 +696,11 @@ public class CompanyService : BaseService
                     Email = sc.BusinessEntity.Email
                 },
 
-                Permission = sc.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
+                Permission = sc.CompanyUsers.FirstOrDefault(cu => cu.UserId == user.Id)?.Permission != null
                     ? new PermissionResponse
                     {
-                        Id = sc.CompanyUsers.First(cu => cu.UserId == userId).Permission.Id,
-                        Name = sc.CompanyUsers.First(cu => cu.UserId == userId).Permission.Name
+                        Id = sc.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Id,
+                        Name = sc.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Name
                     }
                     : null
             }).ToList();
@@ -742,11 +745,11 @@ public class CompanyService : BaseService
     #endregion
 
     #region Get By User
-    public async Task<ResultValue> GetCompaniesByUserId(int userId, int groupId)
+    public async Task<ResultValue> GetCompaniesByUserId( int groupId)
     {
         try
         {
-            var user = await _userRepository.GetByUserId(userId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
@@ -755,7 +758,7 @@ public class CompanyService : BaseService
                 return ErrorResponse(Message.NotFound);
 
             var companies = group.Companies?
-                .Where(c => c.CompanyUsers.Any(cu => cu.UserId == userId))
+                .Where(c => c.CompanyUsers.Any(cu => cu.UserId == user.Id))
                 .ToList();
 
             var companyDtos = companies?.Select(company => new CompanyUsersimpleDto
@@ -780,27 +783,27 @@ public class CompanyService : BaseService
                     Email = company.BusinessEntity.Email
                 },
 
-                Permission = company.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
+                Permission = company.CompanyUsers.FirstOrDefault(cu => cu.UserId == user.Id)?.Permission != null
                     ? new PermissionResponse
                     {
-                        Id = company.CompanyUsers.First(cu => cu.UserId == userId).Permission.Id,
-                        Name = company.CompanyUsers.First(cu => cu.UserId == userId).Permission.Name
+                        Id = company.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Id,
+                        Name = company.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Name
                     }
                     : null,
 
                 SubCompanies = company.SubCompanies?
-                    .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == userId))
+                    .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == user.Id))
                     .Select(subCompany => new SubCompanyUsersimpleDto
                     {
                         SubCompanyId = subCompany.Id,
                         SubCompanyName = subCompany.Name,
                         CompanyId = company.Id,
                         DateCreate = subCompany.DateCreate,
-                        Permission = subCompany.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
+                        Permission = subCompany.CompanyUsers.FirstOrDefault(cu => cu.UserId == user.Id)?.Permission != null
                             ? new PermissionResponse
                             {
-                                Id = subCompany.CompanyUsers.First(cu => cu.UserId == userId).Permission.Id,
-                                Name = subCompany.CompanyUsers.First(cu => cu.UserId == userId).Permission.Name
+                                Id = subCompany.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Id,
+                                Name = subCompany.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Name
                             }
                             : null
                     }).ToList()
@@ -811,7 +814,7 @@ public class CompanyService : BaseService
                 GroupId = group.Id,
                 GroupName = group.Name,
                 DateCreate = group.DateCreate,
-                UserId = userId,
+                UserId = user.Id,
                 UserName = user.Name,
                 Companies = companyDtos ?? new List<CompanyUsersimpleDto>()
 
@@ -824,11 +827,11 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-   public async Task<ResultValue> GetByIdByCompaniesDeleted(int userId, int groupId)
+   public async Task<ResultValue> GetByIdByCompaniesDeleted( int groupId)
 {
     try
     {
-        var user = await _userRepository.GetByUserId(userId);
+        var user = await _userRepository.GetByUserId(_currentUserId);
         if (user == null)
             return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
@@ -837,7 +840,7 @@ public class CompanyService : BaseService
             return ErrorResponse(Message.NotFound);
 
         var companies = dtos
-            .Where(c => c.UserId == userId) // filtra as empresas em que o user aparece
+            .Where(c => c.UserId == user.Id) // filtra as empresas em que o user aparece
             .GroupBy(c => c.CompanyId)
             .Select(g => new CompanyUsersimpleDto
             {
@@ -863,7 +866,7 @@ public class CompanyService : BaseService
             GroupId = dtos.First().GroupId,
             GroupName = dtos.First().GroupName,
             DateCreate = DateTime.Now, // não vem na query, defina conforme necessidade
-            UserId = userId,
+            UserId = user.Id,
             UserName = user.Name,
             Companies = companies
         };
@@ -875,11 +878,11 @@ public class CompanyService : BaseService
         return ErrorResponse(ex);
     }
 }
-    public async Task<ResultValue> GetCompaniesByUserIdPaginated(int userId, int groupId, int skip = 0, int take = 10)
+    public async Task<ResultValue> GetCompaniesByUserIdPaginated( int groupId, int skip = 0, int take = 10)
     {
         try
         {
-            var user = await _userRepository.GetById(userId);
+            var user = await _userRepository.GetById(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
@@ -888,7 +891,7 @@ public class CompanyService : BaseService
                 return ErrorResponse(Message.NotFound);
 
             // Obtém as empresas vinculadas ao usuário no grupo específico
-            var companies = await _groupRepository.GetCompaniesByUserIdAndGroupId(userId, groupId);
+            var companies = await _groupRepository.GetCompaniesByUserIdAndGroupId(user.Id, groupId);
 
             // Paginação manual para evitar sobrecarga no banco
             var paginatedCompanies = companies
@@ -898,7 +901,7 @@ public class CompanyService : BaseService
 
             var companyDtos = paginatedCompanies.Select(company =>
             {
-                var userCompany = company.CompanyUsers?.FirstOrDefault(cu => cu.UserId == userId);
+                var userCompany = company.CompanyUsers?.FirstOrDefault(cu => cu.UserId == user.Id);
 
                 return new CompanyUsersimpleDto
                 {
@@ -944,11 +947,11 @@ public class CompanyService : BaseService
         }
     }
 
-    public async Task<ResultValue> GetByIdByCompaniesDeletedPaginated(int userId, int groupId, int skip = 0, int take = 10)
+    public async Task<ResultValue> GetByIdByCompaniesDeletedPaginated( int groupId, int skip = 0, int take = 10)
     {
         try
         {
-            var user = await _userRepository.GetById(userId);
+            var user = await _userRepository.GetById(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
@@ -957,7 +960,7 @@ public class CompanyService : BaseService
                 return ErrorResponse(Message.NotFound);
 
             // Busca todas as empresas deletadas vinculadas ao usuário e grupo
-            var allDeletedCompanies = await _groupRepository.GetDeletedCompaniesByUserIdAndGroupId(userId, groupId);
+            var allDeletedCompanies = await _groupRepository.GetDeletedCompaniesByUserIdAndGroupId(user.Id, groupId);
 
             var totalCount = allDeletedCompanies.Count;
 
@@ -969,7 +972,7 @@ public class CompanyService : BaseService
 
             var companyDtos = paginatedCompanies.Select(company =>
             {
-                var userCompany = company.CompanyUsers?.FirstOrDefault(cu => cu.UserId == userId);
+                var userCompany = company.CompanyUsers?.FirstOrDefault(cu => cu.UserId == user.Id);
 
                 return new CompanyUsersimpleDto
                 {
@@ -1017,16 +1020,16 @@ public class CompanyService : BaseService
         }
     }
 
-    public async Task<ResultValue> GetSubCompaniesByUserIdPaginated(int userId, int companyId, int skip = 0, int take = 10)
+    public async Task<ResultValue> GetSubCompaniesByUserIdPaginated( int companyId, int skip = 0, int take = 10)
     {
         try
         {
-            var user = await _userRepository.GetByUserId(userId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
             // Obtém as subempresas filtradas diretamente do repositório
-            var allSubCompanies = await _companyRepository.GetSubCompaniesByUserId(userId);
+            var allSubCompanies = await _companyRepository.GetSubCompaniesByUserId(user.Id);
 
             // Filtra pelo ID da empresa
             var filteredSubCompanies = allSubCompanies
@@ -1061,11 +1064,11 @@ public class CompanyService : BaseService
                     Telefone = sc.BusinessEntity.Telefone,
                     Email = sc.BusinessEntity.Email
                 },
-                Permission = sc.CompanyUsers.FirstOrDefault(cu => cu.UserId == userId)?.Permission != null
+                Permission = sc.CompanyUsers.FirstOrDefault(cu => cu.UserId == user.Id)?.Permission != null
                     ? new PermissionResponse
                     {
-                        Id = sc.CompanyUsers.First(cu => cu.UserId == userId).Permission.Id,
-                        Name = sc.CompanyUsers.First(cu => cu.UserId == userId).Permission.Name
+                        Id = sc.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Id,
+                        Name = sc.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Name
                     }
                     : null
             }).ToList();
@@ -1086,16 +1089,16 @@ public class CompanyService : BaseService
         }
     }
 
-    public async Task<ResultValue> GetSubCompaniesDeletedByUserIdPaginated(int userId, int companyId, int skip = 0, int take = 10)
+    public async Task<ResultValue> GetSubCompaniesDeletedByUserIdPaginated( int companyId, int skip = 0, int take = 10)
     {
         try
         {
-            var user = await _userRepository.GetByUserId(userId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
             // Busca todas as subempresas deletadas da company que o usuário tem vínculo
-            var allSubCompanies = await _companyRepository.GetSubCompaniesDeletedByUserId(userId);
+            var allSubCompanies = await _companyRepository.GetSubCompaniesDeletedByUserId(user.Id);
 
             var filteredSubCompanies = allSubCompanies
                 .Where(sc => sc.CompanyId == companyId && sc.Deleted) // Garante que estejam deletadas
@@ -1110,7 +1113,7 @@ public class CompanyService : BaseService
 
             var subCompanyDtos = paginatedSubCompanies.Select(sc =>
             {
-                var userCompany = sc.CompanyUsers?.FirstOrDefault(cu => cu.UserId == userId);
+                var userCompany = sc.CompanyUsers?.FirstOrDefault(cu => cu.UserId == user.Id);
 
                 return new _2___Application._2_Dto_s.Company.SubCompany.SubCompanyDto
                 {

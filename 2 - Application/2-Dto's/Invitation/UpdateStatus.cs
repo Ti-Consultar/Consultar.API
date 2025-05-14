@@ -9,7 +9,7 @@ namespace _2___Application._2_Dto_s.Invitation
 {
    public class UpdateStatus
     {
-        public int UserId { get; set; }
+       
         public InvitationStatus Status { get; set; }
     }
 }

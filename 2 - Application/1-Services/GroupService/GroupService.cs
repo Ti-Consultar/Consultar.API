@@ -32,7 +32,7 @@ public class GroupService : BaseService
         _businessEntityRepository = businessEntityRepository;
         _emailService = emailService;
 
-        // Obtendo o ID do usuário autenticado uma única vez no construtor
+        // Obtendo o ID do usuário autenticado 
         _currentUserId = GetCurrentUserId();
     }
 
@@ -42,7 +42,7 @@ public class GroupService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetById(dto.UserId);
+            var user = await _userRepository.GetById(_currentUserId);
             if (user == null) return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
             if (await _businessEntityRepository.CnpjExists(dto.BusinessEntity.Cnpj))
@@ -60,7 +60,7 @@ public class GroupService : BaseService
 
             await _groupRepository.Add(group);
 
-            await _companyRepository.AddUserToGroup(dto.UserId, group.Id);
+            await _companyRepository.AddUserToGroup(_currentUserId, group.Id);
             await _emailService.SendWelcomeAsync(user.Email, group.Name, user.Name);
 
             return SuccessResponse(Message.Success);

@@ -10,7 +10,6 @@ namespace _2___Application._2_Dto_s.Company
     public class UpdateCompanyDto
     {
         public string Name { get; set; }
-        public int UserId { get; set; }
         public int GroupId { get; set; }
         public BusinessEntityDto BusinessEntity { get; set; }
 
@@ -20,7 +19,7 @@ namespace _2___Application._2_Dto_s.Company
     {
         public string Name { get; set; }
         public int CompanyId { get; set; }
-        public int UserId { get; set; }
+
 
         public BusinessEntityDto BusinessEntity { get; set; }
     }

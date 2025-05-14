@@ -1,5 +1,6 @@
 ﻿using _2___Application._2_Dto_s.Company;
 using _2___Application._2_Dto_s.Company.SubCompany;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -18,31 +19,36 @@ namespace _5_API.Controllers
             _companyService = companyService;
         }
 
-       
+        /// <summary>
+        /// Cria uma nova empresa.
+        /// </summary>
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpPost]
         [Route("create")]
         public async Task<IActionResult> CreateCompany([FromBody] InsertCompanyDto createCompanyDto)
         {
             try
             {
-               
                 var company = await _companyService.CreateCompany(createCompanyDto);
-                return Ok(company);  
+                return Ok(company);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });  
+                return BadRequest(new { message = ex.Message });
             }
         }
 
+        /// <summary>
+        /// Atualiza uma empresa existente pelo ID.
+        /// </summary>
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpPut]
-        [Route("update/id/{id}")]
-        public async Task<IActionResult> UpdateCompany(int id,[FromBody] UpdateCompanyDto dto)
+        [Route("update/{id}")]
+        public async Task<IActionResult> UpdateCompany(int id, [FromBody] UpdateCompanyDto dto)
         {
             try
             {
-
-                var company = await _companyService.UpdateCompany(id,dto);
+                var company = await _companyService.UpdateCompany(id, dto);
                 return Ok(company);
             }
             catch (Exception ex)
@@ -51,14 +57,17 @@ namespace _5_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Exclui logicamente uma empresa pelo ID (somente gestor).
+        /// </summary>
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpPatch]
-        [Route("user/{userId}/group/{groupId}/company/{id}/delete")]
-        public async Task<IActionResult> DeleteCompany(int userId, int id, int groupId)
+        [Route("{id}/group/{groupId}/delete")]
+        public async Task<IActionResult> DeleteCompany(int id, int groupId)
         {
             try
             {
-
-                var company = await _companyService.DeleteCompany(userId, id, groupId);
+                var company = await _companyService.DeleteCompany(id, groupId);
                 return Ok(company);
             }
             catch (Exception ex)
@@ -66,13 +75,18 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Restaura empresas excluídas logicamente (somente gestor).
+        /// </summary>
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpPatch]
-        [Route("user/{userId}/group/{groupId}/companies/restore")]
-        public async Task<IActionResult> RestoreCompanies(int userId, int groupId, [FromBody] List<int> companyIds)
+        [Route("group/{groupId}/restore")]
+        public async Task<IActionResult> RestoreCompanies(int groupId, [FromBody] List<int> companyIds)
         {
             try
             {
-                var result = await _companyService.RestoreCompanies(userId, companyIds, groupId);
+                var result = await _companyService.RestoreCompanies(companyIds, groupId);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -81,45 +95,17 @@ namespace _5_API.Controllers
             }
         }
 
-
+        /// <summary>
+        /// Obtém as empresas associadas ao usuário em um grupo específico.
+        /// </summary>
+        [Authorize]
         [HttpGet]
-        [Route("user/{userId}/group/{groupId}")]
-        public async Task<IActionResult> GetCompaniesByUserId(int userId, int groupId)
+        [Route("group/{groupId}")]
+        public async Task<IActionResult> GetCompaniesByUserId(int groupId)
         {
             try
             {
-               
-                var companies = await _companyService.GetCompaniesByUserId(userId, groupId);
-                return Ok(companies);  
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });  
-            }
-        }
-        [HttpGet]
-        [Route("user/{userId}/group/{groupId}/deleted")]
-        public async Task<IActionResult> GetByIdByCompaniesDeleted(int userId, int groupId)
-        {
-            try
-            {
-
-                var companies = await _companyService.GetByIdByCompaniesDeleted(userId, groupId);
-                return Ok(companies);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-        [HttpGet]
-        [Route("{id}/user/{userId}/group/{groupId}")]
-        public async Task<IActionResult> GetCompanyById(int id,int userId, int groupId)
-        {
-            try
-            {
-
-                var companies = await _companyService.GetCompanyById(id, userId, groupId);
+                var companies = await _companyService.GetCompaniesByUserId(groupId);
                 return Ok(companies);
             }
             catch (Exception ex)
@@ -128,13 +114,54 @@ namespace _5_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Obtém as empresas excluídas logicamente associadas a um grupo.
+        /// </summary>
+        [Authorize]
+        [HttpGet]
+        [Route("group/{groupId}/deleted")]
+        public async Task<IActionResult> GetByIdByCompaniesDeleted(int groupId)
+        {
+            try
+            {
+                var companies = await _companyService.GetByIdByCompaniesDeleted(groupId);
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Obtém uma empresa específica pelo ID e grupo.
+        /// </summary>
+        [Authorize]
+        [HttpGet]
+        [Route("{id}/group/{groupId}")]
+        public async Task<IActionResult> GetCompanyById(int id, int groupId)
+        {
+            try
+            {
+                var companies = await _companyService.GetCompanyById(id, groupId);
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Obtém os usuários vinculados a uma empresa específica.
+        /// </summary>
+        [Authorize]
         [HttpGet]
         [Route("{id}/group/{groupId}/users")]
         public async Task<IActionResult> GetUsersByCompanyId(int groupId, int id)
         {
             try
             {
-
                 var companies = await _companyService.GetUsersByCompanyId(groupId, id);
                 return Ok(companies);
             }
@@ -143,29 +170,18 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-        [HttpGet]
-        [Route("paginated/user/{userId}/group/{groupId}")]
-        public async Task<IActionResult> GetCompaniesByUserIdPaginated(int userId, int groupId ,int skip, int take)
-        {
-            try
-            {
-               
-                var companies = await _companyService.GetCompaniesByUserIdPaginated(userId, groupId, skip, take);
-                return Ok(companies); 
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message }); 
-            }
-        }
-        [HttpGet]
-        [Route("paginated/user/{userId}/group/{groupId}/deleted")]
-        public async Task<IActionResult> GetByIdByCompaniesDeletedPaginated(int userId, int groupId, int skip, int take)
-        {
-            try
-            {
 
-                var companies = await _companyService.GetByIdByCompaniesDeletedPaginated(userId, groupId, skip, take);
+        /// <summary>
+        /// Obtém as empresas de um grupo de forma paginada.
+        /// </summary>
+        [Authorize]
+        [HttpGet]
+        [Route("group/{groupId}/paginated")]
+        public async Task<IActionResult> GetCompaniesByUserIdPaginated(int groupId, int skip, int take)
+        {
+            try
+            {
+                var companies = await _companyService.GetCompaniesByUserIdPaginated(groupId, skip, take);
                 return Ok(companies);
             }
             catch (Exception ex)
@@ -173,13 +189,36 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Obtém as empresas excluídas logicamente de um grupo de forma paginada.
+        /// </summary>
+        [Authorize]
+        [HttpGet]
+        [Route("group/{groupId}/paginated/deleted")]
+        public async Task<IActionResult> GetByIdByCompaniesDeletedPaginated(int groupId, int skip, int take)
+        {
+            try
+            {
+                var companies = await _companyService.GetByIdByCompaniesDeletedPaginated(groupId, skip, take);
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Cria um vínculo de usuário com uma empresa (somente gestor).
+        /// </summary>
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpPost]
         [Route("bond")]
         public async Task<IActionResult> CreateUserCompany([FromBody] CreateCompanyUserDto dto)
         {
             try
             {
-
                 var company = await _companyService.CreateUserCompany(dto);
                 return Ok(company);
             }
@@ -188,6 +227,5 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
- 
     }
 }

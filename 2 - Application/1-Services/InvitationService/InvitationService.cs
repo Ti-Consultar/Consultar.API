@@ -22,6 +22,7 @@ public class InvitationService : BaseService
     private readonly UserRepository _userRepository;
     private readonly CompanyRepository _companyRepository;
     private readonly GroupRepository _groupRepository;
+    private readonly int _currentUserId;
 
     public InvitationService(
         InvitationRepository invitationRepository,
@@ -34,13 +35,15 @@ public class InvitationService : BaseService
         _userRepository = userRepository;
         _companyRepository = companyRepository;
         _groupRepository = groupRepository;
+        // Obtendo o ID do usuário autenticado 
+        _currentUserId = GetCurrentUserId();
     }
 
     public async Task<ResultValue> CreateInvitation(CreateInvitationDto dto)
     {
         try
         {
-            var invitedUser = await _userRepository.GetByUserId(dto.UserId);
+            var invitedUser = await _userRepository.GetByUserId(_currentUserId);
             var invitingUser = await _userRepository.GetByUserId(dto.InvitedByUserId);
 
             var group = await _groupRepository.GetById(dto.GroupId);
@@ -51,7 +54,7 @@ public class InvitationService : BaseService
 
             var invitation = new InvitationToCompany
             {
-                UserId = dto.UserId,
+                UserId = invitedUser.Id,
                 GroupId = dto.GroupId,
                 CompanyId = dto.CompanyId,
                 InvitedById = dto.InvitedByUserId,
@@ -71,16 +74,15 @@ public class InvitationService : BaseService
             return ErrorResponse(ex);
         }
     }
-
-    public async Task<ResultValue> GetInvitationsByUserId(int userId)
+    public async Task<ResultValue> GetInvitationsByUserId()
     {
         try
         {
-            var user = await _userRepository.GetByUserId(userId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
-            var invitations = await _invitationRepository.GetByUserId(userId);
+            var invitations = await _invitationRepository.GetByUserId(user.Id);
             if (invitations == null || !invitations.Any())
                 return ErrorResponse(Message.NotFound);
 
@@ -93,16 +95,15 @@ public class InvitationService : BaseService
             return ErrorResponse(ex);
         }
     }
-
-    public async Task<ResultValue> GetInvitationsByInvitedById(int userId)
+    public async Task<ResultValue> GetInvitationsByInvitedById()
     {
         try
         {
-            var user = await _userRepository.GetByUserId(userId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
                 return ErrorResponse(UserLoginMessage.InvalidCredentials);
 
-            var invitations = await _invitationRepository.GetInvitationsByInvitedById(userId);
+            var invitations = await _invitationRepository.GetInvitationsByInvitedById(user.Id);
             if (invitations == null || !invitations.Any())
                 return ErrorResponse(Message.NotFound);
 
@@ -115,13 +116,12 @@ public class InvitationService : BaseService
             return ErrorResponse(ex);
         }
     }
-
     public async Task<ResultValue> UpdateInvitationStatus(int invitationId, int groupId, UpdateStatus dto)
     {
         try
         {
             var invitation = await _invitationRepository.GetById(invitationId);
-            var user = await _userRepository.GetByUserId(dto.UserId);
+            var user = await _userRepository.GetByUserId(_currentUserId);
 
             if (invitation == null || user == null)
                 return ErrorResponse(Message.NotFound);
@@ -144,11 +144,12 @@ public class InvitationService : BaseService
             return ErrorResponse(ex);
         }
     }
-
-    public async Task<ResultValue> DeleteCompanyUser(int userId, int groupId,int? companyId, int? subCompanyId)
+    public async Task<ResultValue> DeleteCompanyUser( int groupId,int? companyId, int? subCompanyId)
     {
         try
         {
+            var userId = _currentUserId;
+
             var companyUser = await _companyRepository.GetCompanyUser(userId, groupId, companyId, subCompanyId);
 
             if (companyUser == null )
@@ -162,8 +163,6 @@ public class InvitationService : BaseService
             return ErrorResponse(ex);
         }
     }
-
-
     public async Task<ResultValue> GetInvitationById(int id)
     {
         try
@@ -224,11 +223,11 @@ public class InvitationService : BaseService
             return ErrorResponse(ex);
         }
     }
-
-    public async Task<ResultValue> DeleteInvitation(int invitationId, int userId)
+    public async Task<ResultValue> DeleteInvitation(int invitationId)
     {
         try
         {
+            var userId = _currentUserId;
             var invitation = await _invitationRepository.GetByUserId(invitationId,userId);
 
             if (invitation == null)
@@ -277,7 +276,6 @@ public class InvitationService : BaseService
         await _companyRepository.AddUserToGroup(userId, invitation.GroupId);
         return SuccessResponse(Message.Success);
     }
-
     private async Task<ResultValue> HandleCompanyInvitation(int userId, InvitationToCompany invitation)
     {
         var exists = await _companyRepository.ExistsCompanyUser(userId, (int)invitation.CompanyId);
@@ -288,7 +286,6 @@ public class InvitationService : BaseService
         await _companyRepository.AddUserToCompany(userId, invitation.CompanyId, invitation.PermissionId);
         return SuccessResponse(Message.Success);
     }
-
     private async Task<ResultValue> HandleSubCompanyInvitation(int userId,int groupId, InvitationToCompany invitation)
     {
         var exists = await _companyRepository.ExistsSubCompanyUser(userId, invitation.CompanyId, (int)invitation.SubCompanyId);
@@ -299,7 +296,6 @@ public class InvitationService : BaseService
         await _companyRepository.AddUserToCompanyOrSubCompany(userId, groupId,invitation.CompanyId, invitation.SubCompanyId, invitation.PermissionId);
         return SuccessResponse(Message.Success);
     }
-
     private InvitationDetailDto MapToInvitationDetailDto(InvitationToCompany invitation)
     {
         return new InvitationDetailDto
@@ -324,17 +320,14 @@ public class InvitationService : BaseService
     {
         return company != null ? new CompanyDto { Id = company.Id, Name = company.Name } : null;
     }
-
     private SubCompanyDto MapToSubCompanyDto(SubCompanyModel subCompany)
     {
         return subCompany != null ? new SubCompanyDto { Id = subCompany.Id, Name = subCompany.Name } : null;
     }
-
     private UserDto MapToUserDto(UserModel user)
     {
         return user != null ? new UserDto { Id = user.Id, Name = user.Name, Email = user.Email } : null;
     }
-
     private PermissionDto MapToPermissionDto(PermissionModel permission)
     {
         return permission != null ? new PermissionDto { Id = permission.Id, Name = permission.Name } : null;

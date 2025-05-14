@@ -21,7 +21,7 @@ namespace _5_API.Controllers
         /// Cria um novo grupo.
         /// </summary>
         /// <param name="createGroupDto">Dados para criação do grupo.</param>
-        [Authorize]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpPost]
         [Route("create")]
         public async Task<IActionResult> CreateGroup([FromBody] InsertGroupDto createGroupDto)
@@ -42,7 +42,7 @@ namespace _5_API.Controllers
         /// </summary>
         /// <param name="id">ID do grupo.</param>
         /// <param name="dto">Dados para atualização.</param>
-        [Authorize]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpPut]
         [Route("{id}/update")]
         public async Task<IActionResult> UpdateGroup(int id, [FromBody] UpdateGroupDto dto)
@@ -62,7 +62,7 @@ namespace _5_API.Controllers
         /// Exclui um grupo (soft delete).
         /// </summary>
         /// <param name="id">ID do grupo.</param>
-        [Authorize]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpPatch]
         [Route("{id}/delete")]
         public async Task<IActionResult> DeleteGroup(int id)
@@ -82,7 +82,7 @@ namespace _5_API.Controllers
         /// Restaura um grupo excluído.
         /// </summary>
         /// <param name="id">ID do grupo.</param>
-        [Authorize]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpPatch]
         [Route("{id}/restore")]
         public async Task<IActionResult> RestoreGroup(int id)

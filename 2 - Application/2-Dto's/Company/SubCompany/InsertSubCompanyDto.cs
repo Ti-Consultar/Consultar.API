@@ -12,7 +12,6 @@ namespace _2___Application._2_Dto_s.Company.SubCompany
         public string Name { get; set; } 
         public DateTime DateCreate { get; set; } 
         public int CompanyId { get; set; } 
-        public int UserId { get; set; }
         public InsertBusinessEntityDto BusinessEntity { get; set; }
 
     }
