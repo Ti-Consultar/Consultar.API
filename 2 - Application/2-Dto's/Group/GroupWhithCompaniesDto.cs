@@ -33,6 +33,7 @@ public class GroupWithSubCompaniesDto
     public int UserId { get; set; }
     public string UserName { get; set; }
     public PermissionResponse GroupPermission { get; set; }
-    public List<SubCompanyUsersimpleDto> SubCompanies { get; set; }
+    public List<SubCompanyUsersimpleDeleteDto> SubCompanies { get; set; }
+
     public BusinessEntityDto BusinessEntity { get; set; }
 }

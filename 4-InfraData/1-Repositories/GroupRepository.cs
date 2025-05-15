@@ -119,24 +119,27 @@ namespace _4_InfraData._1_Repositories
         {
             var sql = @"
                         SELECT 
-                            g.Id AS GroupId,
-                            g.Name AS GroupName,
-                            c.Id AS CompanyId,
-                            c.Name AS CompanyName,
-                            sc.Id AS SubCompanyId,
-                            be.NomeFantasia AS SubCompanyName,
-                            be.Cnpj AS SubCompanyCnpj,
-                            cu.UserId,
-                            p.Id AS PermissionId,
-                            p.Name AS PermissionName
+                            g.Id AS GroupId,                              -- Id do grupo associado à empresa
+                            g.Name AS GroupName,                          -- Nome do grupo
+                            c.Id AS CompanyId,                            -- Id da empresa (Company)
+                            beCompany.NomeFantasia AS CompanyName,       -- Nome fantasia da empresa (Company)
+                            beCompany.Cnpj AS CompanyCnpj,                -- CNPJ da empresa (Company)
+                            sc.Id AS SubCompanyId,                        -- Id da subempresa (SubCompany)
+                            beSubCompany.NomeFantasia AS SubCompanyName, -- Nome fantasia da subempresa
+                            beSubCompany.Cnpj AS SubCompanyCnpj,          -- CNPJ da subempresa
+                            cu.UserId,                                   -- Id do usuário vinculado à empresa
+                            p.Id AS PermissionId,                        -- Id da permissão do usuário para essa empresa
+                            p.Name AS PermissionName                     -- Nome da permissão
                         FROM Companies c
-                        INNER JOIN Groups g ON g.Id = c.GroupId
-                        INNER JOIN CompanyUsers cu ON cu.CompanyId = c.Id
-                        INNER JOIN SubCompanies sc ON sc.CompanyId = c.Id
-                        INNER JOIN BusinessEntity be ON be.Id = sc.BusinessEntityId
-                        LEFT JOIN Permissions p ON p.Id = cu.PermissionId
-                        WHERE c.Id = {0}
-                          AND sc.Deleted = 1";
+                        INNER JOIN Groups g ON g.Id = c.GroupId                  -- Junta o grupo da empresa
+                        INNER JOIN CompanyUsers cu ON cu.CompanyId = c.Id        -- Usuários vinculados à empresa
+                        INNER JOIN BusinessEntity beCompany ON beCompany.Id = c.BusinessEntityId  -- Dados da empresa
+                        INNER JOIN SubCompanies sc ON sc.CompanyId = c.Id         -- Subempresas da empresa
+                        INNER JOIN BusinessEntity beSubCompany ON beSubCompany.Id = sc.BusinessEntityId  -- Dados da subempresa
+                        LEFT JOIN Permissions p ON p.Id = cu.PermissionId         -- Permissões do usuário
+                        WHERE c.Id = {0}                                           -- Filtra pela empresa (CompanyId)
+                          AND sc.Deleted = 1                                      -- Filtra só subempresas deletadas
+                        ";
 
             return await _context.Set<GroupSubCompanyDeletedDto>()
                 .FromSqlRaw(sql, companyId)

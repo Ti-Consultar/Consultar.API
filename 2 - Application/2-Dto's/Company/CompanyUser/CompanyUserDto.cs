@@ -41,4 +41,14 @@ public class SubCompanyUsersimpleDto
     public PermissionResponse Permission { get; set; }
 
 
+
+}
+public class SubCompanyUsersimpleDeleteDto
+{
+    public int SubCompanyId { get; set; }
+    public string SubCompanyName { get; set; }
+    public BusinessEntitySimpleDto BusinessEntity { get; set; }
+    public PermissionResponse Permission { get; set; }
+
+
 }

@@ -1059,15 +1059,17 @@ public class CompanyService : BaseService
             if (dtos == null || !dtos.Any())
                 return SuccessResponse(new List<GroupWithSubCompaniesDto>());
 
-            // Filtra e agrupa os resultados paginados
-            var companies = dtos
-                .Where(c => c.UserId == user.Id) // Filtra as empresas que o usuário possui
+            // Filtra pelos registros do usuário
+            var userDtos = dtos.Where(c => c.UserId == user.Id);
+
+            // Agrupa por SubCompanyId
+            var grouped = userDtos
                 .GroupBy(c => c.SubCompanyId)
-                .Select(g => new SubCompanyUsersimpleDto
+                .Select(g => new SubCompanyUsersimpleDeleteDto
                 {
                     SubCompanyId = g.Key,
                     SubCompanyName = g.First().SubCompanyName,
-                    BusinessEntity = new BusinessEntityDto
+                    BusinessEntity = new BusinessEntitySimpleDto
                     {
                         Cnpj = g.First().SubCompanyCnpj,
                         NomeFantasia = g.First().SubCompanyName
@@ -1075,13 +1077,16 @@ public class CompanyService : BaseService
                     Permission = g.First().PermissionId != null
                         ? new PermissionResponse
                         {
-                            Id = g.First().PermissionId,
+                            Id = (int)g.First().PermissionId,
                             Name = g.First().PermissionName
                         }
                         : null
-                })
-                .Skip(skip)  // Pula os registros conforme o parâmetro de paginação
-                .Take(take)  // Traz a quantidade solicitada
+                });
+
+            // Aplica paginação sobre os grupos (subempresas)
+            var paginated = grouped
+                .Skip(skip)
+                .Take(take)
                 .ToList();
 
             var groupDto = new GroupWithSubCompaniesDto
@@ -1091,7 +1096,7 @@ public class CompanyService : BaseService
                 DateCreate = DateTime.Now,
                 UserId = user.Id,
                 UserName = user.Name,
-                SubCompanies = companies
+                SubCompanies = paginated
             };
 
             return SuccessResponse(groupDto);

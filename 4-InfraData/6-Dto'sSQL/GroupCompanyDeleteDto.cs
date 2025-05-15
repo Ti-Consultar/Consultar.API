@@ -27,10 +27,11 @@ public class GroupSubCompanyDeletedDto
 {
     public int GroupId { get; set; }
     public string GroupName { get; set; }
+    public int CompanyId { get; set; }
     public int SubCompanyId { get; set; }
     public string SubCompanyName { get; set; }
     public string SubCompanyCnpj { get; set; }
     public int UserId { get; set; }
-    public int PermissionId { get; set; }
+    public int? PermissionId { get; set; } // Nullable se no banco pode ser null
     public string PermissionName { get; set; }
 }

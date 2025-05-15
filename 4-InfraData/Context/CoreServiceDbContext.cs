@@ -32,8 +32,12 @@ namespace _4_InfraData._1_Context
     base.OnModelCreating(modelBuilder);
 
     modelBuilder.Entity<GroupCompanyDeletedDto>().HasNoKey(); // ← ESSENCIAL!
-    modelBuilder.Entity<GroupSubCompanyDeletedDto>().HasNoKey(); // ← ESSENCIAL!
-}
+            modelBuilder.Entity<GroupSubCompanyDeletedDto>(entity =>
+            {
+                entity.HasNoKey();
+                entity.ToView(null); // Opcional: se não for view, evita erro no EF Core
+            }); // ← ESSENCIAL!
+        }
 
     }
 }
