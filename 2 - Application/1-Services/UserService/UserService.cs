@@ -22,6 +22,7 @@ namespace _2___Application._1_Services.User
         private readonly CompanyRepository _companyRepository;
         private readonly EmailService _emailService;
 
+
         public UserService(UserRepository repository, EmailService emailService)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -66,7 +67,7 @@ namespace _2___Application._1_Services.User
         }
 
 
-
+       
         public async Task<object> GetUser(int userId)
         {
             try

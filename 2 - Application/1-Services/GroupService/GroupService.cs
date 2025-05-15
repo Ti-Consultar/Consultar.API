@@ -42,11 +42,10 @@ public class GroupService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetById(_currentUserId);
-            if (user == null) return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             if (await _businessEntityRepository.CnpjExists(dto.BusinessEntity.Cnpj))
-                return SuccessResponse("Já existe um cadastro com este CNPJ.");
+                return SuccessResponse(Message.CNPJAlreadyRegistered);
 
             var businessEntity = MapToBusinessEntity(dto.BusinessEntity);
             await _businessEntityRepository.AddAsync(businessEntity);
@@ -74,8 +73,7 @@ public class GroupService : BaseService
     {
         try
         {
-            if (!await _groupRepository.UserHasManagerPermissionInGroup(_currentUserId, id))
-                return SuccessResponse("Você não tem permissão para editar este grupo.");
+            var user = await GetCurrentUserAsync();
 
             var group = await _groupRepository.GetById(id);
             if (group == null) return ErrorResponse(Message.NotFound);
@@ -158,15 +156,9 @@ public class GroupService : BaseService
 {
     try
         {
-            if (_currentUserId == 0)
-                return ErrorResponse("Usuário não autenticado.");
+            var user = await GetCurrentUserAsync();
 
-            if (_currentUserId == 0) return ErrorResponse("Usuário não autenticado.");
-
-        var user = await _userRepository.GetByUserId(_currentUserId);
-        if (user == null) return ErrorResponse(UserLoginMessage.InvalidCredentials);
-
-        var groups = await _groupRepository.GetGroupsByUserId(_currentUserId);
+            var groups = await _groupRepository.GetGroupsByUserId(_currentUserId);
         if (groups == null || !groups.Any()) return SuccessResponse(new List<ResultValue>());
 
         var result = groups.Select(g => MapToGroupWithCompaniesDto(g, _currentUserId, user.Name)).ToList();
@@ -182,8 +174,7 @@ public class GroupService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(_currentUserId);
-            if (user == null) return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             var groups = await _groupRepository.GetGroupsDeletedByUserId(_currentUserId);
             if (groups == null || !groups.Any())
@@ -206,7 +197,7 @@ public class GroupService : BaseService
             if (group == null) return ErrorResponse(Message.NotFound);
 
             if (!group.CompanyUsers.Any(cu => cu.UserId == _currentUserId))
-                return ErrorResponse(UserLoginMessage.Error);
+                return SuccessResponse(UserLoginMessage.Error);
 
             var userName = group.CompanyUsers.FirstOrDefault(cu => cu.UserId == _currentUserId)?.User?.Name ?? string.Empty;
 
@@ -221,6 +212,8 @@ public class GroupService : BaseService
     {
         try
         {
+            var user = await GetCurrentUserAsync();
+
             if (!await _groupRepository.UserHasManagerPermissionInGroup(_currentUserId, groupId))
                 return SuccessResponse(Message.Unauthorized);
 
@@ -248,7 +241,7 @@ public class GroupService : BaseService
         try
         {
             if (!await _groupRepository.UserHasManagerPermissionInGroup(_currentUserId, groupId))
-                return ErrorResponse("Você não tem permissão para excluir este grupo.");
+                return SuccessResponse(Message.Unauthorized);
 
             var group = await _groupRepository.GetById(groupId);
             if (group == null) return ErrorResponse(Message.NotFound);
@@ -363,6 +356,13 @@ public class GroupService : BaseService
         if (!string.IsNullOrWhiteSpace(dto.Telefone)) entity.Telefone = dto.Telefone;
         if (!string.IsNullOrWhiteSpace(dto.Email)) entity.Email = dto.Email;
     }
+    private async Task<UserModel> GetCurrentUserAsync()
+    {
+        var user = await _userRepository.GetByUserId(_currentUserId);
+        if (user == null)
+            throw new UnauthorizedAccessException(UserLoginMessage.InvalidCredentials);
 
+        return user;
+    }
     #endregion
 }

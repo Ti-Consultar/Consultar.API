@@ -12,6 +12,8 @@ namespace _2___Application.Base
         public const string MessageError = "Dados Inválidos";
         public const string NotFound = "Não encontrado";
         public const string Unauthorized = "Sem permissão para Realizar esta ação";
+        public const string CNPJAlreadyRegistered = "Já existe um cadastro com este CNPJ.";
+        public const string InvalidInvitationType = "Tipo de convite inválido ou incompleto.";
 
     }
 
@@ -23,6 +25,8 @@ namespace _2___Application.Base
         public const string EmailExists = "Já existe uma conta com este email cadastrado";
         public const string PasswordFailed = "Falha ao redefinir a senha. Por favor, tente novamente mais tarde.";
         public const string PasswordSuccess = "Senha Alterada com Sucesso!";
+        public const string UserNotFound = "Usuário não encontrado!";
         public const string Error = "Erro!";
     }
 }
+

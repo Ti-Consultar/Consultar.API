@@ -1,6 +1,11 @@
-﻿using _4_InfraData._2_AppSettings;
+﻿using _3_Domain._1_Entities;
+using _4_InfraData._1_Repositories;
+using _4_InfraData._2_AppSettings;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 
 namespace _2___Application.Base
 {
@@ -8,10 +13,12 @@ namespace _2___Application.Base
     {
         public IAppSettings _appSettings;
         public int _currentUserId;
+     
 
         public BaseService(IAppSettings appSettings)
         {
             _appSettings = appSettings;
+         
         }
 
         // Método para liberar recursos (se necessário)
@@ -54,6 +61,8 @@ namespace _2___Application.Base
                 return 0;
             }
         }
+        
+       
 
         private string GetRouterName()
         {

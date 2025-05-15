@@ -80,7 +80,7 @@ public class InvitationService : BaseService
         {
             var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+                return SuccessResponse(UserLoginMessage.UserNotFound);
 
             var invitations = await _invitationRepository.GetByUserId(user.Id);
             if (invitations == null || !invitations.Any())
@@ -101,7 +101,7 @@ public class InvitationService : BaseService
         {
             var user = await _userRepository.GetByUserId(_currentUserId);
             if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+                return ErrorResponse(UserLoginMessage.UserNotFound);
 
             var invitations = await _invitationRepository.GetInvitationsByInvitedById(user.Id);
             if (invitations == null || !invitations.Any())
@@ -156,7 +156,7 @@ public class InvitationService : BaseService
                 return ErrorResponse(Message.NotFound);
 
             await _companyRepository.DeleteCompanyUser(userId, groupId, companyId, subCompanyId);
-            return SuccessResponse("Removido com sucesso.");
+            return SuccessResponse(Message.DeletedSuccess);
         }
         catch (Exception ex)
         {
@@ -264,7 +264,7 @@ public class InvitationService : BaseService
             return await HandleCompanyInvitation(userId, invitation);
         }
 
-        return ErrorResponse("Tipo de convite inválido ou incompleto.");
+        return ErrorResponse(Message.InvalidInvitationType);
     }
     private async Task<ResultValue> HandleGroupInvitation(int userId, InvitationToCompany invitation)
     {

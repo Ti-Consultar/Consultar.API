@@ -41,15 +41,13 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetById(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             // Verifica se o CNPJ já existe
             var cnpjExists = await _businessEntityRepository.CnpjExists(createCompanyDto.BusinessEntity.Cnpj);
             if (cnpjExists)
             {
-                return SuccessResponse("Já existe um cadastro com este CNPJ.");
+                return SuccessResponse(Message.CNPJAlreadyRegistered);
             }
 
             // Cria a entidade empresarial
@@ -102,13 +100,11 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             var hasPermission = await _companyRepository.ExistsEditCompanyUser(user.Id, id, dto.GroupId);
             if (!hasPermission)
-                return ErrorResponse(Message.Unauthorized);
+                return SuccessResponse(Message.Unauthorized);
 
             var company = await _companyRepository.GetCompanyByUserId(id, user.Id, dto.GroupId);
             if (company == null)
@@ -152,14 +148,12 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             // Verifica se o usuário tem permissão para excluir a empresa
             var hasPermission = await _companyRepository.ExistsCompanyUser(user.Id, id, groupId);
             if (!hasPermission)
-                return ErrorResponse(Message.Unauthorized);
+                return SuccessResponse(Message.Unauthorized);
 
             var company = await _companyRepository.GetCompanyByUserId(id, user.Id, groupId);
             if (company == null)
@@ -179,9 +173,7 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             var notAuthorizedIds = new List<int>();
             var notFoundIds = new List<int>();
@@ -212,7 +204,7 @@ public class CompanyService : BaseService
                 Restored = restoredIds,
                 NotFound = notFoundIds,
                 Unauthorized = notAuthorizedIds,
-                Message = "Empresas restauradas com sucesso"
+                Message = Message.RestoreSuccess
             });
         }
         catch (Exception ex)
@@ -273,9 +265,7 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             var company = await _companyRepository.GetById(dto.CompanyId);
             if (company == null)
@@ -338,18 +328,16 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             var company = await _companyRepository.GetById(createSubCompanyDto.CompanyId);
             if (company == null)
-                return ErrorResponse(Message.NotFound);
+                return SuccessResponse(Message.NotFound);
 
             // Verifica se o CNPJ já está cadastrado
             var cnpjExists = await _businessEntityRepository.CnpjExists(createSubCompanyDto.BusinessEntity.Cnpj);
             if (cnpjExists)
-                return SuccessResponse("Já existe um cadastro com este CNPJ.");
+                return SuccessResponse(Message.CNPJAlreadyRegistered);
 
             // Cria a entidade empresarial
             var businessEntity = new BusinessEntity
@@ -411,14 +399,11 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
-
+            var user = await GetCurrentUserAsync();
             // Verifica se o usuário tem permissão para editar a subempresa
             var hasPermission = await _companyRepository.ExistsEditSubCompanyUser(user.Id, dto.CompanyId, id);
             if (!hasPermission)
-                return ErrorResponse(Message.Unauthorized);
+                return SuccessResponse(Message.Unauthorized);
 
             // Obtém a subempresa diretamente pelo ID e pelo usuário
             var subCompany = await _companyRepository.GetSubCompanyByUserId(id, user.Id);
@@ -452,14 +437,12 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             // Verifica se o usuário tem permissão para excluir a subempresa
             var hasPermission = await _companyRepository.ExistsEditSubCompanyUser(user.Id, companyId, subCompanyId);
             if (!hasPermission)
-                return ErrorResponse(Message.Unauthorized);
+                return SuccessResponse(Message.Unauthorized);
 
             var company = await _companyRepository.GetById(companyId);
             if (company == null)
@@ -483,13 +466,11 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             var company = await _companyRepository.GetById(companyId);
             if (company == null)
-                return ErrorResponse(Message.NotFound);
+                return SuccessResponse(Message.NotFound);
 
             var restoredIds = new List<int>();
             var notFoundIds = new List<int>();
@@ -520,7 +501,7 @@ public class CompanyService : BaseService
                 Restored = restoredIds,
                 NotFound = notFoundIds,
                 Unauthorized = unauthorizedIds,
-                Message = "Subempresas restauradas com sucesso"
+                Message = Message.RestoreSuccess
             });
         }
         catch (Exception ex)
@@ -533,10 +514,7 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(dto.UserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
-
+            var user = await GetCurrentUserAsync();
             var company = await _companyRepository.GetById(dto.CompanyId);
             if (company == null)
                 return ErrorResponse(Message.NotFound);
@@ -563,9 +541,7 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             var subCompanies = await _companyRepository.GetSubCompaniesByUserId(user.Id);
 
@@ -613,9 +589,7 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             var sc = await _companyRepository.GetSubCompanyId(user.Id, companyId, subcompanyId);
 
@@ -666,9 +640,7 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             var subCompanies = await _companyRepository.GetSubCompaniesDeletedByUserId(user.Id);
 
@@ -749,9 +721,7 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             var group = await _groupRepository.GetByIdByCompanies(groupId);
             if (group == null)
@@ -831,11 +801,8 @@ public class CompanyService : BaseService
 {
     try
     {
-        var user = await _userRepository.GetByUserId(_currentUserId);
-        if (user == null)
-            return ErrorResponse(UserLoginMessage.InvalidCredentials);
-
-        var dtos = await _groupRepository.GetByIdByCompaniesDeleted(groupId);
+            var user = await GetCurrentUserAsync();
+            var dtos = await _groupRepository.GetByIdByCompaniesDeleted(groupId);
         if (dtos == null || !dtos.Any())
             return ErrorResponse(Message.NotFound);
 
@@ -882,9 +849,7 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetById(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             var group = await _groupRepository.GetByIdByCompanies(groupId);
             if (group == null)
@@ -951,9 +916,7 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetById(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             var group = await _groupRepository.GetByIdByCompaniesDeleted(groupId);
             if (group == null)
@@ -1024,10 +987,7 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
-
+            var user = await GetCurrentUserAsync();
             // Obtém as subempresas filtradas diretamente do repositório
             var allSubCompanies = await _companyRepository.GetSubCompaniesByUserId(user.Id);
 
@@ -1093,9 +1053,7 @@ public class CompanyService : BaseService
     {
         try
         {
-            var user = await _userRepository.GetByUserId(_currentUserId);
-            if (user == null)
-                return ErrorResponse(UserLoginMessage.InvalidCredentials);
+            var user = await GetCurrentUserAsync();
 
             // Busca todas as subempresas deletadas da company que o usuário tem vínculo
             var allSubCompanies = await _companyRepository.GetSubCompaniesDeletedByUserId(user.Id);
@@ -1163,6 +1121,13 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+    private async Task<UserModel> GetCurrentUserAsync()
+    {
+        var user = await _userRepository.GetByUserId(_currentUserId);
+        if (user == null)
+            throw new UnauthorizedAccessException(UserLoginMessage.InvalidCredentials);
 
+        return user;
+    }
     #endregion
 }
