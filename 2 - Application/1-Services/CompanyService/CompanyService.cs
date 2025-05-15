@@ -279,7 +279,7 @@ public class CompanyService : BaseService
             model.PermissionId = dto.PermissionId;
             model.GroupId = dto.GroupId;
 
-            await _companyRepository.AddUserToCompany(model.UserId, company.Id, model.PermissionId);
+            await _companyRepository.AddUserToCompany(model.UserId, company.Id,company.GroupId ,model.PermissionId);
 
 
 
