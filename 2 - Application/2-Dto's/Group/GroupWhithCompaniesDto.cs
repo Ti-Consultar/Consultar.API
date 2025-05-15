@@ -21,4 +21,18 @@ namespace _2___Application._2_Dto_s.Group
         public List<CompanyUsersimpleDto> Companies { get; set; }
         public BusinessEntityDto BusinessEntity { get; set; }
     }
+
+}
+
+public class GroupWithSubCompaniesDto
+{
+    public int GroupId { get; set; }
+    public string GroupName { get; set; }
+    public DateTime DateCreate { get; set; }
+
+    public int UserId { get; set; }
+    public string UserName { get; set; }
+    public PermissionResponse GroupPermission { get; set; }
+    public List<SubCompanyUsersimpleDto> SubCompanies { get; set; }
+    public BusinessEntityDto BusinessEntity { get; set; }
 }

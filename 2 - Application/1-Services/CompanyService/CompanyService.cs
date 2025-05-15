@@ -24,7 +24,7 @@ public class CompanyService : BaseService
     private readonly EmailService _emailService;
     private readonly int _currentUserId;
 
-    public CompanyService(CompanyRepository companyRepository, UserRepository userRepository, BusinessEntityRepository businessEntityRepository, GroupRepository groupRepository, EmailService emailService,IAppSettings appSettings)
+    public CompanyService(CompanyRepository companyRepository, UserRepository userRepository, BusinessEntityRepository businessEntityRepository, GroupRepository groupRepository, EmailService emailService, IAppSettings appSettings)
         : base(appSettings)
     {
         _companyRepository = companyRepository;
@@ -88,7 +88,7 @@ public class CompanyService : BaseService
                 PermissionId = 1
             };
 
-            await _companyRepository.AddUserToCompany(companyUser.UserId, company.Id,companyUser.GroupId, companyUser.PermissionId);
+            await _companyRepository.AddUserToCompany(companyUser.UserId, company.Id, companyUser.GroupId, companyUser.PermissionId);
             await _emailService.SendWelcomeAsync(user.Email, company.Name, user.Name);
             return SuccessResponse(Message.Success);
         }
@@ -145,7 +145,7 @@ public class CompanyService : BaseService
         if (!string.IsNullOrWhiteSpace(dto.Telefone)) entity.Telefone = dto.Telefone;
         if (!string.IsNullOrWhiteSpace(dto.Email)) entity.Email = dto.Email;
     }
-    public async Task<ResultValue> DeleteCompany( int id, int groupId)
+    public async Task<ResultValue> DeleteCompany(int id, int groupId)
     {
         try
         {
@@ -170,7 +170,7 @@ public class CompanyService : BaseService
         }
     }
 
-    public async Task<ResultValue> RestoreCompanies( List<int> companyIds, int groupId)
+    public async Task<ResultValue> RestoreCompanies(List<int> companyIds, int groupId)
     {
         try
         {
@@ -279,7 +279,7 @@ public class CompanyService : BaseService
             model.PermissionId = dto.PermissionId;
             model.GroupId = dto.GroupId;
 
-            await _companyRepository.AddUserToCompany(model.UserId, company.Id,company.GroupId ,model.PermissionId);
+            await _companyRepository.AddUserToCompany(model.UserId, company.Id, company.GroupId, model.PermissionId);
 
 
 
@@ -386,7 +386,7 @@ public class CompanyService : BaseService
                 companyUser.PermissionId
             );
 
-            await _emailService.SendWelcomeSubCompanyAsync(user.Email,company.Name ,subCompany.Name, user.Name);
+            await _emailService.SendWelcomeSubCompanyAsync(user.Email, company.Name, subCompany.Name, user.Name);
 
             return SuccessResponse(Message.Success);
         }
@@ -434,7 +434,7 @@ public class CompanyService : BaseService
         }
     }
 
-    public async Task<ResultValue> DeleteSubCompany( int companyId, int subCompanyId)
+    public async Task<ResultValue> DeleteSubCompany(int companyId, int subCompanyId)
     {
         try
         {
@@ -463,7 +463,7 @@ public class CompanyService : BaseService
         }
     }
 
-    public async Task<ResultValue> RestoreSubCompanies( int companyId, List<int> subCompanyIds)
+    public async Task<ResultValue> RestoreSubCompanies(int companyId, List<int> subCompanyIds)
     {
         try
         {
@@ -586,7 +586,7 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-    public async Task<ResultValue> GetSubCompaniesById( int companyId, int subcompanyId)
+    public async Task<ResultValue> GetSubCompaniesById(int companyId, int subcompanyId)
     {
         try
         {
@@ -718,7 +718,7 @@ public class CompanyService : BaseService
     #endregion
 
     #region Get By User
-    public async Task<ResultValue> GetCompaniesByUserId( int groupId)
+    public async Task<ResultValue> GetCompaniesByUserId(int groupId)
     {
         try
         {
@@ -798,55 +798,55 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-   public async Task<ResultValue> GetByIdByCompaniesDeleted( int groupId)
-{
-    try
+    public async Task<ResultValue> GetByIdByCompaniesDeleted(int groupId)
     {
+        try
+        {
             var user = await GetCurrentUserAsync();
             var dtos = await _groupRepository.GetByIdByCompaniesDeleted(groupId);
-        if (dtos == null || !dtos.Any())
-            return ErrorResponse(Message.NotFound);
+            if (dtos == null || !dtos.Any())
+                return ErrorResponse(Message.NotFound);
 
-        var companies = dtos
-            .Where(c => c.UserId == user.Id) // filtra as empresas em que o user aparece
-            .GroupBy(c => c.CompanyId)
-            .Select(g => new CompanyUsersimpleDto
-            {
-                CompanyId = g.Key,
-                CompanyName = g.First().CompanyName,
-                BusinessEntity = new BusinessEntityDto
+            var companies = dtos
+                .Where(c => c.UserId == user.Id) // filtra as empresas em que o user aparece
+                .GroupBy(c => c.CompanyId)
+                .Select(g => new CompanyUsersimpleDto
                 {
-                    Cnpj = g.First().CompanyCnpj,
-                    NomeFantasia = g.First().CompanyName
-                },
-                Permission = g.First().PermissionId != null
-                    ? new PermissionResponse
+                    CompanyId = g.Key,
+                    CompanyName = g.First().CompanyName,
+                    BusinessEntity = new BusinessEntityDto
                     {
-                        Id = g.First().PermissionId.Value,
-                        Name = g.First().PermissionName
-                    }
-                    : null
-            })
-            .ToList();
+                        Cnpj = g.First().CompanyCnpj,
+                        NomeFantasia = g.First().CompanyName
+                    },
+                    Permission = g.First().PermissionId != null
+                        ? new PermissionResponse
+                        {
+                            Id = g.First().PermissionId.Value,
+                            Name = g.First().PermissionName
+                        }
+                        : null
+                })
+                .ToList();
 
-        var groupDto = new GroupWithCompaniesDto
+            var groupDto = new GroupWithCompaniesDto
+            {
+                GroupId = dtos.First().GroupId,
+                GroupName = dtos.First().GroupName,
+                DateCreate = DateTime.Now, // não vem na query, defina conforme necessidade
+                UserId = user.Id,
+                UserName = user.Name,
+                Companies = companies
+            };
+
+            return SuccessResponse(groupDto);
+        }
+        catch (Exception ex)
         {
-            GroupId = dtos.First().GroupId,
-            GroupName = dtos.First().GroupName,
-            DateCreate = DateTime.Now, // não vem na query, defina conforme necessidade
-            UserId = user.Id,
-            UserName = user.Name,
-            Companies = companies
-        };
-
-        return SuccessResponse(groupDto);
+            return ErrorResponse(ex);
+        }
     }
-    catch (Exception ex)
-    {
-        return ErrorResponse(ex);
-    }
-}
-    public async Task<ResultValue> GetCompaniesByUserIdPaginated( int groupId, int skip = 0, int take = 10)
+    public async Task<ResultValue> GetCompaniesByUserIdPaginated(int groupId, int skip = 0, int take = 10)
     {
         try
         {
@@ -913,7 +913,7 @@ public class CompanyService : BaseService
         }
     }
 
-    public async Task<ResultValue> GetByIdByCompaniesDeletedPaginated( int groupId, int skip = 0, int take = 10)
+    public async Task<ResultValue> GetByIdByCompaniesDeletedPaginated(int groupId, int skip = 0, int take = 10)
     {
         try
         {
@@ -984,7 +984,7 @@ public class CompanyService : BaseService
         }
     }
 
-    public async Task<ResultValue> GetSubCompaniesByUserIdPaginated( int companyId, int skip = 0, int take = 10)
+    public async Task<ResultValue> GetSubCompaniesByUserIdPaginated(int companyId, int skip = 0, int take = 10)
     {
         try
         {
@@ -1049,8 +1049,60 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+    public async Task<ResultValue> GetByIdBySubCompaniesDeleted( int companyId)
+    {
+        try
+        {
+            var user = await GetCurrentUserAsync();
+            var dtos = await _groupRepository.GetByIdBySubCompaniesDeleted( companyId);
 
-    public async Task<ResultValue> GetSubCompaniesDeletedByUserIdPaginated( int companyId, int skip = 0, int take = 10)
+            if (dtos == null || !dtos.Any())
+                return SuccessResponse(new List<GroupWithSubCompaniesDto>());
+
+            // Agrupa por CompanyId e SubCompanyId, pois podem ter várias subempresas para a mesma empresa
+            var companies = dtos
+                .Where(c => c.UserId == user.Id) // Filtra as empresas que o usuário possui
+                .GroupBy(c => c.SubCompanyId)
+                .Select(g => new SubCompanyUsersimpleDto
+                {
+                    SubCompanyId = g.Key,
+                    SubCompanyName = g.First().SubCompanyName,
+                    BusinessEntity = new BusinessEntityDto
+                    {
+                        Cnpj = g.First().SubCompanyCnpj,
+                        NomeFantasia = g.First().SubCompanyName
+                    },
+                    Permission = g.First().PermissionId != null
+                        ? new PermissionResponse
+                        {
+                            Id = g.First().PermissionId,
+                            Name = g.First().PermissionName
+                        }
+                        : null
+                })
+                .ToList();
+
+            var groupDto = new GroupWithSubCompaniesDto
+            {
+                GroupId = dtos.First().GroupId,
+                GroupName = dtos.First().GroupName,
+                DateCreate = DateTime.Now, // Não vem na query, defina conforme necessário
+                UserId = user.Id,
+                UserName = user.Name,
+                SubCompanies = companies
+            };
+
+            return SuccessResponse(groupDto);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
+
+
+
+    public async Task<ResultValue> GetSubCompaniesDeletedByUserIdPaginated(int companyId, int skip = 0, int take = 10)
     {
         try
         {

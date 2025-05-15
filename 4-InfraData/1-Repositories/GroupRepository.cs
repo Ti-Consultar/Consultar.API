@@ -115,6 +115,34 @@ namespace _4_InfraData._1_Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<GroupSubCompanyDeletedDto>> GetByIdBySubCompaniesDeleted(int companyId)
+        {
+            var sql = @"
+                        SELECT 
+                            g.Id AS GroupId,
+                            g.Name AS GroupName,
+                            c.Id AS CompanyId,
+                            c.Name AS CompanyName,
+                            sc.Id AS SubCompanyId,
+                            be.NomeFantasia AS SubCompanyName,
+                            be.Cnpj AS SubCompanyCnpj,
+                            cu.UserId,
+                            p.Id AS PermissionId,
+                            p.Name AS PermissionName
+                        FROM Companies c
+                        INNER JOIN Groups g ON g.Id = c.GroupId
+                        INNER JOIN CompanyUsers cu ON cu.CompanyId = c.Id
+                        INNER JOIN SubCompanies sc ON sc.CompanyId = c.Id
+                        INNER JOIN BusinessEntity be ON be.Id = sc.BusinessEntityId
+                        LEFT JOIN Permissions p ON p.Id = cu.PermissionId
+                        WHERE c.Id = {0}
+                          AND sc.Deleted = 1";
+
+            return await _context.Set<GroupSubCompanyDeletedDto>()
+                .FromSqlRaw(sql, companyId)
+                .ToListAsync();
+        }
+
 
         public async Task<PaginatedResult<CompanyModel>> GetCompaniesByUserIdPaginatedAsync(int userId, int groupId, int skip, int take)
         {

@@ -19,4 +19,18 @@ namespace _4_InfraData._6_Dto_sSQL
         public int? PermissionId { get; set; }
         public string PermissionName { get; set; }
     }
+
+
+}
+[Keyless]
+public class GroupSubCompanyDeletedDto
+{
+    public int GroupId { get; set; }
+    public string GroupName { get; set; }
+    public int SubCompanyId { get; set; }
+    public string SubCompanyName { get; set; }
+    public string SubCompanyCnpj { get; set; }
+    public int UserId { get; set; }
+    public int PermissionId { get; set; }
+    public string PermissionName { get; set; }
 }

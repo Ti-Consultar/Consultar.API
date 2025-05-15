@@ -215,11 +215,11 @@ namespace _5_API.Controllers
         [Authorize]
         [HttpGet]
         [Route("company/{companyId}/paginated/deleted")]
-        public async Task<IActionResult> GetSubCompaniesDeletedByUserIdPaginated(int companyId, int skip, int take)
+        public async Task<IActionResult> GetSubCompaniesDeletedByUserIdPaginated( int companyId)
         {
             try
             {
-                var companies = await _companyService.GetSubCompaniesDeletedByUserIdPaginated(companyId, skip, take);
+                var companies = await _companyService.GetByIdBySubCompaniesDeleted(companyId);
                 return Ok(companies);
             }
             catch (Exception ex)
