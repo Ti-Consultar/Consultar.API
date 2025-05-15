@@ -318,13 +318,14 @@ namespace _4_InfraData._1_Repositories
                 throw new ArgumentException("Grupo não encontrado", nameof(groupId));
             }
         }
-        public async Task AddUserToCompany(int userId, int companyId, int permissionId)
+        public async Task AddUserToCompany(int userId, int companyId,int groupId, int permissionId)
         {
             var companyUser = new CompanyUserModel
             {
                 UserId = userId,
                 CompanyId = companyId,
-                PermissionId = permissionId
+                PermissionId = permissionId,
+                GroupId = groupId
             };
 
             await _context.CompanyUsers.AddAsync(companyUser);

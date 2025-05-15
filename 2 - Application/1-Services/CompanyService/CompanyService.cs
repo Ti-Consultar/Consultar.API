@@ -84,10 +84,11 @@ public class CompanyService : BaseService
             {
                 UserId = user.Id,
                 CompanyId = company.Id,
-                GroupId = createCompanyDto.GroupId
+                GroupId = createCompanyDto.GroupId,
+                PermissionId = 1
             };
 
-            await _companyRepository.AddUserToCompany(companyUser.UserId, company.Id, companyUser.GroupId);
+            await _companyRepository.AddUserToCompany(companyUser.UserId, company.Id,companyUser.GroupId, companyUser.PermissionId);
             await _emailService.SendWelcomeAsync(user.Email, company.Name, user.Name);
             return SuccessResponse(Message.Success);
         }
