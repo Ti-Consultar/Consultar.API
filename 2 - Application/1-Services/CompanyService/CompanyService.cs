@@ -1049,17 +1049,17 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
-    public async Task<ResultValue> GetByIdBySubCompaniesDeleted( int companyId)
+    public async Task<ResultValue> GetByIdBySubCompaniesDeleted(int companyId, int skip, int take)
     {
         try
         {
             var user = await GetCurrentUserAsync();
-            var dtos = await _groupRepository.GetByIdBySubCompaniesDeleted( companyId);
+            var dtos = await _groupRepository.GetByIdBySubCompaniesDeleted(companyId);
 
             if (dtos == null || !dtos.Any())
                 return SuccessResponse(new List<GroupWithSubCompaniesDto>());
 
-            // Agrupa por CompanyId e SubCompanyId, pois podem ter várias subempresas para a mesma empresa
+            // Filtra e agrupa os resultados paginados
             var companies = dtos
                 .Where(c => c.UserId == user.Id) // Filtra as empresas que o usuário possui
                 .GroupBy(c => c.SubCompanyId)
@@ -1080,13 +1080,15 @@ public class CompanyService : BaseService
                         }
                         : null
                 })
+                .Skip(skip)  // Pula os registros conforme o parâmetro de paginação
+                .Take(take)  // Traz a quantidade solicitada
                 .ToList();
 
             var groupDto = new GroupWithSubCompaniesDto
             {
                 GroupId = dtos.First().GroupId,
                 GroupName = dtos.First().GroupName,
-                DateCreate = DateTime.Now, // Não vem na query, defina conforme necessário
+                DateCreate = DateTime.Now,
                 UserId = user.Id,
                 UserName = user.Name,
                 SubCompanies = companies
@@ -1099,6 +1101,7 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+
 
 
 
