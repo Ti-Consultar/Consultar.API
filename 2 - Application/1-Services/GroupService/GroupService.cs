@@ -222,7 +222,7 @@ public class GroupService : BaseService
         try
         {
             if (!await _groupRepository.UserHasManagerPermissionInGroup(_currentUserId, groupId))
-                return SuccessResponse("Você não tem permissão para excluir este grupo.");
+                return SuccessResponse(Message.Unauthorized);
 
             var group = await _groupRepository.GetById(groupId);
             if (group == null) return ErrorResponse(Message.NotFound);
