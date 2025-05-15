@@ -89,7 +89,7 @@ public class CompanyService : BaseService
                 GroupId = createCompanyDto.GroupId
             };
 
-            await _companyRepository.AddUserToCompany(companyUser.UserId, companyUser.CompanyId, companyUser.GroupId);
+            await _companyRepository.AddUserToCompany(companyUser.UserId, company.Id, companyUser.GroupId);
             await _emailService.SendWelcomeAsync(user.Email, company.Name, user.Name);
             return SuccessResponse(Message.Success);
         }
@@ -288,7 +288,7 @@ public class CompanyService : BaseService
             model.PermissionId = dto.PermissionId;
             model.GroupId = dto.GroupId;
 
-            await _companyRepository.AddUserToCompany(model.UserId, model.CompanyId, model.PermissionId);
+            await _companyRepository.AddUserToCompany(model.UserId, company.Id, model.PermissionId);
 
 
 

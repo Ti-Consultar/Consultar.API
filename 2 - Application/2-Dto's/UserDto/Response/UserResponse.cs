@@ -15,6 +15,7 @@ namespace _2___Application._2_Dto_s.UserDto.Response
         public string Name { get; set; }
         public string Email { get; set; }
         public string Contact { get; set; }
+        public string Role { get; set; }
         public List<GroupDto> Groups { get; set; }  // Lista de Grupos associadas
 
 
@@ -25,6 +26,7 @@ namespace _2___Application._2_Dto_s.UserDto.Response
         public string Name { get; set; }
         public string Email { get; set; }
         public string Contact { get; set; }
+        public string Role { get; set; }
 
     }
 }

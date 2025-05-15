@@ -81,6 +81,7 @@ namespace _2___Application._1_Services.User
                     Email = user.Email,
                     Name = user.Name,
                     Contact = user.Contact,
+                    Role = user.Role,
                     Groups = user?.CompanyUsers
                         .Select(a => new GroupDto
                         {
@@ -137,7 +138,8 @@ namespace _2___Application._1_Services.User
                 Id = model.Id,
                 Email = model.Email,
                 Name = model.Name,
-                Contact= model.Contact
+                Contact= model.Contact,
+                Role = model.Role
             };
 
             return response;

@@ -84,7 +84,7 @@ public class InvitationService : BaseService
 
             var invitations = await _invitationRepository.GetByUserId(user.Id);
             if (invitations == null || !invitations.Any())
-                return ErrorResponse(Message.NotFound);
+                return SuccessResponse(new List<InvitationDto>());
 
             var response = invitations.Select(MapToInvitationDetailDto).ToList();
 
@@ -105,7 +105,7 @@ public class InvitationService : BaseService
 
             var invitations = await _invitationRepository.GetInvitationsByInvitedById(user.Id);
             if (invitations == null || !invitations.Any())
-                return ErrorResponse(Message.NotFound);
+                return SuccessResponse(new List<InvitationDto>());
 
             var response = invitations.Select(MapToInvitationDetailDto).ToList();
 
@@ -283,7 +283,7 @@ public class InvitationService : BaseService
         if (exists)
             return ErrorResponse(Message.MessageError);
 
-        await _companyRepository.AddUserToCompany(userId, invitation.CompanyId, invitation.PermissionId);
+        await _companyRepository.AddUserToCompany(userId, (int)invitation.CompanyId, invitation.PermissionId);
         return SuccessResponse(Message.Success);
     }
     private async Task<ResultValue> HandleSubCompanyInvitation(int userId,int groupId, InvitationToCompany invitation)

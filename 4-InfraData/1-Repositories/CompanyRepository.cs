@@ -273,7 +273,7 @@ namespace _4_InfraData._1_Repositories
                 await _context.SaveChangesAsync();
             }
         }
-        public async Task AddUserToCompany(int userId, int? companyId, int groupId)
+        public async Task AddUserToCompany(int userId, int? companyId)
         {
             var company = await _context.Companies
                 .FirstOrDefaultAsync(c => c.Id == companyId);
@@ -285,7 +285,7 @@ namespace _4_InfraData._1_Repositories
                     UserId = userId,
                     CompanyId = companyId,
                     PermissionId = 1,
-                    GroupId = groupId
+                    GroupId = company.Group.Id
                 };
 
                 await _context.CompanyUsers.AddAsync(companyUser);
