@@ -645,6 +645,11 @@ public class CompanyService : BaseService
 
             var subCompanies = await _companyRepository.GetSubCompaniesDeletedByUserId(user.Id);
 
+            if (subCompanies is null)
+            {
+                return SuccessResponse(Message.NotFound);
+            }
+
             var subCompanyDtos = subCompanies.Select(sc => new SubCompanyUsersimpleDto
             {
                 SubCompanyId = sc.Id,

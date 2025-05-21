@@ -24,11 +24,11 @@ namespace _5_API.Controllers
         [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpPost]
         [Route("create")]
-        public async Task<IActionResult> CreateInvitation([FromBody] CreateInvitationDto createInvitationDto)
+        public async Task<IActionResult> CreateInvitation([FromBody] CreateInvitationBatchDto createInvitationDto)
         {
             try
             {
-                var result = await _invitationService.CreateInvitation(createInvitationDto);
+                var result = await _invitationService.CreateInvitationBatch(createInvitationDto);
                 return Ok(result);
             }
             catch (Exception ex)

@@ -16,6 +16,9 @@ namespace ConsultarAuth.API.Controllers
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
         }
 
+        /// <summary>
+        /// Realiza o login de um usuário e retorna o token de autenticação.
+        /// </summary>
         [HttpPost("/login")]
         public async Task<IActionResult> Login([FromBody] LoginDto request)
         {
@@ -29,6 +32,9 @@ namespace ConsultarAuth.API.Controllers
             return Ok(userResponse);
         }
 
+        /// <summary>
+        /// Registra um novo usuário no sistema.
+        /// </summary>
         [HttpPost("/register")]
         public async Task<IActionResult> InsertUser([FromBody] InsertDto request)
         {
@@ -42,8 +48,11 @@ namespace ConsultarAuth.API.Controllers
             return Ok(user);
         }
 
+        /// <summary>
+        /// Redefine a senha do usuário com base no e-mail informado e envia uma nova senha por e-mail.
+        /// </summary>
         [HttpPut("redefine-password")]
-        public async Task<IActionResult> RedefinePassword([FromBody] _2___Application._2_Dto_s.UserDto.Request.ResetPasswordRequest request)
+        public async Task<IActionResult> RedefinePassword([FromBody] ResetPasswordRequest request)
         {
             if (request == null)
             {
@@ -55,23 +64,45 @@ namespace ConsultarAuth.API.Controllers
             return Ok(user);
         }
 
-        [HttpPut("/{userId}/reset-password")]
+        /// <summary>
+        /// Atualiza a senha do usuário autenticado.
+        /// </summary>
+        [HttpPut("/reset-password")]
         [Authorize()]
-        public async Task<IActionResult> ResetPassword(int userId, [FromBody] UpdatePasswordDto request)
+        public async Task<IActionResult> ResetPassword([FromBody] UpdatePasswordDto request)
         {
             if (request == null)
             {
                 return NotFound(new { message = "Dados inválidos" });
             }
 
-            var user = await _userService.ResetPassword(userId, request);
+            var user = await _userService.ResetPassword(request);
 
             return Ok(user);
         }
 
-        // Novo método para buscar usuário e suas empresas/subempresas
+        /// <summary>
+        /// Atualiza os dados do usuário autenticado.
+        /// </summary>
+        [HttpPut()]
+        [Authorize()]
+        public async Task<IActionResult> Update([FromBody] UpdateUser request)
+        {
+            if (request == null)
+            {
+                return NotFound(new { message = "Dados inválidos" });
+            }
+
+            var user = await _userService.UpdateUser(request);
+
+            return Ok(user);
+        }
+
+        /// <summary>
+        /// Retorna os dados completos de um usuário, incluindo grupos, empresas e filiais.
+        /// </summary>
         [HttpGet("/{userId}")]
-        //[Authorize()]
+        [Authorize()]
         public async Task<IActionResult> GetUser(int userId)
         {
             try
@@ -91,8 +122,10 @@ namespace ConsultarAuth.API.Controllers
             }
         }
 
+        /// <summary>
+        /// Retorna todos os usuários do sistema.
+        /// </summary>
         [HttpGet("")]
-       // [Authorize()]
         public async Task<IActionResult> GetAllUsers()
         {
             try
@@ -108,12 +141,15 @@ namespace ConsultarAuth.API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Erro ao buscar usuário", details = ex.Message });
+                return StatusCode(500, new { message = "Erro ao buscar usuários", details = ex.Message });
             }
         }
 
+        /// <summary>
+        /// Retorna os dados básicos de um usuário específico.
+        /// </summary>
         [HttpGet("/{id}/simple")]
-        // [Authorize()]
+        [Authorize()]
         public async Task<IActionResult> GetUserbyId(int id)
         {
             try
@@ -132,9 +168,12 @@ namespace ConsultarAuth.API.Controllers
                 return StatusCode(500, new { message = "Erro ao buscar usuário", details = ex.Message });
             }
         }
-       
+
+        /// <summary>
+        /// Retorna todas as policies de autorização disponíveis no sistema.
+        /// </summary>
         [HttpGet("/policies")]
-        
+    
         public async Task<IActionResult> GetPolicies([FromServices] AuthorizationService authorizationService)
         {
             var policies = await authorizationService.GetAllPoliciesAsync();

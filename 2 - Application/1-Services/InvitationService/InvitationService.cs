@@ -39,33 +39,35 @@ public class InvitationService : BaseService
         _currentUserId = GetCurrentUserId();
     }
 
-    public async Task<ResultValue> CreateInvitation(CreateInvitationDto dto)
+    public async Task<ResultValue> CreateInvitationBatch(CreateInvitationBatchDto dto)
     {
         try
         {
-            var invitedUser = await _userRepository.GetByUserId(_currentUserId);
-            var invitingUser = await _userRepository.GetByUserId(dto.InvitedByUserId);
-
-            var group = await _groupRepository.GetById(dto.GroupId);
-            var company = await _companyRepository.GetById(dto.CompanyId);
-
-            if (invitedUser == null || invitingUser == null || group == null)
-                return ErrorResponse(Message.NotFound);
-
-            var invitation = new InvitationToCompany
+            foreach (var invitationDto in dto.Invitations)
             {
-                UserId = invitedUser.Id,
-                GroupId = dto.GroupId,
-                CompanyId = dto.CompanyId,
-                InvitedById = dto.InvitedByUserId,
-                PermissionId = dto.PermissionId,
-                Status = InvitationStatus.Pending,
-                CreatedAt = DateTime.UtcNow,
-                SubCompanyId = dto.SubCompanyId > 0 ? dto.SubCompanyId : null
-            };
+                var invitedUser = await _userRepository.GetByUserId(_currentUserId);
+                var invitingUser = await _userRepository.GetByEmail(invitationDto.EmailInvitedByUser);
 
+                var group = await _groupRepository.GetById(invitationDto.GroupId);
+                var company = await _companyRepository.GetById(invitationDto.CompanyId);
 
-            await _invitationRepository.Add(invitation);
+                if (invitedUser == null || invitingUser == null || group == null)
+                    continue; // Ou logar o erro e seguir com os próximos
+
+                var invitation = new InvitationToCompany
+                {
+                    UserId = invitedUser.Id,
+                    GroupId = invitationDto.GroupId,
+                    CompanyId = invitationDto.CompanyId,
+                    InvitedById = invitingUser.Id,
+                    PermissionId = invitationDto.PermissionId,
+                    Status = InvitationStatus.Pending,
+                    CreatedAt = DateTime.UtcNow,
+                    SubCompanyId = invitationDto.SubCompanyId > 0 ? invitationDto.SubCompanyId : null
+                };
+
+                await _invitationRepository.Add(invitation);
+            }
 
             return SuccessResponse(Message.Success);
         }
@@ -74,6 +76,7 @@ public class InvitationService : BaseService
             return ErrorResponse(ex);
         }
     }
+
     public async Task<ResultValue> GetInvitationsByUserId()
     {
         try

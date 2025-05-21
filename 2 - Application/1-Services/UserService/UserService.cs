@@ -12,21 +12,24 @@ using _4_InfraData._3_Utils.Email;
 using _2___Application._2_Dto_s.Group;
 using _3_Domain._2_Enum_s;
 using _4_InfraData._5_ConfigEnum;
+using _4_InfraData._2_AppSettings;
 
 namespace _2___Application._1_Services.User
 {
-    public class UserService
+    public class UserService : BaseService
     {
         #region Construtor
         private readonly UserRepository _repository;
         private readonly CompanyRepository _companyRepository;
         private readonly EmailService _emailService;
+        public int _currentUserId;
 
-
-        public UserService(UserRepository repository, EmailService emailService)
+        public UserService(UserRepository repository, EmailService emailService, IAppSettings appSettings) : base(appSettings)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _emailService = emailService;
+            _currentUserId = GetCurrentUserId();
+
         }
 
         #endregion
@@ -66,8 +69,38 @@ namespace _2___Application._1_Services.User
             }
         }
 
+        public async Task<object> UpdateUser(UpdateUser request)
+        {
+            try
+            {
+                var user = await GetCurrentUserAsync();
 
-       
+
+                if (user == null)
+                    return Message.NotFound;
+
+                // Verifica se o e-mail está sendo alterado para um que já existe em outro usuário
+                if (user.Email != request.Email)
+                {
+                    var emailExists = await _repository.GetByEmail(request.Email);
+                    if (emailExists != null && emailExists.Id != user.Id)
+                        return UserLoginMessage.EmailExists;
+                }
+
+                // Atualiza os campos
+                user.Name = request.Name;
+                user.Email = request.Email;
+                user.Contact = request.Contact;
+
+                await _repository.UpdateUser(user);
+                return Message.Success;
+            }
+            catch (Exception ex)
+            {
+                return UserLoginMessage.Error + ex;
+            }
+        }
+
         public async Task<object> GetUser(int userId)
         {
             try
@@ -184,15 +217,15 @@ namespace _2___Application._1_Services.User
                 };
             }
         }
-        public async Task<ResetPasswordResponse> ResetPassword(int userId, UpdatePasswordDto request)
+        public async Task<ResetPasswordResponse> ResetPassword( UpdatePasswordDto request)
         {
 
             try
 
             {
-                var user = await _repository.GetByEmail(request.Email);
+                var user = await GetCurrentUserAsync();
 
-                if (user == null && user.Id != userId)
+                if (user == null && user.Id != user.Id)
                 {
                     return new ResetPasswordResponse
                     {
@@ -256,7 +289,14 @@ namespace _2___Application._1_Services.User
                 Message = UserLoginMessage.InvalidCredentials
             };
         }
+        private async Task<UserModel> GetCurrentUserAsync()
+        {
+            var user = await _repository.GetByUserId(_currentUserId);
+            if (user == null)
+                throw new UnauthorizedAccessException(UserLoginMessage.InvalidCredentials);
 
+            return user;
+        }
         #endregion
 
 

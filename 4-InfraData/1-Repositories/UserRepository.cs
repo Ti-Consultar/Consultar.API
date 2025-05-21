@@ -27,6 +27,11 @@ namespace _4_InfraData._1_Repositories
             await _context.Users.AddAsync(model);
             await _context.SaveChangesAsync();
         }
+        public async Task UpdateUser(UserModel model)
+        {
+            _context.Users.Update(model);
+            await _context.SaveChangesAsync();
+        }
 
         public async Task ResetPassword(UserModel model)
         {

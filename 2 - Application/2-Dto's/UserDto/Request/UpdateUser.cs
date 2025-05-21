@@ -6,13 +6,14 @@ using System.Threading.Tasks;
 
 namespace _2___Application._2_Dto_s.UserDto.Request
 {
-    public class InsertDto
+    public class UpdateUser
     {
         public string Name { get; set; }
         public string? Contact { get; set; }
-        public string? Role { get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }
     }
-
+    public class UpdateUserByGestor
+    {
+        public string? Role { get; set; }
+    }
 }
