@@ -30,6 +30,21 @@ namespace _4_InfraData._1_Repositories
                  .ToListAsync();
 
         }
+        public async Task<List<GroupModel>> GetAllByUserId(int userId)
+        {
+            var groupIds = await _context.CompanyUsers
+                .Where(cu => cu.UserId == userId && cu.GroupId != null)
+                .Select(cu => cu.GroupId)
+                .Distinct()
+                .ToListAsync();
+
+            return await _context.Groups
+                .Where(g => groupIds.Contains(g.Id) && !g.Deleted)
+                .Include(g => g.BusinessEntity)
+                .Include(g => g.Companies)
+                    .ThenInclude(c => c.SubCompanies)
+                .ToListAsync();
+        }
 
         public async Task<GroupModel> GetById(int id)
         {

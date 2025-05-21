@@ -99,7 +99,9 @@ public class GroupService : BaseService
     {
         try
         {
-            var groups = await _groupRepository.GetAll();
+            var user = await GetCurrentUserAsync();
+
+            var groups = await _groupRepository.GetAllByUserId(user.Id);
 
             var result = groups.Select(MapToGroupDto).ToList();
 
@@ -193,13 +195,15 @@ public class GroupService : BaseService
     {
         try
         {
-            var group = await _groupRepository.GetGroupWithCompaniesById(groupId, _currentUserId);
+            var user = await GetCurrentUserAsync();
+
+            var group = await _groupRepository.GetGroupWithCompaniesById(groupId, user.Id);
             if (group == null) return ErrorResponse(Message.NotFound);
 
             if (!group.CompanyUsers.Any(cu => cu.UserId == _currentUserId))
                 return SuccessResponse(UserLoginMessage.Error);
 
-            var userName = group.CompanyUsers.FirstOrDefault(cu => cu.UserId == _currentUserId)?.User?.Name ?? string.Empty;
+            var userName = group.CompanyUsers.FirstOrDefault(cu => cu.UserId == user.Id)?.User?.Name ?? string.Empty;
 
             return SuccessResponse(MapToGroupWithCompaniesDto(group, _currentUserId, userName));
         }
