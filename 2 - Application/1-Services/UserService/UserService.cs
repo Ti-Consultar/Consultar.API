@@ -101,12 +101,13 @@ namespace _2___Application._1_Services.User
             }
         }
 
-        public async Task<object> GetUser(int userId)
+        public async Task<object> GetUser()
         {
             try
             {
+
                 // Busca o usuário no banco, garantindo que está trazendo as empresas e subempresas
-                var user = await _repository.GetByUserId(userId);
+                var user = await GetCurrentUserAsync();
 
                 // Cria o objeto de resposta
                 var response = new UserResponse
@@ -162,9 +163,11 @@ namespace _2___Application._1_Services.User
 
                 return response;
         }
-        public async Task<object> GetById(int id)
+        public async Task<object> GetById()
         {
-            var model = await _repository.GetById(id);
+            var user = await GetCurrentUserAsync();
+
+            var model = await _repository.GetById(user.Id);
 
 
             var response = new UserSimpleResponse

@@ -101,13 +101,13 @@ namespace ConsultarAuth.API.Controllers
         /// <summary>
         /// Retorna os dados completos de um usuário, incluindo grupos, empresas e filiais.
         /// </summary>
-        [HttpGet("/{userId}")]
+        [HttpGet("")]
         [Authorize()]
-        public async Task<IActionResult> GetUser(int userId)
+        public async Task<IActionResult> GetUser()
         {
             try
             {
-                var user = await _userService.GetUser(userId);
+                var user = await _userService.GetUser();
 
                 if (user == null)
                 {
@@ -148,13 +148,13 @@ namespace ConsultarAuth.API.Controllers
         /// <summary>
         /// Retorna os dados básicos de um usuário específico.
         /// </summary>
-        [HttpGet("/{id}/simple")]
+        [HttpGet("/simple")]
         [Authorize()]
-        public async Task<IActionResult> GetUserbyId(int id)
+        public async Task<IActionResult> GetUserbyId()
         {
             try
             {
-                var user = await _userService.GetById(id);
+                var user = await _userService.GetById();
 
                 if (user == null)
                 {
