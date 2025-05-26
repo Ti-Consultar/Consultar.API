@@ -122,28 +122,29 @@ namespace ConsultarAuth.API.Controllers
             }
         }
 
-        /// <summary>
-        /// Retorna todos os usuários do sistema.
-        /// </summary>
-        [HttpGet("")]
-        public async Task<IActionResult> GetAllUsers()
-        {
-            try
-            {
-                var user = await _userService.GetAllUsers();
+        ///// <summary>
+        ///// Retorna todos os usuários do sistema.
+        ///// </summary>
+        //[HttpGet("/user")]
+        //[Authorize()]
+        //public async Task<IActionResult> GetAllUsers()
+        //{
+        //    try
+        //    {
+        //        var user = await _userService.GetAllUsers();
 
-                if (user == null)
-                {
-                    return NotFound(new { message = "Usuário não encontrado" });
-                }
+        //        if (user == null)
+        //        {
+        //            return NotFound(new { message = "Usuário não encontrado" });
+        //        }
 
-                return Ok(user);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Erro ao buscar usuários", details = ex.Message });
-            }
-        }
+        //        return Ok(user);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { message = "Erro ao buscar usuários", details = ex.Message });
+        //    }
+        //}
 
         /// <summary>
         /// Retorna os dados básicos de um usuário específico.
