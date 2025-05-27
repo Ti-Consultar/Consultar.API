@@ -17,5 +17,10 @@ namespace _2___Application._2_Dto_s.Company
 
 
     }
-
+    public class CompanySimpleDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+       
+    }
 }

@@ -14,6 +14,7 @@ namespace _2___Application.Base
         public const string Unauthorized = "Sem permissão para Realizar esta ação";
         public const string CNPJAlreadyRegistered = "Já existe um cadastro com este CNPJ.";
         public const string InvalidInvitationType = "Tipo de convite inválido ou incompleto.";
+        public const string ExistsAccountPlans = "Já existe um plano de contas para esse nível";
 
     }
 

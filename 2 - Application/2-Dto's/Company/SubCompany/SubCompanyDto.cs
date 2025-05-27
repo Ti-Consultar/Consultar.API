@@ -17,5 +17,9 @@ namespace _2___Application._2_Dto_s.Company.SubCompany
         public BusinessEntityDto BusinessEntity { get; set; }
         public PermissionResponse Permission { get; set; }
     }
-
-}
+    public class SubCompanySimpleDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+    }

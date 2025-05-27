@@ -17,8 +17,8 @@ namespace _3_Domain._1_Entities
         public int Id { get; set; }
         public int AccountPlansId { get; set; }
         public AccountPlansModel AccountPlans { get; set; }
-        public int DateMonth { get; set; }
-        public int YearMonth { get; set; }
+        public EMonth DateMonth { get; set; }
+        public int DateYear { get; set; }
         public ESituationBalancete Status { get; set; }
         public DateTime DateCreate { get; set; } = DateTime.UtcNow;
 
