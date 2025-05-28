@@ -13,6 +13,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using System.Formats.Asn1;
+using System.Globalization;
+using CsvHelper;
+using ClosedXML.Excel;
 
 namespace _2___Application._1_Services.AccountPlans.Balancete
 {
@@ -20,11 +25,13 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
     {
         private readonly AccountPlansRepository _accountPlansRepository;
         private readonly BalanceteRepository _repository;
+        private readonly BalanceteDataRepository _balanceteDataRepository;
 
 
         public BalanceteService(
             AccountPlansRepository accountPlansRepository,
             BalanceteRepository repository,
+            BalanceteDataRepository balanceteDataRepository,
 
 
 
@@ -32,13 +39,14 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
         {
             _accountPlansRepository = accountPlansRepository;
             _repository = repository;
+            _balanceteDataRepository = balanceteDataRepository;
 
 
             _currentUserId = GetCurrentUserId();
 
         }
         #region Métodos
-
+        #region Balancete
         public async Task<ResultValue> Create(InsertBalanceteDto dto)
         {
             try
@@ -134,8 +142,6 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 return ErrorResponse(ex);
             }
         }
-
-
         private static BalanceteDto MapToBalanceteDto(BalanceteModel x) => new()
         {
             Id = x.Id,
@@ -148,9 +154,157 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 Id = x.AccountPlans.Id, 
             }
         };
+        #endregion
+
+        #region Balancete Data
+
+        public async Task<ResultValue> ImportBalanceteData(IFormFile file, int balanceteId)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                    return ErrorResponse("Arquivo inválido.");
+
+                var balancete = await _repository.GetBalanceteById(balanceteId);
+                if (balancete == null)
+                    return ErrorResponse(Message.NotFound);
+
+                var list = new List<BalanceteDataModel>();
+                var extension = Path.GetExtension(file.FileName).ToLower();
+
+                using var stream = new MemoryStream();
+                await file.CopyToAsync(stream);
+
+                if (extension == ".csv")
+                {
+                    list = ReadFromCsv(stream, balanceteId);
+                }
+                else if (extension == ".xlsx")
+                {
+                    list = ReadFromXlsx(stream, balanceteId);
+                }
+                else
+                {
+                    return ErrorResponse("Formato de arquivo não suportado. Envie um CSV ou XLSX.");
+                }
+
+                await _balanceteDataRepository.AddRangeAsync(list);
+
+                return SuccessResponse("Dados importados com sucesso.");
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+
+
+        #region Private
+        private List<BalanceteDataModel> ReadFromXlsx(Stream stream, int balanceteId)
+        {
+            var list = new List<BalanceteDataModel>();
+            stream.Position = 0;
+
+            using var workbook = new XLWorkbook(stream);
+            var worksheet = workbook.Worksheet(1);
+            var firstRowUsed = worksheet.FirstRowUsed();
+            var row = firstRowUsed.RowUsed().RowBelow();
+
+            while (!row.IsEmpty())
+            {
+                var costCenter = row.Cell(0).GetFormattedString().Trim();
+                var name = row.Cell(1).GetFormattedString().Trim();
+
+                // Ignorar linhas vazias ou de cabeçalho no meio
+                if (string.IsNullOrWhiteSpace(costCenter) && string.IsNullOrWhiteSpace(name))
+                {
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                if (name != null && name.ToUpper().Contains("DESCRIÇÃO"))
+                {
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                var model = new BalanceteDataModel
+                {
+                    BalanceteId = balanceteId,
+                    CostCenter = costCenter,
+                    Name = name,
+                    InitialValue = ParseDecimal(row.Cell(2).GetFormattedString()),
+                    Debit = ParseDecimal(row.Cell(3).GetFormattedString()),
+                    Credit = ParseDecimal(row.Cell(4).GetFormattedString()),
+                    FinalValue = ParseDecimal(row.Cell(5).GetFormattedString()),
+                    BudgetedAmount = false
+                };
+
+                list.Add(model);
+                row = row.RowBelow();
+            }
+
+            return list;
+        }
+
+
+
+        private List<BalanceteDataModel> ReadFromCsv(Stream stream, int balanceteId)
+        {
+            var list = new List<BalanceteDataModel>();
+            stream.Position = 0;
+
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+            var csv = new CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                HasHeaderRecord = true,
+                Delimiter = ";",
+                BadDataFound = null,
+                MissingFieldFound = null,
+                IgnoreBlankLines = true
+            });
+
+            csv.Read();
+            csv.ReadHeader();
+
+            while (csv.Read())
+            {
+                var costCenter = csv.GetField(0)?.Trim();
+                var name = csv.GetField(1)?.Trim();
+
+                // Ignorar linhas vazias ou cabeçalho no meio
+                if (string.IsNullOrWhiteSpace(costCenter) && string.IsNullOrWhiteSpace(name))
+                    continue;
+
+                if (name != null && name.ToUpper().Contains("DESCRIÇÃO"))
+                    continue;
+
+                var model = new BalanceteDataModel
+                {
+                    BalanceteId = balanceteId,
+                    CostCenter = costCenter,
+                    Name = name,
+                    InitialValue = ParseDecimal(csv.GetField(2)),
+                    Debit = ParseDecimal(csv.GetField(3)),
+                    Credit = ParseDecimal(csv.GetField(4)),
+                    FinalValue = ParseDecimal(csv.GetField(5)),
+                    BudgetedAmount = false
+                };
+
+                list.Add(model);
+            }
+
+            return list;
+        }
+
 
 
         #endregion
+        #endregion
+
+        #endregion
+
 
 
     }

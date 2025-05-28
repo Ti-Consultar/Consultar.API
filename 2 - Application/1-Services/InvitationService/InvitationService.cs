@@ -91,12 +91,12 @@ public class InvitationService : BaseService
 
             var response = invitations.Select(MapToInvitationDetailDto).ToList();
 
-            return SuccessResponse(response.OrderBy(a => a.CreatedAt));
+            return SuccessResponse(response.OrderByDescending(a => a.CreatedAt));
         }
         catch (Exception ex)
         {
             return ErrorResponse(ex);
-        }
+        } 
     }
     public async Task<ResultValue> GetInvitationsByInvitedById()
     {
@@ -112,7 +112,7 @@ public class InvitationService : BaseService
 
             var response = invitations.Select(MapToInvitationDetailDto).ToList();
 
-            return SuccessResponse(response.OrderBy(a => a.CreatedAt));
+            return SuccessResponse(response.OrderByDescending(a => a.CreatedAt));
         }
         catch (Exception ex)
         {

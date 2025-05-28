@@ -1,5 +1,5 @@
 ﻿CREATE TABLE BalanceteData (
-    Id INT PRIMARY KEY,
+    Id INT IDENTITY(1,1) PRIMARY KEY,
     BalanceteId INT NOT NULL,
     CostCenter VARCHAR(100),
     Name VARCHAR(100),

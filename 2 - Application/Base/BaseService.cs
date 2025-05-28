@@ -3,9 +3,11 @@ using _4_InfraData._1_Repositories;
 using _4_InfraData._2_AppSettings;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 
 namespace _2___Application.Base
 {
@@ -26,6 +28,51 @@ namespace _2___Application.Base
         {
             // Libere recursos não gerenciados aqui, se necessário.
         }
+        public decimal ParseDecimal(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return 0;
+
+            // Remove espaços
+            input = input.Trim();
+
+            // Trata ponto como separador de milhar e vírgula como decimal
+            if (Regex.IsMatch(input, @"\.\d{3},\d{2}$"))
+            {
+                input = input.Replace(".", "").Replace(",", ".");
+            }
+            // Trata vírgula como milhar e ponto como decimal (formato inverso)
+            else if (Regex.IsMatch(input, @",\d{3}\.\d{2}$"))
+            {
+                input = input.Replace(",", "").Replace(".", ",");
+            }
+            else
+            {
+                // Caso seja só vírgula ou só ponto, tenta ajustar
+                input = input.Replace(".", "").Replace(",", ".");
+            }
+
+            decimal.TryParse(input, NumberStyles.Any, CultureInfo.InvariantCulture, out var result);
+            return result;
+        }
+
+
+        
+
+        public bool ParseBoolean(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return false;
+
+            value = value.Trim().ToLower();
+
+            return value switch
+            {
+                "true" or "1" or "sim" or "s" => true,
+                _ => false
+            };
+        }
+
 
         public string GetEnvironmentName() =>
             _appSettings.GetHostingEnvironment()?.EnvironmentName ?? "dev";

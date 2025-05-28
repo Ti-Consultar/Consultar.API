@@ -21,7 +21,11 @@ namespace _4_InfraData._1_Repositories
             await _context.Set<T>().AddAsync(entity);
             await _context.SaveChangesAsync();
         }
-
+        public async Task AddRangeAsync(IEnumerable<T> entities)
+        {
+            await _context.Set<T>().AddRangeAsync(entities);
+            await _context.SaveChangesAsync();
+        }
         public async Task<bool> ExistsAsync(int id)
         {
             return await _context.Set<T>().AnyAsync(e => EF.Property<int>(e, "Id") == id);

@@ -82,5 +82,20 @@ namespace _5_API.Controllers
 
             return Ok(result);
         }
+        #region Balancete Data
+
+       // [Authorize]
+        [HttpPost("import")]
+        public async Task<IActionResult> ImportBalanceteData(IFormFile file, [FromQuery] int balanceteId)
+        {
+            var result = await _service.ImportBalanceteData(file, balanceteId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        #endregion
     }
 }

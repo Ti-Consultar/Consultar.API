@@ -21,6 +21,6 @@ namespace _3_Domain._1_Entities
         public decimal Credit { get; set; }
         public decimal Debit { get; set; }
         public decimal FinalValue { get; set; }
-        public bool BudgetAmount  { get; set; }
+        public bool BudgetedAmount  { get; set; }
     }
 }
