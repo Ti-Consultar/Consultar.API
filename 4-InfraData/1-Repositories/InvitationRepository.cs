@@ -1,4 +1,5 @@
 ﻿using _3_Domain._1_Entities;
+using _3_Domain._2_Enum_s;
 using _4_InfraData._1_Context;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -64,7 +65,7 @@ namespace _4_InfraData._1_Repositories
         public async Task<List<InvitationToCompany>> GetInvitationsByInvitedById(int userId)
         {
             return await _context.InvitationToCompany
-                .Where(i => i.InvitedById == userId)
+                .Where(i => i.InvitedById == userId && i.Status == InvitationStatus.Pending)
                 .Include(a => a.Group)
                 .Include(a => a.Company)
                 .Include(a => a.SubCompany)
