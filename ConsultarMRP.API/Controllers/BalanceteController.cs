@@ -82,9 +82,23 @@ namespace _5_API.Controllers
 
             return Ok(result);
         }
+
+        /// <summary>
+        /// Deleta
+        /// </summary>
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var result = await _service.Delete(id);
+
+            if (!result.Success)
+                return NotFound(result);
+
+            return Ok(result);
+        }
         #region Balancete Data
 
-       // [Authorize]
+        // [Authorize]
         [HttpPost("import")]
         public async Task<IActionResult> ImportBalanceteData(IFormFile file, [FromQuery] int balanceteId)
         {
@@ -95,7 +109,28 @@ namespace _5_API.Controllers
 
             return Ok(result);
         }
+        // [Authorize]
+        [HttpGet("data/{balanceteId}")]
+        public async Task<IActionResult> GetByBalanceteId( int balanceteId)
+        {
+            var result = await _service.GetByBalanceteId( balanceteId);
 
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        [HttpGet("{balanceteId}/cost-center")]
+        public async Task<IActionResult> GetAgrupadoPorCostCenter(int balanceteId)
+        {
+            var result = await _service.GetAgrupadoPorCostCenter(balanceteId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
         #endregion
     }
 }

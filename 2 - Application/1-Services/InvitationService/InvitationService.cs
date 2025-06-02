@@ -119,7 +119,7 @@ public class InvitationService : BaseService
             return ErrorResponse(ex);
         }
     }
-    public async Task<ResultValue> UpdateInvitationStatus(int invitationId, int groupId, UpdateStatus dto)
+    public async Task<ResultValue> UpdateInvitationStatus(int invitationId, UpdateStatus dto)
     {
         try
         {
@@ -135,7 +135,7 @@ public class InvitationService : BaseService
             invitation.Status = dto.Status;
             invitation.UpdatedAt = DateTime.UtcNow;
 
-            var result = await HandleInvitationByContext(user.Id, groupId, invitation);
+            var result = await HandleInvitationByContext(user.Id, invitation.GroupId, invitation);
             if (!result.Success)
                 return result;
 

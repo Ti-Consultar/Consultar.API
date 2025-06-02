@@ -104,11 +104,11 @@ namespace _5_API.Controllers
         [Authorize]
         [HttpPatch]
         [Route("{id}/update-status")]
-        public async Task<IActionResult> UpdateInvitationStatus(int id, int groupId, [FromBody] UpdateStatus dto)
+        public async Task<IActionResult> UpdateInvitationStatus(int id, [FromBody] UpdateStatus dto)
         {
             try
             {
-                var result = await _invitationService.UpdateInvitationStatus(id, groupId, dto);
+                var result = await _invitationService.UpdateInvitationStatus(id, dto);
                 return Ok(result);
             }
             catch (Exception ex)

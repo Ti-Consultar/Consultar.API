@@ -1,20 +1,12 @@
 ﻿using _2___Application._2_Dto_s.AccountPlan;
 using _2___Application._2_Dto_s.AccountPlan.Balancete;
-using _2___Application._2_Dto_s.Company.SubCompany;
-using _2___Application._2_Dto_s.Company;
-using _2___Application._2_Dto_s.Group;
 using _2___Application.Base;
 using _3_Domain._1_Entities;
 using _3_Domain._2_Enum_s;
 using _4_InfraData._1_Repositories;
 using _4_InfraData._2_AppSettings;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using System.Formats.Asn1;
 using System.Globalization;
 using CsvHelper;
 using ClosedXML.Excel;
@@ -142,6 +134,26 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 return ErrorResponse(ex);
             }
         }
+
+        public async Task<ResultValue> Delete(int id)
+        {
+            try
+            {
+                var balancete = await _repository.GetByIdDelete(id);
+
+                if (balancete == null )
+                    return ErrorResponse(Message.NotFound);
+
+                await _repository.DeletePermanently(id);
+
+                return SuccessResponse(Message.DeletedSuccess);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+        #region Private Balancete
         private static BalanceteDto MapToBalanceteDto(BalanceteModel x) => new()
         {
             Id = x.Id,
@@ -154,6 +166,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 Id = x.AccountPlans.Id, 
             }
         };
+        #endregion
         #endregion
 
         #region Balancete Data
@@ -198,6 +211,53 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             }
         }
 
+        public async Task<ResultValue> GetByBalanceteId(int balanceteId)
+        {
+            try
+            {
+                var balancete = await _balanceteDataRepository.GetByBalanceteId(balanceteId);
+
+                if (balancete == null || !balancete.Any())
+                    return ErrorResponse(Message.NotFound);
+
+                var result = MapToBalanceteDataDto(balancete); 
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+        public async Task<ResultValue> GetAgrupadoPorCostCenter(int balanceteId)
+        {
+            try
+            {
+                var data = await _balanceteDataRepository.GetAgrupadoPorCostCenter(balanceteId);
+
+                if (data == null || !data.Any())
+                    return SuccessResponse(Message.NotFound);
+
+                var result = data.Select(x => new DataDto
+                {
+                    Id = x.Id,
+                    CostCenter = x.CostCenter,
+                    Name = x.Name,
+                    InitialValue = x.InitialValue,
+                    Credit = x.Credit,
+                    Debit = x.Debit,
+                    FinalValue = x.FinalValue,
+                    BudgetedAmount = x.BudgetedAmount,
+                }).ToList();
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
 
 
         #region Private
@@ -247,9 +307,6 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
             return list;
         }
-
-
-
         private List<BalanceteDataModel> ReadFromCsv(Stream stream, int balanceteId)
         {
             var list = new List<BalanceteDataModel>();
@@ -298,9 +355,43 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             return list;
         }
 
+        private static BalanceteDataDto MapToBalanceteDataDto(List<BalanceteDataModel> data)
+
+        {
+            var first = data.First();
+
+            return new BalanceteDataDto
+            {
+                Balancete = new BalanceteDto
+                {
+                    Id = first.Balancete.Id,
+                    DateMonth = first.Balancete.DateMonth,
+                    DateYear = first.Balancete.DateYear,
+                },
+                DataDto = data.Select(x => new DataDto
+                {
+                    Id = x.Id,
+                    CostCenter = x.CostCenter,
+                    Name = x.Name,
+                    InitialValue = x.InitialValue,
+                    Credit = x.Credit,
+                    Debit = x.Debit,
+                    FinalValue = x.FinalValue,
+                    BudgetedAmount = x.BudgetedAmount
+                }).ToList()
+            };
+        }
+        private string GetCostCenterPai(string costCenter)
+        {
+            // Pega tudo até o primeiro ponto. Se não tiver ponto, ele é o próprio pai.
+            var partes = costCenter.Split('.');
+
+            return partes.Length > 0 ? partes[0] : costCenter;
+        }
 
 
         #endregion
+
         #endregion
 
         #endregion

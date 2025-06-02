@@ -27,7 +27,14 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.Id == id)
                 .ToListAsync();
         }
-
+        public async Task<List<BalanceteModel>> GetByIdDelete(int id)
+        {
+            return await _context.Balancete
+                .Include(x => x.AccountPlans)
+                .Include(x => x.BalancetesData)
+                .Where(x => x.Id == id)
+                .ToListAsync();
+        }
         public async Task<BalanceteModel> GetBalanceteById(int id)
         {
             return await _context.Balancete
