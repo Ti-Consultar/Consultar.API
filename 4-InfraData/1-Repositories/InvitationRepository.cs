@@ -23,9 +23,9 @@ namespace _4_InfraData._1_Repositories
         {
             return await _context.InvitationToCompany.ToListAsync();
         }
-        public async Task<InvitationToCompany> GetExistingInvitation(int userId, int groupId, int? companyId = null, int? subCompanyId = null)
+        public async Task<InvitationToCompany> GetExistingInvitation(int userId, int invitingUserId , int groupId, int? companyId = null, int? subCompanyId = null)
         {
-            var predicate = BuildInvitationPredicate(userId, groupId, companyId, subCompanyId);
+            var predicate = BuildInvitationPredicate(userId, invitingUserId, groupId, companyId, subCompanyId);
 
             return await _context.InvitationToCompany
                 .AsNoTracking()
@@ -34,10 +34,11 @@ namespace _4_InfraData._1_Repositories
         }
 
         private Expression<Func<InvitationToCompany, bool>> BuildInvitationPredicate(
-    int userId, int groupId, int? companyId, int? subCompanyId)
+    int userId, int invitingUserId, int groupId, int? companyId, int? subCompanyId)
         {
             return i =>
                 i.UserId == userId &&
+                i.InvitedById == invitingUserId &&
                 i.GroupId == groupId &&
                 (companyId == null || i.CompanyId == companyId) &&
                 (subCompanyId == null || i.SubCompanyId == subCompanyId);
