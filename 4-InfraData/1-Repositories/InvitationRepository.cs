@@ -23,6 +23,19 @@ namespace _4_InfraData._1_Repositories
         {
             return await _context.InvitationToCompany.ToListAsync();
         }
+
+        public async Task<InvitationToCompany> Existis(int groupId, int? companyId, int? subCompanyId, int userId, int invitedUserId)
+        {
+            return await _context.InvitationToCompany.
+                Where(a => a.GroupId == groupId &&
+                a.CompanyId == companyId &&
+                a.SubCompanyId == subCompanyId &&
+                a.UserId == userId &&
+                a.InvitedById == invitedUserId 
+             
+                )
+                .FirstOrDefaultAsync();
+        }
         public async Task<InvitationToCompany> GetExistingInvitation(int userId, int invitingUserId , int groupId, int? companyId = null, int? subCompanyId = null)
         {
             var predicate = BuildInvitationPredicate(userId, invitingUserId, groupId, companyId, subCompanyId);
