@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace _4_InfraData._1_Repositories
@@ -21,6 +22,25 @@ namespace _4_InfraData._1_Repositories
         public async Task<List<InvitationToCompany>> GetAll()
         {
             return await _context.InvitationToCompany.ToListAsync();
+        }
+        public async Task<InvitationToCompany> GetExistingInvitation(int userId, int groupId, int? companyId = null, int? subCompanyId = null)
+        {
+            var predicate = BuildInvitationPredicate(userId, groupId, companyId, subCompanyId);
+
+            return await _context.InvitationToCompany
+                .AsNoTracking()
+                .Where(predicate)
+                .FirstOrDefaultAsync();
+        }
+
+        private Expression<Func<InvitationToCompany, bool>> BuildInvitationPredicate(
+    int userId, int groupId, int? companyId, int? subCompanyId)
+        {
+            return i =>
+                i.UserId == userId &&
+                i.GroupId == groupId &&
+                (companyId == null || i.CompanyId == companyId) &&
+                (subCompanyId == null || i.SubCompanyId == subCompanyId);
         }
 
         public async Task<InvitationToCompany> GetById(int id)

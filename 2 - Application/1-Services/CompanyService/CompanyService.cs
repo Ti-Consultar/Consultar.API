@@ -803,6 +803,10 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+
+
+    #region
+
     public async Task<ResultValue> GetByIdByCompaniesDeleted(int groupId)
     {
         try
@@ -1054,6 +1058,7 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+
     public async Task<ResultValue> GetByIdBySubCompaniesDeleted(int companyId, int skip, int take)
     {
         try
@@ -1195,5 +1200,141 @@ public class CompanyService : BaseService
 
         return user;
     }
+    #region [{Visão de Usuário}]
+    public async Task<ResultValue> GetCompaniesByUser()
+    {
+        try
+        {
+            var user = await GetCurrentUserAsync();
+
+            var companies = await _companyRepository.GetByUser(user.Id);
+            if (companies == null)
+                return ErrorResponse(Message.NotFound);
+
+
+
+            var companyDtos = companies?.Select(company => new CompanyUsersimpleDto
+            {
+                CompanyId = company.Id,
+                CompanyName = company.Name,
+                DateCreate = company.DateCreate,
+
+                BusinessEntity = company.BusinessEntity == null ? null : new BusinessEntityDto
+                {
+                    Id = company.BusinessEntity.Id,
+                    NomeFantasia = company.BusinessEntity.NomeFantasia,
+                    RazaoSocial = company.BusinessEntity.RazaoSocial,
+                    Cnpj = company.BusinessEntity.Cnpj,
+                    Logradouro = company.BusinessEntity.Logradouro,
+                    Numero = company.BusinessEntity.Numero,
+                    Bairro = company.BusinessEntity.Bairro,
+                    Municipio = company.BusinessEntity.Municipio,
+                    Uf = company.BusinessEntity.Uf,
+                    Cep = company.BusinessEntity.Cep,
+                    Telefone = company.BusinessEntity.Telefone,
+                    Email = company.BusinessEntity.Email
+                },
+
+                Permission = company.CompanyUsers.FirstOrDefault(cu => cu.UserId == user.Id)?.Permission != null
+                    ? new PermissionResponse
+                    {
+                        Id = company.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Id,
+                        Name = company.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Name
+                    }
+                    : null,
+
+                SubCompanies = company.SubCompanies?
+                    .Where(sc => sc.CompanyUsers.Any(cu => cu.UserId == user.Id))
+                    .Select(subCompany => new SubCompanyUsersimpleDto
+                    {
+                        SubCompanyId = subCompany.Id,
+                        SubCompanyName = subCompany.Name,
+                        CompanyId = company.Id,
+                        DateCreate = subCompany.DateCreate,
+                        Permission = subCompany.CompanyUsers.FirstOrDefault(cu => cu.UserId == user.Id)?.Permission != null
+                            ? new PermissionResponse
+                            {
+                                Id = subCompany.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Id,
+                                Name = subCompany.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Name
+                            }
+                            : null
+                    }).ToList()
+            }).ToList();
+
+
+
+            return SuccessResponse(companyDtos);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
+
+    public async Task<ResultValue> GetSubCompaniesByUserPaginated(int skip = 0, int take = 10)
+    {
+        try
+        {
+            var user = await GetCurrentUserAsync();
+            // Obtém as subempresas filtradas diretamente do repositório
+            var allSubCompanies = await _companyRepository.GetSubCompaniesByUserId(user.Id);
+
+            // Filtra pelo ID da empresa
+
+
+            var totalCount = allSubCompanies.Count;
+
+            var paginatedSubCompanies = allSubCompanies
+                .Skip(skip)
+                .Take(take)
+                .ToList();
+
+            var subCompanyDtos = paginatedSubCompanies.Select(sc => new _2___Application._2_Dto_s.Company.SubCompany.SubCompanyDto
+            {
+                Id = sc.Id,
+                Name = sc.Name,
+                DateCreate = sc.DateCreate,
+                CompanyId = sc.CompanyId,
+                BusinessEntity = sc.BusinessEntity == null ? null : new BusinessEntityDto
+                {
+                    Id = sc.BusinessEntity.Id,
+                    NomeFantasia = sc.BusinessEntity.NomeFantasia,
+                    RazaoSocial = sc.BusinessEntity.RazaoSocial,
+                    Cnpj = sc.BusinessEntity.Cnpj,
+                    Logradouro = sc.BusinessEntity.Logradouro,
+                    Numero = sc.BusinessEntity.Numero,
+                    Bairro = sc.BusinessEntity.Bairro,
+                    Municipio = sc.BusinessEntity.Municipio,
+                    Uf = sc.BusinessEntity.Uf,
+                    Cep = sc.BusinessEntity.Cep,
+                    Telefone = sc.BusinessEntity.Telefone,
+                    Email = sc.BusinessEntity.Email
+                },
+                Permission = sc.CompanyUsers.FirstOrDefault(cu => cu.UserId == user.Id)?.Permission != null
+                    ? new PermissionResponse
+                    {
+                        Id = sc.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Id,
+                        Name = sc.CompanyUsers.First(cu => cu.UserId == user.Id).Permission.Name
+                    }
+                    : null
+            }).ToList();
+
+            var result = new
+            {
+                TotalCount = totalCount,
+                Skip = skip,
+                Take = take,
+                SubCompanies = subCompanyDtos
+            };
+
+            return SuccessResponse(result);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
+    #endregion
+    #endregion
     #endregion
 }

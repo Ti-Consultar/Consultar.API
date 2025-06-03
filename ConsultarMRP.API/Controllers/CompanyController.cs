@@ -113,7 +113,24 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-
+        /// <summary>
+        /// Obtém as empresas associadas ao usuário em um grupo específico.
+        /// </summary>
+        [Authorize]
+        [HttpGet]
+        [Route("")]
+        public async Task<IActionResult> GetCompaniesByUser()
+        {
+            try
+            {
+                var companies = await _companyService.GetCompaniesByUser();
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
         /// <summary>
         /// Obtém as empresas excluídas logicamente associadas a um grupo.
         /// </summary>

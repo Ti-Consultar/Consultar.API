@@ -206,6 +206,29 @@ namespace _4_InfraData._1_Repositories
 
             return companies;
         }
+
+        public async Task<List<CompanyModel>> GetByUser(int userId)
+        {
+            var companies = await _context.CompanyUsers
+                .AsNoTracking()
+                .Where(cu => cu.UserId == userId && cu.CompanyId != null)
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.SubCompanies)
+                        .ThenInclude(sc => sc.CompanyUsers) // Inclui os usuários nas SubCompanies
+                            .ThenInclude(cu => cu.Permission) // Inclui a Permission das SubCompanies
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.Group)
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.CompanyUsers) // Inclui os usuários na Company
+                        .ThenInclude(cu => cu.Permission) // Inclui a Permission dos usuários na Company
+                .Include(cu => cu.Company)
+                    .ThenInclude(c => c.BusinessEntity) // Inclui dados do CNPJ
+                .Select(cu => cu.Company)
+                .ToListAsync();
+
+            return companies;
+        }
+
         public async Task<CompanyModel> GetCompanyById(int userId, int groupId, int companyId)
         {
             return await _context.Companies

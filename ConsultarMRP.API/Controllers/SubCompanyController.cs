@@ -210,6 +210,25 @@ namespace _5_API.Controllers
         }
 
         /// <summary>
+        /// Obtém as subempresas de uma empresa de forma paginada.
+        /// </summary>
+        [Authorize]
+        [HttpGet]
+        [Route("paginated")]
+        public async Task<IActionResult> GetSubCompaniesByUserPaginated( int skip, int take)
+        {
+            try
+            {
+                var companies = await _companyService.GetSubCompaniesByUserPaginated( skip, take);
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
         /// Obtém as subempresas excluídas de uma empresa de forma paginada.
         /// </summary>
         [Authorize]

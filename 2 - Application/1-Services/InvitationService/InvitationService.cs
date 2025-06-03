@@ -48,6 +48,14 @@ public class InvitationService : BaseService
                 var invitedUser = await _userRepository.GetByUserId(_currentUserId);
                 var invitingUser = await _userRepository.GetByEmail(invitationDto.EmailInvitedByUser);
 
+                var existInvitation = await _invitationRepository.GetExistingInvitation(_currentUserId, invitationDto.GroupId, invitationDto.CompanyId, invitationDto.SubCompanyId);
+
+                if (existInvitation != null)
+                {
+                     return SuccessResponse(Message.ExistsInvitation);
+                }
+
+
                 var group = await _groupRepository.GetById(invitationDto.GroupId);
                 var company = await _companyRepository.GetById(invitationDto.CompanyId);
 
