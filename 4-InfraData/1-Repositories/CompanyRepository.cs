@@ -296,7 +296,7 @@ namespace _4_InfraData._1_Repositories
                 throw new ArgumentException("Empresa não encontrada", nameof(companyId));
             }
         }
-        public async Task AddUserToGroup(int userId, int groupId)
+        public async Task AddUserToGroup(int userId, int groupId, int permissionId)
         {
             var group = await _context.Groups
                 .FirstOrDefaultAsync(c => c.Id == groupId);
@@ -306,7 +306,7 @@ namespace _4_InfraData._1_Repositories
                 var companyUser = new CompanyUserModel
                 {
                     UserId = userId,
-                    PermissionId = 1,
+                    PermissionId = permissionId,
                     GroupId = groupId
                 };
 

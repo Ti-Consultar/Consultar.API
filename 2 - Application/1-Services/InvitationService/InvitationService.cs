@@ -276,7 +276,7 @@ public class InvitationService : BaseService
         if (exists)
             return ErrorResponse(Message.MessageError);
 
-        await _companyRepository.AddUserToGroup(userId, invitation.GroupId);
+        await _companyRepository.AddUserToGroup(userId, invitation.GroupId, invitation.PermissionId);
         return SuccessResponse(Message.Success);
     }
     private async Task<ResultValue> HandleCompanyInvitation(int userId, InvitationToCompany invitation)
