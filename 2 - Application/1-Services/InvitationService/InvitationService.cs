@@ -138,7 +138,8 @@ public class InvitationService : BaseService
             {
                 invitation.Status = dto.Status;
                 invitation.UpdatedAt = DateTime.UtcNow;
-                await _invitationRepository.Update(invitation);
+                await _invitationRepository.Delete(invitation.Id);
+                //enviar email que o convite foi rejeitado.
                 return SuccessResponse(Message.RejectSucess);
             }
 
