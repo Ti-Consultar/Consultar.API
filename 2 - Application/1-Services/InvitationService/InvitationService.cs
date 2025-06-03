@@ -123,6 +123,9 @@ public class InvitationService : BaseService
     {
         try
         {
+            if (dto.Status == InvitationStatus.Rejected)
+                return SuccessResponse(Message.RejectSucess);
+
             var invitation = await _invitationRepository.GetById(invitationId);
             var user = await _userRepository.GetByUserId(_currentUserId);
 
@@ -134,6 +137,8 @@ public class InvitationService : BaseService
 
             invitation.Status = dto.Status;
             invitation.UpdatedAt = DateTime.UtcNow;
+
+            
 
             var result = await HandleInvitationByContext(user.Id, invitation.GroupId, invitation);
             if (!result.Success)
