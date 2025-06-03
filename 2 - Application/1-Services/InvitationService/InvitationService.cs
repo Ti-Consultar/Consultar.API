@@ -75,7 +75,7 @@ public class InvitationService : BaseService
                 await _invitationRepository.Add(invitation);
             }
 
-            return SuccessResponse(Message.Success);
+            return SuccessResponse(Message.InvitationSucess);
         }
         catch (Exception ex)
         {
