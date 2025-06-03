@@ -96,7 +96,7 @@ public class InvitationService : BaseService
         catch (Exception ex)
         {
             return ErrorResponse(ex);
-        } 
+        }
     }
     public async Task<ResultValue> GetInvitationsByInvitedById()
     {
@@ -123,8 +123,7 @@ public class InvitationService : BaseService
     {
         try
         {
-            if (dto.Status == InvitationStatus.Rejected)
-                return SuccessResponse(Message.RejectSucess);
+
 
             var invitation = await _invitationRepository.GetById(invitationId);
             var user = await _userRepository.GetByUserId(_currentUserId);
@@ -135,10 +134,18 @@ public class InvitationService : BaseService
             if (user.Id != invitation.InvitedById)
                 return ErrorResponse(Message.MessageError);
 
+            if (dto.Status == InvitationStatus.Rejected)
+            {
+                invitation.Status = dto.Status;
+                invitation.UpdatedAt = DateTime.UtcNow;
+                await _invitationRepository.Update(invitation);
+                return SuccessResponse(Message.RejectSucess);
+            }
+
             invitation.Status = dto.Status;
             invitation.UpdatedAt = DateTime.UtcNow;
 
-            
+
 
             var result = await HandleInvitationByContext(user.Id, invitation.GroupId, invitation);
             if (!result.Success)
@@ -152,7 +159,7 @@ public class InvitationService : BaseService
             return ErrorResponse(ex);
         }
     }
-    public async Task<ResultValue> DeleteCompanyUser( int groupId,int? companyId, int? subCompanyId)
+    public async Task<ResultValue> DeleteCompanyUser(int groupId, int? companyId, int? subCompanyId)
     {
         try
         {
@@ -160,7 +167,7 @@ public class InvitationService : BaseService
 
             var companyUser = await _companyRepository.GetCompanyUser(userId, groupId, companyId, subCompanyId);
 
-            if (companyUser == null )
+            if (companyUser == null)
                 return ErrorResponse(Message.NotFound);
 
             await _companyRepository.DeleteCompanyUser(userId, groupId, companyId, subCompanyId);
@@ -177,8 +184,8 @@ public class InvitationService : BaseService
         {
             // Obtém o convite pelo ID com as entidades relacionadas
             var invitation = await _invitationRepository.GetById(id);
-                
-             
+
+
 
             if (invitation == null)
                 return ErrorResponse(Message.NotFound);
@@ -236,12 +243,12 @@ public class InvitationService : BaseService
         try
         {
             var userId = _currentUserId;
-            var invitation = await _invitationRepository.GetByUserId(invitationId,userId);
+            var invitation = await _invitationRepository.GetByUserId(invitationId, userId);
 
             if (invitation == null)
                 return ErrorResponse(Message.NotFound);
 
-            if(invitation.Status == InvitationStatus.Pending)
+            if (invitation.Status == InvitationStatus.Pending)
             {
                 await _invitationRepository.Delete(invitationId);
             }
@@ -291,17 +298,17 @@ public class InvitationService : BaseService
         if (exists)
             return ErrorResponse(Message.MessageError);
 
-        await _companyRepository.AddUserToCompany(userId, (int)invitation.CompanyId,invitation.GroupId ,invitation.PermissionId);
+        await _companyRepository.AddUserToCompany(userId, (int)invitation.CompanyId, invitation.GroupId, invitation.PermissionId);
         return SuccessResponse(Message.Success);
     }
-    private async Task<ResultValue> HandleSubCompanyInvitation(int userId,int groupId, InvitationToCompany invitation)
+    private async Task<ResultValue> HandleSubCompanyInvitation(int userId, int groupId, InvitationToCompany invitation)
     {
         var exists = await _companyRepository.ExistsSubCompanyUser(userId, invitation.CompanyId, (int)invitation.SubCompanyId);
 
         if (exists)
             return ErrorResponse(Message.MessageError);
 
-        await _companyRepository.AddUserToCompanyOrSubCompany(userId, groupId,invitation.CompanyId, invitation.SubCompanyId, invitation.PermissionId);
+        await _companyRepository.AddUserToCompanyOrSubCompany(userId, groupId, invitation.CompanyId, invitation.SubCompanyId, invitation.PermissionId);
         return SuccessResponse(Message.Success);
     }
     private InvitationDetailDto MapToInvitationDetailDto(InvitationToCompany invitation)
