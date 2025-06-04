@@ -22,6 +22,16 @@ namespace _2___Application.Base
             _appSettings = appSettings;
          
         }
+        public static DateTime GetBrasilDateTime()
+        {
+            var timeZoneId = OperatingSystem.IsWindows()
+                ? "E. South America Standard Time"
+                : "America/Sao_Paulo";
+
+            var timeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+
+            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZone);
+        }
 
         // Método para liberar recursos (se necessário)
         public void Dispose()

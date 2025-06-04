@@ -68,7 +68,7 @@ public class InvitationService : BaseService
                     InvitedById = invitingUser.Id,
                     PermissionId = invitationDto.PermissionId,
                     Status = InvitationStatus.Pending,
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = GetBrasilDateTime(),
                     SubCompanyId = invitationDto.SubCompanyId > 0 ? invitationDto.SubCompanyId : null
                 };
 
@@ -143,7 +143,7 @@ public class InvitationService : BaseService
             if (dto.Status == InvitationStatus.Rejected)
             {
                 invitation.Status = dto.Status;
-                invitation.UpdatedAt = DateTime.UtcNow;
+                invitation.UpdatedAt = GetBrasilDateTime();
                 await _invitationRepository.Delete(invitation.Id);
                 //enviar email que o convite foi rejeitado.
                 return SuccessResponse(Message.RejectSucess);
