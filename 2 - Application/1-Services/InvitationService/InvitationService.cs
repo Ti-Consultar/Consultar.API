@@ -137,7 +137,7 @@ public class InvitationService : BaseService
             if (invitation == null || user == null)
                 return ErrorResponse(Message.NotFound);
 
-            if (user.Id != invitation.InvitedById)
+            if (user.Id != invitation.UserId)
                 return ErrorResponse(Message.MessageError);
 
             if (dto.Status == InvitationStatus.Rejected)
@@ -150,7 +150,7 @@ public class InvitationService : BaseService
             }
 
             invitation.Status = dto.Status;
-            invitation.UpdatedAt = DateTime.UtcNow;
+            invitation.UpdatedAt = GetBrasilDateTime();
 
 
 
