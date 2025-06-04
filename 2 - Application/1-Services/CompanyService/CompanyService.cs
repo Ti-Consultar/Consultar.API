@@ -296,22 +296,31 @@ public class CompanyService : BaseService
     {
         try
         {
-            var users = await _groupRepository.GetUsersByCompanyId(groupId, companyId);
-            if (users == null) return ErrorResponse(Message.NotFound);
+            var userLogado = await GetCurrentUserAsync();
 
-            var response = new List<UserListDto>();
-            response.AddRange(users.Select(u => new UserListDto
+            var users = await _groupRepository.GetUsersByCompanyId(groupId, companyId);
+            if (users == null)
+                return ErrorResponse(Message.NotFound);
+
+            var response = users.Select(u => new UserListDto
             {
                 Id = u.Id,
                 Name = u.User.Name,
                 Email = u.User.Email,
                 Contact = u.User.Name,
+                UserLogado = u.UserId == userLogado.Id, // Marca se é o logado
                 Permission = new PermissionDto
                 {
                     Id = u.Permission.Id,
                     Name = u.Permission.Name
                 }
-            }));
+            });
+
+            // Coloca o user logado no topo da lista
+            response = response
+                .OrderByDescending(x => x.UserLogado) // True primeiro
+                .ThenBy(x => x.Name) // Depois ordena por nome (se quiser)
+                .ToList();
 
             return SuccessResponse(response);
         }
@@ -320,6 +329,7 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+
 
 
     #endregion
@@ -695,22 +705,31 @@ public class CompanyService : BaseService
     {
         try
         {
-            var users = await _groupRepository.GetUsersBySubCompanyId(groupId, companyId, subCompanyId);
-            if (users == null) return ErrorResponse(Message.NotFound);
+            var userLogado = await GetCurrentUserAsync();
 
-            var response = new List<UserListDto>();
-            response.AddRange(users.Select(u => new UserListDto
+            var users = await _groupRepository.GetUsersBySubCompanyId(groupId, companyId, subCompanyId);
+            if (users == null)
+                return ErrorResponse(Message.NotFound);
+
+            var response = users.Select(u => new UserListDto
             {
                 Id = u.Id,
                 Name = u.User.Name,
                 Email = u.User.Email,
                 Contact = u.User.Name,
+                UserLogado = u.Id == userLogado.Id, // Marca se é o logado
                 Permission = new PermissionDto
                 {
                     Id = u.Permission.Id,
                     Name = u.Permission.Name
                 }
-            }));
+            });
+
+            // Coloca o user logado no topo da lista
+            response = response
+                .OrderByDescending(x => x.UserLogado) // True primeiro
+                .ThenBy(x => x.Name) // Depois ordena por nome (se quiser)
+                .ToList();
 
             return SuccessResponse(response);
         }
@@ -719,6 +738,7 @@ public class CompanyService : BaseService
             return ErrorResponse(ex);
         }
     }
+
 
     #endregion
 
