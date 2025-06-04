@@ -62,10 +62,10 @@ public class InvitationService : BaseService
                 }
                 var invitation = new InvitationToCompany
                 {
-                    UserId = invitedUser.Id,
+                    UserId = invitingUser.Id,
                     GroupId = invitationDto.GroupId,
                     CompanyId = invitationDto.CompanyId,
-                    InvitedById = invitingUser.Id,
+                    InvitedById = invitedUser.Id,
                     PermissionId = invitationDto.PermissionId,
                     Status = InvitationStatus.Pending,
                     CreatedAt = GetBrasilDateTime(),
@@ -91,7 +91,7 @@ public class InvitationService : BaseService
             if (user == null)
                 return SuccessResponse(UserLoginMessage.UserNotFound);
 
-            var invitations = await _invitationRepository.GetByUserId(user.Id);
+            var invitations = await _invitationRepository.GetInvitationsByInvitedById(user.Id);
             if (invitations == null || !invitations.Any())
                 return SuccessResponse(new List<InvitationDto>());
 
@@ -112,7 +112,7 @@ public class InvitationService : BaseService
             if (user == null)
                 return ErrorResponse(UserLoginMessage.UserNotFound);
 
-            var invitations = await _invitationRepository.GetInvitationsByInvitedById(user.Id);
+            var invitations = await _invitationRepository.GetInvitationsByInvitingById(user.Id);
             if (invitations == null || !invitations.Any())
                 return SuccessResponse(new List<InvitationDto>());
 

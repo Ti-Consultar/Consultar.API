@@ -70,10 +70,10 @@ namespace _4_InfraData._1_Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<List<InvitationToCompany>> GetByUserId(int userId)
+        public async Task<List<InvitationToCompany>> GetInvitationsByInvitingById(int userId)
         {
             return await _context.InvitationToCompany
-                .Where(i => i.UserId == userId)
+                .Where(i => i.UserId == userId && i.Status == InvitationStatus.Pending)
                 .Include(a => a.Group)
                 .Include(a => a.Company)
                 .Include(a => a.SubCompany)
