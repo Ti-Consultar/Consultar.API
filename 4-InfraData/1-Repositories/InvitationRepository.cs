@@ -86,7 +86,7 @@ namespace _4_InfraData._1_Repositories
         public async Task<InvitationToCompany> GetByUserId(int invitationId, int userId)
         {
             return await _context.InvitationToCompany
-                .Where(i => i.Id == invitationId && i.UserId == userId)
+                .Where(i => i.Id == invitationId && i.InvitedById == userId)
                 .Include(a => a.Group)
                 .Include(a => a.Company)
                 .Include(a => a.SubCompany)
