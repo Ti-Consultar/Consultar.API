@@ -126,26 +126,35 @@ public class GroupService : BaseService
             return ErrorResponse(ex);
         }
     }
-    public async Task<ResultValue> GetUsersByGroupId(int id)
+    public async Task<ResultValue> GetUsersByGroupId(int groupId)
     {
         try
         {
-            var users = await _groupRepository.GetUsersByGroupId(id);
-            if (users == null) return ErrorResponse(Message.NotFound);
+            var userLogado = await GetCurrentUserAsync();
+            var users = await _groupRepository.GetUsersByGroupId(groupId);
 
-            var response = new List<UserListDto>();
-            response.AddRange(users.Select(u => new UserListDto
+            if (users == null || !users.Any())
+                return ErrorResponse(Message.NotFound);
+
+            var response = users.Select(u => new UserListDto
             {
                 Id = u.Id,
                 Name = u.User.Name,
                 Email = u.User.Email,
                 Contact = u.User.Name,
+                UserLogado = u.UserId == userLogado.Id, // <-- Aqui seta TRUE ou FALSE
                 Permission = new PermissionDto
                 {
                     Id = u.Permission.Id,
                     Name = u.Permission.Name
                 }
-            }));
+            }).ToList();
+
+            // Coloca o user logado no topo da lista
+            response = response
+                .OrderByDescending(x => x.UserLogado) // True primeiro
+                .ThenBy(x => x.Name) // Depois ordena por nome (se quiser)
+                .ToList();
 
             return SuccessResponse(response);
         }
@@ -154,7 +163,9 @@ public class GroupService : BaseService
             return ErrorResponse(ex);
         }
     }
-   public async Task<ResultValue> GetGroupsWithCompaniesByUserId()
+
+
+    public async Task<ResultValue> GetGroupsWithCompaniesByUserId()
 {
     try
         {

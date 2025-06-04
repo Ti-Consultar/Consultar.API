@@ -31,9 +31,7 @@ namespace _4_InfraData._1_Repositories
                 a.CompanyId == companyId &&
                 a.SubCompanyId == subCompanyId &&
                 a.UserId == userId &&
-                a.InvitedById == invitedUserId 
-             
-                )
+                a.InvitedById == invitedUserId )
                 .FirstOrDefaultAsync();
         }
         public async Task<InvitationToCompany> GetExistingInvitation(int userId, int invitingUserId , int groupId, int? companyId = null, int? subCompanyId = null)
