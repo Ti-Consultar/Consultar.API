@@ -138,7 +138,7 @@ namespace _5_API.Controllers
         /// </summary>
         [Authorize]
         [HttpGet]
-        [Route("{id}/company/{companyId}/users")]
+        [Route("{id}/group{groupId}/company/{companyId}/users")]
         public async Task<IActionResult> GetUsersBySubCompanyId(int groupId, int companyId, int id)
         {
             try
