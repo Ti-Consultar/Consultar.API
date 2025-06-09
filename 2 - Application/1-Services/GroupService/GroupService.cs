@@ -20,16 +20,18 @@ public class GroupService : BaseService
     private readonly UserRepository _userRepository;
     private readonly CompanyRepository _companyRepository;
     private readonly BusinessEntityRepository _businessEntityRepository;
+    private readonly AccountPlansRepository _accountPlansRepository;
     private readonly EmailService _emailService;
     private readonly int _currentUserId;
 
-    public GroupService(GroupRepository groupRepository, UserRepository userRepository, CompanyRepository companyRepository, EmailService emailService,BusinessEntityRepository businessEntityRepository, IAppSettings appSettings)
+    public GroupService(GroupRepository groupRepository, UserRepository userRepository, CompanyRepository companyRepository, EmailService emailService,BusinessEntityRepository businessEntityRepository, AccountPlansRepository accountPlansRepository, IAppSettings appSettings)
         : base(appSettings)
     {
         _groupRepository = groupRepository;
         _userRepository = userRepository;
         _companyRepository = companyRepository;
         _businessEntityRepository = businessEntityRepository;
+        _accountPlansRepository = accountPlansRepository;
         _emailService = emailService;
 
         // Obtendo o ID do usuário autenticado 
@@ -60,6 +62,16 @@ public class GroupService : BaseService
             await _groupRepository.Add(group);
 
             await _companyRepository.AddUserToGroup(_currentUserId, group.Id, 1);
+
+            var accountPlan = new AccountPlansModel
+            {
+                GroupId = group.Id,
+                CompanyId = null,
+                SubCompanyId = null,
+            };
+
+            await _accountPlansRepository.AddAsync(accountPlan);
+
             await _emailService.SendWelcomeAsync(user.Email, group.Name, user.Name);
 
             return SuccessResponse(Message.Success);

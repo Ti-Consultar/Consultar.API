@@ -21,16 +21,18 @@ public class CompanyService : BaseService
     private readonly UserRepository _userRepository;
     private readonly BusinessEntityRepository _businessEntityRepository;
     private readonly GroupRepository _groupRepository;
+    private readonly AccountPlansRepository _accountPlansRepository;
     private readonly EmailService _emailService;
     private readonly int _currentUserId;
 
-    public CompanyService(CompanyRepository companyRepository, UserRepository userRepository, BusinessEntityRepository businessEntityRepository, GroupRepository groupRepository, EmailService emailService, IAppSettings appSettings)
+    public CompanyService(CompanyRepository companyRepository, UserRepository userRepository, BusinessEntityRepository businessEntityRepository, GroupRepository groupRepository, AccountPlansRepository accountPlansRepository, EmailService emailService, IAppSettings appSettings)
         : base(appSettings)
     {
         _companyRepository = companyRepository;
         _userRepository = userRepository;
         _businessEntityRepository = businessEntityRepository;
         _groupRepository = groupRepository;
+        _accountPlansRepository = accountPlansRepository;
         _emailService = emailService;
 
         _currentUserId = GetCurrentUserId();
@@ -89,7 +91,17 @@ public class CompanyService : BaseService
             };
 
             await _companyRepository.AddUserToCompany(companyUser.UserId, company.Id, companyUser.GroupId, companyUser.PermissionId);
+
+            var accountPlan = new AccountPlansModel
+            {
+                GroupId = createCompanyDto.GroupId,
+                CompanyId = company.Id,
+                SubCompanyId = null,
+            };
+
+            await _accountPlansRepository.AddAsync(accountPlan);
             await _emailService.SendWelcomeAsync(user.Email, company.Name, user.Name);
+
             return SuccessResponse(Message.Success);
         }
         catch (Exception ex)
@@ -396,8 +408,16 @@ public class CompanyService : BaseService
                 companyUser.PermissionId
             );
 
-            await _emailService.SendWelcomeSubCompanyAsync(user.Email, company.Name, subCompany.Name, user.Name);
+            var accountPlan = new AccountPlansModel
+            {
+                GroupId = companyUser.GroupId,
+                CompanyId = companyUser.CompanyId,
+                SubCompanyId = companyUser.SubCompanyId,
+            };
 
+            await _accountPlansRepository.AddAsync(accountPlan);
+
+            await _emailService.SendWelcomeSubCompanyAsync(user.Email, company.Name, subCompany.Name, user.Name);
             return SuccessResponse(Message.Success);
         }
         catch (Exception ex)
