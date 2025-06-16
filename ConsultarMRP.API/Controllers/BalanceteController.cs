@@ -47,7 +47,7 @@ namespace _5_API.Controllers
         {
             try
             {
-                var result = await _service.Update(id, dto);
+                var result = await _service. Update(id, dto);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -61,7 +61,7 @@ namespace _5_API.Controllers
         [HttpGet("accountplan/{accountPlanId}")]
         public async Task<IActionResult> GetBalancetes(int accountPlanId)
         {
-            var result = await _service.GetBalancetes(accountPlanId);
+            var result = await _service.GetAccountPlanWithBalancetes(accountPlanId);
 
             if (!result.Success)
                 return NotFound(result);

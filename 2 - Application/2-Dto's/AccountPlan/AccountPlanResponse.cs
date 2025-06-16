@@ -20,5 +20,31 @@ namespace _2___Application._2_Dto_s.AccountPlan
 
     }
 
+    public class AccountPlanResponseSimple
+    {
 
+        public int Id { get; set; }
+
+
+    }
+
+    public class AccountPlanWithBalancetesDto
+    {
+        public int Id { get; set; }
+        public GroupSimpleDto Group { get; set; }
+        public CompanySimpleDto? Company { get; set; }
+        public SubCompanySimpleDto? SubCompany { get; set; }
+        public List<BalanceteSimpleDto> Balancetes { get; set; }
+    }
+
+    public class BalanceteSimpleDto
+    {
+        public int Id { get; set; }
+        public string DateMonth { get; set; }
+        public int DateYear { get; set; }
+        public string Status { get; set; }
+        public DateTime DateCreate { get; set; }
+    }
 }
+
+

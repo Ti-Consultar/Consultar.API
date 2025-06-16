@@ -14,6 +14,8 @@ using System.Text;
 using _2___Application._1_Services.AccountPlans;
 using _4_Application._1_Services;
 using _2___Application._1_Services.AccountPlans.Balancete;
+using _2___Application._1_Services;
+using _2___Application._1_Services.DRE;
 
 
 namespace _2___Application._4__DependencyInjectionConfig
@@ -79,6 +81,8 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<BalanceteService>();
             services.AddScoped<BalanceteDataService>();
             services.AddScoped<InteractionService>();
+            services.AddScoped<ClassificationService>();
+            services.AddScoped<DREService>();
 
 
             #endregion
@@ -97,6 +101,8 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<BalanceteDataRepository>();
             services.AddScoped<InteractionRepository>();
             services.AddScoped<PlansAccountUserRepository>();
+            services.AddScoped<ClassificationRepository>();
+            services.AddScoped<DRERepository>();
             #endregion
 
             #endregion

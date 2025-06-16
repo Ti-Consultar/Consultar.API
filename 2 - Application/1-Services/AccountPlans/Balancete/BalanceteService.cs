@@ -10,6 +10,10 @@ using Microsoft.AspNetCore.Http;
 using System.Globalization;
 using CsvHelper;
 using ClosedXML.Excel;
+using _2___Application._2_Dto_s.Company.SubCompany;
+using _2___Application._2_Dto_s.Company;
+using _2___Application._2_Dto_s.Group;
+using _4_InfraData._5_ConfigEnum;
 
 namespace _2___Application._1_Services.AccountPlans.Balancete
 {
@@ -63,7 +67,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
                 await _repository.AddAsync(model);
 
-                return SuccessResponse(Message.Success);
+                return SuccessResponse( model);
             }
             catch (Exception ex)
             {
@@ -153,6 +157,37 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 return ErrorResponse(ex);
             }
         }
+
+        public async Task<ResultValue> GetAccountPlanWithBalancetes(int accountPlanId)
+        {
+            var balancetes = await _repository.GetAccountPlanWithBalancetesAsync(accountPlanId);
+
+            if (balancetes == null || !balancetes.Any())
+                return ErrorResponse("AccountPlan não encontrado ou sem balancetes.");
+
+            var response = new AccountPlanWithBalancetesDto
+            {
+                Id = accountPlanId,
+                Balancetes = balancetes
+                    .OrderBy(b => b.DateYear)
+                    .ThenBy(b => b.DateMonth)
+                    .Select(b => new BalanceteSimpleDto
+                    {
+                        Id = b.Id,
+                        DateMonth = b.DateMonth.GetDescription(),
+                        DateYear = b.DateYear,
+                        Status = b.Status.GetDescription(),
+                        DateCreate = b.DateCreate
+                    })
+                    .ToList()
+            };
+
+            return SuccessResponse(response);
+        }
+
+
+
+
         #region Private Balancete
         private static BalanceteDto MapToBalanceteDto(BalanceteModel x) => new()
         {
@@ -381,14 +416,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 }).ToList()
             };
         }
-        private string GetCostCenterPai(string costCenter)
-        {
-            // Pega tudo até o primeiro ponto. Se não tiver ponto, ele é o próprio pai.
-            var partes = costCenter.Split('.');
-
-            return partes.Length > 0 ? partes[0] : costCenter;
-        }
-
+        
 
         #endregion
 
