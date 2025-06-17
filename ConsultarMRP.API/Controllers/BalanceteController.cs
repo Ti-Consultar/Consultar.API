@@ -110,7 +110,7 @@ namespace _5_API.Controllers
             return Ok(result);
         }
         // [Authorize]
-        [HttpGet("data/{balanceteId}")]
+        [HttpGet("{balanceteId}/data")]
         public async Task<IActionResult> GetByBalanceteId( int balanceteId)
         {
             var result = await _service.GetByBalanceteId( balanceteId);
