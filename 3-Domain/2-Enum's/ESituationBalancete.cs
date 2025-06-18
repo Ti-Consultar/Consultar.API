@@ -10,13 +10,13 @@ namespace _3_Domain._2_Enum_s
     public enum ESituationBalancete
     {
         [Description("Pending")]
-        Pending = 0,
+        Pending =1,
 
         [Description("Accepted")]
-        Accepted = 1,
+        Accepted = 2,
 
         [Description("Rejected")]
-        Rejected = 2,
+        Rejected = 3,
 
     }
 }
