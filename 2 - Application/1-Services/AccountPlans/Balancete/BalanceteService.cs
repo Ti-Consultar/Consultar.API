@@ -63,6 +63,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                     DateMonth = (EMonth)dto.DateMonth,
                     DateYear = dto.DateYear,
                     AccountPlansId = dto.AccountPlansId,
+                    Status = ESituationBalancete.Pending
                 };
 
                 await _repository.AddAsync(model);
