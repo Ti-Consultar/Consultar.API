@@ -169,19 +169,18 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             {
                 Id = accountPlanId,
                 Balancetes = balancetes
-                    .OrderBy(b => b.DateYear)
-                    .ThenBy(b => b.DateMonth)
-                    .Select(b => new BalanceteSimpleDto
-                    {
-                        Id = b.Id,
-                        DateMonth = b.DateMonth.GetDescription(),
-                        DateYear = b.DateYear,
-                        Status = b.Status.GetDescription(),
-                        DateCreate = b.DateCreate
-                    })
-                    .ToList()
+          .OrderByDescending(b => b.DateYear)
+          .ThenByDescending(b => b.DateMonth)
+          .Select(b => new BalanceteSimpleDto
+          {
+              Id = b.Id,
+              DateMonth = b.DateMonth.GetDescription(),
+              DateYear = b.DateYear,
+              Status = b.Status.GetDescription(),
+              DateCreate = b.DateCreate
+          })
+          .ToList()
             };
-
             return SuccessResponse(response);
         }
 
