@@ -26,6 +26,7 @@ namespace _4_InfraData._1_Context
         public DbSet<InteractionModel> Interaction { get; set; }
         public DbSet<ClassificationModel> Classification { get; set; }
         public DbSet<DREModel> DRE { get; set; }
+        public DbSet<DREBalanceteData> DREBalanceteData { get; set; }
     
 
 

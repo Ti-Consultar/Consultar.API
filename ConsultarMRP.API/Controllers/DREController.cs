@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using _2___Application._1_Services.DRE;
 using _2___Application._2_Dto_s.DRE;
+using _2___Application._2_Dto_s.DRE.BalanceteDRE;
 
 namespace ConsultarMRP.API.Controllers
 {
@@ -70,6 +71,20 @@ namespace ConsultarMRP.API.Controllers
                     return BadRequest(new { message = "accountplanId inválido" });
 
                 var response = await _service.GetDREGroupedByAccountPlanAsync(accountplanId);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("/bond")]
+        public async Task<IActionResult> CreateBondDreBalanceteData(BalanceteDRE dto)
+        {
+            try
+            {
+                var response = await _service.Vincular(dto);
                 return Ok(response);
             }
             catch (Exception ex)

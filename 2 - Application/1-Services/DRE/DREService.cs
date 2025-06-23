@@ -1,6 +1,7 @@
 ﻿using _2___Application._2_Dto_s.AccountPlan;
 using _2___Application._2_Dto_s.Classification;
 using _2___Application._2_Dto_s.DRE;
+using _2___Application._2_Dto_s.DRE.BalanceteDRE;
 using _2___Application._2_Dto_s.Group;
 using _2___Application.Base;
 using _3_Domain._1_Entities;
@@ -19,16 +20,19 @@ namespace _2___Application._1_Services.DRE
         private readonly DRERepository _repository;
         private readonly ClassificationRepository _Classificationrepository;
         private readonly AccountPlansRepository _accountPlansRepository;
+        private readonly DREBalanceteDataRepository _dREBalanceteDataRepository;
 
         public DREService(
             DRERepository repository,
             ClassificationRepository classificationrepository,
             AccountPlansRepository accountPlansRepository,
+            DREBalanceteDataRepository dREBalanceteDataRepository,
             IAppSettings appSettings) : base(appSettings)
         {
             _Classificationrepository = classificationrepository;
             _repository = repository;
             _accountPlansRepository = accountPlansRepository;
+            _dREBalanceteDataRepository = dREBalanceteDataRepository;
         }
 
         #region Métodos
@@ -58,9 +62,6 @@ namespace _2___Application._1_Services.DRE
                 return ErrorResponse(ex);
             }
         }
-
-       
-
 
         public async Task<ResultValue> GetAll(int accountplanId)
         {
@@ -129,7 +130,47 @@ namespace _2___Application._1_Services.DRE
             return result;
         }
 
+        #region Vinculo de DRE com cada  Item do Balancete
 
+        // Criar método para vincular o dre criado pelo usuario a varias linhas de um unico balancete e depois criar a forme de obter esses dados com o id do DRE e do BalanceteID
+
+
+        public async Task<ResultValue> Vincular(BalanceteDRE dto)
+        {
+            try
+            {
+                var dre = await _repository.GetById(dto.DREId);
+                if (dre == null)
+                    return ErrorResponse(Message.NotFound);
+
+                // Validação extra (opcional)
+                if (dto.Items == null || !dto.Items.Any())
+                    return ErrorResponse("Nenhum item de Balancete foi informado.");
+                
+                // Mapeia os itens da lista para os modelos que serão salvos
+                var vinculos = dto.Items.Select(item => new DREBalanceteData
+                {
+                    DREId = dto.DREId,
+                    BalanceteId = dto.BalanceteId,
+                    BalanceteDataId = item.BalanceteDataId,
+                    
+                }).ToList();
+
+                // Persiste os vínculos
+                await _dREBalanceteDataRepository.AddRangeAsync(vinculos); // Supondo que você tenha esse método
+
+                return SuccessResponse(Message.Success);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+
+
+
+        #endregion
 
         #region Private
         private DREResponse MapToDREResponse(DREModel model)
@@ -163,7 +204,6 @@ namespace _2___Application._1_Services.DRE
                 .OrderBy(d => d.Sequential)
                 .LastOrDefault()?.Sequential + 1 ?? 1;
         }
-
         private DREModel BuildDreModel(InsertDRE dto, int sequential)
         {
             return new DREModel

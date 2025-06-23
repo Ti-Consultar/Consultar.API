@@ -103,6 +103,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<PlansAccountUserRepository>();
             services.AddScoped<ClassificationRepository>();
             services.AddScoped<DRERepository>();
+            services.AddScoped<DREBalanceteDataRepository>();
             #endregion
 
             #endregion
