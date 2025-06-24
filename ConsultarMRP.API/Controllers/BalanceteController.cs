@@ -59,6 +59,7 @@ namespace _5_API.Controllers
         /// Lista o planos de contas de acordo com os Parametros passados
         /// </summary>
         [HttpGet("accountplan/{accountPlanId}")]
+        [Authorize()]
         public async Task<IActionResult> GetBalancetes(int accountPlanId)
         {
             var result = await _service.GetAccountPlanWithBalancetes(accountPlanId);
@@ -73,6 +74,7 @@ namespace _5_API.Controllers
         /// Lista o plano de contas por Id
         /// </summary>
         [HttpGet("{id}")]
+        [Authorize()]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _service.GetById(id);
@@ -87,6 +89,7 @@ namespace _5_API.Controllers
         /// Deleta
         /// </summary>
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _service.Delete(id);
@@ -100,6 +103,7 @@ namespace _5_API.Controllers
 
         // [Authorize]
         [HttpPost("import")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> ImportBalanceteData(IFormFile file, [FromQuery] int balanceteId)
         {
             var result = await _service.ImportBalanceteData(file, balanceteId);
@@ -111,6 +115,7 @@ namespace _5_API.Controllers
         }
         // [Authorize]
         [HttpGet("{balanceteId}/data")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetByBalanceteId( int balanceteId)
         {
             var result = await _service.GetByBalanceteId( balanceteId);
@@ -122,12 +127,28 @@ namespace _5_API.Controllers
         }
 
         [HttpGet("{balanceteId}/cost-center")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetAgrupadoPorCostCenter(int balanceteId)
         {
             var result = await _service.GetAgrupadoPorCostCenter(balanceteId);
 
             if (!result.Success)
                 return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Deleta
+        /// </summary>
+        [HttpDelete("{id}/balancete-data")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> DeleteBalanceteData(int balanceteId)
+        {
+            var result = await _service.DeleteBalanceteData(balanceteId);
+
+            if (!result.Success)
+                return NotFound(result);
 
             return Ok(result);
         }

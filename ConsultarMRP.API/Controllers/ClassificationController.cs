@@ -1,5 +1,6 @@
 ﻿using _2___Application._1_Services;
 using _4_Application._1_Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConsultarMRP.API.Controllers
@@ -17,6 +18,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetAll()
         {
             try
@@ -34,6 +36,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("/{id}")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetById(int id)
         {
             try

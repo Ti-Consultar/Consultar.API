@@ -2,6 +2,7 @@
 using _4_InfraData._1_Context;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Diagnostics;
 
 namespace _4_InfraData._1_Repositories
 {
@@ -20,6 +21,15 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.AccountPlansId == accountPlansId)
                 .ToListAsync();
         }
+
+        public async Task<bool> GetExistsParams(int accountPlansId, int month, int year)
+        {
+            return await _context.Balancete
+                .AnyAsync(x => x.AccountPlansId == accountPlansId &&
+                               (int)x.DateMonth == month &&
+                               x.DateYear == year);
+        }
+
         public async Task<List<BalanceteModel>> GetById(int id)
         {
             return await _context.Balancete
@@ -43,6 +53,16 @@ namespace _4_InfraData._1_Repositories
                 .FirstOrDefaultAsync();
         }
 
+        public async Task DeleteBalanceteData(int balanceteId)
+        {
+            var model = await _context.BalanceteData
+                .Where(x => x.BalanceteId == balanceteId)
+                .ToListAsync();
+
+            _context.BalanceteData.RemoveRange(model);
+
+            await _context.SaveChangesAsync();
+        }
 
         public async Task<List<BalanceteModel>> GetAccountPlanWithBalancetesAsync(int accountPlanId)
         {

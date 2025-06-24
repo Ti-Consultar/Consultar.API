@@ -16,6 +16,7 @@ namespace _2___Application.Base
         public const string InvalidInvitationType = "Tipo de convite inválido ou incompleto.";
         public const string ExistsAccountPlans = "Já existe um plano de contas para esse nível";
         public const string ExistsInvitation = "Já existe um Convite";
+        public const string ExistsBalancete= "Já existe um Balancete para este mês!";
         public const string RejectSucess = "Convite Rejeitado";
         public const string InvitationSucess = "Convite(s) Enviado(s) com sucesso!";
 

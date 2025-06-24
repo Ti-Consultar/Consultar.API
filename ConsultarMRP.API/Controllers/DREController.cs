@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using _2___Application._1_Services.DRE;
 using _2___Application._2_Dto_s.DRE;
 using _2___Application._2_Dto_s.DRE.BalanceteDRE;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ConsultarMRP.API.Controllers
 {
@@ -18,6 +19,7 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> Create(InsertDRE dto)
         {
             try
@@ -32,6 +34,7 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpGet]
+        [Authorize()]
         public async Task<IActionResult> GetAll([FromQuery] int accountplanId)
         {
             try
@@ -49,6 +52,7 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize()]
         public async Task<IActionResult> GetById(int id)
         {
             try
@@ -63,6 +67,7 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpGet("accountPlan/{accountplanId}")]
+        [Authorize()]
         public async Task<IActionResult> GetAllByAccountPlan( int accountplanId)
         {
             try
@@ -80,6 +85,7 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpPost("/bond")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> CreateBondDreBalanceteData(BalanceteDRE dto)
         {
             try

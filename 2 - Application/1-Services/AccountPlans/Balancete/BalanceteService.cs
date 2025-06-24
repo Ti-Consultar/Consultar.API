@@ -57,6 +57,12 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                     return ErrorResponse(Message.NotFound);
                 }
 
+                var balanceteExists = await _repository.GetExistsParams(dto.AccountPlansId, dto.DateMonth, dto.DateYear);
+
+                if (balanceteExists is true)
+                {
+                    return SuccessResponse(Message.ExistsBalancete);
+                }
 
                 var model = new BalanceteModel
                 {
@@ -293,7 +299,24 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 return ErrorResponse(ex);
             }
         }
+        public async Task<ResultValue> DeleteBalanceteData(int balanceteId)
+        {
+            try
+            {
+                var balancete = await _repository.GetByIdDelete(balanceteId);
 
+                if (balancete == null)
+                    return ErrorResponse(Message.NotFound);
+
+                await _repository.DeleteBalanceteData(balanceteId);
+
+                return SuccessResponse(Message.DeletedSuccess);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
 
         #region Private
         private List<BalanceteDataModel> ReadFromXlsx(Stream stream, int balanceteId)
