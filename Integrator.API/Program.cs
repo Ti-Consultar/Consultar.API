@@ -64,5 +64,10 @@ app.UseHttpsRedirection();
 app.UseAuthentication(); // Adiciona autenticação (caso JWT esteja sendo usado)
 app.UseAuthorization();
 app.MapControllers();
-
+// ?? Redirecionamento da raiz para /swagger
+app.MapGet("/", context =>
+{
+    context.Response.Redirect("/swagger");
+    return Task.CompletedTask;
+});
 app.Run();

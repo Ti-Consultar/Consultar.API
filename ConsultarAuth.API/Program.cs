@@ -1,5 +1,5 @@
-using Microsoft.OpenApi.Models;
-using _2___Application._4__DependencyInjectionConfig; // Importação da configuração de dependências
+ï»¿using Microsoft.OpenApi.Models;
+using _2___Application._4__DependencyInjectionConfig; // ImportaÃ§Ã£o da configuraÃ§Ã£o de dependÃªncias
 using _2___Application._1_Services.User;
 using _4_InfraData._1_Repositories;
 using _4_InfraData._1_Context;
@@ -7,22 +7,22 @@ using Microsoft.EntityFrameworkCore; // Certifique-se de usar o namespace corret
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Adiciona os serviços ao contêiner
+// Adiciona os serviÃ§os ao contÃªiner
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
-// Obtém a connection string do appsettings.json
+// ObtÃ©m a connection string do appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// Configuração do DbContext
+// ConfiguraÃ§Ã£o do DbContext
 builder.Services.AddDbContext<CoreServiceDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 
-// Chama o método para configurar dependências gerais
+// Chama o mÃ©todo para configurar dependÃªncias gerais
 DependencyInjectionConfig.Configure(builder.Services, connectionString);
 
 // Adiciona o UserService diretamente
@@ -31,7 +31,7 @@ builder.Services.AddScoped<AuthorizationService>();
 
 builder.Services.AddScoped<UserRepository>();
 
-// Configuração de CORS (permitindo todas as origens, ajuste conforme necessário)
+// ConfiguraÃ§Ã£o de CORS (permitindo todas as origens, ajuste conforme necessÃ¡rio)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -42,7 +42,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configuração do Swagger/OpenAPI
+// ConfiguraÃ§Ã£o do Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -50,13 +50,13 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Consultar Auth API",
         Version = "v1",
-        Description = "API de Autenticação do sistema ConsultarAuth"
+        Description = "API de AutenticaÃ§Ã£o do sistema ConsultarAuth"
     });
 });
 
 var app = builder.Build();
 
-// Habilita o CORS para a aplicação
+// Habilita o CORS para a aplicaÃ§Ã£o
 app.UseCors("AllowAll");
 
 // Sempre habilita o Swagger, independentemente do ambiente
@@ -64,12 +64,17 @@ app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "ConsultarAuth API v1");
-    c.RoutePrefix = "swagger"; // O Swagger será acessível em http://localhost:7270/swagger
+    c.RoutePrefix = "swagger"; // O Swagger serÃ¡ acessÃ­vel em http://localhost:7270/swagger
 });
 
 app.UseHttpsRedirection();
-app.UseAuthentication(); // Adiciona autenticação (caso JWT esteja sendo usado)
+app.UseAuthentication(); // Adiciona autenticaÃ§Ã£o (caso JWT esteja sendo usado)
 app.UseAuthorization();
 app.MapControllers();
-
+// ðŸ‘‡ Redirecionamento da raiz para /swagger
+app.MapGet("/", context =>
+{
+    context.Response.Redirect("/swagger");
+    return Task.CompletedTask;
+});
 app.Run();
