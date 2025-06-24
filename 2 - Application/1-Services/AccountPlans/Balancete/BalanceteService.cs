@@ -170,7 +170,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             var balancetes = await _repository.GetAccountPlanWithBalancetesAsync(accountPlanId);
 
             if (balancetes == null || !balancetes.Any())
-                return ErrorResponse("AccountPlan não encontrado ou sem balancetes.");
+                return SuccessResponse (new List<AccountPlanWithBalancetesDto>());
 
             var response = new AccountPlanWithBalancetesDto
             {
