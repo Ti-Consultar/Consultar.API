@@ -115,7 +115,7 @@ namespace _5_API.Controllers
         }
         // [Authorize]
         [HttpGet("{balanceteId}/data")]
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
         public async Task<IActionResult> GetByBalanceteId( int balanceteId)
         {
             var result = await _service.GetByBalanceteId( balanceteId);
@@ -127,7 +127,7 @@ namespace _5_API.Controllers
         }
 
         [HttpGet("{balanceteId}/cost-center")]
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario,Usuario")]
         public async Task<IActionResult> GetAgrupadoPorCostCenter(int balanceteId)
         {
             var result = await _service.GetAgrupadoPorCostCenter(balanceteId);
