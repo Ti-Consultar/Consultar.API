@@ -127,7 +127,7 @@ namespace _5_API.Controllers
         }
 
         [HttpGet("{balanceteId}/cost-center")]
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario,Usuario")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
         public async Task<IActionResult> GetAgrupadoPorCostCenter(int balanceteId)
         {
             var result = await _service.GetAgrupadoPorCostCenter(balanceteId);
