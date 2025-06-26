@@ -43,11 +43,11 @@ namespace _5_API.Controllers
         [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpPut]
         [Route("{id}")]
-        public async Task<IActionResult> Update(int id,[FromBody] UpdateBalanceteDto dto)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateBalanceteDto dto)
         {
             try
             {
-                var result = await _service. Update(id, dto);
+                var result = await _service.Update(id, dto);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -58,8 +58,8 @@ namespace _5_API.Controllers
         /// <summary>
         /// Lista o planos de contas de acordo com os Parametros passados
         /// </summary>
-        [Authorize()]
         [HttpGet("accountplan/{accountPlanId}")]
+        [Authorize()]
         public async Task<IActionResult> GetBalancetes(int accountPlanId)
         {
             var result = await _service.GetAccountPlanWithBalancetes(accountPlanId);
@@ -73,8 +73,8 @@ namespace _5_API.Controllers
         /// <summary>
         /// Lista o plano de contas por Id
         /// </summary>
-        [Authorize()]
         [HttpGet("{id}")]
+        [Authorize()]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _service.GetById(id);
@@ -88,8 +88,8 @@ namespace _5_API.Controllers
         /// <summary>
         /// Deleta
         /// </summary>
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _service.Delete(id);
@@ -101,8 +101,9 @@ namespace _5_API.Controllers
         }
         #region Balancete Data
 
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        // [Authorize]
         [HttpPost("import")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> ImportBalanceteData(IFormFile file, [FromQuery] int balanceteId)
         {
             var result = await _service.ImportBalanceteData(file, balanceteId);
@@ -112,11 +113,12 @@ namespace _5_API.Controllers
 
             return Ok(result);
         }
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
+        // [Authorize]
         [HttpGet("{balanceteId}/data")]
-        public async Task<IActionResult> GetByBalanceteId( int balanceteId)
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
+        public async Task<IActionResult> GetByBalanceteId(int balanceteId)
         {
-            var result = await _service.GetByBalanceteId( balanceteId);
+            var result = await _service.GetByBalanceteId(balanceteId);
 
             if (!result.Success)
                 return BadRequest(result);
@@ -139,8 +141,8 @@ namespace _5_API.Controllers
         /// <summary>
         /// Deleta
         /// </summary>
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpDelete("{id}/balancete-data")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> DeleteBalanceteData(int balanceteId)
         {
             var result = await _service.DeleteBalanceteData(balanceteId);
