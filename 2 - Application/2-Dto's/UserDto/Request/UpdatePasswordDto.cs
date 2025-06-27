@@ -8,7 +8,6 @@ namespace _2___Application._2_Dto_s.UserDto.Request
 {
     public class UpdatePasswordDto
     {
-        public string Email { get; set; }
         public string Password { get; set; }
     }
 }
