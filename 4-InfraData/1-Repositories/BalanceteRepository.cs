@@ -74,7 +74,15 @@ namespace _4_InfraData._1_Repositories
                 .ThenBy(ap => ap.DateMonth)
                 .ToListAsync();
         }
-
+        public async Task<List<BalanceteModel>> GetAccountPlanWithBalancetesMonthAsync(int accountPlanId)
+        {
+            return await _context.Balancete
+                .Include(x => x.AccountPlans)
+                .Where(ap => ap.AccountPlansId == accountPlanId)
+                .OrderBy(ap => ap.DateYear)
+                .ThenBy(ap => ap.DateMonth)
+                .ToListAsync();
+        }
 
     }
 }

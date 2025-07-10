@@ -165,9 +165,37 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             }
         }
 
+        public async Task<ResultValue> GetAccountPlanWithBalancetesMonth(int accountPlanId)
+        {
+           
+            var balancetes = await _repository.GetAccountPlanWithBalancetesMonthAsync(accountPlanId);
+
+            if (balancetes == null || !balancetes.Any())
+                return SuccessResponse(new List<AccountPlanWithBalancetesDto>());
+
+            var response = new AccountPlanWithBalancetesDto
+            {
+                Id = accountPlanId,
+                Balancetes = balancetes
+                    .OrderByDescending(b => b.DateYear)
+                    .ThenByDescending(b => b.DateMonth)
+                    .Select(b => new BalanceteSimpleDto
+                    {
+                        Id = b.Id,
+                        DateMonth = b.DateMonth.GetDescription(),
+                        DateYear = b.DateYear,
+                        Status = b.Status.GetDescription(),
+                        DateCreate = b.DateCreate
+                      
+                    })
+                    .ToList()
+            };
+
+            return SuccessResponse(response);
+        }
         public async Task<ResultValue> GetAccountPlanWithBalancetes(int accountPlanId, char tipo)
         {
-            if (  tipo == 0)
+            if (tipo == 0)
             {
                 tipo = '1';
             }
@@ -203,7 +231,6 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
             return SuccessResponse(response);
         }
-
 
 
         private List<DataDto> AgruparBalanceteData(List<BalanceteDataModel> data, char tipoInicial)

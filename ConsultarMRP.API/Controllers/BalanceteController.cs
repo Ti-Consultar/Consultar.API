@@ -60,7 +60,22 @@ namespace _5_API.Controllers
         /// </summary>
         [HttpGet("accountplan/{accountPlanId}")]
         [Authorize()]
-        public async Task<IActionResult> GetBalancetes(int accountPlanId ,[FromQuery] char tipo  )
+        public async Task<IActionResult> GetAccountPlanWithBalancetesMonth(int accountPlanId )
+        {
+            var result = await _service.GetAccountPlanWithBalancetesMonth(accountPlanId);
+
+            if (!result.Success)
+                return NotFound(result);
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Lista o planos de contas de acordo com os Parametros passados
+        /// </summary>
+        [HttpGet("accountplan/{accountPlanId}/filter")]
+        [Authorize()]
+        public async Task<IActionResult> GetBalancetes(int accountPlanId, [FromQuery] char tipo)
         {
             var result = await _service.GetAccountPlanWithBalancetes(accountPlanId, tipo);
 
