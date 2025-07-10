@@ -127,7 +127,7 @@ namespace _5_API.Controllers
         }
 
         [HttpGet("{balanceteId}/cost-center")]
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
+       // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
         public async Task<IActionResult> GetAgrupadoPorCostCenter(int balanceteId)
         {
             var result = await _service.GetAgrupadoPorCostCenter(balanceteId);
@@ -137,6 +137,43 @@ namespace _5_API.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("{balanceteId}/ativo")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
+        public async Task<IActionResult> GetAgrupadoSomenteAtivos(int balanceteId)
+        {
+            var result = await _service.GetAgrupadoSomenteAtivos(balanceteId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        [HttpGet("{balanceteId}/passivo")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
+        public async Task<IActionResult> GetAgrupadoPorTipo(int balanceteId)
+        {
+            var result = await _service.GetAgrupadoPorTipo(balanceteId, '2');
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        [HttpGet("{balanceteId}/contas-resultados")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
+        public async Task<IActionResult> GetAgrupadocontasResultado(int balanceteId)
+        {
+            var result = await _service.GetAgrupadoPorTipo(balanceteId, '3');
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
 
         /// <summary>
         /// Deleta

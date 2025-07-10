@@ -4,14 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace _2___Application._2_Dto_s.Classification
+namespace _2___Application.Passivo
 {
-    public class ClassificationResponse
+    public class ClassificationPassivosResponse
     {
         public int Id { get; set; }
         public string Name { get; set; }
         public int Type { get; set; }
     }
-
-    
 }

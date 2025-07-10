@@ -4,14 +4,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace _2___Application._2_Dto_s.Classification
+namespace _3_Domain._1_Entities
 {
-    public class ClassificationResponse
+    public class ClassificationPassivoModel
     {
+        public ClassificationPassivoModel()
+        {
+
+        }
+
         public int Id { get; set; }
         public string Name { get; set; }
         public int Type { get; set; }
+
     }
 
-    
 }
