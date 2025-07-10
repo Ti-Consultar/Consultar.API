@@ -60,7 +60,7 @@ namespace _5_API.Controllers
         /// </summary>
         [HttpGet("accountplan/{accountPlanId}")]
         [Authorize()]
-        public async Task<IActionResult> GetBalancetes(int accountPlanId ,[FromQuery] char tipo)
+        public async Task<IActionResult> GetBalancetes(int accountPlanId ,[FromQuery] char tipo  )
         {
             var result = await _service.GetAccountPlanWithBalancetes(accountPlanId, tipo);
 

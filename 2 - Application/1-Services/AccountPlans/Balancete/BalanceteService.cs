@@ -167,6 +167,11 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
         public async Task<ResultValue> GetAccountPlanWithBalancetes(int accountPlanId, char tipo)
         {
+            if (  tipo == 0)
+            {
+                tipo = '1';
+            }
+
             var balancetes = await _repository.GetAccountPlanWithBalancetesAsync(accountPlanId);
 
             if (balancetes == null || !balancetes.Any())
