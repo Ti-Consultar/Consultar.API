@@ -59,10 +59,10 @@ namespace _5_API.Controllers
         /// Lista o planos de contas de acordo com os Parametros passados
         /// </summary>
         [HttpGet("accountplan/{accountPlanId}")]
-        [Authorize()]
-        public async Task<IActionResult> GetBalancetes(int accountPlanId)
+       // [Authorize()]
+        public async Task<IActionResult> GetBalancetes(int accountPlanId ,[FromQuery] char tipo)
         {
-            var result = await _service.GetAccountPlanWithBalancetes(accountPlanId);
+            var result = await _service.GetAccountPlanWithBalancetes(accountPlanId, tipo);
 
             if (!result.Success)
                 return NotFound(result);
@@ -138,11 +138,13 @@ namespace _5_API.Controllers
             return Ok(result);
         }
 
-        [HttpGet("{balanceteId}/ativo")]
+       
+
+        [HttpGet("{balanceteId}/filter")]
         // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
-        public async Task<IActionResult> GetAgrupadoSomenteAtivos(int balanceteId)
+        public async Task<IActionResult> GetAgrupadoPorTipo(int balanceteId, [FromQuery] char tipo)
         {
-            var result = await _service.GetAgrupadoSomenteAtivos(balanceteId);
+            var result = await _service.GetAgrupadoPorTipo(balanceteId, tipo);
 
             if (!result.Success)
                 return BadRequest(result);
@@ -150,30 +152,7 @@ namespace _5_API.Controllers
             return Ok(result);
         }
 
-        [HttpGet("{balanceteId}/passivo")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
-        public async Task<IActionResult> GetAgrupadoPorTipo(int balanceteId)
-        {
-            var result = await _service.GetAgrupadoPorTipo(balanceteId, '2');
-
-            if (!result.Success)
-                return BadRequest(result);
-
-            return Ok(result);
-        }
-
-        [HttpGet("{balanceteId}/contas-resultados")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
-        public async Task<IActionResult> GetAgrupadocontasResultado(int balanceteId)
-        {
-            var result = await _service.GetAgrupadoPorTipo(balanceteId, '3');
-
-            if (!result.Success)
-                return BadRequest(result);
-
-            return Ok(result);
-        }
-
+       
 
         /// <summary>
         /// Deleta

@@ -165,32 +165,80 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             }
         }
 
-        public async Task<ResultValue> GetAccountPlanWithBalancetes(int accountPlanId)
+        public async Task<ResultValue> GetAccountPlanWithBalancetes(int accountPlanId, char tipo)
         {
             var balancetes = await _repository.GetAccountPlanWithBalancetesAsync(accountPlanId);
 
             if (balancetes == null || !balancetes.Any())
-                return SuccessResponse (new List<AccountPlanWithBalancetesDto>());
+                return SuccessResponse(new List<AccountPlanWithBalancetesDto>());
 
             var response = new AccountPlanWithBalancetesDto
             {
                 Id = accountPlanId,
                 Balancetes = balancetes
-          .OrderByDescending(b => b.DateYear)
-          .ThenByDescending(b => b.DateMonth)
-          .Select(b => new BalanceteSimpleDto
-          {
-              Id = b.Id,
-              DateMonth = b.DateMonth.GetDescription(),
-              DateYear = b.DateYear,
-              Status = b.Status.GetDescription(),
-              DateCreate = b.DateCreate
-          })
-          .ToList()
+                    .OrderByDescending(b => b.DateYear)
+                    .ThenByDescending(b => b.DateMonth)
+                    .Select(b => new BalanceteSimpleDto
+                    {
+                        Id = b.Id,
+                        DateMonth = b.DateMonth.GetDescription(),
+                        DateYear = b.DateYear,
+                        Status = b.Status.GetDescription(),
+                        DateCreate = b.DateCreate,
+                        BalanceteData = new List<BalanceteDataDtoSimple>
+                        {
+                    new BalanceteDataDtoSimple
+                    {
+                        DataDto = AgruparBalanceteData(b.BalancetesData.ToList(), tipo) // muda pra '1' se quiser ativos
+                    }
+                        }
+                    })
+                    .ToList()
             };
+
             return SuccessResponse(response);
         }
 
+
+
+        private List<DataDto> AgruparBalanceteData(List<BalanceteDataModel> data, char tipoInicial)
+        {
+            var lookup = data.ToDictionary(x => x.CostCenter, x => new DataDto
+            {
+                Id = x.Id,
+                CostCenter = x.CostCenter,
+                Name = x.Name,
+                InitialValue = x.InitialValue,
+                Credit = x.Credit,
+                Debit = x.Debit,
+                FinalValue = x.FinalValue,
+                BudgetedAmount = x.BudgetedAmount
+            });
+
+            foreach (var item in data)
+            {
+                var parts = item.CostCenter.Split('.');
+                if (parts.Length <= 1) continue;
+
+                var parentCostCenter = string.Join('.', parts.Take(parts.Length - 1));
+
+                if (lookup.TryGetValue(parentCostCenter, out var parent))
+                {
+                    parent.InitialValue += item.InitialValue;
+                    parent.Credit += item.Credit;
+                    parent.Debit += item.Debit;
+                    parent.FinalValue += item.FinalValue;
+                }
+            }
+
+            var pais = lookup.Values
+                .Where(x => x.CostCenter.StartsWith(tipoInicial.ToString()))
+                .Where(x => data.Any(d => d.CostCenter.StartsWith(x.CostCenter + ".")))
+                .OrderBy(x => x.CostCenter)
+                .ToList();
+
+            return pais;
+        }
 
 
 

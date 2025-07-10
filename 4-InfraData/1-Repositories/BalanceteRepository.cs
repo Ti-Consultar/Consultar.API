@@ -68,6 +68,7 @@ namespace _4_InfraData._1_Repositories
         {
             return await _context.Balancete
                 .Include(x => x.AccountPlans)
+                .Include(x => x.BalancetesData)
                 .Where(ap => ap.AccountPlansId == accountPlanId)
                 .OrderBy(ap => ap.DateYear)
                 .ThenBy(ap => ap.DateMonth)

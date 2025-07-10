@@ -1,4 +1,5 @@
-﻿using _2___Application._2_Dto_s.Company;
+﻿using _2___Application._2_Dto_s.AccountPlan.Balancete;
+using _2___Application._2_Dto_s.Company;
 using _2___Application._2_Dto_s.Company.SubCompany;
 using _2___Application._2_Dto_s.Group;
 using System;
@@ -44,7 +45,16 @@ namespace _2___Application._2_Dto_s.AccountPlan
         public int DateYear { get; set; }
         public string Status { get; set; }
         public DateTime DateCreate { get; set; }
+        public List<BalanceteDataDtoSimple> BalanceteData { get; set; }
     }
+
+    public class BalanceteDataDtoSimple
+    {
+        public List<DataDto> DataDto { get; set; }
+
+    }
+
+   
 }
 
 
