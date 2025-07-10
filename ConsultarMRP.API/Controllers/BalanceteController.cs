@@ -59,7 +59,7 @@ namespace _5_API.Controllers
         /// Lista o planos de contas de acordo com os Parametros passados
         /// </summary>
         [HttpGet("accountplan/{accountPlanId}")]
-       // [Authorize()]
+        [Authorize()]
         public async Task<IActionResult> GetBalancetes(int accountPlanId ,[FromQuery] char tipo)
         {
             var result = await _service.GetAccountPlanWithBalancetes(accountPlanId, tipo);
@@ -127,7 +127,7 @@ namespace _5_API.Controllers
         }
 
         [HttpGet("{balanceteId}/cost-center")]
-       // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
         public async Task<IActionResult> GetAgrupadoPorCostCenter(int balanceteId)
         {
             var result = await _service.GetAgrupadoPorCostCenter(balanceteId);
@@ -141,7 +141,7 @@ namespace _5_API.Controllers
        
 
         [HttpGet("{balanceteId}/filter")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
+         [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
         public async Task<IActionResult> GetAgrupadoPorTipo(int balanceteId, [FromQuery] char tipo)
         {
             var result = await _service.GetAgrupadoPorTipo(balanceteId, tipo);
