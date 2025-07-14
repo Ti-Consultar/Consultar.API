@@ -52,7 +52,7 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
-        public async Task<ResultValue> GetByTypeClassification(ETypeClassification typeClassification)
+        public async Task<ResultValue> GetByTypeClassificationTemplate(ETypeClassification typeClassification)
         {
             try
             {
@@ -104,6 +104,27 @@ namespace _2___Application._1_Services
         #endregion
 
         #region AccountPlan Classification
+
+        public async Task<ResultValue> GetByTypeClassificationReal(int accountPlanId,ETypeClassification typeClassification)
+        {
+            try
+            {
+                var model = await _accountClassificationRepository.GetByTypeClassification(accountPlanId, typeClassification);
+                if (model == null || !model.Any())
+                    return ErrorResponse(Message.NotFound);
+
+                var response = model
+                    .OrderBy(x => x.TypeOrder) // Ordenação crescente por Type
+                    .Select(MapToClassificationRealResponse)
+                    .ToList();
+
+                return SuccessResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
         public async Task<ResultValue> Create(CreateAccountPlanClassification dto)
         {
             try
@@ -156,7 +177,36 @@ namespace _2___Application._1_Services
             }
         }
 
+        public async Task<ResultValue> Update(int accountplanId, int id, UpdateItemClassification dto)
+        {
+            try
+            {
+                var user = GetCurrentUserId();
 
+                var accountPlanClassification = await _accountClassificationRepository.GetByAccountIdAndId(accountplanId, id);
+
+                if (accountPlanClassification == null)
+                    return ErrorResponse("Item não encontrado");
+
+
+                // Atualiza os dados do item
+                accountPlanClassification.Name = dto.Name;
+                accountPlanClassification.TypeClassification = (ETypeClassification)dto.TypeClassification;
+   
+
+                await _accountClassificationRepository.Update(accountPlanClassification);
+
+                return SuccessResponse(Message.Success);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+
+
+        #region Private 
         private async Task ReorganizeTypeOrders(int accountPlanId, int typeClassification, int typeOrder)
         {
             var classifications = await _accountClassificationRepository
@@ -173,7 +223,19 @@ namespace _2___Application._1_Services
             }
         }
 
+        private AccountPlanClassificationResponse MapToClassificationRealResponse(AccountPlanClassification model)
+        {
+            return new AccountPlanClassificationResponse
+            {
+                Id = model.Id,
+                AccountPlanId = model.AccountPlanId,
+                Name = model.Name,
+                TypeOrder = model.TypeOrder,
+                TypeClassification = model.TypeClassification.GetDescription()
+            };
+        }
 
+        #endregion
 
         #endregion
         #endregion

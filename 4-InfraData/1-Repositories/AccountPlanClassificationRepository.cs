@@ -17,14 +17,16 @@ namespace _4_InfraData._1_Repositories
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
-        public async Task<List<ClassificationModel>> GetByTypeClassification(ETypeClassification typeClassification)
+        public async Task<List<AccountPlanClassification>> GetByTypeClassification(int accountPlanId, ETypeClassification typeClassification)
         {
             var model = await _context.AccountPlanClassification
-                .Where(c => c.TypeClassification == typeClassification)
+                .Where(c => c.TypeClassification == typeClassification && c.AccountPlanId == accountPlanId)
+                .Include(a => a.AccountPlan)
                 .OrderBy(c => c.TypeOrder)
-                .Select(c => new ClassificationModel
+                .Select(c => new AccountPlanClassification
                 {
                     Id = c.Id,
+                    AccountPlanId = c.AccountPlanId,
                     Name = c.Name,
                     TypeOrder = c.TypeOrder,
                     TypeClassification = c.TypeClassification
@@ -50,6 +52,24 @@ namespace _4_InfraData._1_Repositories
 
             return model;
         }
+
+        public async Task<AccountPlanClassification> GetByAccountIdAndId(int accountPlanId, int id)
+        {
+            var model = await _context.AccountPlanClassification
+                .Where(c => c.AccountPlanId == accountPlanId && c.Id == id)
+                .OrderBy(c => c.TypeOrder)
+                .Select(c => new AccountPlanClassification
+                {
+                    Id = c.Id,
+                    AccountPlanId = c.AccountPlanId,
+                    Name = c.Name,
+                    TypeOrder = c.TypeOrder,
+                    TypeClassification = c.TypeClassification
+                })
+                .FirstOrDefaultAsync();
+
+            return model;
+        }
         public async Task<List<AccountPlanClassification>> GetAllAfterTypeOrderAsync(int accountPlanId, int typeClassification, int typeOrder)
         {
             return await _context.AccountPlanClassification
@@ -58,6 +78,16 @@ namespace _4_InfraData._1_Repositories
                     (int)c.TypeClassification == typeClassification &&
                     c.TypeOrder >= typeOrder)
                 .OrderBy(c => c.TypeOrder)
+                .ToListAsync();
+        }
+
+        public async Task<List<AccountPlanClassification>> GetItemsToDecrementOrderAsync(int accountPlanId, ETypeClassification typeClassification, int oldOrder, int newOrder)
+        {
+            return await _context.AccountPlanClassification
+                .Where(c => c.AccountPlanId == accountPlanId
+                            && c.TypeClassification == typeClassification
+                            && c.TypeOrder <= newOrder
+                            && c.TypeOrder > oldOrder)
                 .ToListAsync();
         }
 

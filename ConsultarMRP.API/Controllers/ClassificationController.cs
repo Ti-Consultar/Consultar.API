@@ -37,14 +37,14 @@ namespace ConsultarMRP.API.Controllers
             }
         }
         [HttpGet]
-        [Route("typeClassification")]
+        [Route("template/typeClassification")]
         // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
-        public async Task<IActionResult> GetAll( ETypeClassification typeClassification)
+        public async Task<IActionResult> GetAllTemplate( ETypeClassification typeClassification)
         {
             try
             {
 
-                var response = await _Service.GetByTypeClassification(typeClassification);
+                var response = await _Service.GetByTypeClassificationTemplate(typeClassification);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -81,6 +81,40 @@ namespace ConsultarMRP.API.Controllers
             {
 
                 var response = await _Service.CreateItemClassification(accountPlanId,dto);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPut]
+        [Route("{accountPlanId}/update-item")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> Update(int accountPlanId,[FromQuery]int id ,[FromBody] UpdateItemClassification dto)
+        {
+            try
+            {
+
+                var response = await _Service.Update(accountPlanId, id,dto);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        [Route("accountPlan/{accountPlanId}/typeClassification")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetByTypeClassificationReal(int accountPlanId, ETypeClassification typeClassification)
+        {
+            try
+            {
+
+                var response = await _Service.GetByTypeClassificationReal(accountPlanId, typeClassification);
                 return Ok(response);
             }
             catch (Exception ex)

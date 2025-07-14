@@ -6,16 +6,12 @@ using System.Threading.Tasks;
 
 namespace _2___Application._2_Dto_s.Classification.AccountPlanClassification
 {
-    public class CreateItemClassification
+    public class AccountPlanClassificationResponse
     {
+        public int Id { get; set; }
+        public int AccountPlanId { get; set; }
         public string Name { get; set; }
+        public string TypeClassification { get; set; }
         public int TypeOrder { get; set; }
-        public int TypeClassification { get; set; }
-    }
-
-    public class UpdateItemClassification
-    {
-        public string Name { get; set; }
-        public int TypeClassification { get; set; }
     }
 }
