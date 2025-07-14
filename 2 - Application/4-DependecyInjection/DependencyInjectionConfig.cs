@@ -109,6 +109,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<ClassificationRepository>();
             services.AddScoped<ReclassificationRepository>();
             services.AddScoped<ReclassificationBalanceteDataRepository>();
+            services.AddScoped<AccountPlanClassificationRepository>();
             #endregion
 
             #endregion

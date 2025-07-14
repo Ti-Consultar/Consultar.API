@@ -80,6 +80,7 @@
     <Build Include="dbo\Tables\ReclassificationBalanceteData.sql" />
     <Build Include="dbo\Tables\ClassificationPassivo.sql" />
     <Build Include="dbo\Tables\PassivoBalanceteData.sql" />
+    <Build Include="dbo\Tables\AccountPlanClassification.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="Database.refactorlog" />

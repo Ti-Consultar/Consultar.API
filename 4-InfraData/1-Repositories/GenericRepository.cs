@@ -36,6 +36,12 @@ namespace _4_InfraData._1_Repositories
             _context.Set<T>().Update(entity);
             await _context.SaveChangesAsync();
         }
+        public async Task UpdateRange(IEnumerable<T> entities)
+        {
+            _context.Set<T>().UpdateRange(entities);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task DeletePermanently(int id)
         {
             var entity = await _context.Set<T>().FirstOrDefaultAsync(a => EF.Property<int>(a, "Id") == id);

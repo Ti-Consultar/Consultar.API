@@ -1,4 +1,5 @@
 ﻿using _2___Application._1_Services;
+using _2___Application._2_Dto_s.Classification.AccountPlanClassification;
 using _3_Domain._2_Enum_s;
 using _4_Application._1_Services;
 using Microsoft.AspNetCore.Authorization;
@@ -16,6 +17,8 @@ namespace ConsultarMRP.API.Controllers
         {
             _Service = service;
         }
+
+        #region Template
 
         [HttpGet]
         [Route("")]
@@ -49,22 +52,42 @@ namespace ConsultarMRP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        #endregion
 
-        [HttpGet]
-        [Route("ativo/{id}")]
-        //[Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
-        public async Task<IActionResult> GetById(int id)
+        #region AccountPlan Classification
+
+        [HttpPost]
+        [Route("")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> Create( CreateAccountPlanClassification dto)
         {
             try
             {
 
-                var result = await _Service.GetById(id);
-                return Ok(result);
+                var response = await _Service.Create(dto);
+                return Ok(response);
             }
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
         }
+        [HttpPut]
+        [Route("{accountPlanId}/create-item")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> CreateItemClassification(int accountPlanId, [FromBody]CreateItemClassification dto)
+        {
+            try
+            {
+
+                var response = await _Service.CreateItemClassification(accountPlanId,dto);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        #endregion
     }
 }
