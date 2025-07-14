@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace _3_Domain._1_Entities
 {
-   public class DREModel
+   public class ReclassificationModel
     {
-        public DREModel()
+        public ReclassificationModel()
         {
             
         }

@@ -26,8 +26,8 @@ namespace _4_InfraData._1_Context
         public DbSet<InteractionModel> Interaction { get; set; }
         public DbSet<ClassificationModel> Classification { get; set; }
         public DbSet<ClassificationPassivoModel> ClassificationPassivo { get; set; }
-        public DbSet<DREModel> DRE { get; set; }
-        public DbSet<DREBalanceteData> DREBalanceteData { get; set; }
+        public DbSet<ReclassificationModel> DRE { get; set; }
+        public DbSet<ReclassificationBalanceteModel> DREBalanceteData { get; set; }
         public DbSet<PassivoBalanceteDataModel> PassivoBalanceteData { get; set; }
     
 

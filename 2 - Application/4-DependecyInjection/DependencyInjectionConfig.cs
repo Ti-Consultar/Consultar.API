@@ -87,7 +87,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<InteractionService>();
             services.AddScoped<ClassificationService>();
             services.AddScoped<PassivoService>();
-            services.AddScoped<DREService>();
+            services.AddScoped<ReclassificationService>();
 
 
             #endregion
@@ -107,8 +107,8 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<InteractionRepository>();
             services.AddScoped<PlansAccountUserRepository>();
             services.AddScoped<ClassificationRepository>();
-            services.AddScoped<DRERepository>();
-            services.AddScoped<DREBalanceteDataRepository>();
+            services.AddScoped<ReclassificationRepository>();
+            services.AddScoped<ReclassificationBalanceteDataRepository>();
             #endregion
 
             #endregion
