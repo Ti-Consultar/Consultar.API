@@ -18,7 +18,7 @@ namespace _4_InfraData._1_Repositories
         }
         public async Task<List<ReclassificationBalanceteModel>> GetByDREId(int dREId)
         {
-            return await _context.DREBalanceteData
+            return await _context.ReclassificationBalanceteData
                 .Include(x => x.Dre)
                 .Include(x => x.Balancete)
                 .Include(x => x.BalanceteData)
@@ -28,7 +28,7 @@ namespace _4_InfraData._1_Repositories
 
         public async Task<List<ReclassificationBalanceteModel>> GetByBalanceteId(int balanceteId)
         {
-            return await _context.DREBalanceteData
+            return await _context.ReclassificationBalanceteData
                 .Include(x => x.Dre)
                 .Include(x => x.Balancete)
                 .Include(x => x.BalanceteData)

@@ -1,16 +1,16 @@
-﻿CREATE TABLE DREBalanceteData (
+﻿CREATE TABLE ReclassificationBalanceteData (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     
-    DREId INT NOT NULL,
+    ReclassificationId INT NOT NULL,
     BalanceteId INT NOT NULL,
     BalanceteDataId INT NOT NULL,
 
     -- Foreign Keys
-    CONSTRAINT FK_DREBalanceteData_DRE FOREIGN KEY (DREId)
-        REFERENCES DRE (Id)
+    CONSTRAINT FK_ReclassificationBalanceteData_Reclassification FOREIGN KEY (ReclassificationId)
+        REFERENCES Reclassification (Id)
         ON DELETE CASCADE,
 
-    CONSTRAINT FK_DREBalanceteData_Balancete FOREIGN KEY (BalanceteId)
+    CONSTRAINT FK_ReclassificationBalanceteData_Balancete FOREIGN KEY (BalanceteId)
         REFERENCES Balancete (Id)
         ON DELETE NO ACTION,
 

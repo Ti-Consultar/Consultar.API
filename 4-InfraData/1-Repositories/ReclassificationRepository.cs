@@ -18,7 +18,7 @@ namespace _4_InfraData._1_Repositories
         }
         public async Task<List<ReclassificationModel>> GetByAccountPlanId(int accountPlansId)
         {
-            return await _context.DRE
+            return await _context.Reclassification
                 .Include(x => x.Classification)
                 .Include(x => x.AccountPlan)
                 .Where(x => x.AccountPlanId == accountPlansId)
@@ -29,7 +29,7 @@ namespace _4_InfraData._1_Repositories
 
         public async Task<ReclassificationModel> GetByDREId(int id)
         {
-            return await _context.DRE
+            return await _context.Reclassification
                  .Where(x => x.Id == id)
                 .Include(x => x.Classification)
                 .Include(x => x.AccountPlan)
