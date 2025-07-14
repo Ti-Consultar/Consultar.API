@@ -1,4 +1,5 @@
 ﻿using _2___Application._1_Services;
+using _2___Application._2_Dto_s.Classification;
 using _2___Application._2_Dto_s.Classification.AccountPlanClassification;
 using _3_Domain._2_Enum_s;
 using _4_Application._1_Services;
@@ -122,6 +123,41 @@ namespace ConsultarMRP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpPut]
+        [Route("/create-bond")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> CreateBond([FromQuery]int accountPlanClassificationId, [FromBody] BalanceteDataAccountPlanClassificationCreate dto)
+        {
+            try
+            {
+
+                var response = await _Service.CreateBond(accountPlanClassificationId, dto);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        [Route("/get-bond")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetBond([FromQuery] int accountPlanId, int typeClassification)
+        {
+            try
+            {
+
+                var response = await _Service.GetBond(accountPlanId, typeClassification);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         #endregion
     }
 }

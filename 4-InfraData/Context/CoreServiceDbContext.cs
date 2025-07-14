@@ -26,6 +26,7 @@ namespace _4_InfraData._1_Context
         public DbSet<InteractionModel> Interaction { get; set; }
         public DbSet<ClassificationModel> Classification { get; set; }
         public DbSet<AccountPlanClassification> AccountPlanClassification { get; set; }
+        public DbSet<BalanceteDataAccountPlanClassification> BalanceteDataAccountPlanClassification { get; set; }
         public DbSet<ClassificationPassivoModel> ClassificationPassivo { get; set; }
         public DbSet<ReclassificationModel> Reclassification { get; set; }
         public DbSet<ReclassificationBalanceteModel> ReclassificationBalanceteData { get; set; }

@@ -29,6 +29,16 @@ namespace _4_InfraData._1_Repositories
             return AgruparPorCostCenterPai(data);
         }
 
+        public async Task<List<BalanceteDataModel>> GetAgrupadoPorCostCenterListAsync(List<string> costCenters)
+        {
+            return await _context.BalanceteData
+                .Include(x => x.Balancete)
+                .Where(x => costCenters.Contains(x.CostCenter))
+                .ToListAsync();
+        }
+
+
+
         public List<BalanceteDataModel> AgruparPorCostCenterPai(List<BalanceteDataModel> data)
         {
             var grupos = data

@@ -91,6 +91,25 @@ namespace _4_InfraData._1_Repositories
                 .ToListAsync();
         }
 
+        public async Task CreateBond(List<BalanceteDataAccountPlanClassification> models)
+        {
+            await _context.BalanceteDataAccountPlanClassification.AddRangeAsync(models);
+            await _context.SaveChangesAsync();
+        }
+        public async Task<List<BalanceteDataAccountPlanClassification>> GetBond(int accountPlanId, int typeClassification)
+        {
+            var model = await _context.BalanceteDataAccountPlanClassification
+                .Include(a => a.AccountPlanClassification)
+                    .ThenInclude(apc => apc.AccountPlan)
+                .Where(c =>
+                    c.AccountPlanClassification.AccountPlanId == accountPlanId &&
+                    (int)c.AccountPlanClassification.TypeClassification == typeClassification
+                )
+                .OrderBy(c => c.AccountPlanClassification.TypeOrder)
+                .ToListAsync();
+
+            return model;
+        }
 
 
     }

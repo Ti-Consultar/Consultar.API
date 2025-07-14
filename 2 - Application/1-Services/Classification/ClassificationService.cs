@@ -20,14 +20,17 @@ namespace _2___Application._1_Services
     {
         private readonly ClassificationRepository _repository;
         private readonly AccountPlanClassificationRepository _accountClassificationRepository;
+        private readonly BalanceteDataRepository _balanceteDataRepository;
 
         public ClassificationService(
             ClassificationRepository repository,
             AccountPlanClassificationRepository accountClassificationRepository,
+            BalanceteDataRepository balanceteDataRepository,
             IAppSettings appSettings) : base(appSettings)
         {
             _repository = repository;
             _accountClassificationRepository = accountClassificationRepository;
+            _balanceteDataRepository = balanceteDataRepository;
         }
 
         #region Métodos
@@ -176,7 +179,6 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
-
         public async Task<ResultValue> Update(int accountplanId, int id, UpdateItemClassification dto)
         {
             try
@@ -204,6 +206,73 @@ namespace _2___Application._1_Services
             }
         }
 
+
+        #region Vinculos
+
+        public async Task<ResultValue> CreateBond(int accountPlanClassificationId, BalanceteDataAccountPlanClassificationCreate dto)
+        {
+            try
+            {
+                var models = dto.CostCenters.Select(cc => new BalanceteDataAccountPlanClassification
+                {
+                    AccountPlanClassificationId = accountPlanClassificationId,
+                    CostCenter = cc.CostCenter
+                }).ToList();
+
+                await _accountClassificationRepository.CreateBond(models);
+
+                return SuccessResponse(Message.Success);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+        public async Task<ResultValue> GetBond(int accountPlanId, int typeClassification)
+        {
+            try
+            {
+                var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
+                if (model == null || !model.Any())
+                    return ErrorResponse(Message.NotFound);
+
+                var costCenters = model.Select(a => a.CostCenter).ToList();
+                var balancete = await _balanceteDataRepository.GetAgrupadoPorCostCenterListAsync(costCenters);
+
+                var response = model
+                    .GroupBy(x => new { x.AccountPlanClassificationId, x.AccountPlanClassification.Name })
+                    .Select(group =>
+                    {
+                        var groupCostCenters = model
+                            .Where(m => m.AccountPlanClassificationId == group.Key.AccountPlanClassificationId)
+                            .Select(m => m.CostCenter)
+                            .ToList();
+
+                        var totalValue = balancete
+                            .Where(b => groupCostCenters.Contains(b.CostCenter))
+                            .Sum(b => b.FinalValue);
+
+                        return new BalanceteDataAccountPlanClassificationResponse
+                        {
+                            Id = group.Key.AccountPlanClassificationId,
+                            Name = group.Key.Name,
+                            Value = totalValue
+                        };
+                    })
+                    .ToList();
+
+                return SuccessResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+
+
+
+        #endregion
 
 
         #region Private 
