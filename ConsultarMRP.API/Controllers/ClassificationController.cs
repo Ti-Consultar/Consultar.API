@@ -1,4 +1,5 @@
 ﻿using _2___Application._1_Services;
+using _3_Domain._2_Enum_s;
 using _4_Application._1_Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,7 +33,22 @@ namespace ConsultarMRP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        [HttpGet]
+        [Route("typeClassification")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetAll( ETypeClassification typeClassification)
+        {
+            try
+            {
 
+                var response = await _Service.GetByTypeClassification(typeClassification);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
         [HttpGet]
         [Route("ativo/{id}")]

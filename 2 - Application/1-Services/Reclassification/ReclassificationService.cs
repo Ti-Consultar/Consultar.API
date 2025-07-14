@@ -112,12 +112,12 @@ namespace _2___Application._1_Services.DRE
                 {
                     Id = apGroup.Key.Id,
                     Classifications = apGroup
-                        .GroupBy(d => new { d.Classification.Id, d.Classification.Name, d.Classification.Type })
+                        .GroupBy(d => new { d.Classification.Id, d.Classification.Name, d.Classification.TypeOrder })
                         .Select(classGroup => new ClassificationWithDREsResponse
                         {
                             Id = classGroup.Key.Id,
                             Name = classGroup.Key.Name,
-                            Type = classGroup.Key.Type,
+                            Type = classGroup.Key.TypeOrder,
                             DREs = classGroup.Select(d => new DREResponseSimple
                             {
                                 Id = d.Id,
@@ -194,7 +194,7 @@ namespace _2___Application._1_Services.DRE
             {
                 Id = model.Id,
                 Name = model.Name,
-                Type = model.Type
+                TypeOrder = model.TypeOrder
             };
         }
         private async Task<int> GetNextSequentialAsync(int accountPlanId)

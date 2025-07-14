@@ -22,7 +22,7 @@ namespace _4_InfraData._1_Repositories
                 .Include(x => x.Classification)
                 .Include(x => x.AccountPlan)
                 .Where(x => x.AccountPlanId == accountPlansId)
-                .OrderBy(x => x.Classification.Type)
+                .OrderBy(x => x.Classification.TypeOrder)
                 .ToListAsync();
         }
 

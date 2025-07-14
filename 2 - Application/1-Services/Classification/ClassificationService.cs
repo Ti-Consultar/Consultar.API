@@ -2,8 +2,10 @@
 using _2___Application._2_Dto_s.Permissions;
 using _2___Application.Base;
 using _3_Domain._1_Entities;
+using _3_Domain._2_Enum_s;
 using _4_InfraData._1_Repositories;
 using _4_InfraData._2_AppSettings;
+using _4_InfraData._5_ConfigEnum;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,7 +36,27 @@ namespace _2___Application._1_Services
                     return ErrorResponse(Message.NotFound);
 
                 var response = model
-                    .OrderBy(x => x.Type) // Ordenação crescente por Type
+                    .OrderBy(x => x.TypeOrder) // Ordenação crescente por Type
+                    .Select(MapToClassificationResponse)
+                    .ToList();
+
+                return SuccessResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+        public async Task<ResultValue> GetByTypeClassification(ETypeClassification typeClassification)
+        {
+            try
+            {
+                var model = await _repository.GetByTypeClassification(typeClassification);
+                if (model == null || !model.Any())
+                    return ErrorResponse(Message.NotFound);
+
+                var response = model
+                    .OrderBy(x => x.TypeOrder) // Ordenação crescente por Type
                     .Select(MapToClassificationResponse)
                     .ToList();
 
@@ -70,7 +92,8 @@ namespace _2___Application._1_Services
             {
                 Id = model.Id,
                 Name = model.Name,
-                Type = model.Type
+                TypeOrder = model.TypeOrder,
+                TypeClassification = model.TypeClassification.GetDescription()
             };
         }
 
