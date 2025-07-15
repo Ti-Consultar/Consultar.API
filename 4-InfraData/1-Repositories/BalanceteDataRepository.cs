@@ -19,6 +19,15 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.BalanceteId == balanceteId)
                 .ToListAsync();
         }
+
+        public async Task<List<BalanceteDataModel>> GetByBalanceteDataByCostCenter(int balanceteId, string search)
+        {
+            return await _context.BalanceteData
+                .Include(x => x.Balancete)
+                .Where(x => x.CostCenter.StartsWith(search) && x.BalanceteId == balanceteId)
+                .ToListAsync();
+        }
+
         public async Task<List<BalanceteDataModel>> GetAgrupadoPorCostCenter(int balanceteId)
         {
             var data = await _context.BalanceteData

@@ -380,6 +380,35 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             }
         }
 
+        public async Task<ResultValue> GetAgrupadoByCostCenter(int balanceteId, string search)
+        {
+            try
+            {
+                var data = await _balanceteDataRepository.GetByBalanceteDataByCostCenter(balanceteId, search);
+
+                if (data == null || !data.Any())
+                    return SuccessResponse(Message.NotFound);
+
+                var result = data.Select(x => new DataDto
+                {
+                    Id = x.Id,
+                    CostCenter = x.CostCenter,
+                    Name = x.Name,
+                    InitialValue = x.InitialValue,
+                    Credit = x.Credit,
+                    Debit = x.Debit,
+                    FinalValue = x.FinalValue,
+                    BudgetedAmount = x.BudgetedAmount,
+                }).ToList();
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
         public async Task<ResultValue> GetAgrupadoSomenteAtivos(int balanceteId)
         {
             try
