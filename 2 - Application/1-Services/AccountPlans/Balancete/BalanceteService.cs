@@ -362,7 +362,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 var balancete = await _balanceteDataRepository.GetByBalanceteIdDate(accountplanId, year, month);
 
                 if (balancete == null || !balancete.Any())
-                    return ErrorResponse(Message.NotFound);
+                    return SuccessResponse(new BalanceteDataDto());
 
                 var result = MapToBalanceteDataDto(balancete);
 
