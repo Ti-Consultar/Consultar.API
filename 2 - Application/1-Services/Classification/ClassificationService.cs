@@ -112,7 +112,7 @@ namespace _2___Application._1_Services
 
         #region AccountPlan Classification
 
-        public async Task<ResultValue> GetByTypeClassificationReal(int accountPlanId,ETypeClassification typeClassification)
+        public async Task<ResultValue> GetByTypeClassificationReal(int accountPlanId, ETypeClassification typeClassification)
         {
             try
             {
@@ -198,7 +198,7 @@ namespace _2___Application._1_Services
                 // Atualiza os dados do item
                 accountPlanClassification.Name = dto.Name;
                 accountPlanClassification.TypeClassification = (ETypeClassification)dto.TypeClassification;
-   
+
 
                 await _accountClassificationRepository.Update(accountPlanClassification);
 
@@ -215,7 +215,7 @@ namespace _2___Application._1_Services
             try
             {
                 var exists = await _accountClassificationRepository.ExistsAccountPlanClassification(accountPlanId);
-         
+
                 return SuccessResponse(exists);
             }
             catch (Exception ex)
@@ -285,7 +285,7 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
-        
+
 
         public async Task<ResultValue> GetBondMonth(int accountPlanId, int balanceteId, int typeClassification)
         {
@@ -399,8 +399,115 @@ namespace _2___Application._1_Services
             }
         }
 
+        public async Task<ResultValue> GetBondDREMonth(int accountPlanId, int balanceteId, int typeClassification)
+        {
+            try
+            {
+                var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
+                if (model == null || !model.Any())
+                    return ErrorResponse(Message.NotFound);
 
+                var costCenters = model.Select(a => a.CostCenter).ToList();
+                var balancete = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMonthAsync(costCenters, balanceteId);
+                var balanceteMonth = await _balanceteRepository.GetBalanceteById(balanceteId);
 
+                var classifications = model
+                                 .GroupBy(x => new { x.AccountPlanClassificationId, x.AccountPlanClassification.Name, x.AccountPlanClassification.TypeOrder })
+                                 .Select(group =>
+                                 {
+                                     var groupCostCenters = group.Select(m => m.CostCenter).ToList();
+
+                                     var totalValue = balancete
+                                         .Where(b => groupCostCenters.Contains(b.CostCenter))
+                                         .Sum(b => b.FinalValue - b.InitialValue);
+
+                                     return new BalanceteDataAccountPlanClassificationResponse
+                                     {
+                                         Id = group.Key.AccountPlanClassificationId,
+                                         Name = group.Key.Name,
+                                         Value = totalValue
+                                     };
+                                 })
+                                 .OrderBy(x => model.First(m => m.AccountPlanClassificationId == x.Id).AccountPlanClassification.TypeOrder)
+                                 .ToList();
+
+                var response = new MonthBalanceteDataAccountPlanClassificationResponse
+                {
+                    Month = balanceteMonth.DateMonth.GetDescription(),
+                    Year = balanceteMonth.DateYear,
+                    Classifications = classifications
+                };
+
+                return SuccessResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+        public async Task<ResultValue> GetBondDREMonths(int accountPlanId, int typeClassification)
+        {
+            try
+            {
+                var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
+                if (model == null || !model.Any())
+                    return ErrorResponse(Message.NotFound);
+
+                var costCenters = model.Select(a => a.CostCenter).ToList();
+
+                // Busca todos os balancetes relacionados aos cost centers
+                var balancetes = await _balanceteRepository.GetBalancetesByCostCenters(costCenters);
+
+                if (balancetes == null || !balancetes.Any())
+                    return ErrorResponse("Nenhum balancete encontrado.");
+
+                var balanceteIds = balancetes.Select(b => b.Id).ToList();
+
+                // Busca dados do balancete agrupados por cost center e balanceteId
+                var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
+
+                // Montar resposta agrupando por balancete (mês e ano)
+                var response = balancetes
+                    .OrderBy(b => b.DateYear)
+                    .ThenBy(b => b.DateMonth)
+                    .Select(bal =>
+                    {
+                        var classifications = model
+                            .GroupBy(x => new { x.AccountPlanClassificationId, x.AccountPlanClassification.Name, x.AccountPlanClassification.TypeOrder })
+                            .Select(group =>
+                            {
+                                var groupCostCenters = group.Select(m => m.CostCenter).ToList();
+
+                                var totalValue = balanceteData
+                                    .Where(bd => bd.BalanceteId == bal.Id && groupCostCenters.Contains(bd.CostCenter))
+                                    .Sum(b => b.FinalValue - b.InitialValue);
+
+                                return new BalanceteDataAccountPlanClassificationResponse
+                                {
+                                    Id = group.Key.AccountPlanClassificationId,
+                                    Name = group.Key.Name,
+                                    Value = totalValue
+                                };
+                            })
+                            .OrderBy(x => model.First(m => m.AccountPlanClassificationId == x.Id).AccountPlanClassification.TypeOrder)
+                            .ToList();
+
+                        return new MonthBalanceteDataAccountPlanClassificationResponse
+                        {
+                            Month = bal.DateMonth.GetDescription(),
+                            Year = bal.DateYear,
+                            Classifications = classifications
+                        };
+                    })
+                    .ToList();
+
+                return SuccessResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
         #endregion
 
 

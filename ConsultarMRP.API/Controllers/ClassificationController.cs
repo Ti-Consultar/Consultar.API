@@ -207,6 +207,41 @@ namespace ConsultarMRP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+         
+        [HttpGet]
+        [Route("/get-bond-month/dre")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetBondDREMonth([FromQuery] int accountPlanId, [FromQuery] int balanceteId, int typeClassification)
+        {
+            try
+            {
+
+                var response = await _Service.GetBondDREMonth(accountPlanId, balanceteId, typeClassification);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        [Route("/get-bond-painel/dre")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetBondDREMonths([FromQuery] int accountPlanId, int typeClassification)
+        {
+            try
+            {
+
+                var response = await _Service.GetBondDREMonths(accountPlanId, typeClassification);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
         #endregion
     }
 }
