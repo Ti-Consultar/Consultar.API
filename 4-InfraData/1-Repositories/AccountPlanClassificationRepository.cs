@@ -111,6 +111,19 @@ namespace _4_InfraData._1_Repositories
             return model;
         }
 
+        public async Task<List<BalanceteDataAccountPlanClassification>> GetBondMonth(int accountPlanId, int balanceteId,int typeClassification)
+        {
+            var model = await _context.BalanceteDataAccountPlanClassification
+                .Include(a => a.AccountPlanClassification)
+                    .ThenInclude(apc => apc.AccountPlan)
+                .Where(c =>
+                    c.AccountPlanClassification.AccountPlanId == accountPlanId &&
+                    (int)c.AccountPlanClassification.TypeClassification == typeClassification
+                )
+                .OrderBy(c => c.AccountPlanClassification.TypeOrder)
+                .ToListAsync();
 
+            return model;
+        }
     }
 }

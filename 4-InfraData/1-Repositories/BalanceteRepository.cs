@@ -52,6 +52,16 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.Id == id)
                 .FirstOrDefaultAsync();
         }
+        public async Task<List<BalanceteModel>> GetBalancetesByCostCenters(List<string> costCenters)
+        {
+            return await _context.BalanceteData
+                .Where(bd => costCenters.Contains(bd.CostCenter))
+                .Select(bd => bd.Balancete)
+                .Distinct()
+                .OrderBy(b => b.DateYear)
+                .ThenBy(b => b.DateMonth)
+                .ToListAsync();
+        }
 
         public async Task DeleteBalanceteData(int balanceteId)
         {

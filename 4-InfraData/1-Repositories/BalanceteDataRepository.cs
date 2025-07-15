@@ -28,15 +28,26 @@ namespace _4_InfraData._1_Repositories
 
             return AgruparPorCostCenterPai(data);
         }
-
+        public async Task<List<BalanceteDataModel>> GetAgrupadoPorCostCenterListMultiBalancete(List<string> costCenters, List<int> balanceteIds)
+        {
+            return await _context.BalanceteData
+                .Where(bd => balanceteIds.Contains(bd.BalanceteId) && costCenters.Contains(bd.CostCenter))
+                .ToListAsync();
+        }
+        public async Task<List<BalanceteDataModel>> GetAgrupadoPorCostCenterListMonthAsync(List<string> costCenters, int balanceteId)
+        {
+            return await _context.BalanceteData
+                .Include(x => x.Balancete)
+                .Where(x => x.BalanceteId == balanceteId && costCenters.Contains(x.CostCenter))
+                .ToListAsync();
+        }
         public async Task<List<BalanceteDataModel>> GetAgrupadoPorCostCenterListAsync(List<string> costCenters)
         {
             return await _context.BalanceteData
                 .Include(x => x.Balancete)
-                .Where(x => costCenters.Contains(x.CostCenter))
+                .Where(x =>  costCenters.Contains(x.CostCenter))
                 .ToListAsync();
         }
-
 
 
         public List<BalanceteDataModel> AgruparPorCostCenterPai(List<BalanceteDataModel> data)

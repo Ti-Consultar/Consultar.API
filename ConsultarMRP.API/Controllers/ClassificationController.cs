@@ -157,7 +157,39 @@ namespace ConsultarMRP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        [HttpGet]
+        [Route("/get-bond-month")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetBond([FromQuery] int accountPlanId, [FromQuery] int balanceteId, int typeClassification)
+        {
+            try
+            {
 
+                var response = await _Service.GetBondMonth(accountPlanId, balanceteId, typeClassification);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        [Route("/get-bond-painel")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetBondMonths([FromQuery] int accountPlanId, int typeClassification)
+        {
+            try
+            {
+
+                var response = await _Service.GetBondMonths(accountPlanId, typeClassification);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
         #endregion
     }
 }
