@@ -14,6 +14,7 @@ using _2___Application._2_Dto_s.Company.SubCompany;
 using _2___Application._2_Dto_s.Company;
 using _2___Application._2_Dto_s.Group;
 using _4_InfraData._5_ConfigEnum;
+using Microsoft.IdentityModel.Tokens;
 
 namespace _2___Application._1_Services.AccountPlans.Balancete
 {
@@ -380,10 +381,12 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             }
         }
 
-        public async Task<ResultValue> GetAgrupadoByCostCenter(int balanceteId, string search)
+        public async Task<ResultValue> GetAgrupadoByCostCenter(int balanceteId, string? search)
         {
             try
             {
+               
+
                 var data = await _balanceteDataRepository.GetByBalanceteDataByCostCenter(balanceteId, search);
 
                 if (data == null || !data.Any())
