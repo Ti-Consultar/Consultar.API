@@ -147,6 +147,25 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             }
         }
 
+        public async Task<ResultValue> GetByDate(int accountplanId, int year, int month)
+        {
+            try
+            {
+                var accountPlans = await _repository.GetByDate(accountplanId, year, month);
+
+                if (accountPlans == null || !accountPlans.Any())
+                    return ErrorResponse(Message.NotFound);
+
+                var result = accountPlans.Select(MapToBalanceteDto).ToList();
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
         public async Task<ResultValue> Delete(int id)
         {
             try
@@ -194,6 +213,9 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
             return SuccessResponse(response);
         }
+
+      
+
         public async Task<ResultValue> GetAccountPlanWithBalancetes(int accountPlanId, char tipo)
         {
             if (tipo == 0)
@@ -332,6 +354,26 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 return ErrorResponse(ex);
             }
         }
+
+        public async Task<ResultValue> GetByBalanceteIdDate(int accountplanId, int year, int month)
+        {
+            try
+            {
+                var balancete = await _balanceteDataRepository.GetByBalanceteIdDate(accountplanId, year, month);
+
+                if (balancete == null || !balancete.Any())
+                    return ErrorResponse(Message.NotFound);
+
+                var result = MapToBalanceteDataDto(balancete);
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
 
         public async Task<ResultValue> GetByBalanceteId(int balanceteId)
         {

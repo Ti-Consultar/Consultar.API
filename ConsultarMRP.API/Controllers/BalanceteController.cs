@@ -101,6 +101,23 @@ namespace _5_API.Controllers
         }
 
         /// <summary>
+        /// Lista o plano de contas por Id
+        /// </summary>
+        [HttpGet("accountplan/{accountPlanid}/date")]
+        [Authorize()]
+        public async Task<IActionResult> GetByDate(int accountPlanid, [FromQuery] int year, [FromQuery]int month)
+        {
+            var result = await _service.GetByBalanceteIdDate(accountPlanid, year, month);
+
+            if (!result.Success)
+                return NotFound(result);
+
+            return Ok(result);
+        }
+
+        
+
+        /// <summary>
         /// Deleta
         /// </summary>
         [HttpDelete("{id}")]

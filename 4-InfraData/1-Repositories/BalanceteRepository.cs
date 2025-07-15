@@ -37,6 +37,14 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.Id == id)
                 .ToListAsync();
         }
+
+        public async Task<List<BalanceteModel>> GetByDate(int accountPlanId, int year, int month)
+        {
+            return await _context.Balancete
+                .Include(x => x.AccountPlans)
+                .Where(x => x.AccountPlansId == accountPlanId && (int)x.DateMonth == month && x.DateYear == year)
+                .ToListAsync();
+        }
         public async Task<List<BalanceteModel>> GetByIdDelete(int id)
         {
             return await _context.Balancete
@@ -93,6 +101,15 @@ namespace _4_InfraData._1_Repositories
                 .ThenBy(ap => ap.DateMonth)
                 .ToListAsync();
         }
-
+        public async Task<BalanceteModel> GetWithBalancetesSearchAsync(int accountplanId, int year, int month)
+        {
+            return await _context.Balancete
+                .Include(x => x.AccountPlans)
+                .Include(x => x.BalancetesData)
+                .Where(ap => ap.DateYear == year && (int)ap.DateMonth == month && ap.AccountPlansId == accountplanId)
+                .OrderBy(ap => ap.DateYear)
+                .ThenBy(ap => ap.DateMonth)
+                .FirstOrDefaultAsync();
+        }
     }
 }
