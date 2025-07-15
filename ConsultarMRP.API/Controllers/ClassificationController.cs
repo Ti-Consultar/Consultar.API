@@ -190,6 +190,23 @@ namespace ConsultarMRP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet]
+        [Route("exists")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetAccountPlanClassification([FromQuery] int accountPlanId)
+        {
+            try
+            {
+
+                var response = await _Service.GetAccountPlanClassification(accountPlanId);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
         #endregion
     }
 }

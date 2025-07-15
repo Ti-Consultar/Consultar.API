@@ -210,6 +210,19 @@ namespace _2___Application._1_Services
             }
         }
 
+        public async Task<ResultValue> GetAccountPlanClassification(int accountPlanId)
+        {
+            try
+            {
+                var exists = await _accountClassificationRepository.ExistsAccountPlanClassification(accountPlanId);
+         
+                return SuccessResponse(exists);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
 
         #region Vinculos
 

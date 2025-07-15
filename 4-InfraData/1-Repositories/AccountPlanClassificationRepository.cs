@@ -111,6 +111,13 @@ namespace _4_InfraData._1_Repositories
             return model;
         }
 
+        public async Task<bool> ExistsAccountPlanClassification(int accountPlanId)
+        {
+            return await _context.AccountPlanClassification
+                .AnyAsync(a => a.AccountPlanId == accountPlanId);
+        }
+
+
         public async Task<List<BalanceteDataAccountPlanClassification>> GetBondMonth(int accountPlanId, int balanceteId,int typeClassification)
         {
             var model = await _context.BalanceteDataAccountPlanClassification
