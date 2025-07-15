@@ -245,6 +245,28 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
+
+        public async Task<ResultValue> CreateBondList(BalanceteDataAccountPlanClassificationCreateList dto)
+        {
+            try
+            {
+                var models = dto.BondList.SelectMany(bond => bond.CostCenters.Select(cc => new BalanceteDataAccountPlanClassification
+                {
+                    AccountPlanClassificationId = bond.AccountPlanClassificationId,
+                    CostCenter = cc.CostCenter
+                })).ToList();
+
+                await _accountClassificationRepository.CreateBond(models);
+
+                return SuccessResponse(Message.Success);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+
         public async Task<ResultValue> GetBond(int accountPlanId, int typeClassification)
         {
             try
