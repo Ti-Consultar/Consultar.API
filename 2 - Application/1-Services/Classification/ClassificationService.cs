@@ -487,7 +487,7 @@ namespace _2___Application._1_Services
                             c.Name == "Outros Creditos" ||
                             c.Name == "Adiantamentos" ||
                             c.Name == "Tributos a Recuperar" ||
-                            c.Name == "Estoque").ToList();
+                            c.Name == "Estoques").ToList();
 
                         var totalLongoPrazo = classificationsMonth.Where(c =>
                             c.Name == "Empréstimos a Coligadas e Controladas" ||
