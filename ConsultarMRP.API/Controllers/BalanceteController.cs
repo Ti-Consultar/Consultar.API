@@ -183,7 +183,7 @@ namespace _5_API.Controllers
         }
 
         [HttpGet("{balanceteId}/filter")]
-         [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
+         //[Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
         public async Task<IActionResult> GetAgrupadoPorTipo(int balanceteId, [FromQuery] char tipo)
         {
             var result = await _service.GetAgrupadoPorTipo(balanceteId, tipo);

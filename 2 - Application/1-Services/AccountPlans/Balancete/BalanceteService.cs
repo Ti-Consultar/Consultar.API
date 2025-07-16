@@ -345,6 +345,13 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                     return ErrorResponse("Formato de arquivo não suportado. Envie um CSV ou XLSX.");
                 }
 
+                // Remover duplicados na lista importada (CostCenter único)
+                list = list
+                    .GroupBy(x => x.CostCenter)
+                    .Select(g => g.First())
+                    .ToList();
+
+               
                 await _balanceteDataRepository.AddRangeAsync(list);
 
                 return SuccessResponse("Dados importados com sucesso.");
@@ -354,6 +361,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 return ErrorResponse(ex);
             }
         }
+
 
         public async Task<ResultValue> GetByBalanceteIdDate(int accountplanId, int year, int month)
         {
