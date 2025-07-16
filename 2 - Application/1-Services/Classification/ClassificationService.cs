@@ -321,25 +321,31 @@ namespace _2___Application._1_Services
                 var balancete = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMonthAsync(costCenters, balanceteId);
                 var balanceteMonth = await _balanceteRepository.GetBalanceteById(balanceteId);
 
+                var factor = typeClassification == 2 ? -1 : 1;
+
                 var classifications = model
-                    .GroupBy(x => new { x.AccountPlanClassificationId, x.AccountPlanClassification.Name, x.AccountPlanClassification.TypeOrder })
+                    .GroupBy(x => new
+                    {
+                        x.AccountPlanClassificationId,
+                        x.AccountPlanClassification.Name,
+                        x.AccountPlanClassification.TypeOrder
+                    })
                     .Select(group =>
                     {
                         var groupCostCenters = group.Select(m => m.CostCenter).ToList();
 
                         var totalValue = balancete
                             .Where(b => groupCostCenters.Contains(b.CostCenter))
-                            .Sum(b => b.FinalValue);
+                            .Sum(b => b.FinalValue) * factor;
 
                         return new BalanceteDataAccountPlanClassificationResponse
                         {
                             Id = group.Key.AccountPlanClassificationId,
                             Name = group.Key.Name,
                             Value = totalValue
-
                         };
                     })
-                   .OrderBy(x => model.First(m => m.AccountPlanClassificationId == x.Id).AccountPlanClassification.TypeOrder)
+                    .OrderBy(x => model.First(m => m.AccountPlanClassificationId == x.Id).AccountPlanClassification.TypeOrder)
                     .ToList();
 
                 var response = new MonthBalanceteDataAccountPlanClassificationResponse
@@ -356,6 +362,7 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
+
 
         public async Task<ResultValue> GetBondMonths(int accountPlanId, int typeClassification)
         {
@@ -378,6 +385,8 @@ namespace _2___Application._1_Services
                 // Busca dados do balancete agrupados por cost center e balanceteId
                 var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
 
+                var factor = typeClassification == 2 ? -1 : 1;
+
                 // Montar resposta agrupando por balancete (mês e ano)
                 var response = balancetes
                     .OrderBy(b => b.DateYear)
@@ -385,14 +394,19 @@ namespace _2___Application._1_Services
                     .Select(bal =>
                     {
                         var classifications = model
-                            .GroupBy(x => new { x.AccountPlanClassificationId, x.AccountPlanClassification.Name, x.AccountPlanClassification.TypeOrder })
+                            .GroupBy(x => new
+                            {
+                                x.AccountPlanClassificationId,
+                                x.AccountPlanClassification.Name,
+                                x.AccountPlanClassification.TypeOrder
+                            })
                             .Select(group =>
                             {
                                 var groupCostCenters = group.Select(m => m.CostCenter).ToList();
 
                                 var totalValue = balanceteData
                                     .Where(bd => bd.BalanceteId == bal.Id && groupCostCenters.Contains(bd.CostCenter))
-                                    .Sum(bd => bd.FinalValue);
+                                    .Sum(bd => bd.FinalValue) * factor;
 
                                 return new BalanceteDataAccountPlanClassificationResponse
                                 {
@@ -420,6 +434,7 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
+
 
         public async Task<ResultValue> GetBondDREMonth(int accountPlanId, int balanceteId, int typeClassification)
         {
