@@ -71,6 +71,21 @@ namespace _4_InfraData._1_Repositories
                 .ToListAsync();
         }
 
+
+        public async Task<List<BalanceteModel>> GetBalancetesByCostCenterAtivo(int accountPlanId, int year)
+        {
+            return await _context.BalanceteData
+                .Where(bd => bd.CostCenter.StartsWith("1")
+                             && bd.Balancete.DateYear == year
+                             && bd.Balancete.AccountPlansId == accountPlanId)
+                .Select(bd => bd.Balancete)
+                .Distinct()
+                .OrderBy(b => b.DateYear)
+                .ThenBy(b => b.DateMonth)
+                .ToListAsync();
+        }
+
+
         public async Task DeleteBalanceteData(int balanceteId)
         {
             var model = await _context.BalanceteData

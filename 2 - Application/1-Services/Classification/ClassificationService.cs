@@ -434,6 +434,117 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
+        public async Task<ResultValue> GetPainelMonths(int accountPlanId, int year)
+        {
+            try
+            {
+                var model = await _accountClassificationRepository.GetBond(accountPlanId, 1);
+                if (model == null || !model.Any())
+                    return ErrorResponse(Message.NotFound);
+
+                var costCenters = model.Select(a => a.CostCenter).ToList();
+                var balancetes = await _balanceteRepository.GetBalancetesByCostCenterAtivo(accountPlanId,year);
+                if (balancetes == null || !balancetes.Any())
+                    return ErrorResponse("Nenhum balancete encontrado.");
+
+                var balanceteIds = balancetes.Select(b => b.Id).ToList();
+                var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
+
+                var response = new PainelMensalAtivoResponse
+                {
+                    Year = year,
+                    Meses = balancetes.OrderBy(b => b.DateMonth).Select(bal =>
+                    {
+                        // Agrupar classificações para o mês atual (bal)
+                        var classificationsMonth = model
+                            .GroupBy(x => new
+                            {
+                                x.AccountPlanClassificationId,
+                                x.AccountPlanClassification.Name
+                            })
+                            .Select(group =>
+                            {
+                                var groupCostCenters = group.Select(m => m.CostCenter).ToList();
+
+                                var totalValue = balanceteData
+                                    .Where(bd => bd.BalanceteId == bal.Id && groupCostCenters.Contains(bd.CostCenter))
+                                    .Sum(bd => bd.FinalValue);
+
+                                return new BalanceteDataAccountPlanClassificationResponseteste
+                                {
+                                    Id = group.Key.AccountPlanClassificationId,
+                                    Name = group.Key.Name,
+                                    Value = totalValue
+                                };
+                            })
+                            .ToList();
+
+                        // Filtrar classificações para cada categoria principal - ajuste os filtros conforme sua regra
+                        var totalAtivoCirculante = classificationsMonth.Where(c =>
+                            c.Name == "Caixa e Equivalente de Caixa" ||
+                            c.Name == "Aplicação Financeira" ||
+                            c.Name == "Clientes" ||
+                            c.Name == "Outros Creditos" ||
+                            c.Name == "Adiantamentos" ||
+                            c.Name == "Tributos a Recuperar" ||
+                            c.Name == "Estoque").ToList();
+
+                        var totalLongoPrazo = classificationsMonth.Where(c =>
+                            c.Name == "Empréstimos a Coligadas e Controladas" ||
+                            c.Name == "Depósitos Judiciais" 
+                            ).ToList();
+                        var totalPermanente = classificationsMonth.Where(c =>
+                            c.Name == "Investimentos" ||
+                            c.Name == "Imobilizado" ||
+                            c.Name == "( - ) Depreciação Acumuladas" ||
+                            c.Name == "Intangivel / Diferido").ToList();
+                        var totalAtivoNaoCirculante = classificationsMonth.Where(c =>
+                            c.Name == "Ativo Compensado" ||
+                            c.Name == "Contas Transitórias Ativo"
+                            ).ToList();
+
+                        return new MesAtivoPainel
+                        {
+                            Month = bal.DateMonth.GetDescription(),
+                            TotalAtivoCirculante = new TotalAtivoCirculante
+                            {
+                                Classifications = totalAtivoCirculante,
+                                value = totalAtivoCirculante.Sum(c => c.Value)
+                            },
+                            TotalLongoPrazo = new TotalLongoPrazo
+                            {
+                                Classifications = totalLongoPrazo,
+                                value = totalLongoPrazo.Sum(c => c.Value)
+                            },
+                            TotalPermanente = new TotalPermanente
+                            {
+                                Classifications = totalPermanente,
+                                value = totalPermanente.Sum(c => c.Value)
+                            },
+                            TotalAtivoNaoCirculante = new TotalAtivoNaoCirculante
+                            {
+                                Classifications = totalAtivoNaoCirculante,
+                                value = totalAtivoNaoCirculante.Sum(c => c.Value)
+                            },
+                            TotalGeralDoAtivo = new TotalGeralDoAtivo
+                            {
+                                value = totalAtivoCirculante.Sum(c => c.Value)
+                                      + totalLongoPrazo.Sum(c => c.Value)
+                                      + totalPermanente.Sum(c => c.Value)
+                                      + totalAtivoNaoCirculante.Sum(c => c.Value)
+                            }
+                        };
+                    }).ToList()
+                };
+
+                return SuccessResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
 
 
         public async Task<ResultValue> GetBondDREMonth(int accountPlanId, int balanceteId, int typeClassification)

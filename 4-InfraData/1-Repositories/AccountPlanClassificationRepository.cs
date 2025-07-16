@@ -111,6 +111,22 @@ namespace _4_InfraData._1_Repositories
             return model;
         }
 
+        public async Task<List<BalanceteDataAccountPlanClassification>> GetBondAtivo(int accountPlanId)
+        {
+            var model = await _context.BalanceteDataAccountPlanClassification
+                .Include(a => a.AccountPlanClassification)
+                    .ThenInclude(apc => apc.AccountPlan)
+                .Where(c =>
+                    c.AccountPlanClassification.AccountPlanId == accountPlanId &&
+                    (int)c.AccountPlanClassification.TypeClassification == 1 
+                   
+                )
+                .OrderBy(c => c.AccountPlanClassification.TypeOrder)
+                .ToListAsync();
+
+            return model;
+        }
+
         public async Task<bool> ExistsAccountPlanClassification(int accountPlanId)
         {
             return await _context.AccountPlanClassification

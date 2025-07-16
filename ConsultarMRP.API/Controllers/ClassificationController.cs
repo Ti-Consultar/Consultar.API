@@ -208,6 +208,23 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpGet]
+        [Route("/get-bond-painel/ativo")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetPainelMonths([FromQuery] int accountPlanId, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GetPainelMonths(accountPlanId,year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
         [Route("exists")]
         // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetAccountPlanClassification([FromQuery] int accountPlanId)
