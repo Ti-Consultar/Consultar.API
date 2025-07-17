@@ -37,6 +37,18 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.Id == id)
                 .ToListAsync();
         }
+        public async Task<List<BalanceteModel>> GetBalancetesByCostCenter(int accountPlanId, int year, int bondType)
+        {
+            return await _context.BalanceteData
+                .Where(bd => bd.CostCenter.StartsWith(bondType.ToString())
+                             && bd.Balancete.DateYear == year
+                             && bd.Balancete.AccountPlansId == accountPlanId)
+                .Select(bd => bd.Balancete)
+                .Distinct()
+                .OrderBy(b => b.DateYear)
+                .ThenBy(b => b.DateMonth)
+                .ToListAsync();
+        }
 
         public async Task<List<BalanceteModel>> GetByDate(int accountPlanId, int year, int month)
         {

@@ -9,6 +9,7 @@ using _3_Domain._2_Enum_s;
 using _4_InfraData._1_Repositories;
 using _4_InfraData._2_AppSettings;
 using _4_InfraData._5_ConfigEnum;
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -443,7 +444,7 @@ namespace _2___Application._1_Services
                     return ErrorResponse(Message.NotFound);
 
                 var costCenters = model.Select(a => a.CostCenter).ToList();
-                var balancetes = await _balanceteRepository.GetBalancetesByCostCenterAtivo(accountPlanId,year);
+                var balancetes = await _balanceteRepository.GetBalancetesByCostCenterAtivo(accountPlanId, year);
                 if (balancetes == null || !balancetes.Any())
                     return ErrorResponse("Nenhum balancete encontrado.");
 
@@ -491,7 +492,7 @@ namespace _2___Application._1_Services
 
                         var totalLongoPrazo = classificationsMonth.Where(c =>
                             c.Name == "Empréstimos a Coligadas e Controladas" ||
-                            c.Name == "Depósitos Judiciais" 
+                            c.Name == "Depósitos Judiciais"
                             ).ToList();
                         var totalPermanente = classificationsMonth.Where(c =>
                             c.Name == "Investimentos" ||
@@ -544,6 +545,308 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
+
+        public async Task<ResultValue> GetPainelTypeMonths(int accountPlanId, int year, int type)
+        {
+            if (type == 1) // Ativo
+                return await GerarPainelAtivo(accountPlanId, year);
+            else if (type == 2) // Passivo
+                return await GerarPainelPassivo(accountPlanId, year);
+            else
+                return ErrorResponse("Tipo inválido.");
+        }
+        private async Task<ResultValue> GerarPainelAtivo(int accountPlanId, int year)
+        {
+            return await GerarPainelPorBond(accountPlanId, year, 1);
+        }
+
+        private async Task<ResultValue> GerarPainelPassivo(int accountPlanId, int year)
+        {
+            return await GerarPainelPorBondPassivo(accountPlanId, year, 2);
+        }
+
+        private async Task<ResultValue> GerarPainelPorBondPassivo(int accountPlanId, int year, int bondType)
+        {
+            try
+            {
+                var model = await _accountClassificationRepository.GetBond(accountPlanId, bondType);
+                if (model == null || !model.Any())
+                    return ErrorResponse(Message.NotFound);
+
+                var costCenters = model.Select(a => a.CostCenter).ToList();
+                var balancetes = await _balanceteRepository.GetBalancetesByCostCenter(accountPlanId, year, bondType);
+                if (balancetes == null || !balancetes.Any())
+                    return ErrorResponse("Nenhum balancete encontrado.");
+
+                var balanceteIds = balancetes.Select(b => b.Id).ToList();
+                var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
+
+                var response = new PainelMensalPassivoResponse
+                {
+                    Year = year,
+                    Meses = balancetes.OrderBy(b => b.DateMonth).Select(bal =>
+                    {
+                        var classificationsMonth = model
+                            .GroupBy(x => new
+                            {
+                                x.AccountPlanClassificationId,
+                                x.AccountPlanClassification.Name
+                            })
+                            .Select(group =>
+                            {
+                                var groupCostCenters = group.Select(m => m.CostCenter).ToList();
+                                var totalValue = balanceteData
+                                    .Where(bd => bd.BalanceteId == bal.Id && groupCostCenters.Contains(bd.CostCenter))
+                                    .Sum(bd => bd.FinalValue) * -1; // Inversão aplicada aqui
+
+                                return new BalanceteDataAccountPlanClassificationResponseteste
+                                {
+                                    Id = group.Key.AccountPlanClassificationId,
+                                    Name = group.Key.Name,
+                                    Value = totalValue
+                                };
+                            })
+                            .ToList();
+
+                        var (passivoCirculante, passivoNaoCirculante, patrimonioLiquido, passivoCompensado) =
+                            CategorizarPassivo(classificationsMonth);
+
+                        return new MesPassivoPainel
+                        {
+                            Month = bal.DateMonth.GetDescription(),
+                            TotalPassivoCirculante = new TotalPassivoCirculante
+                            {
+                                Classifications = passivoCirculante,
+                                Value = passivoCirculante.Sum(c => c.Value)
+                            },
+                            TotalPassivoNaoCirculante = new TotalPassivoNaoCirculante
+                            {
+                                Classifications = passivoNaoCirculante,
+                                Value = passivoNaoCirculante.Sum(c => c.Value)
+                            },
+                            TotalPatrimonioLiquido = new TotalPatrimonioLiquido
+                            {
+                                Classifications = patrimonioLiquido,
+                                Value = patrimonioLiquido.Sum(c => c.Value)
+                            },
+                            TotalPassivoCompensado = new TotalPassivoCompensado
+                            {
+                                Classifications = passivoCompensado,
+                                Value = passivoCompensado.Sum(c => c.Value)
+                            },
+                            TotalGeralDoPassivo = new TotalGeralDoPassivo
+                            {
+                                Value = passivoCirculante.Sum(c => c.Value)
+                                        + passivoNaoCirculante.Sum(c => c.Value)
+                                        + patrimonioLiquido.Sum(c => c.Value)
+                                        + passivoCompensado.Sum(c => c.Value)
+                            }
+                        };
+                    }).ToList()
+                };
+
+                return SuccessResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+
+        private (List<BalanceteDataAccountPlanClassificationResponseteste> passivoCirculante,
+         List<BalanceteDataAccountPlanClassificationResponseteste> passivoNaoCirculante,
+         List<BalanceteDataAccountPlanClassificationResponseteste> patrimonioLiquido,
+         List<BalanceteDataAccountPlanClassificationResponseteste> passivoCompensado)
+CategorizarPassivo(List<BalanceteDataAccountPlanClassificationResponseteste> classifications)
+        {
+            var passivoCirculante = classifications.Where(c =>
+                new[] {
+                    "Fornecedores", 
+                    "Outras Contas a Pagar",
+                    "Empréstimos e Financiamentos", // Créditos de Clientes
+                    "( - ) Devolução de Compras", // não achei
+                    "Obrigações Trabalhistas",//Obrigações Sociais a Pagar
+                    "Obrigações Tributárias",//Obrigações Fiscais a Pagar,
+                    "Outros Passivos Operacionais"//Outras Exigibilidades
+                }.Contains(c.Name)).ToList();
+
+            var passivoNaoCirculante = classifications.Where(c =>
+                new[] {
+                        "Instituições Financeiras",
+                         "Empréstimos de Coligadas e Controladas",
+                        "Outras Contas a Pagar - LP",
+                        "Outros Passivos Operacionais",
+                        "Passivo Não Circulante Operacional",
+                        "Passivo Não Circulante Financeiro",
+
+                }.Contains(c.Name)).ToList();
+
+            var patrimonioLiquido = classifications.Where(c =>
+                new[] {
+                    "Capital Social",
+                    "Reservas De Capital",
+                    "Lucros Ou Prejuizos Acumulados",
+                    "Distribuição De Lucro",
+                    "Resultado Do Exercício"
+                }.Contains(c.Name)).ToList();
+
+            var passivoCompensado = classifications.Where(c =>
+                new[] {
+                    "Passivo Compensado",
+                    "Contas Transitórias Passivo",
+                    "Apuração e Encerramento",
+                    "Custo com Depreciação"
+                }.Contains(c.Name)).ToList();
+
+            return (passivoCirculante, passivoNaoCirculante, patrimonioLiquido, passivoCompensado);
+        }
+
+
+
+        private async Task<ResultValue> GerarPainelPorBond(int accountPlanId, int year, int bondType)
+        {
+            try
+            {
+                var model = await _accountClassificationRepository.GetBond(accountPlanId, bondType);
+                if (model == null || !model.Any())
+                    return ErrorResponse(Message.NotFound);
+
+                var costCenters = model.Select(a => a.CostCenter).ToList();
+
+                var balancetes = await _balanceteRepository.GetBalancetesByCostCenter(accountPlanId, year, bondType);
+                if (balancetes == null || !balancetes.Any())
+                    return ErrorResponse("Nenhum balancete encontrado.");
+
+                var balanceteIds = balancetes.Select(b => b.Id).ToList();
+                var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
+
+                var response = new PainelMensalAtivoResponse
+                {
+                    Year = year,
+                    Meses = balancetes.OrderBy(b => b.DateMonth).Select(bal =>
+                    {
+                        var classificationsMonth = model
+                            .GroupBy(x => new
+                            {
+                                x.AccountPlanClassificationId,
+                                x.AccountPlanClassification.Name
+                            })
+                            .Select(group =>
+                            {
+                                var groupCostCenters = group.Select(m => m.CostCenter).ToList();
+                                var totalValue = balanceteData
+                                    .Where(bd => bd.BalanceteId == bal.Id && groupCostCenters.Contains(bd.CostCenter))
+                                    .Sum(bd => bd.FinalValue);
+
+                                return new BalanceteDataAccountPlanClassificationResponseteste
+                                {
+                                    Id = group.Key.AccountPlanClassificationId,
+                                    Name = group.Key.Name,
+                                    Value = totalValue
+                                };
+                            })
+                            .ToList();
+
+                        // Aqui você pode usar diferentes tratamentos baseado no bondType
+                        var (totalCirculante, totalLongoPrazo, totalPermanente, totalNaoCirculante) = CategorizarPorBond(classificationsMonth, bondType);
+
+                        return new MesAtivoPainel
+                        {
+                            Month = bal.DateMonth.GetDescription(),
+                            TotalAtivoCirculante = new TotalAtivoCirculante
+                            {
+                                Classifications = totalCirculante,
+                                value = totalCirculante.Sum(c => c.Value)
+                            },
+                            TotalLongoPrazo = new TotalLongoPrazo
+                            {
+                                Classifications = totalLongoPrazo,
+                                value = totalLongoPrazo.Sum(c => c.Value)
+                            },
+                            TotalPermanente = new TotalPermanente
+                            {
+                                Classifications = totalPermanente,
+                                value = totalPermanente.Sum(c => c.Value)
+                            },
+                            TotalAtivoNaoCirculante = new TotalAtivoNaoCirculante
+                            {
+                                Classifications = totalNaoCirculante,
+                                value = totalNaoCirculante.Sum(c => c.Value)
+                            },
+                            TotalGeralDoAtivo = new TotalGeralDoAtivo
+                            {
+                                value = totalCirculante.Sum(c => c.Value)
+                                      + totalLongoPrazo.Sum(c => c.Value)
+                                      + totalPermanente.Sum(c => c.Value)
+                                      + totalNaoCirculante.Sum(c => c.Value)
+                            }
+                        };
+                    }).ToList()
+                };
+
+                return SuccessResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+
+        private (List<BalanceteDataAccountPlanClassificationResponseteste> circulante,
+         List<BalanceteDataAccountPlanClassificationResponseteste> longoPrazo,
+         List<BalanceteDataAccountPlanClassificationResponseteste> permanente,
+         List<BalanceteDataAccountPlanClassificationResponseteste> naoCirculante)
+
+
+    CategorizarPorBond(List<BalanceteDataAccountPlanClassificationResponseteste> classifications, int bondType)
+        {
+            if (bondType == 1) // Ativo
+            {
+                var totalCirculante = classifications.Where(c =>
+                    new[] { "Caixa e Equivalente de Caixa", "Aplicação Financeira", "Clientes", "Outros Ativos Operacionais", "Adiantamentos", "Tributos a Recuperar", "Estoques" }
+                    .Contains(c.Name)).ToList();
+
+                var totalLongoPrazo = classifications.Where(c =>
+                    new[] { "Empréstimos a Coligadas e Controladas", "Depósitos Judiciais" }
+                    .Contains(c.Name)).ToList();
+
+                var totalPermanente = classifications.Where(c =>
+                    new[] { "Investimentos", "Imobilizado", "( - ) Depreciação Acumuladas", "Intangível / Diferido", "( - ) Amortização Acumuladas" }
+                    .Contains(c.Name)).ToList();
+
+                var totalNaoCirculante = classifications.Where(c =>
+                    new[] { "Ativo Compensado", "Contas Transitórias", "Ativo Não Circulante Financeiro", "Ativo Não Circulante Operacional" }
+                    .Contains(c.Name)).ToList();
+
+                return (totalCirculante, totalLongoPrazo, totalPermanente, totalNaoCirculante);
+            }
+            else if (bondType == 2) // Passivo (exemplo)
+            {
+                // Quando for passivo você cria outras regras
+                var totalCirculante = classifications.Where(c =>
+                    new[] { "Fornecedores", "Empréstimos Bancários", "Salários a Pagar" }
+                    .Contains(c.Name)).ToList();
+
+                var totalLongoPrazo = classifications.Where(c =>
+                    new[] { "Financiamentos de Longo Prazo", "Provisões" }
+                    .Contains(c.Name)).ToList();
+
+                var totalPermanente = new List<BalanceteDataAccountPlanClassificationResponseteste>();
+                var totalNaoCirculante = new List<BalanceteDataAccountPlanClassificationResponseteste>();
+
+                return (totalCirculante, totalLongoPrazo, totalPermanente, totalNaoCirculante);
+            }
+
+            // Default vazio
+            return (new List<BalanceteDataAccountPlanClassificationResponseteste>(),
+                    new List<BalanceteDataAccountPlanClassificationResponseteste>(),
+                    new List<BalanceteDataAccountPlanClassificationResponseteste>(),
+                    new List<BalanceteDataAccountPlanClassificationResponseteste>());
+        }
+
+
 
 
 

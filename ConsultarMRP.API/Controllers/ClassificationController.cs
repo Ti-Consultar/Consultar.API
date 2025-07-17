@@ -208,14 +208,14 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpGet]
-        [Route("/get-bond-painel/ativo")]
+        [Route("/get-bond-painel/type")]
         // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
-        public async Task<IActionResult> GetPainelMonths([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetPainelMonths([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int type)
         {
             try
             {
 
-                var response = await _Service.GetPainelMonths(accountPlanId,year);
+                var response = await _Service.GetPainelTypeMonths(accountPlanId,year, type);
                 return Ok(response);
             }
             catch (Exception ex)
