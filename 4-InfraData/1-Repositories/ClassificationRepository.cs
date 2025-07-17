@@ -21,19 +21,22 @@ namespace _4_InfraData._1_Repositories
         {
             var model = await _context.Classification
                 .Where(c => c.TypeClassification == typeClassification)
+                .Include(a => a.TotalizerClassificationTemplate)
                 .OrderBy(c => c.TypeOrder)
-                .Select(c => new ClassificationModel
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    TypeOrder = c.TypeOrder,
-                    TypeClassification = c.TypeClassification
-                })
+                
                 .ToListAsync();
 
             return model;
         }
-      
+        public async Task<List<ClassificationModel>> GetAll()
+        {
+            var model = await _context.Classification
+                .Include(a => a.TotalizerClassificationTemplate)
+                .OrderBy(c => c.TypeOrder)
+                .ToListAsync();
+
+            return model;
+        }
 
 
     }

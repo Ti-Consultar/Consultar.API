@@ -3,6 +3,7 @@ using _2___Application._2_Dto_s.AccountPlan.Balancete;
 using _2___Application._2_Dto_s.Classification;
 using _2___Application._2_Dto_s.Classification.AccountPlanClassification;
 using _2___Application._2_Dto_s.Permissions;
+using _2___Application._2_Dto_s.TotalizerClassification;
 using _2___Application.Base;
 using _3_Domain._1_Entities;
 using _3_Domain._2_Enum_s;
@@ -44,14 +45,37 @@ namespace _2___Application._1_Services
         {
             try
             {
-                var model = await _repository.GetAllAsync();
+                var model = await _repository.GetAll();
                 if (model == null || !model.Any())
                     return ErrorResponse(Message.NotFound);
 
                 var response = model
-                    .OrderBy(x => x.TypeOrder) // Ordenação crescente por Type
-                    .Select(MapToClassificationResponse)
-                    .ToList();
+                    .GroupBy(a => new
+                    {
+                        a.TotalizerClassificationTemplate.Id,
+                        a.TotalizerClassificationTemplate.Name,
+                        a.TotalizerClassificationTemplate.TypeOrder
+                    })
+                    .Select(g => new ClassificationtesteResponse
+                    {
+                        TotalizerClassification = new TotalizerClassificationTemplateResponse
+                        {
+                            Id = g.Key.Id,
+                            Name = g.Key.Name,
+                            TypeOrder = g.Key.TypeOrder
+                        },
+                        Classifications = g.Select(x => new TotalClassificationtesteResponse
+                        {
+                            Classifications = new ClassificationResponse
+                            {
+                                Id = x.Id,
+                                Name = x.Name,
+                                TypeOrder = x.TypeOrder,
+                                TypeClassification = x.TypeClassification.GetDescription()
+                               
+                            }
+                        }).ToList()
+                    }).ToList();
 
                 return SuccessResponse(response);
             }
@@ -60,6 +84,37 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
+        private List<ClassificationtesteResponse> MapToClassificationGroup(List<ClassificationModel> model)
+        {
+            return model
+                .GroupBy(a => new
+                {
+                    a.TotalizerClassificationTemplate.Id,
+                    a.TotalizerClassificationTemplate.Name,
+                    a.TotalizerClassificationTemplate.TypeOrder
+                })
+                .Select(g => new ClassificationtesteResponse
+                {
+                    TotalizerClassification = new TotalizerClassificationTemplateResponse
+                    {
+                        Id = g.Key.Id,
+                        Name = g.Key.Name,
+                        TypeOrder = g.Key.TypeOrder
+                    },
+                    Classifications = g.Select(x => new TotalClassificationtesteResponse
+                    {
+                        Classifications = new ClassificationResponse
+                        {
+                            Id = x.Id,
+                            Name = x.Name,
+                            TypeOrder = x.TypeOrder,
+                            TypeClassification = x.TypeClassification.GetDescription(),
+                           
+                        }
+                    }).ToList()
+                }).ToList();
+        }
+
         public async Task<ResultValue> GetByTypeClassificationTemplate(ETypeClassification typeClassification)
         {
             try
@@ -68,10 +123,7 @@ namespace _2___Application._1_Services
                 if (model == null || !model.Any())
                     return ErrorResponse(Message.NotFound);
 
-                var response = model
-                    .OrderBy(x => x.TypeOrder) // Ordenação crescente por Type
-                    .Select(MapToClassificationResponse)
-                    .ToList();
+                var response = MapToClassificationGroup(model);
 
                 return SuccessResponse(response);
             }
@@ -80,6 +132,7 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
+
         public async Task<ResultValue> GetById(int id)
         {
             try
@@ -88,7 +141,8 @@ namespace _2___Application._1_Services
                 if (model == null)
                     return ErrorResponse(Message.NotFound);
 
-                var response = MapToClassificationResponse(model);
+                // Mesmo com um item, o método de agrupamento vai transformar em lista agrupada
+                var response = MapToClassificationGroup(new List<ClassificationModel> { model });
 
                 return SuccessResponse(response);
             }
@@ -97,17 +151,10 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
+
         #region Private
-        private ClassificationResponse MapToClassificationResponse(ClassificationModel model)
-        {
-            return new ClassificationResponse
-            {
-                Id = model.Id,
-                Name = model.Name,
-                TypeOrder = model.TypeOrder,
-                TypeClassification = model.TypeClassification.GetDescription()
-            };
-        }
+
+
         #endregion
         #endregion
 
@@ -658,8 +705,8 @@ namespace _2___Application._1_Services
          List<BalanceteDataAccountPlanClassificationResponseteste> passivoNaoCirculante,
          List<BalanceteDataAccountPlanClassificationResponseteste> patrimonioLiquido,
          List<BalanceteDataAccountPlanClassificationResponseteste> passivoCompensado)
-CategorizarPassivo(List<BalanceteDataAccountPlanClassificationResponseteste> classifications)
-        {
+        CategorizarPassivo(List<BalanceteDataAccountPlanClassificationResponseteste> classifications)
+            {
             var passivoCirculante = classifications.Where(c =>
                 new[] {
                     "Fornecedores", 

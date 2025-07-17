@@ -20,5 +20,8 @@ namespace _3_Domain._1_Entities
         public string Name { get; set; }
         public int TypeOrder { get; set; }
         public ETypeClassification TypeClassification { get; set; }
+
+        public int TotalizerClassificationId { get; set; }
+        public TotalizerClassificationModel TotalizerClassificationTemplate { get; set; }
     }
 }
