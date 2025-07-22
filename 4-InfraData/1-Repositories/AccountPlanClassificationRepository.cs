@@ -81,6 +81,9 @@ namespace _4_InfraData._1_Repositories
                 .ToListAsync();
         }
 
+        
+
+
         public async Task<List<AccountPlanClassification>> GetItemsToDecrementOrderAsync(int accountPlanId, ETypeClassification typeClassification, int oldOrder, int newOrder)
         {
             return await _context.AccountPlanClassification
@@ -99,6 +102,8 @@ namespace _4_InfraData._1_Repositories
         public async Task<List<BalanceteDataAccountPlanClassification>> GetBond(int accountPlanId, int typeClassification)
         {
             var model = await _context.BalanceteDataAccountPlanClassification
+                .Include(a => a.AccountPlanClassification)
+                    .ThenInclude(apc => apc.TotalizerClassification)
                 .Include(a => a.AccountPlanClassification)
                     .ThenInclude(apc => apc.AccountPlan)
                 .Where(c =>

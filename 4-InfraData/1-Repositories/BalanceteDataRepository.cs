@@ -21,6 +21,14 @@ namespace _4_InfraData._1_Repositories
                 .ToListAsync();
         }
 
+
+        public async Task<List<BalanceteDataAccountPlanClassification>> GetByAccountPlanClassificationId(int accountPlanId)
+        {
+            return await _context.BalanceteDataAccountPlanClassification
+                .Include(a => a.AccountPlanClassification)
+                .Where(x => x.AccountPlanClassification.AccountPlanId == accountPlanId)
+                .ToListAsync();
+        }
         public async Task<List<BalanceteDataModel>> GetByBalanceteIdDate(int accountPlanId, int year, int month)
         {
             return await _context.BalanceteData
