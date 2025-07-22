@@ -21,7 +21,10 @@ namespace _3_Domain._1_Entities
         public int TypeOrder { get; set; }
         public ETypeClassification TypeClassification { get; set; }
 
-        public int TotalizerClassificationId { get; set; }
-        public TotalizerClassificationModel TotalizerClassificationTemplate { get; set; }
+        public int? TotalizerClassificationId { get; set; }
+        public TotalizerClassificationModel? TotalizerClassification { get; set; }
+
+        public int ? BalancoReclassificadoId { get; set; }
+        public BalancoReclassificadoModel? BalancoReclassificado { get; set; }
     }
 }

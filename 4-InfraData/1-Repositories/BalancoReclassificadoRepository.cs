@@ -9,18 +9,19 @@ using System.Threading.Tasks;
 
 namespace _4_InfraData._1_Repositories
 {
-    public class TotalizerClassificationRepository : GenericRepository<TotalizerClassificationModel>
+    public class BalancoReclassificadoRepository : GenericRepository<BalancoReclassificadoModel>
     {
         private readonly CoreServiceDbContext _context;
-        public TotalizerClassificationRepository(CoreServiceDbContext context) : base(context)
+        public BalancoReclassificadoRepository(CoreServiceDbContext context) : base(context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
-        public async Task<List<TotalizerClassificationModel>> GetByAccountPlanId(int accountPlanId)
+        public async Task<List<BalancoReclassificadoModel>> GetByAccountPlanId(int accountPlanId)
         {
-            return await _context.TotalizerClassification
+            return await _context.BalancoReclassificado
                 .Where(x => x.AccountPlanId == accountPlanId)
                 .ToListAsync();
         }
+
     }
 }

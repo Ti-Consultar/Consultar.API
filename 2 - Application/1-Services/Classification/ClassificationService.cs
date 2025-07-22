@@ -25,18 +25,33 @@ namespace _2___Application._1_Services
         private readonly AccountPlanClassificationRepository _accountClassificationRepository;
         private readonly BalanceteDataRepository _balanceteDataRepository;
         private readonly BalanceteRepository _balanceteRepository;
+        private readonly TotalizerClassificationRepository _totalizerClassificationRepository;
+        private readonly TotalizerClassificationTemplateRepository _totalizerClassificationTemplateRepository;
+        private readonly BalancoReclassificadoTemplateRepository _balancoReclassificadoTemplateRepository;
+        private readonly BalancoReclassificadoRepository _balancoReclassificadoRepository;
+        private readonly AccountPlansRepository _accountPlansRepository;
 
         public ClassificationService(
             ClassificationRepository repository,
             AccountPlanClassificationRepository accountClassificationRepository,
             BalanceteDataRepository balanceteDataRepository,
             BalanceteRepository balanceteRepository,
+            TotalizerClassificationRepository _talizerClassificationRepository,
+            TotalizerClassificationTemplateRepository totalizerClassificationTemplateRepository,
+            BalancoReclassificadoTemplateRepository balancoReclassificadoTemplateRepository,
+            BalancoReclassificadoRepository balancoReclassificadoRepository,
+            AccountPlansRepository accountPlansRepository,
             IAppSettings appSettings) : base(appSettings)
         {
             _repository = repository;
             _accountClassificationRepository = accountClassificationRepository;
             _balanceteDataRepository = balanceteDataRepository;
             _balanceteRepository = balanceteRepository;
+            _totalizerClassificationRepository = _talizerClassificationRepository;
+            _totalizerClassificationTemplateRepository = totalizerClassificationTemplateRepository;
+            _balancoReclassificadoTemplateRepository = balancoReclassificadoTemplateRepository;
+            _balancoReclassificadoRepository = balancoReclassificadoRepository;
+            _accountPlansRepository = accountPlansRepository;
         }
 
         #region Métodos
@@ -72,7 +87,7 @@ namespace _2___Application._1_Services
                                 Name = x.Name,
                                 TypeOrder = x.TypeOrder,
                                 TypeClassification = x.TypeClassification.GetDescription()
-                               
+
                             }
                         }).ToList()
                     }).ToList();
@@ -109,7 +124,7 @@ namespace _2___Application._1_Services
                             Name = x.Name,
                             TypeOrder = x.TypeOrder,
                             TypeClassification = x.TypeClassification.GetDescription(),
-                           
+
                         }
                     }).ToList()
                 }).ToList();
@@ -186,25 +201,465 @@ namespace _2___Application._1_Services
             {
                 var user = GetCurrentUserId();
 
-                var classificationsTemplate = await _repository.GetAllAsync();
+
+                await CreateBalancosReclassificadosAsync(dto.AccountPlanId);
+                await CreateTotalizersAsync(dto.AccountPlanId);
+
+                var classificationsTemplate = await _repository.GetAllAsNoTracking();
 
                 var models = classificationsTemplate.Select(i => new AccountPlanClassification
                 {
                     Name = i.Name,
                     TypeOrder = i.TypeOrder,
                     TypeClassification = i.TypeClassification,
-                    AccountPlanId = dto.AccountPlanId
+                    AccountPlanId = dto.AccountPlanId,
+
                 }).ToList();
 
+              
+
+           //   var classifications=  await _accountClassificationRepository.GetAllAsync(dto.AccountPlanId);
+
+                var reclassifications = await _balancoReclassificadoRepository.GetByAccountPlanId(dto.AccountPlanId);
+                var TotalizerClassifications = await _totalizerClassificationRepository.GetByAccountPlanId(dto.AccountPlanId);
+
+                // Organização modular
+                MapAtivos(models, reclassifications);
+                MapAtivosTotalizer(models, TotalizerClassifications);
+                MapPassivos(models, reclassifications);
+                MapPassivosTotalizer(models, TotalizerClassifications);
+                MapDRE(models, reclassifications);
+                MapDRETotalizer(models, TotalizerClassifications);
+
                 await _accountClassificationRepository.AddRangeAsync(models);
+                // await _accountClassificationRepository.UpdateRange(classifications);
 
                 return SuccessResponse(Message.Success);
             }
-            catch (Exception ex)
+             catch (Exception ex)
             {
                 return ErrorResponse(ex);
             }
         }
+        private void MapAtivos(List<AccountPlanClassification> models, List<BalancoReclassificadoModel> reclassifications)
+        {
+            foreach (var classification in models.Where(m => m.TypeClassification == ETypeClassification.Ativo)) // exemplo usando TypeClassification pra filtrar Ativo
+            {
+                switch (classification.Name)
+                {
+                    case "Caixas":
+                    case "Bancos":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Caixa e Equivalente de Caixa")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Aplicações Financeiras":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Aplicação Financeira")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Clientes":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Clientes")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Outros Créditos":
+                    case "Adiantamentos":
+                    case "Impostos a Recuperar / Antecipações":
+                    case "Empréstimos":
+                    case "Despesas a Apropriar":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Outros Ativos Operacionais")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Estoques":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Estoques")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Consórcio":
+                    case "Empréstimos a Coligadas e Controlada":
+                    case "Depósitos Judiciais":
+                    case "Outros Créditos LP":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Ativo Não Circulante Operacional")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Contas Transitórias":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Contas Transitórias")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Investimentos":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Investimentos")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Imobilizado":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Imobilizado")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Intangível":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Intangível")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Depreciação / Amortização Acumuladas":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Depreciação / Amort. Acumulada")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+                }
+            }
+        }
+
+        private void MapAtivosTotalizer(List<AccountPlanClassification> models, List<TotalizerClassificationModel> totalizerClassifications)
+        {
+            foreach (var classification in models.Where(m => m.TypeClassification == ETypeClassification.Ativo))
+            {
+                switch (classification.Name)
+                {
+                    case "Caixas":
+                    case "Bancos":
+                    case "Aplicações Financeiras":
+                    case "Clientes":
+                    case "Outros Créditos":
+                    case "Adiantamentos":
+                    case "Impostos a Recuperar / Antecipações":
+                    case "Empréstimos":
+                    case "Estoques":
+                    case "Despesas a Apropriar":
+                        classification.TotalizerClassificationId = totalizerClassifications
+                            .Where(r => r.Name == "Total Ativo Circulante")
+                            .Select(r => r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Consórcio":
+                    case "Empréstimos a Coligadas e Controlada":
+                    case "Depósitos Judiciais":
+                    case "Outros Créditos LP":
+                    case "Contas Transitórias":
+                        classification.TotalizerClassificationId = totalizerClassifications
+                            .Where(r => r.Name == "Realizavel Longo Prazo")
+                            .Select(r => r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Investimentos":
+                    case "Imobilizado":
+                    case "Depreciação / Amortização Acumuladas":
+                    case "Intangível":
+                        classification.TotalizerClassificationId = totalizerClassifications
+                            .Where(r => r.Name == "total Ativo Não Circulante")
+                            .Select(r => r.Id)
+                            .FirstOrDefault();
+                        break;
+                }
+            }
+        }
+        private void MapPassivosTotalizer(List<AccountPlanClassification> models, List<TotalizerClassificationModel> totalizerClassifications)
+        {
+            foreach (var classification in models.Where(m => m.TypeClassification == ETypeClassification.Passivo))
+            {
+                switch (classification.Name)
+                {
+                    case "Fornecedores Fábrica":
+                    case "Fornecedores Diversos":
+                    case "Seguros a Pagar":
+                    case "Outras Contas a Pagar":
+                    case "Creditos de Clientes":
+                    case "Empréstimos e Financiamentos":
+                    case "(-) Devolução de Compras":
+                    case "Obrigações Sociais a Pagar":
+                    case "Obrigações Fiscais a Pagar":
+                    case "Outras Exigibilidades":
+                        classification.TotalizerClassificationId = totalizerClassifications
+                            .Where(r => r.Name == "Total Passivo Circulante")
+                            .Select(r => r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Empréstimos e Financiamentos a Longo Prazo":
+                    case "Empréstimos de Coligadas e Controladas":
+                    case "Impostos Parcelados":
+                    case "Passivos Contingentes":
+                    case "Contas Transitórias":
+                        classification.TotalizerClassificationId = totalizerClassifications
+                            .Where(r => r.Name == "Total Passivo Não Circulante")
+                            .Select(r => r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Capital Social":
+                    case "Reservas":
+                    case "Lucros / Prejuízos Acumulados":
+                    case "Distribuição de Lucro":
+                    case "Resultado do Exercício Acumulado":
+                        classification.TotalizerClassificationId = totalizerClassifications
+                            .Where(r => r.Name == "Patrimônio Liquido")
+                            .Select(r => r.Id)
+                            .FirstOrDefault();
+                        break;
+                }
+            }
+        }
+        private void MapDRETotalizer(List<AccountPlanClassification> models, List<TotalizerClassificationModel> totalizerClassifications)
+        {
+            foreach (var classification in models.Where(m => m.TypeClassification == ETypeClassification.DRE))
+            {
+                switch (classification.Name)
+                {
+
+                    case "Vendas de Produtos":
+                    case "Vendas de Mercadorias":
+                    case "Prestação de Serviço":
+                    case "Receita Com Locação":
+                        classification.TotalizerClassificationId = totalizerClassifications
+                            .Where(r => r.Name == "Receita Operacional Bruta")
+                            .Select(r => r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "(-) Devoluções de Vendas":
+                    case "(-) Abatimentos":
+                    case "(-) Impostos e Contribuições":
+                        classification.TotalizerClassificationId = totalizerClassifications
+                            .Where(r => r.Name == "(-) Deduções da Receita Bruta")
+                            .Select(r => r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "(-) Custos das Mercadorias":
+                    case "(-) Custos dos Serviços Prestados":
+                        classification.TotalizerClassificationId = totalizerClassifications
+                            .Where(r => r.Name == "(=) Receita Líquida de Vendas")
+                            .Select(r => r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Despesas Variáveis":
+                        classification.TotalizerClassificationId = totalizerClassifications
+                            .Where(r => r.Name == "Lucro Bruto")
+                            .Select(r => r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Despesas com Vendas":
+                    case "Despesas com Pessoal e Encargos":
+                    case "Despesas Administrativas e Gerais":
+                    case "Outros  Resultados Operacionais":
+                        classification.TotalizerClassificationId = totalizerClassifications
+                            .Where(r => r.Name == "(-) Despesas Operacionais")
+                            .Select(r => r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Ganhos e Perdas de Capital":
+                    case "Outras Receitas não Operacionais":
+                        classification.TotalizerClassificationId = totalizerClassifications
+                            .Where(r => r.Name == "Lucro Operacional")
+                            .Select(r => r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Receitas Financeiras":
+                    case "Despesas Financeiras":
+                        classification.TotalizerClassificationId = totalizerClassifications
+                            .Where(r => r.Name == "Lucro Antes do Resultado Financeiro")
+                            .Select(r => r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Provisão para CSLL":
+                    case "Provisão para IRPJ":
+                        classification.TotalizerClassificationId = totalizerClassifications
+                            .Where(r => r.Name == "Resultado do Exercício Antes do Imposto")
+                            .Select(r => r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Despesas com Depreciação":
+                        classification.TotalizerClassificationId = totalizerClassifications
+                            .Where(r => r.Name == "Lucro Líquido do Periodo")
+                            .Select(r => r.Id)
+                            .FirstOrDefault();
+                        break;
+                }
+            }
+        }
+
+        private void MapPassivos(List<AccountPlanClassification> models, List<BalancoReclassificadoModel> reclassifications)
+        {
+            foreach (var classification in models.Where(m => m.TypeClassification == ETypeClassification.Passivo)) // exemplo filtro Passivo
+            {
+                switch (classification.Name)
+                {
+
+                    case "Empréstimos e Financiamentos":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Empréstimos e Financiamentos")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Fornecedores Fábrica":
+                    case "Fornecedores Diversos":
+                    case "(-) Devolução de Compras":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Fornecedores")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Obrigações Fiscais a Pagar":
+                    case "Obrigações Sociais a Pagar":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Obrigações Tributárias e Trabalhistas")
+                            .Select(r =>     (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Outras Exigibilidades":
+                    case "Seguros a Pagar":
+                    case "Outras Contas a Pagar":
+                    case "Creditos de Clientes":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Outros Passivos Operacionais")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Empréstimos e Financiamentos a Longo Prazo":
+                    case "Impostos Parcelados":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Passivo não Circulante Financeiro")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Empréstimos de Coligadas e Controladas":
+                    case "Passivos Contingentes":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Passivo não Circulante Operacional")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Contas Transitórias":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Contas Transitórias")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+
+                    case "Capital Social":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Capital Social")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Reservas":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Reservas")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Lucros / Prejuízos Acumulados":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Lucros / Prejuízos Acumulados")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Distribuição de Lucro":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Distribuição de Lucro")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                    case "Resultado do Exercício Acumulado":
+                        classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "Resultado Acumulado")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+                        break;
+
+                }
+            }
+        }
+        private void MapDRE(List<AccountPlanClassification> models, List<BalancoReclassificadoModel> reclassifications)
+        {
+            foreach (var classification in models.Where(m => m.TypeClassification == ETypeClassification.DRE)) // exemplo filtro Passivo
+            {
+             classification.BalancoReclassificadoId = reclassifications
+                            .Where(r => r.Name == "DRE")
+                            .Select(r => (int?)r.Id)
+                            .FirstOrDefault();
+
+            }
+        }
+        private async Task CreateTotalizersAsync(int accountPlanId)
+        {
+            var totalizerTemplate = await _totalizerClassificationTemplateRepository.GetAllAsync();
+
+            var totalizerModels = totalizerTemplate.Select(t => new TotalizerClassificationModel
+            {
+                AccountPlanId = accountPlanId,
+                Name = t.Name,
+                TypeOrder = t.TypeOrder
+            }).ToList();
+
+            await _totalizerClassificationRepository.AddRangeAsync(totalizerModels);
+
+
+
+        }
+
+        private async Task CreateBalancosReclassificadosAsync(int accountPlanId)
+        {
+            var balancoTemplate = await _balancoReclassificadoTemplateRepository.GetAllAsync();
+
+            var balancoModels = balancoTemplate.Select(br => new BalancoReclassificadoModel
+            {
+                AccountPlanId = accountPlanId,
+                Name = br.Name,
+                TypeOrder = br.TypeOrder
+            }).ToList();
+
+            await _balancoReclassificadoRepository.AddRangeAsync(balancoModels);
+        }
+
+
+
+
+
         public async Task<ResultValue> CreateItemClassification(int accountplanId, CreateItemClassification dto)
         {
             try
@@ -706,10 +1161,10 @@ namespace _2___Application._1_Services
          List<BalanceteDataAccountPlanClassificationResponseteste> patrimonioLiquido,
          List<BalanceteDataAccountPlanClassificationResponseteste> passivoCompensado)
         CategorizarPassivo(List<BalanceteDataAccountPlanClassificationResponseteste> classifications)
-            {
+        {
             var passivoCirculante = classifications.Where(c =>
                 new[] {
-                    "Fornecedores", 
+                    "Fornecedores",
                     "Outras Contas a Pagar",
                     "Empréstimos e Financiamentos", // Créditos de Clientes
                     "( - ) Devolução de Compras", // não achei

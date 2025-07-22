@@ -33,6 +33,8 @@ namespace _4_InfraData._1_Context
         public DbSet<PassivoBalanceteDataModel> PassivoBalanceteData { get; set; }
         public DbSet<TotalizerClassificationModel> TotalizerClassification { get; set; }
         public DbSet<TotalizerClassificationTemplate> TotalizerClassificationTemplate { get; set; }
+        public DbSet<BalancoReclassificadoTemplate> BalancoReclassificadoTemplate { get; set; }
+        public DbSet<BalancoReclassificadoModel> BalancoReclassificado { get; set; }
     
 
 

@@ -114,6 +114,8 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<AccountPlanClassificationRepository>();
             services.AddScoped<TotalizerClassificationRepository>();
             services.AddScoped<TotalizerClassificationTemplateRepository>();
+            services.AddScoped<BalancoReclassificadoRepository>();
+            services.AddScoped<BalancoReclassificadoTemplateRepository>();
             #endregion
 
             #endregion

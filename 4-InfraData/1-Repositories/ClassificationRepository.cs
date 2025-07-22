@@ -38,6 +38,16 @@ namespace _4_InfraData._1_Repositories
             return model;
         }
 
+        public async Task<List<ClassificationModel>> GetAllAsNoTracking()
+        {
+            var model = await _context.Classification
+                .Include(a => a.TotalizerClassificationTemplate)
+                .OrderBy(c => c.TypeOrder)
+                .AsNoTracking() // evita o tracking
+                .ToListAsync();
+
+            return model;
+        }
 
     }
 }
