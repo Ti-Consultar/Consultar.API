@@ -809,7 +809,7 @@ namespace _2___Application._1_Services
             return typeClassification switch
             {
                 1 => await BuildPainelAtivo(accountPlanId, year),
-               // 2 => await BuildPainelPassivo(accountPlanId, year),
+                2 => await BuildPainelPassivo(accountPlanId, year),
               //  3 => await BuildPainelDRE(accountPlanId, year),
                 _ => throw new ArgumentException("Tipo de classificação inválido.")
             };
@@ -819,7 +819,10 @@ namespace _2___Application._1_Services
         {
             return await BuildPainelByTypeAtivo(accountPlanId, year, 1);
         }
-
+        private async Task<PainelBalancoContabilRespone> BuildPainelPassivo(int accountPlanId, int year)
+        {
+            return await BuildPainelByTypePassivo(accountPlanId, year, 2);
+        }
 
         private async Task<PainelBalancoContabilRespone> BuildPainelByTypeAtivo(int accountPlanId, int year, int typeClassification)
         {
@@ -906,7 +909,91 @@ namespace _2___Application._1_Services
 
             return new PainelBalancoContabilRespone { Months = months };
         }
+        private async Task<PainelBalancoContabilRespone> BuildPainelByTypePassivo(int accountPlanId, int year, int typeClassification)
+        {
+            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
 
+            var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
+
+            var classificationTotalizerIds = classifications
+                    .Where(c => c.TotalizerClassificationId.HasValue)
+                    .Select(c => c.TotalizerClassificationId.Value)
+                    .Distinct()
+                    .ToList();
+
+            var totalizers = await _totalizerClassificationRepository.GetByAccountPlanIdList(accountPlanId, classificationTotalizerIds);
+
+            var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
+
+            var balanceteIds = balancetes.Select(b => b.Id).ToList();
+            var costCenters = model.Select(a => a.CostCenter).ToList();
+
+            var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
+            var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
+
+            var months = balancetes.Select(balancete =>
+            {
+                var totalizerResponses = totalizers.Select(totalizer =>
+                {
+                    var relatedClassifications = classifications
+                        .Where(c => c.TotalizerClassificationId == totalizer.Id)
+                        .ToList();
+
+                    var classificationsResp = relatedClassifications.Select(classification =>
+                    {
+                        var datas = balanceteDataClassifications
+                            .Where(x => x.AccountPlanClassificationId == classification.Id)
+                            .SelectMany(x =>
+                                balanceteData
+                                    .Where(bd => bd.CostCenter == x.CostCenter && bd.BalanceteId == balancete.Id)
+                                    .Select(bd => new BalanceteDataResponse
+                                    {
+                                        Id = bd.Id,
+                                        CostCenter = bd.CostCenter,
+                                        Name = bd.Name,
+                                        Value = bd.FinalValue
+                                    })
+                            ).ToList();
+
+                        return new ClassificationRespone
+                        {
+                            Id = classification.Id,
+                            Name = classification.Name,
+                            TypeOrder = classification.TypeOrder,
+                            Value = datas.Sum(d => d.Value * -1),//aqui eu faço todo data ser multiplicado por menos 1 para a exibição
+                            Datas = datas
+                        };
+                    }).ToList();
+
+                    return new TotalizerParentRespone
+                    {
+                        Id = totalizer.Id,
+                        Name = totalizer.Name,
+                        TypeOrder = totalizer.TypeOrder,
+                        Classifications = classificationsResp,
+                        TotalValue = classificationsResp.Sum(c => c.Value)
+                    };
+
+                }).ToList();
+
+                return new MonthPainelContabilRespone
+                {
+                    Id = balancete.Id,
+                    Name = balancete.DateMonth.GetDescription(),
+                    DateMonth = (int)balancete.DateMonth,
+                    Totalizer = totalizerResponses,
+                    MonthPainelContabilTotalizer = new MonthPainelContabilTotalizerRespone
+                    {
+                        Name = "TOTAL GERAL DO PASSIVO",
+                        TotalValue = totalizerResponses.Sum(t => t.TotalValue)
+                    }
+
+                };
+            }).OrderBy(a => a.DateMonth).ToList();
+
+
+            return new PainelBalancoContabilRespone { Months = months };
+        }
         #endregion
 
         #region Private 
