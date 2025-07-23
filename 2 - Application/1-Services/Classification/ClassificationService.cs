@@ -871,13 +871,9 @@ namespace _2___Application._1_Services
             var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
 
-            var months = balancetes.Select(balancete => new MonthPainelContabilRespone
+            var months = balancetes.Select(balancete =>
             {
-                Id = balancete.Id,
-                Name = balancete.DateMonth.GetDescription(),
-                DateMonth = (int)balancete.DateMonth, // importante para ordenação
-
-                Totalizer = totalizers.Select(totalizer =>
+                var totalizerResponses = totalizers.Select(totalizer =>
                 {
                     var relatedClassifications = classifications
                         .Where(c => c.TotalizerClassificationId == totalizer.Id)
@@ -918,9 +914,23 @@ namespace _2___Application._1_Services
                         TotalValue = classificationsResp.Sum(c => c.Value)
                     };
 
-                }).ToList()
+                }).ToList();
 
-            }).OrderBy(a => a.DateMonth).ToList(); // ordena corretamente pelos meses
+                return new MonthPainelContabilRespone
+                {
+                    Id = balancete.Id,
+                    Name = balancete.DateMonth.GetDescription(),
+                    DateMonth = (int)balancete.DateMonth,
+                    Totalizer = totalizerResponses,
+                    MonthPainelContabilTotalizer = new MonthPainelContabilTotalizerRespone
+                    {
+                        Name = "TOTAL GERAL DO ATIVO",
+                        TotalValue = totalizerResponses.Sum(t => t.TotalValue)
+                    }
+
+                };
+            }).OrderBy(a => a.DateMonth).ToList();
+
 
             return new PainelBalancoContabilRespone { Months = months };
         }

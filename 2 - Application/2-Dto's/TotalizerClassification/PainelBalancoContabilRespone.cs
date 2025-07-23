@@ -15,7 +15,16 @@ namespace _2___Application._2_Dto_s.TotalizerClassification
         public int Id { get; set; }
         public string Name { get; set; }
         public int DateMonth { get; set; }
+        public MonthPainelContabilTotalizerRespone MonthPainelContabilTotalizer { get; set; }
         public List<TotalizerParentRespone> Totalizer { get; set; }
+
+    }
+
+    public class MonthPainelContabilTotalizerRespone
+    {
+        public string Name { get; set; }
+        public decimal TotalValue { get; set; }
+    
 
     }
     public class TotalizerParentRespone
