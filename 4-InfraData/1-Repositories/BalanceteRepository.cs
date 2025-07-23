@@ -21,7 +21,13 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.AccountPlansId == accountPlansId)
                 .ToListAsync();
         }
-
+        public async Task<List<BalanceteModel>> GetByAccountPlanIdMonth(int accountPlansId, int year)
+        {
+            return await _context.Balancete
+                .Include(x => x.AccountPlans)
+                .Where(x => x.AccountPlansId == accountPlansId && x.DateYear == year)
+                .ToListAsync();
+        }
         public async Task<bool> GetExistsParams(int accountPlansId, int month, int year)
         {
             return await _context.Balancete

@@ -825,11 +825,44 @@ namespace _2___Application._1_Services
 
 
 
+       
+
+
         public async Task<PainelBalancoContabilRespone> GetPainelBalancoAsync(int accountPlanId, int year, int typeClassification)
         {
-            var balancetes = await _balanceteRepository.GetBalancetesByCostCenter(accountPlanId, year, typeClassification);
-            var classifications = await _accountClassificationRepository.GetAllAsync(accountPlanId);
-            var totalizers = await _totalizerClassificationRepository.GetByAccountPlanId(accountPlanId);
+            return typeClassification switch
+            {
+                1 => await BuildPainelAtivo(accountPlanId, year),
+               // 2 => await BuildPainelPassivo(accountPlanId, year),
+              //  3 => await BuildPainelDRE(accountPlanId, year),
+                _ => throw new ArgumentException("Tipo de classificação inválido.")
+            };
+        }
+
+
+
+
+
+        private async Task<PainelBalancoContabilRespone> BuildPainelAtivo(int accountPlanId, int year)
+        {
+            return await BuildPainelByTypeAtivo(accountPlanId, year, 1);
+        }
+
+
+        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeAtivo(int accountPlanId, int year, int typeClassification)
+        {
+            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+
+            var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
+
+            var classificationTotalizerIds = classifications
+                    .Where(c => c.TotalizerClassificationId.HasValue)
+                    .Select(c => c.TotalizerClassificationId.Value)
+                    .Distinct()
+                    .ToList();
+
+            var totalizers = await _totalizerClassificationRepository.GetByAccountPlanIdList(accountPlanId, classificationTotalizerIds);
+
             var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
 
             var balanceteIds = balancetes.Select(b => b.Id).ToList();
@@ -891,6 +924,16 @@ namespace _2___Application._1_Services
 
             return new PainelBalancoContabilRespone { Months = months };
         }
+
+
+
+
+
+
+
+
+
+
 
 
         public async Task<PainelBalancoContabilRespone> GetPainelBalancoAsyncc(int accountPlanId, int year, int typeClassification)
