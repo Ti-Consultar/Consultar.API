@@ -157,25 +157,11 @@ namespace ConsultarMRP.API.Controllers
             }
         }
 
-        [HttpGet]
-        [Route("/get-bond")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
-        public async Task<IActionResult> GetBond([FromQuery] int accountPlanId, int typeClassification)
-        {
-            try
-            {
-
-                var response = await _Service.GetBond(accountPlanId, typeClassification);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
+        
+        
 
         [HttpGet]
-        [Route("/painel-top")]
+        [Route("/painel")]
         // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetPainelBalancoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
         {
@@ -190,56 +176,7 @@ namespace ConsultarMRP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-        [HttpGet]
-        [Route("/get-bond-month")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
-        public async Task<IActionResult> GetBond([FromQuery] int accountPlanId, [FromQuery] int balanceteId, int typeClassification)
-        {
-            try
-            {
-
-                var response = await _Service.GetBondMonth(accountPlanId, balanceteId, typeClassification);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
-        [HttpGet]
-        [Route("/get-bond-painel")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
-        public async Task<IActionResult> GetBondMonths([FromQuery] int accountPlanId, int typeClassification)
-        {
-            try
-            {
-
-                var response = await _Service.GetBondMonths(accountPlanId, typeClassification);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
-        [HttpGet]
-        [Route("/get-bond-painel/type")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
-        public async Task<IActionResult> GetPainelMonths([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int type)
-        {
-            try
-            {
-
-                var response = await _Service.GetPainelTypeMonths(accountPlanId,year, type);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
+        
 
         [HttpGet]
         [Route("exists")]
@@ -259,39 +196,7 @@ namespace ConsultarMRP.API.Controllers
         }
 
          
-        [HttpGet]
-        [Route("/get-bond-month/dre")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
-        public async Task<IActionResult> GetBondDREMonth([FromQuery] int accountPlanId, [FromQuery] int balanceteId, int typeClassification)
-        {
-            try
-            {
-
-                var response = await _Service.GetBondDREMonth(accountPlanId, balanceteId, typeClassification);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
-        [HttpGet]
-        [Route("/get-bond-painel/dre")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
-        public async Task<IActionResult> GetBondDREMonths([FromQuery] int accountPlanId, int typeClassification)
-        {
-            try
-            {
-
-                var response = await _Service.GetBondDREMonths(accountPlanId, typeClassification);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
+   
         #endregion
     }
 }
