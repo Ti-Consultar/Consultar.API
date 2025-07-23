@@ -175,6 +175,8 @@ namespace _2___Application.Base
 
         #region Response Methods
         protected ResultValue SuccessResponse<T>(T data) => CreateSuccessResponse(data);
+
+        
         protected ResultValue SuccessResponse() => CreateSuccessResponse<object>();
         protected ResultValue SuccessResponse(string name, string message) => CreateSuccessResponse<string>(null, message, name);
         protected ResultValue SuccessResponse<T>(T data, string name, string message) => CreateSuccessResponse(data, message, name);

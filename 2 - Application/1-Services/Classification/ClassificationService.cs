@@ -804,16 +804,19 @@ namespace _2___Application._1_Services
             }
         }
 
-        public async Task<PainelBalancoContabilRespone> GetPainelBalancoAsync(int accountPlanId, int year, int typeClassification)
+        public async Task<ResultValue> GetPainelBalancoAsync(int accountPlanId, int year, int typeClassification)
         {
-            return typeClassification switch
+            var result = typeClassification switch
             {
                 1 => await BuildPainelAtivo(accountPlanId, year),
                 2 => await BuildPainelPassivo(accountPlanId, year),
-              //  3 => await BuildPainelDRE(accountPlanId, year),
+               // 3 => await BuildPainelDRE(accountPlanId, year),
                 _ => throw new ArgumentException("Tipo de classificação inválido.")
             };
+
+            return SuccessResponse(result); // Aqui retorna a estrutura padronizada
         }
+
 
         private async Task<PainelBalancoContabilRespone> BuildPainelAtivo(int accountPlanId, int year)
         {

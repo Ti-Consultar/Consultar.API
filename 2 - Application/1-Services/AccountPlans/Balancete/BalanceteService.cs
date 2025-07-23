@@ -286,13 +286,13 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 }
             }
 
-            var pais = lookup.Values
+            // ⬇️ Aqui muda: agora retorna todos que comecem com o dígito selecionado (ex: '1' para Ativo)
+            var todosComPrefixo = lookup.Values
                 .Where(x => x.CostCenter.StartsWith(tipoInicial.ToString()))
-                .Where(x => data.Any(d => d.CostCenter.StartsWith(x.CostCenter + ".")))
                 .OrderBy(x => x.CostCenter)
                 .ToList();
 
-            return pais;
+            return todosComPrefixo;
         }
 
 
