@@ -62,7 +62,16 @@ namespace _4_InfraData._1_Repositories
 
             return model;
         }
+        public async Task<List<AccountPlanClassification>> GetAllBytypeClassificationDREAsync(int accountPlanId, int typeClassification)
+        {
+            var model = await _context.AccountPlanClassification
+                .Where(c => c.AccountPlanId == accountPlanId && (int)c.TypeClassification == typeClassification)
+                .Include(c => c.TotalizerClassification)
+                .OrderBy(c => c.TypeOrder)
+                .ToListAsync();
 
+            return model;
+        }
         public async Task<AccountPlanClassification> GetByAccountIdAndId(int accountPlanId, int id)
         {
             var model = await _context.AccountPlanClassification

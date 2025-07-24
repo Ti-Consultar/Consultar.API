@@ -227,7 +227,7 @@ namespace _2___Application._1_Services
                 MapAtivosTotalizer(models, totalizerClassifications);
                 MapPassivos(models, reclassifications);
                 MapPassivosTotalizer(models, totalizerClassifications);
-                MapDRE(models, reclassifications);
+                //MapDRE(models, reclassifications);
                 MapDRETotalizer(models, totalizerClassifications);
 
                 await _accountClassificationRepository.AddRangeAsync(models);
@@ -964,13 +964,18 @@ namespace _2___Application._1_Services
         private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDRE(int accountPlanId, int year, int typeClassification)
         {
             var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
-            var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
+            var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
 
-            var classificationTotalizerIds = classifications
-                .Where(c => c.TotalizerClassificationId.HasValue)
-                .Select(c => c.TotalizerClassificationId.Value)
+
+
+            var totalizerq = await _totalizerClassificationRepository.GetByAccountPlanId(accountPlanId);
+
+            var classificationTotalizerIds = totalizerq
+                .Where(c => c.TypeOrder >= 11 && c.TypeOrder <= 30  )
+                .Select(c => c.Id)
                 .Distinct()
                 .ToList();
+
 
             var totalizers = await _totalizerClassificationRepository.GetByAccountPlanIdList(accountPlanId, classificationTotalizerIds);
             var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
@@ -1029,24 +1034,24 @@ namespace _2___Application._1_Services
 
                 }).ToList();
 
-                // Map para regras
+                // Map para facilitar acesso rápido
                 var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
                 var classificationMap = totalizerResponses
                     .SelectMany(t => t.Classifications)
                     .ToDictionary(c => c.Name);
 
-                // Aplicar regras especiais (EBITDA, Lucro, etc.) com ordem
-                foreach (var totalizer in totalizerResponses.OrderBy(t => t.TypeOrder))
+                // Aplicar regras especiais (Lucros, EBITDA, etc.)
+                for (int i = 0; i < 3; i++)
                 {
-                    totalizer.TotalValue = ApplyDRESpecialRules(
-                        totalizer.Name,
-                        totalizerMap,
-                        classificationMap,
-                        totalizer.TotalValue
-                    );
+                    foreach (var totalizer in totalizerResponses.OrderBy(t => t.TypeOrder))
+                    {
+                        var ruleValue = ApplyDRETotalValueRules(totalizer.Name, totalizerMap, classificationMap);
+                        if (ruleValue.HasValue)
+                            totalizer.TotalValue = ruleValue.Value;
+                    }
                 }
 
-                // Aplicar percentuais
+                // Aplicar regras de percentual (%)
                 foreach (var totalizer in totalizerResponses)
                 {
                     var percentage = ApplyDREPercentageRules(
@@ -1077,18 +1082,12 @@ namespace _2___Application._1_Services
             return new PainelBalancoContabilRespone { Months = months };
         }
 
-        private decimal ApplyDRESpecialRules(string name,Dictionary<string, TotalizerParentRespone> totals,Dictionary<string, ClassificationRespone> classes,decimal current)
-        {
-            // Primeiro, tenta aplicar regra de valor bruto
-            var total = ApplyDRETotalValueRules(name, totals, classes);
 
-            // Se não for total, tenta aplicar percentual
-            var percentual = ApplyDREPercentageRules(name, totals, total);
 
-            // Se não achou nenhuma regra especial, retorna valor original
-            return percentual ?? total ?? current;
-        }
-        private decimal? ApplyDRETotalValueRules(string name,Dictionary<string, TotalizerParentRespone> totals,Dictionary<string, ClassificationRespone> classes)
+        private decimal? ApplyDRETotalValueRules(
+    string name,
+    Dictionary<string, TotalizerParentRespone> totals,
+    Dictionary<string, ClassificationRespone> classes)
         {
             decimal GetValue(string key) =>
                 totals.TryGetValue(key, out var t) ? t.TotalValue :
@@ -1108,7 +1107,11 @@ namespace _2___Application._1_Services
                 _ => null
             };
         }
-        private decimal? ApplyDREPercentageRules(string name,Dictionary<string, TotalizerParentRespone> totals,decimal? totalValue)
+
+        private decimal? ApplyDREPercentageRules(
+            string name,
+            Dictionary<string, TotalizerParentRespone> totals,
+            decimal? totalValue)
         {
             decimal Get(string key) => totals.TryGetValue(key, out var t) ? t.TotalValue : 0;
 
@@ -1126,39 +1129,12 @@ namespace _2___Application._1_Services
             };
         }
 
-        private decimal ApplyDRESpecialRulses(string name, Dictionary<string, TotalizerParentRespone> totals, Dictionary<string, ClassificationRespone> classes, decimal current)
+        private decimal? SafeDivide(decimal numerator, decimal denominator)
         {
-            decimal GetValue(string key) =>
-                totals.TryGetValue(key, out var v) ? v.TotalValue :
-                classes.TryGetValue(key, out var c) ? c.Value : 0;
-
-            return name switch
-            {
-                "(=) Receita Líquida de Vendas" => GetValue("Receita Operacional Bruta") + GetValue("(-) Deduções da Receita Bruta"),
-                "Lucro Bruto" => GetValue("(=) Receita Líquida de Vendas") + GetValue("(-) Custos das Mercadorias"),
-                "Margem Bruta %" => SafeDivide(GetValue("Lucro Bruto"), GetValue("(=) Receita Líquida de Vendas")),
-                "Margem Contribuição" => GetValue("Lucro Bruto") + GetValue("Despesas Variáveis"),
-                "Margem de Contribuição %" => SafeDivide(GetValue("Margem Contribuição"), GetValue("(=) Receita Líquida de Vendas")),
-                "Lucro Operacional" => GetValue("Lucro Bruto") + GetValue("(-) Despesas Operacionais") + GetValue("Outros  Resultados Operacionais"),
-                "Margem Operacional %" => SafeDivide(GetValue("Lucro Operacional"), GetValue("(=) Receita Líquida de Vendas")),
-                "Lucro Antes do Resultado Financeiro" => GetValue("Lucro Operacional") + GetValue("Outras Receitas não Operacionais") + GetValue("Ganhos e Perdas de Capital"),
-                "Margem LAJIR %" => SafeDivide(GetValue("Lucro Antes do Resultado Financeiro"), GetValue("(=) Receita Líquida de Vendas")),
-                "Resultado do Exercício Antes do Imposto" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Receitas Financeiras") + GetValue("Despesas Financeiras"),
-                "Margem LAIR %" => SafeDivide(GetValue("Resultado do Exercício Antes do Imposto"), GetValue("(=) Receita Líquida de Vendas")),
-                "Lucro Líquido do Periodo" => GetValue("Resultado do Exercício Antes do Imposto") + GetValue("Provisão para CSLL") + GetValue("Provisão para IRPJ"),
-                "Margem Líquida %" => SafeDivide(GetValue("Lucro Líquido do Periodo"), GetValue("(=) Receita Líquida de Vendas")),
-                "EBITDA" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Despesas com Depreciação"),
-                "Margem EBITDA %" => SafeDivide(GetValue("EBITDA"), GetValue("(=) Receita Líquida de Vendas")),
-                "NOPAT" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Provisão para CSLL") + GetValue("Provisão para IRPJ"),
-                "Margem NOPAT %" => SafeDivide(GetValue("NOPAT"), GetValue("(=) Receita Líquida de Vendas")),
-                _ => current
-            };
+            if (denominator == 0) return null;
+            return numerator / denominator * 100;
         }
 
-        private decimal SafeDivide(decimal numerator, decimal denominator)
-        {
-            return denominator != 0 ? numerator / denominator : 0;
-        }
 
         #endregion
 
