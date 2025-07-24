@@ -60,6 +60,9 @@ namespace _2___Application._2_Dto_s.TotalizerClassification
         public int TypeOrder { get; set; }
         public string Name { get; set; }
         public string CostCenter { get; set; }
+        public decimal InitialValue { get; set; }
+        public decimal CreditValue { get; set; }
+        public decimal DebitValue { get; set; }
         public decimal Value { get; set; }
     }
 

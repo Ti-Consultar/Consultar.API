@@ -371,7 +371,7 @@ namespace _2___Application._1_Services
                     case "Depreciação / Amortização Acumuladas":
                     case "Intangível":
                         classification.TotalizerClassificationId = totalizerClassifications
-                            .Where(r => r.Name == "total Ativo Não Circulante")
+                            .Where(r => r.Name == "Total Ativo Não Circulante")
                             .Select(r => r.Id)
                             .FirstOrDefault();
                         break;
@@ -428,86 +428,45 @@ namespace _2___Application._1_Services
         {
             foreach (var classification in models.Where(m => m.TypeClassification == ETypeClassification.DRE))
             {
-                switch (classification.Name)
+                int? totalizerId = classification.Name switch
                 {
+                    "Vendas de Produtos" or "Vendas de Mercadorias" or "Prestação de Serviço" or "Receita Com Locação"
+                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Receita Operacional Bruta")?.Id,
 
-                    case "Vendas de Produtos":
-                    case "Vendas de Mercadorias":
-                    case "Prestação de Serviço":
-                    case "Receita Com Locação":
-                        classification.TotalizerClassificationId = totalizerClassifications
-                            .Where(r => r.Name == "Receita Operacional Bruta")
-                            .Select(r => r.Id)
-                            .FirstOrDefault();
-                        break;
+                    "(-) Devoluções de Vendas" or "(-) Abatimentos" or "(-) Impostos e Contribuições"
+                        => totalizerClassifications.FirstOrDefault(r => r.Name == "(-) Deduções da Receita Bruta")?.Id,
 
-                    case "(-) Devoluções de Vendas":
-                    case "(-) Abatimentos":
-                    case "(-) Impostos e Contribuições":
-                        classification.TotalizerClassificationId = totalizerClassifications
-                            .Where(r => r.Name == "(-) Deduções da Receita Bruta")
-                            .Select(r => r.Id)
-                            .FirstOrDefault();
-                        break;
+                    "(-) Custos das Mercadorias" or "(-) Custos dos Serviços Prestados"
+                        => totalizerClassifications.FirstOrDefault(r => r.Name == "(=) Receita Líquida de Vendas")?.Id,
 
-                    case "(-) Custos das Mercadorias":
-                    case "(-) Custos dos Serviços Prestados":
-                        classification.TotalizerClassificationId = totalizerClassifications
-                            .Where(r => r.Name == "(=) Receita Líquida de Vendas")
-                            .Select(r => r.Id)
-                            .FirstOrDefault();
-                        break;
+                    "Despesas Variáveis"
+                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Bruto")?.Id,
 
-                    case "Despesas Variáveis":
-                        classification.TotalizerClassificationId = totalizerClassifications
-                            .Where(r => r.Name == "Lucro Bruto")
-                            .Select(r => r.Id)
-                            .FirstOrDefault();
-                        break;
+                    "Despesas com Vendas" or "Despesas com Pessoal e Encargos" or "Despesas Administrativas e Gerais" or "Outros  Resultados Operacionais"
+                        => totalizerClassifications.FirstOrDefault(r => r.Name == "(-) Despesas Operacionais")?.Id,
 
-                    case "Despesas com Vendas":
-                    case "Despesas com Pessoal e Encargos":
-                    case "Despesas Administrativas e Gerais":
-                    case "Outros  Resultados Operacionais":
-                        classification.TotalizerClassificationId = totalizerClassifications
-                            .Where(r => r.Name == "(-) Despesas Operacionais")
-                            .Select(r => r.Id)
-                            .FirstOrDefault();
-                        break;
+                    "Ganhos e Perdas de Capital" or "Outras Receitas não Operacionais"
+                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Operacional")?.Id,
 
-                    case "Ganhos e Perdas de Capital":
-                    case "Outras Receitas não Operacionais":
-                        classification.TotalizerClassificationId = totalizerClassifications
-                            .Where(r => r.Name == "Lucro Operacional")
-                            .Select(r => r.Id)
-                            .FirstOrDefault();
-                        break;
+                    "Receitas Financeiras" or "Despesas Financeiras"
+                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Antes do Resultado Financeiro")?.Id,
 
-                    case "Receitas Financeiras":
-                    case "Despesas Financeiras":
-                        classification.TotalizerClassificationId = totalizerClassifications
-                            .Where(r => r.Name == "Lucro Antes do Resultado Financeiro")
-                            .Select(r => r.Id)
-                            .FirstOrDefault();
-                        break;
+                    "Provisão para CSLL" or "Provisão para IRPJ"
+                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Resultado do Exercício Antes do Imposto")?.Id,
 
-                    case "Provisão para CSLL":
-                    case "Provisão para IRPJ":
-                        classification.TotalizerClassificationId = totalizerClassifications
-                            .Where(r => r.Name == "Resultado do Exercício Antes do Imposto")
-                            .Select(r => r.Id)
-                            .FirstOrDefault();
-                        break;
+                    "Despesas com Depreciação"
+                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Líquido do Periodo")?.Id,
 
-                    case "Despesas com Depreciação":
-                        classification.TotalizerClassificationId = totalizerClassifications
-                            .Where(r => r.Name == "Lucro Líquido do Periodo")
-                            .Select(r => r.Id)
-                            .FirstOrDefault();
-                        break;
-                }
+                    _ => null
+                };
+
+                if (!totalizerId.HasValue)
+                    continue;
+
+                classification.TotalizerClassificationId = totalizerId.Value;
             }
         }
+
 
         private void MapPassivos(List<AccountPlanClassification> models, List<BalancoReclassificadoModel> reclassifications)
         {
@@ -536,7 +495,7 @@ namespace _2___Application._1_Services
                     case "Obrigações Sociais a Pagar":
                         classification.BalancoReclassificadoId = reclassifications
                             .Where(r => r.Name == "Obrigações Tributárias e Trabalhistas")
-                            .Select(r =>     (int?)r.Id)
+                            .Select(r => (int?)r.Id)
                             .FirstOrDefault();
                         break;
 
@@ -616,10 +575,10 @@ namespace _2___Application._1_Services
         {
             foreach (var classification in models.Where(m => m.TypeClassification == ETypeClassification.DRE)) // exemplo filtro Passivo
             {
-             classification.BalancoReclassificadoId = reclassifications
-                            .Where(r => r.Name == "DRE")
-                            .Select(r => (int?)r.Id)
-                            .FirstOrDefault();
+                classification.BalancoReclassificadoId = reclassifications
+                               .Where(r => r.Name == "DRE")
+                               .Select(r => (int?)r.Id)
+                               .FirstOrDefault();
 
             }
         }
@@ -810,7 +769,7 @@ namespace _2___Application._1_Services
             {
                 1 => await BuildPainelAtivo(accountPlanId, year),
                 2 => await BuildPainelPassivo(accountPlanId, year),
-               // 3 => await BuildPainelDRE(accountPlanId, year),
+                3 => await BuildPainelDRE(accountPlanId, year),
                 _ => throw new ArgumentException("Tipo de classificação inválido.")
             };
 
@@ -825,6 +784,11 @@ namespace _2___Application._1_Services
         private async Task<PainelBalancoContabilRespone> BuildPainelPassivo(int accountPlanId, int year)
         {
             return await BuildPainelByTypePassivo(accountPlanId, year, 2);
+        }
+
+        private async Task<PainelBalancoContabilRespone> BuildPainelDRE(int accountPlanId, int year)
+        {
+            return await BuildPainelByTypeDRE(accountPlanId, year, 3);
         }
 
         private async Task<PainelBalancoContabilRespone> BuildPainelByTypeAtivo(int accountPlanId, int year, int typeClassification)
@@ -997,6 +961,205 @@ namespace _2___Application._1_Services
 
             return new PainelBalancoContabilRespone { Months = months };
         }
+        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDRE(int accountPlanId, int year, int typeClassification)
+        {
+            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
+
+            var classificationTotalizerIds = classifications
+                .Where(c => c.TotalizerClassificationId.HasValue)
+                .Select(c => c.TotalizerClassificationId.Value)
+                .Distinct()
+                .ToList();
+
+            var totalizers = await _totalizerClassificationRepository.GetByAccountPlanIdList(accountPlanId, classificationTotalizerIds);
+            var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
+
+            var balanceteIds = balancetes.Select(b => b.Id).ToList();
+            var costCenters = model.Select(a => a.CostCenter).ToList();
+
+            var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
+            var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
+
+            var months = balancetes.Select(balancete =>
+            {
+                var totalizerResponses = totalizers.Select(totalizer =>
+                {
+                    var relatedClassifications = classifications
+                        .Where(c => c.TotalizerClassificationId == totalizer.Id)
+                        .ToList();
+
+                    var classificationsResp = relatedClassifications.Select(classification =>
+                    {
+                        var datas = balanceteDataClassifications
+                            .Where(x => x.AccountPlanClassificationId == classification.Id)
+                            .SelectMany(x =>
+                                balanceteData
+                                    .Where(bd => bd.CostCenter == x.CostCenter && bd.BalanceteId == balancete.Id)
+                                    .Select(bd => new BalanceteDataResponse
+                                    {
+                                        Id = bd.Id,
+                                        CostCenter = bd.CostCenter,
+                                        Name = bd.Name,
+                                        InitialValue = bd.InitialValue,
+                                        CreditValue = bd.Credit,
+                                        DebitValue = bd.Debit,
+                                        Value = bd.FinalValue
+                                    })
+                            ).ToList();
+
+                        return new ClassificationRespone
+                        {
+                            Id = classification.Id,
+                            Name = classification.Name,
+                            TypeOrder = classification.TypeOrder,
+                            Value = datas.Sum(a => a.CreditValue - a.DebitValue),
+                            Datas = datas
+                        };
+                    }).ToList();
+
+                    return new TotalizerParentRespone
+                    {
+                        Id = totalizer.Id,
+                        Name = totalizer.Name,
+                        TypeOrder = totalizer.TypeOrder,
+                        Classifications = classificationsResp,
+                        TotalValue = classificationsResp.Sum(a => a.Value)
+                    };
+
+                }).ToList();
+
+                // Map para regras
+                var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
+                var classificationMap = totalizerResponses
+                    .SelectMany(t => t.Classifications)
+                    .ToDictionary(c => c.Name);
+
+                // Aplicar regras especiais (EBITDA, Lucro, etc.) com ordem
+                foreach (var totalizer in totalizerResponses.OrderBy(t => t.TypeOrder))
+                {
+                    totalizer.TotalValue = ApplyDRESpecialRules(
+                        totalizer.Name,
+                        totalizerMap,
+                        classificationMap,
+                        totalizer.TotalValue
+                    );
+                }
+
+                // Aplicar percentuais
+                foreach (var totalizer in totalizerResponses)
+                {
+                    var percentage = ApplyDREPercentageRules(
+                        totalizer.Name,
+                        totalizerMap,
+                        totalizer.TotalValue
+                    );
+
+                    if (percentage.HasValue)
+                        totalizer.TotalValue = percentage.Value;
+                }
+
+                return new MonthPainelContabilRespone
+                {
+                    Id = balancete.Id,
+                    Name = balancete.DateMonth.GetDescription(),
+                    DateMonth = (int)balancete.DateMonth,
+                    Totalizer = totalizerResponses.OrderBy(t => t.TypeOrder).ToList(),
+                    MonthPainelContabilTotalizer = new MonthPainelContabilTotalizerRespone
+                    {
+                        Name = "TOTAL GERAL",
+                        TotalValue = totalizerResponses.Sum(t => t.TotalValue)
+                    }
+                };
+
+            }).OrderBy(m => m.DateMonth).ToList();
+
+            return new PainelBalancoContabilRespone { Months = months };
+        }
+
+        private decimal ApplyDRESpecialRules(string name,Dictionary<string, TotalizerParentRespone> totals,Dictionary<string, ClassificationRespone> classes,decimal current)
+        {
+            // Primeiro, tenta aplicar regra de valor bruto
+            var total = ApplyDRETotalValueRules(name, totals, classes);
+
+            // Se não for total, tenta aplicar percentual
+            var percentual = ApplyDREPercentageRules(name, totals, total);
+
+            // Se não achou nenhuma regra especial, retorna valor original
+            return percentual ?? total ?? current;
+        }
+        private decimal? ApplyDRETotalValueRules(string name,Dictionary<string, TotalizerParentRespone> totals,Dictionary<string, ClassificationRespone> classes)
+        {
+            decimal GetValue(string key) =>
+                totals.TryGetValue(key, out var t) ? t.TotalValue :
+                classes.TryGetValue(key, out var c) ? c.Value : 0;
+
+            return name switch
+            {
+                "(=) Receita Líquida de Vendas" => GetValue("Receita Operacional Bruta") + GetValue("(-) Deduções da Receita Bruta"),
+                "Lucro Bruto" => GetValue("(=) Receita Líquida de Vendas") + GetValue("(-) Custos das Mercadorias"),
+                "Margem Contribuição" => GetValue("Lucro Bruto") + GetValue("Despesas Variáveis"),
+                "Lucro Operacional" => GetValue("Lucro Bruto") + GetValue("(-) Despesas Operacionais") + GetValue("Outros  Resultados Operacionais"),
+                "Lucro Antes do Resultado Financeiro" => GetValue("Lucro Operacional") + GetValue("Outras Receitas não Operacionais") + GetValue("Ganhos e Perdas de Capital"),
+                "Resultado do Exercício Antes do Imposto" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Receitas Financeiras") + GetValue("Despesas Financeiras"),
+                "Lucro Líquido do Periodo" => GetValue("Resultado do Exercício Antes do Imposto") + GetValue("Provisão para CSLL") + GetValue("Provisão para IRPJ"),
+                "EBITDA" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Despesas com Depreciação"),
+                "NOPAT" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Provisão para CSLL") + GetValue("Provisão para IRPJ"),
+                _ => null
+            };
+        }
+        private decimal? ApplyDREPercentageRules(string name,Dictionary<string, TotalizerParentRespone> totals,decimal? totalValue)
+        {
+            decimal Get(string key) => totals.TryGetValue(key, out var t) ? t.TotalValue : 0;
+
+            return name switch
+            {
+                "Margem Bruta %" => SafeDivide(Get("Lucro Bruto"), Get("(=) Receita Líquida de Vendas")),
+                "Margem de Contribuição %" => SafeDivide(Get("Margem Contribuição"), Get("(=) Receita Líquida de Vendas")),
+                "Margem Operacional %" => SafeDivide(Get("Lucro Operacional"), Get("(=) Receita Líquida de Vendas")),
+                "Margem LAJIR %" => SafeDivide(Get("Lucro Antes do Resultado Financeiro"), Get("(=) Receita Líquida de Vendas")),
+                "Margem LAIR %" => SafeDivide(Get("Resultado do Exercício Antes do Imposto"), Get("(=) Receita Líquida de Vendas")),
+                "Margem Líquida %" => SafeDivide(Get("Lucro Líquido do Periodo"), Get("(=) Receita Líquida de Vendas")),
+                "Margem EBITDA %" => SafeDivide(Get("EBITDA"), Get("(=) Receita Líquida de Vendas")),
+                "Margem NOPAT %" => SafeDivide(Get("NOPAT"), Get("(=) Receita Líquida de Vendas")),
+                _ => null
+            };
+        }
+
+        private decimal ApplyDRESpecialRulses(string name, Dictionary<string, TotalizerParentRespone> totals, Dictionary<string, ClassificationRespone> classes, decimal current)
+        {
+            decimal GetValue(string key) =>
+                totals.TryGetValue(key, out var v) ? v.TotalValue :
+                classes.TryGetValue(key, out var c) ? c.Value : 0;
+
+            return name switch
+            {
+                "(=) Receita Líquida de Vendas" => GetValue("Receita Operacional Bruta") + GetValue("(-) Deduções da Receita Bruta"),
+                "Lucro Bruto" => GetValue("(=) Receita Líquida de Vendas") + GetValue("(-) Custos das Mercadorias"),
+                "Margem Bruta %" => SafeDivide(GetValue("Lucro Bruto"), GetValue("(=) Receita Líquida de Vendas")),
+                "Margem Contribuição" => GetValue("Lucro Bruto") + GetValue("Despesas Variáveis"),
+                "Margem de Contribuição %" => SafeDivide(GetValue("Margem Contribuição"), GetValue("(=) Receita Líquida de Vendas")),
+                "Lucro Operacional" => GetValue("Lucro Bruto") + GetValue("(-) Despesas Operacionais") + GetValue("Outros  Resultados Operacionais"),
+                "Margem Operacional %" => SafeDivide(GetValue("Lucro Operacional"), GetValue("(=) Receita Líquida de Vendas")),
+                "Lucro Antes do Resultado Financeiro" => GetValue("Lucro Operacional") + GetValue("Outras Receitas não Operacionais") + GetValue("Ganhos e Perdas de Capital"),
+                "Margem LAJIR %" => SafeDivide(GetValue("Lucro Antes do Resultado Financeiro"), GetValue("(=) Receita Líquida de Vendas")),
+                "Resultado do Exercício Antes do Imposto" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Receitas Financeiras") + GetValue("Despesas Financeiras"),
+                "Margem LAIR %" => SafeDivide(GetValue("Resultado do Exercício Antes do Imposto"), GetValue("(=) Receita Líquida de Vendas")),
+                "Lucro Líquido do Periodo" => GetValue("Resultado do Exercício Antes do Imposto") + GetValue("Provisão para CSLL") + GetValue("Provisão para IRPJ"),
+                "Margem Líquida %" => SafeDivide(GetValue("Lucro Líquido do Periodo"), GetValue("(=) Receita Líquida de Vendas")),
+                "EBITDA" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Despesas com Depreciação"),
+                "Margem EBITDA %" => SafeDivide(GetValue("EBITDA"), GetValue("(=) Receita Líquida de Vendas")),
+                "NOPAT" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Provisão para CSLL") + GetValue("Provisão para IRPJ"),
+                "Margem NOPAT %" => SafeDivide(GetValue("NOPAT"), GetValue("(=) Receita Líquida de Vendas")),
+                _ => current
+            };
+        }
+
+        private decimal SafeDivide(decimal numerator, decimal denominator)
+        {
+            return denominator != 0 ? numerator / denominator : 0;
+        }
+
         #endregion
 
         #region Private 
