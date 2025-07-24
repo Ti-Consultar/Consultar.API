@@ -1069,12 +1069,8 @@ namespace _2___Application._1_Services
                     Id = balancete.Id,
                     Name = balancete.DateMonth.GetDescription(),
                     DateMonth = (int)balancete.DateMonth,
-                    Totalizer = totalizerResponses.OrderBy(t => t.TypeOrder).ToList(),
-                    MonthPainelContabilTotalizer = new MonthPainelContabilTotalizerRespone
-                    {
-                        Name = "TOTAL GERAL",
-                        TotalValue = totalizerResponses.Sum(t => t.TotalValue)
-                    }
+                    Totalizer = totalizerResponses.OrderBy(t => t.TypeOrder).ToList()
+                    
                 };
 
             }).OrderBy(m => m.DateMonth).ToList();
