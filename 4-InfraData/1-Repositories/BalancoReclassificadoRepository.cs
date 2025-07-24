@@ -22,6 +22,18 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.AccountPlanId == accountPlanId)
                 .ToListAsync();
         }
+        public async Task<List<BalancoReclassificadoModel>> GetByAccountPlanIdList(int accountPlanId, List<int> ids)
+        {
+            return await _context.BalancoReclassificado
+                .Where(x => x.AccountPlanId == accountPlanId && ids.Contains(x.Id))
+                .ToListAsync();
+        }
 
+        public async Task<List<BalancoReclassificadoModel>> GetByAccountPlanIdListt(int accountPlanId)
+        {
+            return await _context.BalancoReclassificado
+                .Where(x => x.AccountPlanId == accountPlanId)
+                .ToListAsync();
+        }
     }
 }
