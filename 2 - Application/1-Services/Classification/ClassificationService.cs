@@ -1135,19 +1135,35 @@ namespace _2___Application._1_Services
                 "Ativo Operacional" => GetValue("Clientes") + GetValue("Estoques") + GetValue("Outros Ativos Operacionais"),
                 "Outros Ativos Operacionais Total" => GetValue("Outros Ativos Operacionais") + GetValue("Contas Transitórias Ativo"),
                 "Ativo Não Circulante" => GetValue("Ativo Não Circulante Financeiro") + GetValue("Ativo Não Circulante Operacional"),
-                "Ativo Fixo" => GetValue("Investimentos") + GetValue("Imobilizado") + GetValue("De´reciação / Amort. Acumulada"),
+                "Ativo Fixo" => GetValue("Investimentos") + GetValue("Imobilizado") + GetValue("Depreciação / Amort. Acumulada"),
 
                 _ => null
             };
         }
 
+        private decimal? ApplyBalancoReclassificadoTotalPassivoValueRules(string name, Dictionary<string, TotalizerParentRespone> totals, Dictionary<string, ClassificationRespone> classes)
+        {
+            decimal GetValue(string key) =>
+                totals.TryGetValue(key, out var t) ? t.TotalValue :
+                classes.TryGetValue(key, out var c) ? c.Value : 0;
 
+            return name switch
+            {
+                "Passivo Financeiro" => GetValue("Empréstimos e Financiamentos"),
+                "Passivo Operacional" => GetValue("Fornecedores") + GetValue("Obrigações Trabalhistas") + GetValue("Obrigações Tributárias"),
+                "Outros Passivos Operacionais Total" => GetValue("Outros Passivos Operacionais") + GetValue("Contas Transitórias"),
+                "Passivo Não Circulante" => GetValue("Passivo Não Circulante Financeiro") + GetValue("Passivo Não Circulante Operacional"),
+                "Patrimônio Liquido" => GetValue("Capital Social") + GetValue("Reservas") + GetValue("Lucros / Prejuízos Acumulado") + GetValue("Distribuição de Lucro") + GetValue("Resultado Acumulado"),
+
+                _ => null
+            };
+        }
         public async Task<ResultValue> GetPainelBalancoReclassificadoAsync(int accountPlanId, int year, int typeClassification)
         {
             var result = typeClassification switch
             {
                 1 => await BuildPainelBalancoReclassificadoAtivo(accountPlanId, year),
-                //2 => await BuildPainelPassivo(accountPlanId, year),
+               2 => await BuildPainelBalancoReclassificadoPassivo(accountPlanId, year),
                 _ => throw new ArgumentException("Tipo de classificação inválido.")
             };
 
@@ -1156,6 +1172,11 @@ namespace _2___Application._1_Services
         private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoAtivo(int accountPlanId, int year)
         {
             return await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
+        }
+
+        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoPassivo(int accountPlanId, int year)
+        {
+            return await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
         }
         private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypeAtivo(int accountPlanId, int year, int typeClassification)
         {
@@ -1167,7 +1188,7 @@ namespace _2___Application._1_Services
             var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
 
             var balancoReclassificadoIds = balancoReclassificados
-                 .Where(c => c.TypeOrder >= 1 && c.TypeOrder <= 16)
+                 .Where(c => c.TypeOrder >= 1 && c.TypeOrder <= 17)
                  .Select(c => c.Id)
                  .Distinct()
                  .ToList();
@@ -1266,7 +1287,114 @@ namespace _2___Application._1_Services
             };
         }
 
+        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypePassivo(int accountPlanId, int year, int typeClassification)
+        {
+            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
+
+
+            var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
+
+            var balancoReclassificadoIds = balancoReclassificados
+                 .Where(c => c.TypeOrder >= 18 && c.TypeOrder <= 33)
+                 .Select(c => c.Id)
+                 .Distinct()
+                 .ToList();
+
+            var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
+
+            var balanceteIds = balancetes.Select(b => b.Id).ToList();
+            var costCenters = model.Select(a => a.CostCenter).ToList();
+
+            var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
+            var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
+
+            var months = balancetes
+                .Select(balancete =>
+                {
+                    var totalizerResponses = balancoReclassificados
+                        .Select(totalizer =>
+                        {
+                            var relatedClassifications = classifications
+                                .Where(c => c.BalancoReclassificadoId == totalizer.Id)
+                                .ToList();
+
+                            var classificationsResp = relatedClassifications
+                                .Select(classification =>
+                                {
+                                    var datas = balanceteDataClassifications
+                                        .Where(x => x.AccountPlanClassificationId == classification.Id)
+                                        .SelectMany(x =>
+                                            balanceteData
+                                                .Where(bd => bd.CostCenter == x.CostCenter && bd.BalanceteId == balancete.Id)
+                                                .Select(bd => new BalanceteDataResponse
+                                                {
+                                                    Id = bd.Id,
+                                                    CostCenter = bd.CostCenter,
+                                                    Name = bd.Name,
+                                                    Value = bd.FinalValue
+                                                })
+                                        ).ToList();
+
+                                    return new ClassificationRespone
+                                    {
+                                        Id = classification.Id,
+                                        Name = classification.Name,
+                                        TypeOrder = classification.TypeOrder,
+                                        Value = datas.Sum(d => d.Value),
+                                        Datas = datas
+                                    };
+                                }).ToList();
+
+                            return new TotalizerParentRespone
+                            {
+                                Id = totalizer.Id,
+                                Name = totalizer.Name,
+                                TypeOrder = totalizer.TypeOrder,
+                                Classifications = classificationsResp,
+                                TotalValue = classificationsResp.Sum(c => c.Value)
+                            };
+                        }).ToList();
+
+                    // Mapas para acesso rápido
+                    var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
+                    var classificationMap = totalizerResponses
+                        .SelectMany(t => t.Classifications)
+                        .ToDictionary(c => c.Name);
+
+                    // Aplicar regras de valor nos totalizadores
+                    for (int i = 0; i < 3; i++)
+                    {
+                        foreach (var totalizer in totalizerResponses.OrderBy(t => t.TypeOrder))
+                        {
+                            var ruleValue = ApplyBalancoReclassificadoTotalPassivoValueRules(totalizer.Name, totalizerMap, classificationMap);
+                            if (ruleValue.HasValue)
+                                totalizer.TotalValue = ruleValue.Value;
+                        }
+                    }
+
+                    return new MonthPainelContabilRespone
+                    {
+                        Id = balancete.Id,
+                        Name = balancete.DateMonth.GetDescription(),
+                        DateMonth = (int)balancete.DateMonth,
+                        Totalizer = totalizerResponses,
+                        MonthPainelContabilTotalizer = new MonthPainelContabilTotalizerRespone
+                        {
+                            Name = "TOTAL DO PASSIVO",
+                            TotalValue = totalizerResponses.Sum(t => t.TotalValue)
+                        }
+                    };
+                })
+                .OrderBy(m => m.DateMonth)
+                .ToList();
+
+            return new PainelBalancoContabilRespone
+            {
+                Months = months
+            };
+        }
         #endregion
 
         #region Private 
