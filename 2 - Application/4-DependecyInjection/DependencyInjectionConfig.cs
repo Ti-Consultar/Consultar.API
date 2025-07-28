@@ -18,6 +18,9 @@ using _2___Application._1_Services;
 using _2___Application._1_Services.DRE;
 using _2___Application._1_Services.Passivo;
 using _2___Application._1_Services.TotalizerClassification;
+using _2___Application._1_Services.Results.CIL_e_EC;
+using _2___Application._1_Services.Results;
+using _2___Application._1_Services.Results.OperationalEfficiency;
 
 
 namespace _2___Application._4__DependencyInjectionConfig
@@ -90,6 +93,12 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<PassivoService>();
             services.AddScoped<ReclassificationService>();
             services.AddScoped<TotalizerClassificationService>();
+
+            services.AddScoped<CilECService>();
+            services.AddScoped<EconomicIndicesService>();
+            services.AddScoped<LiquidManagementService>();
+            services.AddScoped<OperationalEfficiencyService>();
+
 
 
             #endregion
