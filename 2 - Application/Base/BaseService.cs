@@ -67,7 +67,11 @@ namespace _2___Application.Base
         }
 
 
-        
+        public decimal? SafeDivide(decimal numerator, decimal denominator)
+        {
+            if (denominator == 0) return null;
+            return numerator / denominator * 100;
+        }
 
         public bool ParseBoolean(string value)
         {

@@ -1117,11 +1117,7 @@ namespace _2___Application._1_Services
             };
         }
 
-        private decimal? SafeDivide(decimal numerator, decimal denominator)
-        {
-            if (denominator == 0) return null;
-            return numerator / denominator * 100;
-        }
+ 
 
         private decimal? ApplyBalancoReclassificadoTotalAtivoValueRules(string name, Dictionary<string, TotalizerParentRespone> totals, Dictionary<string, ClassificationRespone> classes)
         {

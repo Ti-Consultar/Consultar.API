@@ -134,7 +134,21 @@ namespace _4_InfraData._1_Repositories
 
             return model;
         }
+        public async Task<List<BalanceteDataAccountPlanClassification>> GetBond(int accountPlanId)
+        {
+            var model = await _context.BalanceteDataAccountPlanClassification
+                .Include(a => a.AccountPlanClassification)
+                    .ThenInclude(apc => apc.TotalizerClassification)
+                .Include(a => a.AccountPlanClassification)
+                    .ThenInclude(apc => apc.AccountPlan)
+                .Where(c =>
+                    c.AccountPlanClassification.AccountPlanId == accountPlanId 
+                )
+                .OrderBy(c => c.AccountPlanClassification.TypeOrder)
+                .ToListAsync();
 
+            return model;
+        }
         public async Task<List<BalanceteDataAccountPlanClassification>> GetBondAtivo(int accountPlanId)
         {
             var model = await _context.BalanceteDataAccountPlanClassification
@@ -172,5 +186,26 @@ namespace _4_InfraData._1_Repositories
 
             return model;
         }
+
+        public async Task<List<AccountPlanClassification>> GetAllBytypeClassificationAsync(int accountPlanId)
+        {
+            var model = await _context.AccountPlanClassification
+                .Where(c => c.AccountPlanId == accountPlanId)
+                .OrderBy(c => c.TypeOrder)
+                .ToListAsync();
+
+            return model;
+        }
+
+        public async Task<List<AccountPlanClassification>> GetAllClassificationAsync(int accountPlanId)
+        {
+            var model = await _context.AccountPlanClassification
+                .Where(c => c.AccountPlanId == accountPlanId)
+                .OrderBy(c => c.TypeOrder)
+                .ToListAsync();
+
+            return model;
+        }
+
     }
 }
