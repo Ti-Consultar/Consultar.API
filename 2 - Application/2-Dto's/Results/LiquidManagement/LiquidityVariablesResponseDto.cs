@@ -27,7 +27,7 @@ namespace _2___Application._2_Dto_s.Results.LiquidManagement
         public decimal SaldoTesouraria { get; set; }
         public decimal NCG { get; set; }
         public decimal CDG { get; set; }
-        public decimal IndiceDeLiquidez { get; set; }
+        public decimal? IndiceDeLiquidez { get; set; }
     }
     #endregion
 
@@ -132,10 +132,10 @@ namespace _2___Application._2_Dto_s.Results.LiquidManagement
     {
         public string Name { get; set; }
         public int DateMonth { get; set; }
-        public decimal TerceirosCurtoPrazo { get; set; }
-        public decimal TerceirosLongoPrazo { get; set; }
-        public decimal ParticipacaoCapitalTerceiros { get; set; }
-        public decimal ParticipacaoCapitalProprio { get; set; }
+        public decimal? TerceirosCurtoPrazo { get; set; }
+        public decimal? TerceirosLongoPrazo { get; set; }
+        public decimal? ParticipacaoCapitalTerceiros { get; set; }
+        public decimal? ParticipacaoCapitalProprio { get; set; }
 
     }
 }

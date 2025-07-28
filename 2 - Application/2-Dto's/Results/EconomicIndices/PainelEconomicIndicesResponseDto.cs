@@ -7,25 +7,21 @@ using System.Threading.Tasks;
 
 namespace _2___Application._2_Dto_s.Results.EconomicIndices
 {
-   public class PainelEconomicIndicesResponseDto
+
+    public class PainelProfitabilityResponseDto
     {
-        public List<MonthEconomicIndicesResponse> Months { get; set; }
+        public ProfitabilityGroupedDto Profitability { get; set; }
     }
-    public class MonthEconomicIndicesResponse
+    public class ProfitabilityGroupedDto
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public int DateMonth { get; set; }
-        public List<ProfitabilityResponseDto>? Profitabilities { get; set; }
-        public List<RentabilityResponseDto>?rentabilities { get; set; }
-        public List<ReturnExpectationResponseDto>? returnExpectations { get; set; }
-        public List<EBITDAResponseDto>? EBITDA { get; set; }
-        public List<NOPATResponseDto>? NOPAT { get; set; }
+        public List<ProfitabilityResponseDto> Months { get; set; }
 
     }
 
     public class ProfitabilityResponseDto
     {
+        public string Name { get; set; }
+        public int DateMonth { get; set; }
         public decimal MargemBruta { get; set; }
         public decimal MargemEBITDA { get; set; }
         public decimal MargemOperacional { get; set; }
@@ -34,8 +30,21 @@ namespace _2___Application._2_Dto_s.Results.EconomicIndices
 
     }
 
+    public class PainelRentabilityResponseDto
+    {
+        public RentabilityGroupedDto Rentability { get; set; }
+    }
+    public class RentabilityGroupedDto
+    {
+        public List<RentabilityResponseDto> Months { get; set; }
+
+    }
+
+
     public class RentabilityResponseDto
     {
+        public string Name { get; set; }
+        public int DateMonth { get; set; }
         public decimal ROI { get; set; }
         public decimal LiquidoMensalROE { get; set; }
         public decimal LiquidoInicioROE { get; set; }

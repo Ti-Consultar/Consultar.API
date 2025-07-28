@@ -67,7 +67,7 @@ namespace _2___Application._1_Services.Results
                     .FirstOrDefault(t => t.Name == "Passivo Financeiro")?.TotalValue ?? 0;
 
                 var valorAtivoOperacional = monthAtivo.Totalizer
-                   .FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
                 var valorPassivoOperacional = monthPassivo?.Totalizer
                     .FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
 
@@ -77,14 +77,14 @@ namespace _2___Application._1_Services.Results
                     .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
                 var ativoNaoCirculante = monthAtivo.Totalizer
-                   .FirstOrDefault(t => t.Name == "Ativo Não Circulante Financeiro")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Ativo Não Circulante Financeiro")?.TotalValue ?? 0;
                 var ativoFixo = monthPassivo?.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
                 var saldoTesouraria = valorAtivoFinanceiro - valorPassivoFinanceiro;
                 var ncg = valorAtivoOperacional - valorPassivoOperacional;
                 var cdg = (passivoNaoCirculante + patrimonioLiquido) - (ativoNaoCirculante + ativoFixo);
-                var indiceDeLiquidez = ncg != 0 ? saldoTesouraria / ncg : 0;
+                decimal? indiceDeLiquidez = ncg != 0 ? saldoTesouraria / ncg : (decimal?)null;
 
                 liquidityMonths.Add(new LiquidityMonthlyDto
                 {
@@ -123,35 +123,22 @@ namespace _2___Application._1_Services.Results
                 var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
                 var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
 
-                var estoque = monthAtivo.Totalizer
-                    .FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
+                var estoque = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
+                var receitaMensal = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "Receita Operacional Bruta")?.TotalValue ?? 0;
+                var cliente = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
+                var fornecedor = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
 
-                var receitaMensal = monthDRE?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Receita Operacional Bruta")?.TotalValue ?? 0;
-
-                var cliente = monthAtivo.Totalizer
-                    .FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
-
-                var fornecedor = monthAtivo.Totalizer
-                   .FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
-
-
-                var valorAtivoOperacional = monthAtivo.Totalizer
-                  .FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
-                var valorPassivoOperacional = monthPassivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
+                var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+                var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
                 var ncg = valorAtivoOperacional - valorPassivoOperacional;
-
-
-
 
                 decimal pMR = 0;
                 decimal pME = 0;
                 decimal pMP = 0;
                 decimal cicloNCG = 0;
+
                 if (receitaMensal > 0)
                 {
-                    // Multiplica por 30 vezes o número do mês: jan=30, fev=60, ..., dez=360
                     int multiplicadorDias = monthAtivo.DateMonth * 30;
                     pMR = (estoque / receitaMensal) * multiplicadorDias;
                     pME = (cliente / receitaMensal) * multiplicadorDias;
@@ -160,6 +147,7 @@ namespace _2___Application._1_Services.Results
                 }
 
                 var cicloFinanceiroOperacoesPrincipaisNCG = (pME + pMR) - pMP;
+
                 capitalDinamics.Add(new CapitalDynamicsResponseDto
                 {
                     Name = monthAtivo.Name,
@@ -181,6 +169,7 @@ namespace _2___Application._1_Services.Results
             };
         }
 
+
         #endregion
 
         #region Geração de Fluxo de Caixa Bruto
@@ -192,43 +181,30 @@ namespace _2___Application._1_Services.Results
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
 
             var grossCashFlow = new List<GrossCashFlowResponseDto>();
-
-            decimal? ncgMesAnterior = null; // <- inicializa como nulo
+            decimal? ncgMesAnterior = null;
 
             foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
             {
                 var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
                 var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
 
-                decimal ebitda = monthDRE?.Totalizer
-                    .FirstOrDefault(t => t.Name == "EBITDA")?.TotalValue ?? 0;
+                decimal ebitda = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "EBITDA")?.TotalValue ?? 0;
+                decimal margemEbitda = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "Margem EBITDA %")?.TotalValue ?? 0;
 
-                decimal margemEbitda = monthDRE?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Margem EBITDA %")?.TotalValue ?? 0;
-
-                decimal valorAtivoOperacional = monthAtivo.Totalizer
-                    .FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
-
-                decimal valorPassivoOperacional = monthPassivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
+                decimal valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+                decimal valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
 
                 decimal ncg = valorAtivoOperacional - valorPassivoOperacional;
 
-                decimal variacaoNCG = 0;
-                if (ncgMesAnterior.HasValue)
-                {
-                    variacaoNCG = ncg - ncgMesAnterior.Value;
-                }
+                decimal variacaoNCG = ncgMesAnterior.HasValue ? ncg - ncgMesAnterior.Value : 0;
                 ncgMesAnterior = ncg;
 
                 decimal fluxoDeCaixaOperacional = variacaoNCG - ebitda;
 
-                var receitaMensal = monthDRE?.Totalizer
-                   .FirstOrDefault(t => t.Name == "Receita Operacional Bruta")?.TotalValue ?? 0;
+                var receitaMensal = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "Receita Operacional Bruta")?.TotalValue ?? 0;
 
-                decimal geracaoCaixa = fluxoDeCaixaOperacional / receitaMensal;
-                decimal aumentoReducaoFluxoCaixa = geracaoCaixa / margemEbitda;
-
+                decimal geracaoCaixa = receitaMensal != 0 ? fluxoDeCaixaOperacional / receitaMensal : 0;
+                decimal aumentoReducaoFluxoCaixa = margemEbitda != 0 ? geracaoCaixa / margemEbitda : 0;
 
                 grossCashFlow.Add(new GrossCashFlowResponseDto
                 {
@@ -238,7 +214,7 @@ namespace _2___Application._1_Services.Results
                     MargemEBITIDA = margemEbitda,
                     VariacaoNCG = variacaoNCG,
                     FluxoCaixaOperacional = fluxoDeCaixaOperacional,
-                    GeracaoCaixa = geracaoCaixa,   
+                    GeracaoCaixa = geracaoCaixa,
                     AumentoReducaoFluxoCaixa = aumentoReducaoFluxoCaixa
                 });
             }
@@ -251,6 +227,7 @@ namespace _2___Application._1_Services.Results
                 }
             };
         }
+
 
 
         #endregion
@@ -269,48 +246,33 @@ namespace _2___Application._1_Services.Results
                 var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
                 var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
 
-                var estoque = monthAtivo.Totalizer
-                    .FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
+                var estoque = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
+                var receitaMensal = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "Receita Operacional Bruta")?.TotalValue ?? 0;
+                var cliente = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
+                var fornecedor = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
 
-                var receitaMensal = monthDRE?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Receita Operacional Bruta")?.TotalValue ?? 0;
-
-                var cliente = monthAtivo.Totalizer
-                    .FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
-
-                var fornecedor = monthAtivo.Totalizer
-                   .FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
-
-
-                var valorAtivoOperacional = monthAtivo.Totalizer
-                  .FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
-                var valorPassivoOperacional = monthPassivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
+                var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+                var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
                 var ncg = valorAtivoOperacional - valorPassivoOperacional;
 
+                decimal pMR = 0, pME = 0, pMP = 0, cicloNCG = 0;
 
-
-
-                decimal pMR = 0;
-                decimal pME = 0;
-                decimal pMP = 0;
-                decimal cicloNCG = 0;
                 if (receitaMensal > 0)
                 {
-                    // Multiplica por 30 vezes o número do mês: jan=30, fev=60, ..., dez=360
                     int multiplicadorDias = monthAtivo.DateMonth * 30;
+
                     pMR = (estoque / receitaMensal) * multiplicadorDias;
                     pME = (cliente / receitaMensal) * multiplicadorDias;
                     pMP = (fornecedor / receitaMensal) * multiplicadorDias;
                     cicloNCG = (ncg / receitaMensal) * multiplicadorDias;
                 }
+
                 var cicloFinanceiroOperacoesPrincipaisNCG = (pME + pMR) - pMP;
 
-                var giroPME = 30 / pME;
-                var giroPMR = 30 / pMR;
-                var giroPMP = 30 / pMP;
-                var giroCaixa = 30 / cicloFinanceiroOperacoesPrincipaisNCG;
-
+                var giroPME = pME != 0 ? 30 / pME : 0;
+                var giroPMR = pMR != 0 ? 30 / pMR : 0;
+                var giroPMP = pMP != 0 ? 30 / pMP : 0;
+                var giroCaixa = cicloFinanceiroOperacoesPrincipaisNCG != 0 ? 30 / cicloFinanceiroOperacoesPrincipaisNCG : 0;
 
                 turnover.Add(new TurnoverResponseDto
                 {
@@ -331,6 +293,7 @@ namespace _2___Application._1_Services.Results
                 }
             };
         }
+
         #endregion
 
         #region Liquidez
@@ -347,32 +310,16 @@ namespace _2___Application._1_Services.Results
                 var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
                 var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
 
-                var ativofinanceiro = monthAtivo.Totalizer
-                     .FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
+                var ativofinanceiro = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
+                var ativoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+                var passivofinanceiro = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Financeiro")?.TotalValue ?? 0;
+                var passivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
+                var estoque = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
 
-                var ativoOperacional = monthAtivo.Totalizer
-                   .FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
-
-                var passivofinanceiro = monthPassivo.Totalizer
-                    .FirstOrDefault(t => t.Name == "Passivo Financeiro")?.TotalValue ?? 0;
-
-                var passivoOperacional = monthPassivo.Totalizer
-                   .FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
-
-                var estoque = monthAtivo.Totalizer
-                    .FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
-
-                var ativoFinanceiro = monthDRE.Totalizer
-                    .FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
-
-
-                var lc = (ativofinanceiro + ativoOperacional) / (passivofinanceiro + passivoOperacional);
-
-                var ls = ((ativofinanceiro + ativoOperacional) - estoque) / (passivofinanceiro + passivoOperacional);
-
-                var li = ativofinanceiro / (passivofinanceiro + passivoOperacional);
-
-
+                var divisor = (passivofinanceiro + passivoOperacional);
+                decimal lc = divisor != 0 ? (ativofinanceiro + ativoOperacional) / divisor : 0;
+                decimal ls = divisor != 0 ? ((ativofinanceiro + ativoOperacional - estoque) / divisor) : 0;
+                decimal li = divisor != 0 ? (ativofinanceiro / divisor) : 0;
 
                 liquidity.Add(new LiquidityResponseDto
                 {
@@ -381,7 +328,6 @@ namespace _2___Application._1_Services.Results
                     LiquidezCorrente = lc,
                     LiquidezImediata = li,
                     LiquidezSeca = ls
-
                 });
             }
 
@@ -394,6 +340,7 @@ namespace _2___Application._1_Services.Results
             };
         }
 
+
         #endregion
 
         #region Estrutura de Capital 
@@ -402,16 +349,11 @@ namespace _2___Application._1_Services.Results
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
 
-
             var capitalStructure = new List<CapitalStructureResponseDto>();
-
 
             foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
             {
                 var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
-
-
-                
 
                 decimal emprestimosACurtoPrazo = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Empréstimos e Financiamentos")?.TotalValue ?? 0;
@@ -420,16 +362,26 @@ namespace _2___Application._1_Services.Results
                     .FirstOrDefault(t => t.Name == "Passivo Não Circulante Financeiro")?.TotalValue ?? 0;
 
                 decimal patrimonioLiquido = monthPassivo?.Totalizer
-                .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
-                decimal endividamentoTerceirosCurtoPrazo = emprestimosACurtoPrazo / (emprestimosACurtoPrazo + passivoNaoCirculanteFinanceiro);
+                decimal totalTerceiros = emprestimosACurtoPrazo + passivoNaoCirculanteFinanceiro;
+                decimal totalGeral = totalTerceiros + patrimonioLiquido;
 
-                decimal endividamentoTerceirosLongoPrazo = passivoNaoCirculanteFinanceiro / (emprestimosACurtoPrazo + passivoNaoCirculanteFinanceiro);
-                
-                decimal participacaoCapitaldeTerceiros =  emprestimosACurtoPrazo + passivoNaoCirculanteFinanceiro /(emprestimosACurtoPrazo + passivoNaoCirculanteFinanceiro + patrimonioLiquido);
-                decimal participacaoCapitaldeProprio = patrimonioLiquido / (emprestimosACurtoPrazo + passivoNaoCirculanteFinanceiro + patrimonioLiquido);
+                decimal? endividamentoTerceirosCurtoPrazo = totalTerceiros != 0
+                    ? emprestimosACurtoPrazo / totalTerceiros
+                    : (decimal?)null;
 
+                decimal? endividamentoTerceirosLongoPrazo = totalTerceiros != 0
+                    ? passivoNaoCirculanteFinanceiro / totalTerceiros
+                    : (decimal?)null;
 
+                decimal? participacaoCapitaldeTerceiros = totalGeral != 0
+                    ? totalTerceiros / totalGeral
+                    : (decimal?)null;
+
+                decimal? participacaoCapitaldeProprio = totalGeral != 0
+                    ? patrimonioLiquido / totalGeral
+                    : (decimal?)null;
 
                 capitalStructure.Add(new CapitalStructureResponseDto
                 {
@@ -450,6 +402,7 @@ namespace _2___Application._1_Services.Results
                 }
             };
         }
+
         #endregion
 
         #region Dados
