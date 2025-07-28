@@ -1151,7 +1151,7 @@ namespace _2___Application._1_Services
             {
                 "Passivo Financeiro" => GetValue("Empréstimos e Financiamentos"),
                 "Passivo Operacional" => GetValue("Fornecedores") + GetValue("Obrigações Trabalhistas") + GetValue("Obrigações Tributárias"),
-                "Outros Passivos Operacionais Total" => GetValue("Outros Passivos Operacionais") + GetValue("Contas Transitórias"),
+                "Outros Passivos Operacionais Total" => GetValue("Outros Passivos Operacionais") + GetValue("Contas Transitórias Passivo"),
                 "Passivo Não Circulante" => GetValue("Passivo Não Circulante Financeiro") + GetValue("Passivo Não Circulante Operacional"),
                 "Patrimônio Liquido" => GetValue("Capital Social") + GetValue("Reservas") + GetValue("Lucros / Prejuízos Acumulado") + GetValue("Distribuição de Lucro") + GetValue("Resultado Acumulado"),
 
@@ -1188,8 +1188,7 @@ namespace _2___Application._1_Services
             var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
 
             var balancoReclassificadoIds = balancoReclassificados
-                 .Where(c => c.TypeOrder >= 1 && c.TypeOrder <= 17)
-                 .Select(c => c.Id)
+                 .Where(c => c.TypeOrder >= 1 && c.TypeOrder <= 17)   
                  .Distinct()
                  .ToList();
 
@@ -1204,7 +1203,7 @@ namespace _2___Application._1_Services
             var months = balancetes
                 .Select(balancete =>
                 {
-                    var totalizerResponses = balancoReclassificados
+                    var totalizerResponses = balancoReclassificadoIds
                         .Select(totalizer =>
                         {
                             var relatedClassifications = classifications
@@ -1298,7 +1297,6 @@ namespace _2___Application._1_Services
 
             var balancoReclassificadoIds = balancoReclassificados
                  .Where(c => c.TypeOrder >= 18 && c.TypeOrder <= 33)
-                 .Select(c => c.Id)
                  .Distinct()
                  .ToList();
 
@@ -1313,7 +1311,7 @@ namespace _2___Application._1_Services
             var months = balancetes
                 .Select(balancete =>
                 {
-                    var totalizerResponses = balancoReclassificados
+                    var totalizerResponses = balancoReclassificadoIds
                         .Select(totalizer =>
                         {
                             var relatedClassifications = classifications
