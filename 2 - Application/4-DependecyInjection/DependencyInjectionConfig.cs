@@ -15,8 +15,6 @@ using _2___Application._1_Services.AccountPlans;
 using _4_Application._1_Services;
 using _2___Application._1_Services.AccountPlans.Balancete;
 using _2___Application._1_Services;
-using _2___Application._1_Services.DRE;
-using _2___Application._1_Services.Passivo;
 using _2___Application._1_Services.TotalizerClassification;
 using _2___Application._1_Services.Results.CIL_e_EC;
 using _2___Application._1_Services.Results;
@@ -81,19 +79,13 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<CnpjService>();
             services.AddScoped<CepService>();
             services.AddScoped<BreadcrumbService>();
-            services.AddScoped<PassivoRepository>();
             services.AddScoped<ClassificationRepository>();
-            services.AddScoped<PassivoBalanceteDataRepository>();
-
             services.AddScoped<AccountPlansService>();
             services.AddScoped<BalanceteService>();
             services.AddScoped<BalanceteDataService>();
             services.AddScoped<InteractionService>();
             services.AddScoped<ClassificationService>();
-            services.AddScoped<PassivoService>();
-            services.AddScoped<ReclassificationService>();
             services.AddScoped<TotalizerClassificationService>();
-
             services.AddScoped<CilECService>();
             services.AddScoped<EconomicIndicesService>();
             services.AddScoped<LiquidManagementService>();
@@ -111,15 +103,12 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<InvitationRepository>();
             services.AddScoped<GroupRepository>();
             services.AddScoped<BusinessEntityRepository>();
-
             services.AddScoped<AccountPlansRepository>();
             services.AddScoped<BalanceteRepository>();
             services.AddScoped<BalanceteDataRepository>();
             services.AddScoped<InteractionRepository>();
             services.AddScoped<PlansAccountUserRepository>();
             services.AddScoped<ClassificationRepository>();
-            services.AddScoped<ReclassificationRepository>();
-            services.AddScoped<ReclassificationBalanceteDataRepository>();
             services.AddScoped<AccountPlanClassificationRepository>();
             services.AddScoped<TotalizerClassificationRepository>();
             services.AddScoped<TotalizerClassificationTemplateRepository>();
