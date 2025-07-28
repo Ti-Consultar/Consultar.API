@@ -76,10 +76,6 @@
     <Build Include="dbo\Tables\Interaction.sql" />
     <Build Include="dbo\Tables\PlansAccountUsers.sql" />
     <Build Include="dbo\Tables\Classification.sql" />
-    <Build Include="dbo\Tables\Reclassification.sql" />
-    <Build Include="dbo\Tables\ReclassificationBalanceteData.sql" />
-    <Build Include="dbo\Tables\ClassificationPassivo.sql" />
-    <Build Include="dbo\Tables\PassivoBalanceteData.sql" />
     <Build Include="dbo\Tables\AccountPlanClassification.sql" />
     <Build Include="dbo\Tables\BalanceteDataAccountPlanClassification.sql" />
     <Build Include="dbo\Tables\TotalizerClassificationTemplate.sql" />
