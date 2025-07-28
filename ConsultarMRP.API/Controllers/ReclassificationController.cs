@@ -9,11 +9,11 @@ namespace ConsultarMRP.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class DREController : ControllerBase
+    public class ReclassificationController : ControllerBase
     {
-        private readonly DREService _service;
+        private readonly ReclassificationService _service;
 
-        public DREController(DREService service)
+        public ReclassificationController(ReclassificationService service)
         {
             _service = service;
         }

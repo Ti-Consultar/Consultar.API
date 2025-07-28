@@ -43,11 +43,11 @@ namespace _5_API.Controllers
         [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpPut]
         [Route("{id}")]
-        public async Task<IActionResult> Update(int id,[FromBody] UpdateBalanceteDto dto)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateBalanceteDto dto)
         {
             try
             {
-                var result = await _service. Update(id, dto);
+                var result = await _service.Update(id, dto);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -60,9 +60,24 @@ namespace _5_API.Controllers
         /// </summary>
         [HttpGet("accountplan/{accountPlanId}")]
         [Authorize()]
-        public async Task<IActionResult> GetBalancetes(int accountPlanId)
+        public async Task<IActionResult> GetAccountPlanWithBalancetesMonth(int accountPlanId )
         {
-            var result = await _service.GetAccountPlanWithBalancetes(accountPlanId);
+            var result = await _service.GetAccountPlanWithBalancetesMonth(accountPlanId);
+
+            if (!result.Success)
+                return NotFound(result);
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Lista o planos de contas de acordo com os Parametros passados
+        /// </summary>
+        [HttpGet("accountplan/{accountPlanId}/filter")]
+        [Authorize()]
+        public async Task<IActionResult> GetBalancetes(int accountPlanId, [FromQuery] char tipo)
+        {
+            var result = await _service.GetAccountPlanWithBalancetes(accountPlanId, tipo);
 
             if (!result.Success)
                 return NotFound(result);
@@ -84,6 +99,23 @@ namespace _5_API.Controllers
 
             return Ok(result);
         }
+
+        /// <summary>
+        /// Lista o plano de contas por Id
+        /// </summary>
+        [HttpGet("accountplan/{accountPlanid}/date")]
+        [Authorize()]
+        public async Task<IActionResult> GetByDate(int accountPlanid, [FromQuery] int year, [FromQuery]int month)
+        {
+            var result = await _service.GetByBalanceteIdDate(accountPlanid, year, month);
+
+            if (!result.Success)
+                return NotFound(result);
+
+            return Ok(result);
+        }
+
+        
 
         /// <summary>
         /// Deleta
@@ -116,9 +148,9 @@ namespace _5_API.Controllers
         // [Authorize]
         [HttpGet("{balanceteId}/data")]
         [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
-        public async Task<IActionResult> GetByBalanceteId( int balanceteId)
+        public async Task<IActionResult> GetByBalanceteId(int balanceteId)
         {
-            var result = await _service.GetByBalanceteId( balanceteId);
+            var result = await _service.GetByBalanceteId(balanceteId);
 
             if (!result.Success)
                 return BadRequest(result);
@@ -137,6 +169,32 @@ namespace _5_API.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("{balanceteId}/cost-center/search")]
+        //[Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
+        public async Task<IActionResult> GetAgrupadoByCostCenter(int balanceteId, string? search)
+        {
+            var result = await _service.GetAgrupadoByCostCenter(balanceteId, search);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        [HttpGet("{balanceteId}/filter")]
+         //[Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
+        public async Task<IActionResult> GetAgrupadoPorTipo(int balanceteId, [FromQuery] char tipo)
+        {
+            var result = await _service.GetAgrupadoPorTipo(balanceteId, tipo);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+       
 
         /// <summary>
         /// Deleta

@@ -15,18 +15,18 @@ using System.Threading.Tasks;
 
 namespace _2___Application._1_Services.DRE
 {
-    public class DREService : BaseService
+    public class ReclassificationService : BaseService
     {
-        private readonly DRERepository _repository;
+        private readonly ReclassificationRepository _repository;
         private readonly ClassificationRepository _Classificationrepository;
         private readonly AccountPlansRepository _accountPlansRepository;
-        private readonly DREBalanceteDataRepository _dREBalanceteDataRepository;
+        private readonly ReclassificationBalanceteDataRepository _dREBalanceteDataRepository;
 
-        public DREService(
-            DRERepository repository,
+        public ReclassificationService(
+            ReclassificationRepository repository,
             ClassificationRepository classificationrepository,
             AccountPlansRepository accountPlansRepository,
-            DREBalanceteDataRepository dREBalanceteDataRepository,
+            ReclassificationBalanceteDataRepository dREBalanceteDataRepository,
             IAppSettings appSettings) : base(appSettings)
         {
             _Classificationrepository = classificationrepository;
@@ -112,12 +112,12 @@ namespace _2___Application._1_Services.DRE
                 {
                     Id = apGroup.Key.Id,
                     Classifications = apGroup
-                        .GroupBy(d => new { d.Classification.Id, d.Classification.Name, d.Classification.Type })
+                        .GroupBy(d => new { d.Classification.Id, d.Classification.Name, d.Classification.TypeOrder })
                         .Select(classGroup => new ClassificationWithDREsResponse
                         {
                             Id = classGroup.Key.Id,
                             Name = classGroup.Key.Name,
-                            Type = classGroup.Key.Type,
+                            Type = classGroup.Key.TypeOrder,
                             DREs = classGroup.Select(d => new DREResponseSimple
                             {
                                 Id = d.Id,
@@ -148,7 +148,7 @@ namespace _2___Application._1_Services.DRE
                     return ErrorResponse("Nenhum item de Balancete foi informado.");
                 
                 // Mapeia os itens da lista para os modelos que serão salvos
-                var vinculos = dto.Items.Select(item => new DREBalanceteData
+                var vinculos = dto.Items.Select(item => new ReclassificationBalanceteModel
                 {
                     DREId = dto.DREId,
                     BalanceteId = dto.BalanceteId,
@@ -173,7 +173,7 @@ namespace _2___Application._1_Services.DRE
         #endregion
 
         #region Private
-        private DREResponse MapToDREResponse(DREModel model)
+        private DREResponse MapToDREResponse(ReclassificationModel model)
         {
             return new DREResponse
             {
@@ -194,7 +194,7 @@ namespace _2___Application._1_Services.DRE
             {
                 Id = model.Id,
                 Name = model.Name,
-                Type = model.Type
+                TypeOrder = model.TypeOrder
             };
         }
         private async Task<int> GetNextSequentialAsync(int accountPlanId)
@@ -204,9 +204,9 @@ namespace _2___Application._1_Services.DRE
                 .OrderBy(d => d.Sequential)
                 .LastOrDefault()?.Sequential + 1 ?? 1;
         }
-        private DREModel BuildDreModel(InsertDRE dto, int sequential)
+        private ReclassificationModel BuildDreModel(InsertDRE dto, int sequential)
         {
-            return new DREModel
+            return new ReclassificationModel
             {
                 Name = dto.Name,
                 Sequential = sequential,

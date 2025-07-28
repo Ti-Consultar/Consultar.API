@@ -14,6 +14,7 @@ using _2___Application._2_Dto_s.Company.SubCompany;
 using _2___Application._2_Dto_s.Company;
 using _2___Application._2_Dto_s.Group;
 using _4_InfraData._5_ConfigEnum;
+using Microsoft.IdentityModel.Tokens;
 
 namespace _2___Application._1_Services.AccountPlans.Balancete
 {
@@ -146,6 +147,25 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             }
         }
 
+        public async Task<ResultValue> GetByDate(int accountplanId, int year, int month)
+        {
+            try
+            {
+                var accountPlans = await _repository.GetByDate(accountplanId, year, month);
+
+                if (accountPlans == null || !accountPlans.Any())
+                    return ErrorResponse(Message.NotFound);
+
+                var result = accountPlans.Select(MapToBalanceteDto).ToList();
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
         public async Task<ResultValue> Delete(int id)
         {
             try
@@ -165,8 +185,44 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             }
         }
 
-        public async Task<ResultValue> GetAccountPlanWithBalancetes(int accountPlanId)
+        public async Task<ResultValue> GetAccountPlanWithBalancetesMonth(int accountPlanId)
         {
+           
+            var balancetes = await _repository.GetAccountPlanWithBalancetesMonthAsync(accountPlanId);
+
+            if (balancetes == null || !balancetes.Any())
+                return SuccessResponse(new List<AccountPlanWithBalancetesDto>());
+
+            var response = new AccountPlanWithBalancetesDto
+            {
+                Id = accountPlanId,
+                Balancetes = balancetes
+                    .OrderByDescending(b => b.DateYear)
+                    .ThenByDescending(b => b.DateMonth)
+                    .Select(b => new BalanceteSimpleDto
+                    {
+                        Id = b.Id,
+                        DateMonth = b.DateMonth.GetDescription(),
+                        DateYear = b.DateYear,
+                        Status = b.Status.GetDescription(),
+                        DateCreate = b.DateCreate
+                      
+                    })
+                    .ToList()
+            };
+
+            return SuccessResponse(response);
+        }
+
+      
+
+        public async Task<ResultValue> GetAccountPlanWithBalancetes(int accountPlanId, char tipo)
+        {
+            if (tipo == 0)
+            {
+                tipo = '1';
+            }
+
             var balancetes = await _repository.GetAccountPlanWithBalancetesAsync(accountPlanId);
 
             if (balancetes == null || !balancetes.Any())
@@ -176,21 +232,68 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             {
                 Id = accountPlanId,
                 Balancetes = balancetes
-          .OrderByDescending(b => b.DateYear)
-          .ThenByDescending(b => b.DateMonth)
-          .Select(b => new BalanceteSimpleDto
-          {
-              Id = b.Id,
-              DateMonth = b.DateMonth.GetDescription(),
-              DateYear = b.DateYear,
-              Status = b.Status.GetDescription(),
-              DateCreate = b.DateCreate
-          })
-          .ToList()
+                    .OrderByDescending(b => b.DateYear)
+                    .ThenByDescending(b => b.DateMonth)
+                    .Select(b => new BalanceteSimpleDto
+                    {
+                        Id = b.Id,
+                        DateMonth = b.DateMonth.GetDescription(),
+                        DateYear = b.DateYear,
+                        Status = b.Status.GetDescription(),
+                        DateCreate = b.DateCreate,
+                        BalanceteData = new List<BalanceteDataDtoSimple>
+                        {
+                    new BalanceteDataDtoSimple
+                    {
+                        DataDto = AgruparBalanceteData(b.BalancetesData.ToList(), tipo) // muda pra '1' se quiser ativos
+                    }
+                        }
+                    })
+                    .ToList()
             };
+
             return SuccessResponse(response);
         }
 
+
+        private List<DataDto> AgruparBalanceteData(List<BalanceteDataModel> data, char tipoInicial)
+        {
+            var lookup = data.ToDictionary(x => x.CostCenter, x => new DataDto
+            {
+                Id = x.Id,
+                CostCenter = x.CostCenter,
+                Name = x.Name,
+                InitialValue = x.InitialValue,
+                Credit = x.Credit,
+                Debit = x.Debit,
+                FinalValue = x.FinalValue,
+                BudgetedAmount = x.BudgetedAmount
+            });
+
+            foreach (var item in data)
+            {
+                var parts = item.CostCenter.Split('.');
+                if (parts.Length <= 1) continue;
+
+                var parentCostCenter = string.Join('.', parts.Take(parts.Length - 1));
+
+                if (lookup.TryGetValue(parentCostCenter, out var parent))
+                {
+                    parent.InitialValue += item.InitialValue;
+                    parent.Credit += item.Credit;
+                    parent.Debit += item.Debit;
+                    parent.FinalValue += item.FinalValue;
+                }
+            }
+
+            // ⬇️ Aqui muda: agora retorna todos que comecem com o dígito selecionado (ex: '1' para Ativo)
+            var todosComPrefixo = lookup.Values
+                .Where(x => x.CostCenter.StartsWith(tipoInicial.ToString()))
+                .OrderBy(x => x.CostCenter)
+                .ToList();
+
+            return todosComPrefixo;
+        }
 
 
 
@@ -242,6 +345,13 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                     return ErrorResponse("Formato de arquivo não suportado. Envie um CSV ou XLSX.");
                 }
 
+                // Remover duplicados na lista importada (CostCenter único)
+                list = list
+                    .GroupBy(x => x.CostCenter)
+                    .Select(g => g.First())
+                    .ToList();
+
+               
                 await _balanceteDataRepository.AddRangeAsync(list);
 
                 return SuccessResponse("Dados importados com sucesso.");
@@ -251,6 +361,27 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 return ErrorResponse(ex);
             }
         }
+
+
+        public async Task<ResultValue> GetByBalanceteIdDate(int accountplanId, int year, int month)
+        {
+            try
+            {
+                var balancete = await _balanceteDataRepository.GetByBalanceteIdDate(accountplanId, year, month);
+
+                if (balancete == null || !balancete.Any())
+                    return SuccessResponse(new BalanceteDataDto());
+
+                var result = MapToBalanceteDataDto(balancete);
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
 
         public async Task<ResultValue> GetByBalanceteId(int balanceteId)
         {
@@ -299,6 +430,144 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 return ErrorResponse(ex);
             }
         }
+
+        public async Task<ResultValue> GetAgrupadoByCostCenter(int balanceteId, string? search)
+        {
+            try
+            {
+               
+
+                var data = await _balanceteDataRepository.GetByBalanceteDataByCostCenter(balanceteId, search);
+
+                if (data == null || !data.Any())
+                    return SuccessResponse(Message.NotFound);
+
+                var result = data.Select(x => new DataDto
+                {
+                    Id = x.Id,
+                    CostCenter = x.CostCenter,
+                    Name = x.Name,
+                    InitialValue = x.InitialValue,
+                    Credit = x.Credit,
+                    Debit = x.Debit,
+                    FinalValue = x.FinalValue,
+                    BudgetedAmount = x.BudgetedAmount,
+                }).ToList();
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+        public async Task<ResultValue> GetAgrupadoSomenteAtivos(int balanceteId)
+        {
+            try
+            {
+                var data = await _balanceteDataRepository.GetByBalanceteId(balanceteId);
+
+                if (data == null || !data.Any())
+                    return SuccessResponse(Message.NotFound);
+
+                var lookup = data.ToDictionary(x => x.CostCenter, x => new DataDto
+                {
+                    Id = x.Id,
+                    CostCenter = x.CostCenter,
+                    Name = x.Name,
+                    InitialValue = x.InitialValue,
+                    Credit = x.Credit,
+                    Debit = x.Debit,
+                    FinalValue = x.FinalValue,
+                    BudgetedAmount = x.BudgetedAmount
+                });
+
+                foreach (var item in data)
+                {
+                    var parts = item.CostCenter.Split('.');
+                    if (parts.Length <= 1) continue;
+
+                    var parentCostCenter = string.Join('.', parts.Take(parts.Length - 1));
+
+                    if (lookup.TryGetValue(parentCostCenter, out var parent))
+                    {
+                        parent.InitialValue += item.InitialValue;
+                        parent.Credit += item.Credit;
+                        parent.Debit += item.Debit;
+                        parent.FinalValue += item.FinalValue;
+                    }
+                }
+
+                var pais = lookup.Values
+                    .Where(x => x.CostCenter.StartsWith("1")) // Apenas ativos
+                    .Where(x => data.Any(d => d.CostCenter.StartsWith(x.CostCenter + "."))) // tem filhos
+                    .OrderBy(x => x.CostCenter)
+                    .ToList();
+
+                return SuccessResponse(pais);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+
+        public async Task<ResultValue> GetAgrupadoPorTipo(int balanceteId, char tipoInicial)
+        {
+            try
+            {
+                var data = await _balanceteDataRepository.GetByBalanceteId(balanceteId);
+
+                if (data == null || !data.Any())
+                    return SuccessResponse(Message.NotFound);
+
+                var lookup = data.ToDictionary(x => x.CostCenter, x => new DataDto
+                {
+                    Id = x.Id,
+                    CostCenter = x.CostCenter,
+                    Name = x.Name,
+                    InitialValue = x.InitialValue,
+                    Credit = x.Credit,
+                    Debit = x.Debit,
+                    FinalValue = x.FinalValue,
+                    BudgetedAmount = x.BudgetedAmount
+                });
+
+                foreach (var item in data)
+                {
+                    var parts = item.CostCenter.Split('.');
+                    if (parts.Length <= 1) continue;
+
+                    var parentCostCenter = string.Join('.', parts.Take(parts.Length - 1));
+
+                    if (lookup.TryGetValue(parentCostCenter, out var parent))
+                    {
+                        parent.InitialValue += item.InitialValue;
+                        parent.Credit += item.Credit;
+                        parent.Debit += item.Debit;
+                        parent.FinalValue += item.FinalValue;
+                    }
+                }
+
+                var pais = lookup.Values
+                    .Where(x => x.CostCenter.StartsWith(tipoInicial.ToString() )) //+ ".")) // filtro dinâmico
+                    .Where(x => data.Any(d => d.CostCenter.StartsWith(x.CostCenter + "."))) // tem filhos
+                    .OrderBy(x => x.CostCenter)
+                    .ToList();
+
+                return SuccessResponse(pais);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+
+
+
         public async Task<ResultValue> DeleteBalanceteData(int balanceteId)
         {
             try

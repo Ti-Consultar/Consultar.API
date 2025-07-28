@@ -16,6 +16,8 @@ using _4_Application._1_Services;
 using _2___Application._1_Services.AccountPlans.Balancete;
 using _2___Application._1_Services;
 using _2___Application._1_Services.DRE;
+using _2___Application._1_Services.Passivo;
+using _2___Application._1_Services.TotalizerClassification;
 
 
 namespace _2___Application._4__DependencyInjectionConfig
@@ -76,13 +78,18 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<CnpjService>();
             services.AddScoped<CepService>();
             services.AddScoped<BreadcrumbService>();
+            services.AddScoped<PassivoRepository>();
+            services.AddScoped<ClassificationRepository>();
+            services.AddScoped<PassivoBalanceteDataRepository>();
 
             services.AddScoped<AccountPlansService>();
             services.AddScoped<BalanceteService>();
             services.AddScoped<BalanceteDataService>();
             services.AddScoped<InteractionService>();
             services.AddScoped<ClassificationService>();
-            services.AddScoped<DREService>();
+            services.AddScoped<PassivoService>();
+            services.AddScoped<ReclassificationService>();
+            services.AddScoped<TotalizerClassificationService>();
 
 
             #endregion
@@ -102,8 +109,13 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<InteractionRepository>();
             services.AddScoped<PlansAccountUserRepository>();
             services.AddScoped<ClassificationRepository>();
-            services.AddScoped<DRERepository>();
-            services.AddScoped<DREBalanceteDataRepository>();
+            services.AddScoped<ReclassificationRepository>();
+            services.AddScoped<ReclassificationBalanceteDataRepository>();
+            services.AddScoped<AccountPlanClassificationRepository>();
+            services.AddScoped<TotalizerClassificationRepository>();
+            services.AddScoped<TotalizerClassificationTemplateRepository>();
+            services.AddScoped<BalancoReclassificadoRepository>();
+            services.AddScoped<BalancoReclassificadoTemplateRepository>();
             #endregion
 
             #endregion

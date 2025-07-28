@@ -63,8 +63,16 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.Id == id)
                 .ToListAsync();
         }
-       
 
+        public async Task<AccountPlansModel> GetByaccountPlanId(int id)
+        {
+            return await _context.AccountPlans
+                .Include(x => x.Group)
+                .Include(x => x.Company)
+                .Include(x => x.SubCompany)
+                .Where(x => x.Id == id)
+                .FirstOrDefaultAsync();
+        }
 
     }
 }

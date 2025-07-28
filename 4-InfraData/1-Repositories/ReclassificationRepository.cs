@@ -9,27 +9,27 @@ using System.Threading.Tasks;
 
 namespace _4_InfraData._1_Repositories
 {
-    public class DRERepository : GenericRepository<DREModel>
+    public class ReclassificationRepository : GenericRepository<ReclassificationModel>
     {
         private readonly CoreServiceDbContext _context;
-        public DRERepository(CoreServiceDbContext context) : base(context)
+        public ReclassificationRepository(CoreServiceDbContext context) : base(context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
-        public async Task<List<DREModel>> GetByAccountPlanId(int accountPlansId)
+        public async Task<List<ReclassificationModel>> GetByAccountPlanId(int accountPlansId)
         {
-            return await _context.DRE
+            return await _context.Reclassification
                 .Include(x => x.Classification)
                 .Include(x => x.AccountPlan)
                 .Where(x => x.AccountPlanId == accountPlansId)
-                .OrderBy(x => x.Classification.Type)
+                .OrderBy(x => x.Classification.TypeOrder)
                 .ToListAsync();
         }
 
 
-        public async Task<DREModel> GetByDREId(int id)
+        public async Task<ReclassificationModel> GetByDREId(int id)
         {
-            return await _context.DRE
+            return await _context.Reclassification
                  .Where(x => x.Id == id)
                 .Include(x => x.Classification)
                 .Include(x => x.AccountPlan)

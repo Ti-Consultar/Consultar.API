@@ -1,6 +1,7 @@
 ﻿using _3_Domain._1_Entities;
 using _4_InfraData._1_Context;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 
 
 namespace _4_InfraData._1_Repositories
@@ -19,6 +20,33 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.BalanceteId == balanceteId)
                 .ToListAsync();
         }
+
+
+        public async Task<List<BalanceteDataAccountPlanClassification>> GetByAccountPlanClassificationId(int accountPlanId)
+        {
+            return await _context.BalanceteDataAccountPlanClassification
+                .Include(a => a.AccountPlanClassification)
+                .Where(x => x.AccountPlanClassification.AccountPlanId == accountPlanId)
+                .ToListAsync();
+        }
+        public async Task<List<BalanceteDataModel>> GetByBalanceteIdDate(int accountPlanId, int year, int month)
+        {
+            return await _context.BalanceteData
+                .Include(x => x.Balancete)
+                .Where(x => x.Balancete.AccountPlansId == accountPlanId && x.Balancete.DateYear == year && (int)x.Balancete.DateMonth == month)
+                .ToListAsync();
+        }
+
+        public async Task<List<BalanceteDataModel>> GetByBalanceteDataByCostCenter(int balanceteId, string? search)
+        {
+            return await _context.BalanceteData
+                .Include(x => x.Balancete)
+                .Where(x => x.BalanceteId == balanceteId &&
+                            (string.IsNullOrEmpty(search) || x.CostCenter.StartsWith(search)))
+                .ToListAsync();
+        }
+
+
         public async Task<List<BalanceteDataModel>> GetAgrupadoPorCostCenter(int balanceteId)
         {
             var data = await _context.BalanceteData
@@ -28,6 +56,27 @@ namespace _4_InfraData._1_Repositories
 
             return AgruparPorCostCenterPai(data);
         }
+        public async Task<List<BalanceteDataModel>> GetAgrupadoPorCostCenterListMultiBalancete(List<string> costCenters, List<int> balanceteIds)
+        {
+            return await _context.BalanceteData
+                .Where(bd => balanceteIds.Contains(bd.BalanceteId) && costCenters.Contains(bd.CostCenter))
+                .ToListAsync();
+        }
+        public async Task<List<BalanceteDataModel>> GetAgrupadoPorCostCenterListMonthAsync(List<string> costCenters, int balanceteId)
+        {
+            return await _context.BalanceteData
+                .Include(x => x.Balancete)
+                .Where(x => x.BalanceteId == balanceteId && costCenters.Contains(x.CostCenter))
+                .ToListAsync();
+        }
+        public async Task<List<BalanceteDataModel>> GetAgrupadoPorCostCenterListAsync(List<string> costCenters)
+        {
+            return await _context.BalanceteData
+                .Include(x => x.Balancete)
+                .Where(x =>  costCenters.Contains(x.CostCenter))
+                .ToListAsync();
+        }
+
 
         public List<BalanceteDataModel> AgruparPorCostCenterPai(List<BalanceteDataModel> data)
         {

@@ -9,16 +9,16 @@ using System.Threading.Tasks;
 
 namespace _4_InfraData._1_Repositories
 {
-    public class DREBalanceteDataRepository : GenericRepository<DREBalanceteData>
+    public class ReclassificationBalanceteDataRepository : GenericRepository<ReclassificationBalanceteModel>
     {
         private readonly CoreServiceDbContext _context;
-        public DREBalanceteDataRepository(CoreServiceDbContext context) : base(context)
+        public ReclassificationBalanceteDataRepository(CoreServiceDbContext context) : base(context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
-        public async Task<List<DREBalanceteData>> GetByDREId(int dREId)
+        public async Task<List<ReclassificationBalanceteModel>> GetByDREId(int dREId)
         {
-            return await _context.DREBalanceteData
+            return await _context.ReclassificationBalanceteData
                 .Include(x => x.Dre)
                 .Include(x => x.Balancete)
                 .Include(x => x.BalanceteData)
@@ -26,9 +26,9 @@ namespace _4_InfraData._1_Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<DREBalanceteData>> GetByBalanceteId(int balanceteId)
+        public async Task<List<ReclassificationBalanceteModel>> GetByBalanceteId(int balanceteId)
         {
-            return await _context.DREBalanceteData
+            return await _context.ReclassificationBalanceteData
                 .Include(x => x.Dre)
                 .Include(x => x.Balancete)
                 .Include(x => x.BalanceteData)

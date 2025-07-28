@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace _3_Domain._1_Entities
 {
-    public class DREBalanceteData
+    public class ReclassificationBalanceteModel
     {
-        public DREBalanceteData()
+        public ReclassificationBalanceteModel()
         {
             
         }
@@ -19,7 +19,7 @@ namespace _3_Domain._1_Entities
         public double TotalValue { get; set; }
 
         // Relacionamentos, se existirem
-        public virtual DREModel Dre { get; set; }
+        public virtual ReclassificationModel Dre { get; set; }
         public virtual BalanceteDataModel BalanceteData { get; set; }
         public virtual BalanceteModel Balancete { get; set; }
     }

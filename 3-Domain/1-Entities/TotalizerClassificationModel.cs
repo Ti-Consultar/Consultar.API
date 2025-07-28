@@ -6,19 +6,18 @@ using System.Threading.Tasks;
 
 namespace _3_Domain._1_Entities
 {
-   public class DREModel
+  public  class TotalizerClassificationModel
     {
-        public DREModel()
+        public TotalizerClassificationModel()
         {
             
         }
 
+
+
         public int Id { get; set; }
         public string Name { get; set; }
-        public int Sequential { get; set; }
-        public int ClassificationId { get; set; }
-        public ClassificationModel Classification { get; set; }
-        public AccountPlansModel AccountPlan { get; set; }
+        public int TypeOrder { get; set; }
         public int AccountPlanId { get; set; }
     }
 }
