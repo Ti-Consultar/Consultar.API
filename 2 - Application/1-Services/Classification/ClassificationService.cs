@@ -1272,6 +1272,8 @@ namespace _2___Application._1_Services
                 var margemBruta = totalizerResponses
                    .FirstOrDefault(t => t.Name == "Margem Bruta %");
 
+                margemBruta.TotalValue = 0;
+
                 margemBruta.TotalValue = receitaLiquida.TotalValue != 0
                     ? Math.Round((lucroBruto.TotalValue / receitaLiquida.TotalValue) * 100, 2)
                     : 0;
@@ -1287,12 +1289,16 @@ namespace _2___Application._1_Services
                 var margemOperacional = totalizerResponses
                    .FirstOrDefault(t => t.Name == "Margem Operacional %");
 
+                margemOperacional.TotalValue = 0;
+
                 margemOperacional.TotalValue = receitaLiquida.TotalValue != 0
                   ? Math.Round((lucroOperacional.TotalValue / receitaLiquida.TotalValue) * 100, 2)
                   : 0;
 
                 var margemLajir = totalizerResponses
                    .FirstOrDefault(t => t.Name == "Margem LAJIR %");
+
+                margemLajir.TotalValue = 0;
 
                 margemLajir.TotalValue = receitaLiquida.TotalValue != 0
                  ? Math.Round((lucroAntes.TotalValue / receitaLiquida.TotalValue) * 100, 2)
@@ -1301,12 +1307,16 @@ namespace _2___Application._1_Services
                 var margemLAIR = totalizerResponses
                    .FirstOrDefault(t => t.Name == "Margem LAIR %");
 
+                margemLAIR.TotalValue = 0;
+
                 margemLAIR.TotalValue = receitaLiquida.TotalValue != 0
                 ? Math.Round((resultadoAntes.TotalValue / receitaLiquida.TotalValue) * 100, 2)
                 : 0;
 
                 var margemLiquida = totalizerResponses
                   .FirstOrDefault(t => t.Name == "Margem Líquida %");
+
+                margemLiquida.TotalValue = 0;
 
                 margemLiquida.TotalValue = receitaLiquida.TotalValue != 0
                ? Math.Round((lucroLiquido.TotalValue / receitaLiquida.TotalValue) * 100, 2)
@@ -1353,22 +1363,22 @@ namespace _2___Application._1_Services
                         => totalizerClassifications.FirstOrDefault(r => r.Name == "(=) Receita Líquida de Vendas")?.Id,
 
                     "Despesas Variáveis"
-                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Bruto")?.Id,
+                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Margem Bruta %")?.Id,
 
-                    "Despesas com Vendas" or "Despesas com Pessoal e Encargos" or "Despesas Administrativas e Gerais" or "Outros Resultados Operacionais"
+                    "Despesas com Vendas" or "Despesas com Pessoal e Encargos" or "Despesas Administrativas e Gerais" or "Outros  Resultados Operacionais"
                         => totalizerClassifications.FirstOrDefault(r => r.Name == "(-) Despesas Operacionais")?.Id,
 
                     "Ganhos e Perdas de Capital" or "Outras Receitas não Operacionais"
-                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Operacional")?.Id,
+                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Margem Operacional %")?.Id,
 
                     "Receitas Financeiras" or "Despesas Financeiras"
-                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Antes do Resultado Financeiro")?.Id,
+                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Margem LAJIR %")?.Id,
 
                     "Provisão para CSLL" or "Provisão para IRPJ"
-                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Resultado do Exercício Antes do Imposto")?.Id,
+                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Margem LAIR %")?.Id,
 
                     "Despesas com Depreciação"
-                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Líquido do Periodo")?.Id,
+                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Margem Líquida %")?.Id,
 
                     _ => null
                 };
