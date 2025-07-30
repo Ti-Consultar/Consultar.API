@@ -788,7 +788,7 @@ namespace _2___Application._1_Services
 
         private async Task<PainelBalancoContabilRespone> BuildPainelDRE(int accountPlanId, int year)
         {
-            return await BuildPainelByTypeDRE(accountPlanId, year, 3);
+            return await BuildPainelByTypeeDRE(accountPlanId, year, 3);
         }
 
         private async Task<PainelBalancoContabilRespone> BuildPainelByTypeAtivo(int accountPlanId, int year, int typeClassification)
@@ -1223,7 +1223,7 @@ namespace _2___Application._1_Services
                         {
                             Id = 0,
                             Name = name,
-                            TypeOrder = 99, // ou outro número para ordenar no final
+                            TypeOrder = 99, 
                             Classifications = new List<ClassificationRespone>(),
                             TotalValue = ruleValue.Value
                         };
