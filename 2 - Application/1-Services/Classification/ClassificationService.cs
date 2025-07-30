@@ -908,6 +908,8 @@ namespace _2___Application._1_Services
                     .SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Resultado do Exercício Acumulado");
 
+                resultadoAcumuladoClass.Value = 0;
+
                 if (resultadoAcumuladoClass != null)
                 {
                     var lucroLiquidoMes = painelDRE.Months
