@@ -1289,7 +1289,7 @@ namespace _2___Application._1_Services
                .FirstOrDefault(c => c.Name == "Despesas Com Depreciação")?.Value ?? 0;
 
                 // calculos 
-                lucroBruto.TotalValue = lucroBruto.TotalValue + receitaLiquidaValor ;
+                lucroBruto.TotalValue = receitaLiquidaValor + custoMercadorias ;
                 receitaLiquida.TotalValue = receitaLiquidaValor;
                 margemContribuicao.TotalValue = (lucroBruto?.TotalValue ?? 0) + despesasV;
                 lucroOperacional.TotalValue = (lucroBruto?.TotalValue ?? 0) + despesasOperacionais?.TotalValue ?? 0 + outrosResultados;
