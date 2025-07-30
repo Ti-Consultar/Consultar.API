@@ -160,12 +160,184 @@ namespace _2___Application._1_Services.Results
         #endregion
 
         #region Expectativa de Retorno
-        #endregion
 
+        //public async Task<PainelReturnExpectationResponseDto> GetReturnExpectation(int accountPlanId, int year)
+        //{
+        //    var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
+        //    var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
+        //    var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
+
+        //    // 🔁 Carrega também o painel do ANO ANTERIOR (somente o Ativo é necessário aqui)
+        //    var painelAtivoAnoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1);
+
+        //    var dezembroAnoAnterior = painelAtivoAnoAnterior.Months
+        //        .FirstOrDefault(a => a.DateMonth == 12);
+
+        //    decimal patrimonioLiquidoAnoAnterior = dezembroAnoAnterior?.Totalizer
+        //        .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+
+        //    var returnExpectations = new List<ReturnExpectationResponseDto>();
+
+        //    foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
+        //    {
+        //        var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
+        //        var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
+
+        //        decimal nOPAT = monthDRE?.Totalizer
+        //            .FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
+
+        //        decimal ativoTotal = monthAtivo?.Totalizer
+        //            .FirstOrDefault(t => t.Name == "Total Ativo Circulante")?.TotalValue ?? 0;
+
+        //        decimal patrimonioLiquido = monthAtivo?.Totalizer
+        //            .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+
+        //        // ⚠️ Evita divisão por zero
+        //        decimal roi = ativoTotal != 0 ? lucroLiquido / ativoTotal : 0;
+        //        decimal roe = patrimonioLiquido != 0 ? lucroLiquido / patrimonioLiquido : 0;
+        //        decimal roeInicial = patrimonioLiquidoAnoAnterior != 0 ? lucroLiquido / patrimonioLiquidoAnoAnterior : 0;
+
+        //        returnExpectations.Add(new ReturnExpectationResponseDto
+        //        {
+        //            Name = monthAtivo.Name,
+        //            DateMonth = monthAtivo.DateMonth,
+        //            ROIC = roi,
+        //            KE = roe,
+        //            CriacaoValor = roeInicial,
+        //        });
+        //    }
+
+        //    return new PainelReturnExpectationResponseDto
+        //    {
+        //        ReturnExpectation = new ReturnExpectationGroupedDto
+        //        {
+        //            Months = returnExpectations
+        //        }
+        //    };
+        //}
+
+        #endregion
         #region EBITDA
+        public async Task<PainelEBITDAResponseDto> GetEBITDA(int accountPlanId, int year)
+        {
+            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
+
+            // 🔁 Carrega também o painel do ANO ANTERIOR (somente o Ativo é necessário aqui)
+            var painelAtivoAnoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1);
+
+            var dezembroAnoAnterior = painelAtivoAnoAnterior.Months
+                .FirstOrDefault(a => a.DateMonth == 12);
+
+            decimal patrimonioLiquidoAnoAnterior = dezembroAnoAnterior?.Totalizer
+                .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+
+            var eBITDA = new List<EBITDAResponseDto>();
+
+            foreach (var monthDRE in painelDRE.Months.OrderBy(m => m.DateMonth))
+            {
+               
+
+                decimal ebitda = monthDRE?.Totalizer
+                    .FirstOrDefault(t => t.Name == "EBITDA")?.TotalValue ?? 0;
+
+                decimal lucroAntesDoResultadoFinanceiro = monthDRE?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro")?.TotalValue ?? 0;
+                decimal despesasComDepreciacao = monthDRE.Totalizer
+                    .SelectMany(t => t.Classifications)
+                    .Where(c => c.Name == "Despesas com Depreciação")
+                    .Sum(c => c.Value);
+
+
+                eBITDA.Add(new EBITDAResponseDto
+                {
+                    Name = monthDRE.Name,
+                    DateMonth = monthDRE.DateMonth,
+                    EBITDA = ebitda,
+                    LucroOperacionalAntesDoResultadoFinanceiro = lucroAntesDoResultadoFinanceiro,
+                    DespesasDepreciacao = despesasComDepreciacao
+                });
+            }
+
+            return new PainelEBITDAResponseDto
+            {
+                EBITDA = new EBITDAGroupedDto
+                {
+                    Months = eBITDA
+                }
+            };
+        }
         #endregion
 
         #region NOPAT
+        public async Task<PainelNOPATResponseDto> GetNOPAT(int accountPlanId, int year)
+        {
+            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
+
+            // 🔁 Carrega também o painel do ANO ANTERIOR (somente o Ativo é necessário aqui)
+            var painelAtivoAnoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1);
+
+            var dezembroAnoAnterior = painelAtivoAnoAnterior.Months
+                .FirstOrDefault(a => a.DateMonth == 12);
+
+            decimal patrimonioLiquidoAnoAnterior = dezembroAnoAnterior?.Totalizer
+                .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+
+            var nOPAT = new List<NOPATResponseDto>();
+
+            foreach (var monthDRE in painelDRE.Months.OrderBy(m => m.DateMonth))
+            {
+
+
+                decimal noPAT = monthDRE?.Totalizer
+                    .FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
+                decimal margemNOPAT = monthDRE?.Totalizer
+                   .FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0;
+                decimal lucroAntesDoResultadoFinanceiro = monthDRE?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro")?.TotalValue ?? 0;
+
+                decimal margemOperacional = monthDRE?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Margem Operacional %")?.TotalValue ?? 0;
+
+
+
+                decimal despesasComDepreciacao = monthDRE.Totalizer
+                    .SelectMany(t => t.Classifications)
+                    .Where(c => c.Name == "Despesas com Depreciação")
+                    .Sum(c => c.Value);
+
+
+                decimal provisaoCSLL = monthDRE.Totalizer
+                   .SelectMany(t => t.Classifications)
+                   .Where(c => c.Name == "Despesas com Depreciação")
+                   .Sum(c => c.Value);
+
+                decimal provisaoIRPJ = monthDRE.Totalizer
+                   .SelectMany(t => t.Classifications)
+                   .Where(c => c.Name == "Despesas com Depreciação")
+                   .Sum(c => c.Value);
+
+                decimal provisaoIRPSCSLL = provisaoIRPJ + provisaoCSLL;
+
+                nOPAT.Add(new NOPATResponseDto
+                {
+                    Name = monthDRE.Name,
+                    DateMonth = monthDRE.DateMonth,
+                    MargemNOPAT = margemNOPAT,
+                    LucroOperacionalAntes = lucroAntesDoResultadoFinanceiro,
+                   MargemOperacional = margemOperacional,
+                   ProvisaoIRPJCSLL = provisaoIRPSCSLL,
+                   NOPAT = noPAT
+                });
+            }
+
+            return new PainelNOPATResponseDto
+            {
+                NOPAT = new NOPATGroupedDto
+                {
+                    Months = nOPAT
+                }
+            };
+        }
         #endregion
 
         #region Dados

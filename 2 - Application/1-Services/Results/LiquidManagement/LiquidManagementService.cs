@@ -176,7 +176,6 @@ namespace _2___Application._1_Services.Results
             };
         }
 
-
         #endregion
 
         #region Dinâmica do Capital de Giro
@@ -253,8 +252,6 @@ namespace _2___Application._1_Services.Results
             };
         }
 
-
-
         #endregion
 
         #region Geração de Fluxo de Caixa Bruto
@@ -312,8 +309,6 @@ namespace _2___Application._1_Services.Results
                 }
             };
         }
-
-
 
         #endregion
 
