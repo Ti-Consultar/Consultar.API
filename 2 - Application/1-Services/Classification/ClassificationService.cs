@@ -965,7 +965,7 @@ namespace _2___Application._1_Services
         {
             var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
-            var totalizers = await _totalizerClassificationRepository.GetByAccountPlanId(accountPlanId);
+            var totalizers = await _totalizerClassificationRepository.GetByAccountPlansId(accountPlanId);
             var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
 
             var balanceteIds = balancetes.Select(b => b.Id).ToList();
@@ -1127,6 +1127,161 @@ namespace _2___Application._1_Services
                 _ => null
             };
         }
+
+
+
+
+
+
+
+
+
+        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeeDRE(int accountPlanId, int year, int typeClassification)
+        {
+            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
+            var totalizersBase = await _totalizerClassificationRepository.GetByAccountPlansId(accountPlanId);
+            var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
+
+            var balanceteIds = balancetes.Select(b => b.Id).ToList();
+            var costCenters = model.Select(a => a.CostCenter).ToList();
+
+            var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
+            var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
+
+            var months = new List<MonthPainelContabilRespone>();
+
+            foreach (var balancete in balancetes.OrderBy(b => b.DateMonth))
+            {
+                // 1. Calcular totalizadores normais
+                var totalizerResponses = totalizersBase.Select(totalizer =>
+                {
+                    var relatedClassifications = classifications
+                        .Where(c => c.TotalizerClassificationId == totalizer.Id)
+                        .ToList();
+
+                    var classificationsResp = relatedClassifications.Select(classification =>
+                    {
+                        var datas = balanceteDataClassifications
+                            .Where(x => x.AccountPlanClassificationId == classification.Id)
+                            .SelectMany(x =>
+                                balanceteData
+                                    .Where(bd => bd.CostCenter == x.CostCenter && bd.BalanceteId == balancete.Id)
+                                    .Select(bd => new BalanceteDataResponse
+                                    {
+                                        Id = bd.Id,
+                                        CostCenter = bd.CostCenter,
+                                        Name = bd.Name,
+                                        InitialValue = bd.InitialValue,
+                                        CreditValue = bd.Credit,
+                                        DebitValue = bd.Debit,
+                                        Value = bd.FinalValue
+                                    })
+                            ).ToList();
+
+                        return new ClassificationRespone
+                        {
+                            Id = classification.Id,
+                            Name = classification.Name,
+                            TypeOrder = classification.TypeOrder,
+                            Value = datas.Sum(a => a.CreditValue - a.DebitValue),
+                            Datas = datas
+                        };
+                    }).ToList();
+
+                    return new TotalizerParentRespone
+                    {
+                        Id = totalizer.Id,
+                        Name = totalizer.Name,
+                        TypeOrder = totalizer.TypeOrder,
+                        Classifications = classificationsResp,
+                        TotalValue = classificationsResp.Sum(a => a.Value)
+                    };
+                }).ToList();
+
+                // 2. Criar mapas de lookup
+                var totalizerMap = totalizerResponses.ToDictionary(t => t.Name, StringComparer.OrdinalIgnoreCase);
+                var classificationMap = totalizerResponses
+                    .SelectMany(t => t.Classifications)
+                    .ToDictionary(c => c.Name, StringComparer.OrdinalIgnoreCase);
+
+                // 3. Aplicar regras de cálculo derivadas
+                var totalizerCalculated = new List<TotalizerParentRespone>();
+                var calculatedNames = new[]
+                {
+            "(=) Receita Líquida de Vendas", "Lucro Bruto", "Margem Contribuição", "Lucro Operacional",
+            "Lucro Antes do Resultado Financeiro", "Resultado do Exercício Antes do Imposto", "Lucro Líquido do Periodo",
+            "EBITDA", "NOPAT"
+        };
+
+                foreach (var name in calculatedNames)
+                {
+                    var ruleValue = ApplyDRETotalValueRules(name, totalizerMap, classificationMap);
+                    if (ruleValue.HasValue)
+                    {
+                        var totalizer = new TotalizerParentRespone
+                        {
+                            Id = 0,
+                            Name = name,
+                            TypeOrder = 99, // ou outro número para ordenar no final
+                            Classifications = new List<ClassificationRespone>(),
+                            TotalValue = ruleValue.Value
+                        };
+
+                        totalizerResponses.Add(totalizer);
+                        totalizerMap[name] = totalizer;
+                    }
+                }
+
+                // 4. Aplicar regras de percentual (%)
+                var percentageNames = new[]
+                {
+            "Margem Bruta %", "Margem de Contribuição %", "Margem Operacional %",
+            "Margem LAJIR %", "Margem LAIR %", "Margem Líquida %",
+            "Margem EBITDA %", "Margem NOPAT %"
+        };
+
+                foreach (var name in percentageNames)
+                {
+                    var percValue = ApplyDREPercentageRules(name, totalizerMap, 0);
+                    if (percValue.HasValue)
+                    {
+                        totalizerResponses.Add(new TotalizerParentRespone
+                        {
+                            Id = 0,
+                            Name = name,
+                            TypeOrder = 100, // ordenação visual
+                            Classifications = new List<ClassificationRespone>(),
+                            TotalValue = percValue.Value
+                        });
+                    }
+                }
+
+                // 5. Finalizar mês
+                months.Add(new MonthPainelContabilRespone
+                {
+                    Id = balancete.Id,
+                    Name = balancete.DateMonth.GetDescription(),
+                    DateMonth = (int)balancete.DateMonth,
+                    Totalizer = totalizerResponses.OrderBy(t => t.TypeOrder).ToList()
+                });
+            }
+
+            return new PainelBalancoContabilRespone { Months = months };
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         private decimal? ApplyBalancoReclassificadoTotalPassivoValueRules(string name, Dictionary<string, TotalizerParentRespone> totals, Dictionary<string, ClassificationRespone> classes)
         {
