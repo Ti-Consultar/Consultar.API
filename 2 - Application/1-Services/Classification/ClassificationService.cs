@@ -439,8 +439,8 @@ namespace _2___Application._1_Services
                     //"(-) Custos das Mercadorias" or "(-) Custos dos Serviços Prestados"
                     //    => totalizerClassifications.FirstOrDefault(r => r.Name == "(=) Receita Líquida de Vendas")?.Id,
 
-                    "(-) Custos das Mercadorias" 
-                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Bruto")?.Id,
+                    //"(-) Custos das Mercadorias" 
+                    //    => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Bruto")?.Id,
 
                     "Despesas com Vendas" or "Despesas com Pessoal e Encargos" or "Despesas Administrativas e Gerais"
                         => totalizerClassifications.FirstOrDefault(r => r.Name == "(-) Despesas Operacionais")?.Id,
