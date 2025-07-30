@@ -512,7 +512,7 @@ namespace _2___Application._1_Services
                     case "Empréstimos e Financiamentos a Longo Prazo":
                     case "Impostos Parcelados":
                         classification.BalancoReclassificadoId = reclassifications
-                            .Where(r => r.Name == "Passivo não Circulante Financeiro")
+                            .Where(r => r.Name == "Passivo Não Circulante Financeiro")
                             .Select(r => (int?)r.Id)
                             .FirstOrDefault();
                         break;
@@ -520,14 +520,14 @@ namespace _2___Application._1_Services
                     case "Empréstimos de Coligadas e Controladas":
                     case "Passivos Contingentes":
                         classification.BalancoReclassificadoId = reclassifications
-                            .Where(r => r.Name == "Passivo não Circulante Operacional")
+                            .Where(r => r.Name == "Passivo Não Circulante Operacional")
                             .Select(r => (int?)r.Id)
                             .FirstOrDefault();
                         break;
 
                     case "Contas Transitórias":
                         classification.BalancoReclassificadoId = reclassifications
-                            .Where(r => r.Name == "Contas Transitórias")
+                            .Where(r => r.Name == "Contas Transitórias Passivo")
                             .Select(r => (int?)r.Id)
                             .FirstOrDefault();
                         break;
@@ -965,19 +965,7 @@ namespace _2___Application._1_Services
         {
             var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
-
-
-
-            var totalizerq = await _totalizerClassificationRepository.GetByAccountPlanId(accountPlanId);
-
-            var classificationTotalizerIds = totalizerq
-                .Where(c => c.TypeOrder >= 11 && c.TypeOrder <= 30  )
-                .Select(c => c.Id)
-                .Distinct()
-                .ToList();
-
-
-            var totalizers = await _totalizerClassificationRepository.GetByAccountPlanIdList(accountPlanId, classificationTotalizerIds);
+            var totalizers = await _totalizerClassificationRepository.GetByAccountPlanId(accountPlanId);
             var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
 
             var balanceteIds = balancetes.Select(b => b.Id).ToList();
@@ -1034,14 +1022,14 @@ namespace _2___Application._1_Services
 
                 }).ToList();
 
-                // Map para facilitar acesso rápido
+                // Map para facilitar lookup rápido
                 var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
                 var classificationMap = totalizerResponses
                     .SelectMany(t => t.Classifications)
                     .ToDictionary(c => c.Name);
 
-                // Aplicar regras especiais (Lucros, EBITDA, etc.)
-                for (int i = 0; i < 3; i++)
+                // Aplicar regras de totalização especiais (Lucros, NOPAT, etc)
+                for (int i = 0; i < 3; i++) // Executar várias vezes para garantir dependências resolvidas
                 {
                     foreach (var totalizer in totalizerResponses.OrderBy(t => t.TypeOrder))
                     {
@@ -1054,12 +1042,7 @@ namespace _2___Application._1_Services
                 // Aplicar regras de percentual (%)
                 foreach (var totalizer in totalizerResponses)
                 {
-                    var percentage = ApplyDREPercentageRules(
-                        totalizer.Name,
-                        totalizerMap,
-                        totalizer.TotalValue
-                    );
-
+                    var percentage = ApplyDREPercentageRules(totalizer.Name, totalizerMap, totalizer.TotalValue);
                     if (percentage.HasValue)
                         totalizer.TotalValue = percentage.Value;
                 }
@@ -1070,7 +1053,6 @@ namespace _2___Application._1_Services
                     Name = balancete.DateMonth.GetDescription(),
                     DateMonth = (int)balancete.DateMonth,
                     Totalizer = totalizerResponses.OrderBy(t => t.TypeOrder).ToList()
-                    
                 };
 
             }).OrderBy(m => m.DateMonth).ToList();
@@ -1078,7 +1060,11 @@ namespace _2___Application._1_Services
             return new PainelBalancoContabilRespone { Months = months };
         }
 
-        private decimal? ApplyDRETotalValueRules(string name,Dictionary<string, TotalizerParentRespone> totals,Dictionary<string, ClassificationRespone> classes)
+
+        private decimal? ApplyDRETotalValueRules(
+    string name,
+    Dictionary<string, TotalizerParentRespone> totals,
+    Dictionary<string, ClassificationRespone> classes)
         {
             decimal GetValue(string key) =>
                 totals.TryGetValue(key, out var t) ? t.TotalValue :
@@ -1086,22 +1072,26 @@ namespace _2___Application._1_Services
 
             return name switch
             {
-                "(=) Receita Líquida de Vendas" => GetValue("Receita Operacional Bruta") + GetValue("(-) Deduções da Receita Bruta"),
-                "Lucro Bruto" => GetValue("(=) Receita Líquida de Vendas") + GetValue("(-) Custos das Mercadorias"),
-                "Margem Contribuição" => GetValue("Lucro Bruto") + GetValue("Despesas Variáveis"),
-                "Lucro Operacional" => GetValue("Lucro Bruto") + GetValue("(-) Despesas Operacionais") + GetValue("Outros  Resultados Operacionais"),
-                "Lucro Antes do Resultado Financeiro" => GetValue("Lucro Operacional") + GetValue("Outras Receitas não Operacionais") + GetValue("Ganhos e Perdas de Capital"),
-                "Resultado do Exercício Antes do Imposto" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Receitas Financeiras") + GetValue("Despesas Financeiras"),
-                "Lucro Líquido do Periodo" => GetValue("Resultado do Exercício Antes do Imposto") + GetValue("Provisão para CSLL") + GetValue("Provisão para IRPJ"),
+                "(=) Receita Líquida de Vendas" => GetValue("Receita Operacional Bruta") - GetValue("(-) Deduções da Receita Bruta"),
+                "Lucro Bruto" => GetValue("(=) Receita Líquida de Vendas") - GetValue("(-) Custos das Mercadorias"),
+                "Margem Contribuição" => GetValue("Lucro Bruto") - GetValue("Despesas Variáveis"),
+                "Lucro Operacional" => GetValue("Lucro Bruto") - GetValue("(-) Despesas Operacionais") + GetValue("Outros Resultados Operacionais"),
+                "Lucro Antes do Resultado Financeiro" => GetValue("Lucro Operacional") + GetValue("Outras Receitas Não Operacionais") + GetValue("Ganhos e Perdas de Capital"),
+                "Resultado do Exercício Antes do Imposto" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Receitas Financeiras") - GetValue("Despesas Financeiras"),
+                "Lucro Líquido do Periodo" => GetValue("Resultado do Exercício Antes do Imposto") - GetValue("Provisão para CSLL") - GetValue("Provisão para IRPJ"),
                 "EBITDA" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Despesas com Depreciação"),
-                "NOPAT" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Provisão para CSLL") + GetValue("Provisão para IRPJ"),
+                "NOPAT" => GetValue("Lucro Antes do Resultado Financeiro") - GetValue("Provisão para CSLL") - GetValue("Provisão para IRPJ"),
                 _ => null
             };
         }
 
-        private decimal? ApplyDREPercentageRules(string name,Dictionary<string, TotalizerParentRespone> totals,decimal? totalValue)
+
+        private decimal? ApplyDREPercentageRules(string name, Dictionary<string, TotalizerParentRespone> totals, decimal? totalValue)
         {
             decimal Get(string key) => totals.TryGetValue(key, out var t) ? t.TotalValue : 0;
+
+            decimal SafeDivide(decimal numerator, decimal denominator) =>
+                denominator != 0 ? Math.Round(numerator / denominator * 100, 2) : 0;
 
             return name switch
             {
@@ -1117,7 +1107,8 @@ namespace _2___Application._1_Services
             };
         }
 
- 
+
+
 
         private decimal? ApplyBalancoReclassificadoTotalAtivoValueRules(string name, Dictionary<string, TotalizerParentRespone> totals, Dictionary<string, ClassificationRespone> classes)
         {
