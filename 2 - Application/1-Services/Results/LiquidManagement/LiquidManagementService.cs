@@ -116,15 +116,28 @@ namespace _2___Application._1_Services.Results
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
 
+            // Cálculo acumulado da receita líquida (Lucro Líquido do Periodo)
+            var lucroLiquidoAcumuladoPorMes = new Dictionary<int, decimal>();
+            decimal acumulado = 0;
+
+            foreach (var mes in painelDRE.Months.OrderBy(m => m.DateMonth))
+            {
+                var lucroMes = mes.Totalizer.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
+                acumulado += lucroMes;
+                lucroLiquidoAcumuladoPorMes[mes.DateMonth] = acumulado;
+            }
+
             var capitalDinamics = new List<CapitalDynamicsResponseDto>();
 
             foreach (var monthAtivo in painelAtivo.Months)
             {
-                var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
-                var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
+                var dateMonth = monthAtivo.DateMonth;
+                var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == dateMonth);
+                var receitaLiquidaAcumulada = lucroLiquidoAcumuladoPorMes.ContainsKey(dateMonth)
+                    ? lucroLiquidoAcumuladoPorMes[dateMonth]
+                    : 0;
 
                 var estoque = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
-                var receitaMensal = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "Receita Operacional Bruta")?.TotalValue ?? 0;
                 var cliente = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
                 var fornecedor = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
 
@@ -137,13 +150,13 @@ namespace _2___Application._1_Services.Results
                 decimal pMP = 0;
                 decimal cicloNCG = 0;
 
-                if (receitaMensal > 0)
+                if (receitaLiquidaAcumulada > 0)
                 {
-                    int multiplicadorDias = monthAtivo.DateMonth * 30;
-                    pMR = (estoque / receitaMensal) * multiplicadorDias;
-                    pME = (cliente / receitaMensal) * multiplicadorDias;
-                    pMP = (fornecedor / receitaMensal) * multiplicadorDias;
-                    cicloNCG = (ncg / receitaMensal) * multiplicadorDias;
+                    int multiplicadorDias = dateMonth * 30;
+                    pMR = (estoque / receitaLiquidaAcumulada) * multiplicadorDias;
+                    pME = (cliente / receitaLiquidaAcumulada) * multiplicadorDias;
+                    pMP = (fornecedor / receitaLiquidaAcumulada) * multiplicadorDias;
+                    cicloNCG = (ncg / receitaLiquidaAcumulada) * multiplicadorDias;
                 }
 
                 var cicloFinanceiroOperacoesPrincipaisNCG = (pME + pMR) - pMP;
@@ -151,7 +164,7 @@ namespace _2___Application._1_Services.Results
                 capitalDinamics.Add(new CapitalDynamicsResponseDto
                 {
                     Name = monthAtivo.Name,
-                    DateMonth = monthAtivo.DateMonth,
+                    DateMonth = dateMonth,
                     PME = pME,
                     PMR = pMR,
                     PMP = pMP,
@@ -168,6 +181,7 @@ namespace _2___Application._1_Services.Results
                 }
             };
         }
+
 
 
         #endregion
