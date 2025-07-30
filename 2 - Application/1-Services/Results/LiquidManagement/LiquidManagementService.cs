@@ -71,20 +71,27 @@ namespace _2___Application._1_Services.Results
                 var valorPassivoOperacional = monthPassivo?.Totalizer
                     .FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
 
-                var passivoNaoCirculante = monthAtivo.Totalizer
-                    .FirstOrDefault(t => t.Name == "Passivo Não Circulante Financeiro")?.TotalValue ?? 0;
+                var passivoNaoCirculante = monthPassivo?.Totalizer
+    .FirstOrDefault(t => t.Name == "Passivo Não Circulante")?.TotalValue ?? 0;
+
                 var patrimonioLiquido = monthPassivo?.Totalizer
                     .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
                 var ativoNaoCirculante = monthAtivo.Totalizer
-                    .FirstOrDefault(t => t.Name == "Ativo Não Circulante Financeiro")?.TotalValue ?? 0;
-                var ativoFixo = monthPassivo?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
+
+                var ativoFixo = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
+
+                var cdg = (passivoNaoCirculante + patrimonioLiquido) - (ativoNaoCirculante + ativoFixo);
 
                 var saldoTesouraria = valorAtivoFinanceiro - valorPassivoFinanceiro;
                 var ncg = valorAtivoOperacional - valorPassivoOperacional;
-                var cdg = (passivoNaoCirculante + patrimonioLiquido) - (ativoNaoCirculante + ativoFixo);
                 decimal? indiceDeLiquidez = ncg != 0 ? saldoTesouraria / ncg : (decimal?)null;
+
+
+
+
 
                 liquidityMonths.Add(new LiquidityMonthlyDto
                 {
@@ -136,12 +143,12 @@ namespace _2___Application._1_Services.Results
                 .FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
 
             var passivoNaoCirculante = monthPassivo.Totalizer
-                .FirstOrDefault(t => t.Name == "Passivo Não Circulante Financeiro")?.TotalValue ?? 0;
+                .FirstOrDefault(t => t.Name == "Passivo Não Circulante")?.TotalValue ?? 0;
             var patrimonioLiquido = monthPassivo.Totalizer
                 .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
             var ativoNaoCirculante = monthAtivo.Totalizer
-                .FirstOrDefault(t => t.Name == "Ativo Não Circulante Financeiro")?.TotalValue ?? 0;
+                .FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
             var ativoFixo = monthAtivo.Totalizer
                 .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
