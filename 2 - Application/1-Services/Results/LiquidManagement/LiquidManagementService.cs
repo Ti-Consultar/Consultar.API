@@ -106,6 +106,70 @@ namespace _2___Application._1_Services.Results
             };
         }
 
+        public async Task<PainelLiquidityManagementResponseDto> GetLiquidityManagementMonth(int accountPlanId, int year, int month)
+        {
+            var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
+            var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
+
+            var monthAtivo = painelAtivo.Months.FirstOrDefault(m => m.DateMonth == month);
+            var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == month);
+
+            if (monthAtivo == null || monthPassivo == null)
+            {
+                return new PainelLiquidityManagementResponseDto
+                {
+                    LiquidityVariables = new LiquidityVariablesGroupedDto
+                    {
+                        Months = new List<LiquidityMonthlyDto>() // retorna vazio se mês não encontrado
+                    }
+                };
+            }
+
+            var valorAtivoFinanceiro = monthAtivo.Totalizer
+                .FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
+            var valorPassivoFinanceiro = monthPassivo.Totalizer
+                .FirstOrDefault(t => t.Name == "Passivo Financeiro")?.TotalValue ?? 0;
+
+            var valorAtivoOperacional = monthAtivo.Totalizer
+                .FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+            var valorPassivoOperacional = monthPassivo.Totalizer
+                .FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
+
+            var passivoNaoCirculante = monthPassivo.Totalizer
+                .FirstOrDefault(t => t.Name == "Passivo Não Circulante Financeiro")?.TotalValue ?? 0;
+            var patrimonioLiquido = monthPassivo.Totalizer
+                .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+
+            var ativoNaoCirculante = monthAtivo.Totalizer
+                .FirstOrDefault(t => t.Name == "Ativo Não Circulante Financeiro")?.TotalValue ?? 0;
+            var ativoFixo = monthAtivo.Totalizer
+                .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
+
+            var saldoTesouraria = valorAtivoFinanceiro - valorPassivoFinanceiro;
+            var ncg = valorAtivoOperacional - valorPassivoOperacional;
+            var cdg = (passivoNaoCirculante + patrimonioLiquido) - (ativoNaoCirculante + ativoFixo);
+            decimal? indiceDeLiquidez = ncg != 0 ? saldoTesouraria / ncg : (decimal?)null;
+
+            var liquidityMonth = new LiquidityMonthlyDto
+            {
+                Name = monthAtivo.Name,
+                DateMonth = month,
+                SaldoTesouraria = saldoTesouraria,
+                NCG = ncg,
+                CDG = cdg,
+                IndiceDeLiquidez = indiceDeLiquidez
+            };
+
+            return new PainelLiquidityManagementResponseDto
+            {
+                LiquidityVariables = new LiquidityVariablesGroupedDto
+                {
+                    Months = new List<LiquidityMonthlyDto> { liquidityMonth }
+                }
+            };
+        }
+
+
         #endregion
 
         #region Dinâmica do Capital de Giro

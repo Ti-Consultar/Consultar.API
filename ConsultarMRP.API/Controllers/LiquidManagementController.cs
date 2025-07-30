@@ -32,6 +32,23 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpGet]
+        [Route("liquidity-management/month")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetLiquidityManagementMonth([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int month)
+        {
+            try
+            {
+
+                var response = await _Service.GetLiquidityManagementMonth(accountPlanId, year, month);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
         [Route("capital-dynamics")]
         // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetCapitalDynamics([FromQuery] int accountPlanId, [FromQuery] int year)
