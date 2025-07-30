@@ -1553,7 +1553,7 @@ namespace _2___Application._1_Services
             var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
-
+            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
 
             var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
 
@@ -1615,8 +1615,25 @@ namespace _2___Application._1_Services
                                 Classifications = classificationsResp,
                                 TotalValue = classificationsResp.Sum(c => c.Value)
                             };
+
+
+
+
                         }).ToList();
 
+                    var resultadoAcumuladoClass = totalizerResponses
+                        .SelectMany(t => t.Classifications)
+                        .FirstOrDefault(c => c.Name == "Resultado Acumulado");
+
+                    if (resultadoAcumuladoClass != null)
+                    {
+                        var lucroLiquidoMes = painelDRE.Months
+                            .Where(m => m.DateMonth == (int)balancete.DateMonth)
+                            .SelectMany(m => m.Totalizer)
+                            .FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
+
+                        resultadoAcumuladoClass.Value = lucroLiquidoMes?.TotalValue ?? 0;
+                    }
                     // Mapas para acesso rápido
                     var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
                     var classificationMap = totalizerResponses
