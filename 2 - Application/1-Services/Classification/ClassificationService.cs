@@ -837,17 +837,15 @@ namespace _2___Application._1_Services
         private async Task<PainelBalancoContabilRespone> BuildPainelByTypePassivo(int accountPlanId, int year, int typeClassification)
         {
             var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
-
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
             var classificationTotalizerIds = classifications
-                    .Where(c => c.TotalizerClassificationId.HasValue)
-                    .Select(c => c.TotalizerClassificationId.Value)
-                    .Distinct()
-                    .ToList();
+                .Where(c => c.TotalizerClassificationId.HasValue)
+                .Select(c => c.TotalizerClassificationId.Value)
+                .Distinct()
+                .ToList();
 
             var totalizers = await _totalizerClassificationRepository.GetByAccountPlanIdList(accountPlanId, classificationTotalizerIds);
-
             var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
 
             var balanceteIds = balancetes.Select(b => b.Id).ToList();
@@ -856,7 +854,11 @@ namespace _2___Application._1_Services
             var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
 
-            var months = balancetes.Select(balancete =>
+            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3); // Painel da DRE para pegar o lucro líquido
+
+            decimal acumuladoAnterior = 0;
+
+            var months = balancetes.OrderBy(b => b.DateMonth).Select(balancete =>
             {
                 var totalizerResponses = totalizers.Select(totalizer =>
                 {
@@ -885,7 +887,7 @@ namespace _2___Application._1_Services
                             Id = classification.Id,
                             Name = classification.Name,
                             TypeOrder = classification.TypeOrder,
-                            Value = datas.Sum(d => d.Value * -1),//aqui eu faço todo data ser multiplicado por menos 1 para a exibição
+                            Value = datas.Sum(d => d.Value * -1),
                             Datas = datas
                         };
                     }).ToList();
@@ -901,6 +903,26 @@ namespace _2___Application._1_Services
 
                 }).ToList();
 
+                // Aplicar a regra do resultado acumulado
+                var resultadoAcumuladoClass = totalizerResponses
+                    .SelectMany(t => t.Classifications)
+                    .FirstOrDefault(c => c.Name == "Resultado do Exercício Acumulado");
+
+                if (resultadoAcumuladoClass != null)
+                {
+                    var lucroLiquidoMes = painelDRE.Months
+                        .Where(m => m.DateMonth == (int)balancete.DateMonth)
+                        .SelectMany(m => m.Totalizer)
+                        .FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
+
+                    var lucroLiquidoValor = lucroLiquidoMes?.TotalValue ?? 0;
+                    var resultadoAcumuladoAtual = acumuladoAnterior + lucroLiquidoValor;
+
+                    resultadoAcumuladoClass.Value = resultadoAcumuladoAtual;
+
+                    acumuladoAnterior = resultadoAcumuladoAtual; // Atualiza para o próximo mês
+                }
+
                 return new MonthPainelContabilRespone
                 {
                     Id = balancete.Id,
@@ -912,13 +934,12 @@ namespace _2___Application._1_Services
                         Name = "TOTAL GERAL DO PASSIVO",
                         TotalValue = totalizerResponses.Sum(t => t.TotalValue)
                     }
-
                 };
-            }).OrderBy(a => a.DateMonth).ToList();
-
+            }).ToList();
 
             return new PainelBalancoContabilRespone { Months = months };
         }
+
         private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDRE(int accountPlanId, int year, int typeClassification)
         {
             var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
@@ -1553,7 +1574,7 @@ namespace _2___Application._1_Services
             var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
-            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
+
 
             var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
 
@@ -1570,10 +1591,7 @@ namespace _2___Application._1_Services
             var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
 
-            var acumulado = 0m;
-
             var months = balancetes
-                .OrderBy(b => b.DateMonth)
                 .Select(balancete =>
                 {
                     var totalizerResponses = balancoReclassificadoIds
@@ -1620,25 +1638,7 @@ namespace _2___Application._1_Services
                             };
                         }).ToList();
 
-                    var resultadoAcumuladoClass = totalizerResponses
-                        .SelectMany(t => t.Classifications)
-                        .FirstOrDefault(c => c.Name == "Resultado Acumulado");
-
-                    var lucroLiquidoMes = painelDRE.Months
-                        .Where(m => m.DateMonth == (int)balancete.DateMonth)
-                        .SelectMany(m => m.Totalizer)
-                        .FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
-
-                    var lucroLiquido = lucroLiquidoMes?.TotalValue ?? 0;
-
-                    if (resultadoAcumuladoClass != null)
-                    {
-                        resultadoAcumuladoClass.Value = acumulado + lucroLiquido;
-                    }
-
-                    acumulado += lucroLiquido;
-
-                    // Mapas para regras
+                    // Mapas para acesso rápido
                     var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
                     var classificationMap = totalizerResponses
                         .SelectMany(t => t.Classifications)
@@ -1667,7 +1667,9 @@ namespace _2___Application._1_Services
                             TotalValue = totalizerResponses.Sum(t => t.TotalValue)
                         }
                     };
-                }).ToList();
+                })
+                .OrderBy(m => m.DateMonth)
+                .ToList();
 
             return new PainelBalancoContabilRespone
             {
