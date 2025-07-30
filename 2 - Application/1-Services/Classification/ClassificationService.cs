@@ -1206,7 +1206,7 @@ namespace _2___Application._1_Services
                 var deducoes = totalizerResponses
                     .FirstOrDefault(t => t.Name == "(-) Deduções da Receita Bruta")?.TotalValue ?? 0;
 
-                var receitaLiquidaValor = receitaOperacionalBruta - deducoes;
+                var receitaLiquidaValor = receitaOperacionalBruta + deducoes;
 
                 var receitaLiquida = totalizerResponses
                    .FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas");
