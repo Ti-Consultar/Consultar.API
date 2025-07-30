@@ -436,26 +436,26 @@ namespace _2___Application._1_Services
                     "(-) Devoluções de Vendas" or "(-) Abatimentos" or "(-) Impostos e Contribuições"
                         => totalizerClassifications.FirstOrDefault(r => r.Name == "(-) Deduções da Receita Bruta")?.Id,
 
-                    "(-) Custos das Mercadorias" or "(-) Custos dos Serviços Prestados"
-                        => totalizerClassifications.FirstOrDefault(r => r.Name == "(=) Receita Líquida de Vendas")?.Id,
+                    //"(-) Custos das Mercadorias" or "(-) Custos dos Serviços Prestados"
+                    //    => totalizerClassifications.FirstOrDefault(r => r.Name == "(=) Receita Líquida de Vendas")?.Id,
 
-                    "Despesas Variáveis"
-                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Bruto")?.Id,
+                    //"(=) Receita Líquida de Vendas" or "(-) Custos das Mercadorias"
+                    //    => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Bruto")?.Id,
 
-                    "Despesas com Vendas" or "Despesas com Pessoal e Encargos" or "Despesas Administrativas e Gerais" or "Outros  Resultados Operacionais"
+                    "Despesas com Vendas" or "Despesas com Pessoal e Encargos" or "Despesas Administrativas e Gerais"
                         => totalizerClassifications.FirstOrDefault(r => r.Name == "(-) Despesas Operacionais")?.Id,
 
-                    "Ganhos e Perdas de Capital" or "Outras Receitas não Operacionais"
-                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Operacional")?.Id,
+                    //"Ganhos e Perdas de Capital" or "Outras Receitas não Operacionais"
+                    //    => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Operacional")?.Id,
 
-                    "Receitas Financeiras" or "Despesas Financeiras"
-                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Antes do Resultado Financeiro")?.Id,
+                    //"Receitas Financeiras" or "Despesas Financeiras"
+                    //    => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Antes do Resultado Financeiro")?.Id,
 
-                    "Provisão para CSLL" or "Provisão para IRPJ"
-                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Resultado do Exercício Antes do Imposto")?.Id,
+                    //"Provisão para CSLL" or "Provisão para IRPJ"
+                    //    => totalizerClassifications.FirstOrDefault(r => r.Name == "Resultado do Exercício Antes do Imposto")?.Id,
 
-                    "Despesas com Depreciação"
-                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Líquido do Periodo")?.Id,
+                    //"Despesas com Depreciação"
+                    //    => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Líquido do Periodo")?.Id,
 
                     _ => null
                 };
