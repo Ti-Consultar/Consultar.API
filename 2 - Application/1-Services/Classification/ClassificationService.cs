@@ -1570,7 +1570,10 @@ namespace _2___Application._1_Services
             var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
 
+            var acumulado = 0m;
+
             var months = balancetes
+                .OrderBy(b => b.DateMonth)
                 .Select(balancete =>
                 {
                     var totalizerResponses = balancoReclassificadoIds
@@ -1615,26 +1618,27 @@ namespace _2___Application._1_Services
                                 Classifications = classificationsResp,
                                 TotalValue = classificationsResp.Sum(c => c.Value)
                             };
-
-
-
-
                         }).ToList();
 
                     var resultadoAcumuladoClass = totalizerResponses
                         .SelectMany(t => t.Classifications)
                         .FirstOrDefault(c => c.Name == "Resultado Acumulado");
 
+                    var lucroLiquidoMes = painelDRE.Months
+                        .Where(m => m.DateMonth == (int)balancete.DateMonth)
+                        .SelectMany(m => m.Totalizer)
+                        .FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
+
+                    var lucroLiquido = lucroLiquidoMes?.TotalValue ?? 0;
+
                     if (resultadoAcumuladoClass != null)
                     {
-                        var lucroLiquidoMes = painelDRE.Months
-                            .Where(m => m.DateMonth == (int)balancete.DateMonth)
-                            .SelectMany(m => m.Totalizer)
-                            .FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
-
-                        resultadoAcumuladoClass.Value = lucroLiquidoMes?.TotalValue ?? 0;
+                        resultadoAcumuladoClass.Value = acumulado + lucroLiquido;
                     }
-                    // Mapas para acesso rápido
+
+                    acumulado += lucroLiquido;
+
+                    // Mapas para regras
                     var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
                     var classificationMap = totalizerResponses
                         .SelectMany(t => t.Classifications)
@@ -1663,9 +1667,7 @@ namespace _2___Application._1_Services
                             TotalValue = totalizerResponses.Sum(t => t.TotalValue)
                         }
                     };
-                })
-                .OrderBy(m => m.DateMonth)
-                .ToList();
+                }).ToList();
 
             return new PainelBalancoContabilRespone
             {
