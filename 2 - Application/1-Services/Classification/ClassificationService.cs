@@ -439,8 +439,8 @@ namespace _2___Application._1_Services
                     //"(-) Custos das Mercadorias" or "(-) Custos dos Serviços Prestados"
                     //    => totalizerClassifications.FirstOrDefault(r => r.Name == "(=) Receita Líquida de Vendas")?.Id,
 
-                    //"(=) Receita Líquida de Vendas" or "(-) Custos das Mercadorias"
-                    //    => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Bruto")?.Id,
+                    "(-) Custos das Mercadorias" 
+                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Lucro Bruto")?.Id,
 
                     "Despesas com Vendas" or "Despesas com Pessoal e Encargos" or "Despesas Administrativas e Gerais"
                         => totalizerClassifications.FirstOrDefault(r => r.Name == "(-) Despesas Operacionais")?.Id,
@@ -1289,7 +1289,7 @@ namespace _2___Application._1_Services
                .FirstOrDefault(c => c.Name == "Despesas Com Depreciação")?.Value ?? 0;
 
                 // calculos 
-                lucroBruto.TotalValue = receitaLiquidaValor - custoMercadorias;
+                lucroBruto.TotalValue = lucroBruto.TotalValue + receitaLiquidaValor ;
                 receitaLiquida.TotalValue = receitaLiquidaValor;
                 margemContribuicao.TotalValue = (lucroBruto?.TotalValue ?? 0) + despesasV;
                 lucroOperacional.TotalValue = (lucroBruto?.TotalValue ?? 0) + despesasOperacionais?.TotalValue ?? 0 + outrosResultados;
