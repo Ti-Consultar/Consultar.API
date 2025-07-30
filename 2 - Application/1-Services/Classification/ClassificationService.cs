@@ -1199,65 +1199,20 @@ namespace _2___Application._1_Services
                     };
                 }).ToList();
 
-                // 2. Criar mapas de lookup
-                var totalizerMap = totalizerResponses.ToDictionary(t => t.Name, StringComparer.OrdinalIgnoreCase);
-                var classificationMap = totalizerResponses
-                    .SelectMany(t => t.Classifications)
-                    .ToDictionary(c => c.Name, StringComparer.OrdinalIgnoreCase);
+                // Após totalizerResponses já populado
+                var receitaOperacionalBruta = totalizerResponses
+                    .FirstOrDefault(t => t.Name == "Receita Operacional Bruta")?.TotalValue ?? 0;
 
-                // 3. Aplicar regras de cálculo derivadas
-                var totalizerCalculated = new List<TotalizerParentRespone>();
-                var calculatedNames = new[]
-                {
-            "(=) Receita Líquida de Vendas", "Lucro Bruto", "Margem Contribuição", "Lucro Operacional",
-            "Lucro Antes do Resultado Financeiro", "Resultado do Exercício Antes do Imposto", "Lucro Líquido do Periodo",
-            "EBITDA", "NOPAT"
-        };
+                var deducoes = totalizerResponses
+                    .FirstOrDefault(t => t.Name == "(-) Deduções da Receita Bruta")?.TotalValue ?? 0;
 
-                foreach (var name in calculatedNames)
-                {
-                    var ruleValue = ApplyDRETotalValueRules(name, totalizerMap, classificationMap);
-                    if (ruleValue.HasValue)
-                    {
-                        var totalizer = new TotalizerParentRespone
-                        {
-                            Id = 0,
-                            Name = name,
-                            TypeOrder = 99, 
-                            Classifications = new List<ClassificationRespone>(),
-                            TotalValue = ruleValue.Value
-                        };
+                var receitaLiquidaValor = receitaOperacionalBruta - deducoes;
 
-                        totalizerResponses.Add(totalizer);
-                        totalizerMap[name] = totalizer;
-                    }
-                }
+                var receitaLiquida = totalizerResponses
+                   .FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas");
+                receitaLiquida.TotalValue = receitaLiquidaValor;  
 
-                // 4. Aplicar regras de percentual (%)
-                var percentageNames = new[]
-                {
-            "Margem Bruta %", "Margem de Contribuição %", "Margem Operacional %",
-            "Margem LAJIR %", "Margem LAIR %", "Margem Líquida %",
-            "Margem EBITDA %", "Margem NOPAT %"
-        };
-
-                foreach (var name in percentageNames)
-                {
-                    var percValue = ApplyDREPercentageRules(name, totalizerMap, 0);
-                    if (percValue.HasValue)
-                    {
-                        totalizerResponses.Add(new TotalizerParentRespone
-                        {
-                            Id = 0,
-                            Name = name,
-                            TypeOrder = 100, // ordenação visual
-                            Classifications = new List<ClassificationRespone>(),
-                            TotalValue = percValue.Value
-                        });
-                    }
-                }
-
-                // 5. Finalizar mês
+          
                 months.Add(new MonthPainelContabilRespone
                 {
                     Id = balancete.Id,
