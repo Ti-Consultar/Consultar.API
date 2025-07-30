@@ -286,7 +286,7 @@ namespace _2___Application._1_Services.Results
 
                 decimal fluxoDeCaixaOperacional = variacaoNCG - ebitda;
 
-                var receitaMensal = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "Receita Operacional Bruta")?.TotalValue ?? 0;
+                var receitaMensal = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
 
                 decimal geracaoCaixa = receitaMensal != 0 ? fluxoDeCaixaOperacional / receitaMensal : 0;
                 decimal aumentoReducaoFluxoCaixa = margemEbitda != 0 ? geracaoCaixa / margemEbitda : 0;
