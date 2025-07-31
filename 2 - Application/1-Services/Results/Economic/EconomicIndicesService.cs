@@ -170,7 +170,6 @@ namespace _2___Application._1_Services.Results
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
 
-            // 🔁 Carrega também o painel do ANO ANTERIOR (somente o Ativo é necessário aqui)
             var painelAtivoAnoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1);
 
             var dezembroAnoAnterior = painelAtivoAnoAnterior.Months
@@ -181,14 +180,15 @@ namespace _2___Application._1_Services.Results
 
             var returnExpectations = new List<ReturnExpectationResponseDto>();
 
+            var parameter = await _parameterRepository.GetByAccountPlanIdYear(accountPlanId, year);
+            decimal wacc = parameter
+                .FirstOrDefault(a => a.Name == "WACC")?.ParameterValue ?? 0;
+
             foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
             {
                 var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
                 var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
 
-
-
-                // mesmo calculo para trazer o Capital Investido Liquido de CIL
                 decimal disponibilidade = monthAtivo?.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
 
@@ -196,19 +196,19 @@ namespace _2___Application._1_Services.Results
                     .FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
 
                 decimal estoque = monthAtivo?.Totalizer
-                        .FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
 
                 decimal outrosAtivosOperacionaisTotal = monthAtivo?.Totalizer
-                   .FirstOrDefault(t => t.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
 
                 decimal fornecedores = monthPassivo?.Totalizer
-                       .FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
 
                 decimal obrigacoesTributariasETrabalhistas = monthPassivo?.Totalizer
-                      .FirstOrDefault(t => t.Name == "Obrigações Tributárias e Trabalhistas")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Obrigações Tributárias e Trabalhistas")?.TotalValue ?? 0;
 
                 decimal outrosPassivosOperacionaisTotal = monthPassivo?.Totalizer
-                     .FirstOrDefault(t => t.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
 
                 decimal somaAtivos = disponibilidade + clientes + estoque + outrosAtivosOperacionaisTotal;
 
@@ -217,47 +217,34 @@ namespace _2___Application._1_Services.Results
                 decimal necessidadeDeCapitalDeGiro = somaAtivos + somaPassivo;
 
                 decimal realizavelLongoPrazo = monthAtivo?.Totalizer
-                   .FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
 
                 decimal exigivelLongoPrazo = monthPassivo?.Totalizer
-                     .FirstOrDefault(t => t.Name == "Passivo Não Circulante Operacional")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Passivo Não Circulante Operacional")?.TotalValue ?? 0;
 
                 decimal ativosFixos = monthAtivo?.Totalizer
-                  .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
                 decimal capitalInvestidoLiquido = necessidadeDeCapitalDeGiro + realizavelLongoPrazo + exigivelLongoPrazo + ativosFixos;
-
 
                 decimal nOPAT = monthDRE?.Totalizer
                     .FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
 
-                decimal ativoTotal = monthAtivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Total Ativo Circulante")?.TotalValue ?? 0;
+                // Evitar divisão por zero e calcular ROIC já em percentual
+                decimal roic = capitalInvestidoLiquido != 0 ? (nOPAT / capitalInvestidoLiquido) * 100 : 0;
 
-                decimal patrimonioLiquido = monthAtivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
-
-                // ⚠️ Evita divisão por zero
-                decimal roic = nOPAT / capitalInvestidoLiquido;
-
-                var parameter = await _parameterRepository.GetByAccountPlanIdYear(accountPlanId, year);
-
-
-                decimal wacc = parameter
-                .FirstOrDefault(a => a.Name == "WACC")?.ParameterValue ?? 0;
+                // O WACC deve estar já no formato percentual, se estiver decimal, ajuste aqui:
+                // Exemplo: wacc = wacc * 100; (se necessário)
 
                 decimal criacaoValor = roic - wacc;
-
-                //  decimal roe = patrimonioLiquido != 0 ? lucroLiquido / patrimonioLiquido : 0;
-                // decimal roeInicial = patrimonioLiquidoAnoAnterior != 0 ? lucroLiquido / patrimonioLiquidoAnoAnterior : 0;
 
                 returnExpectations.Add(new ReturnExpectationResponseDto
                 {
                     Name = monthAtivo.Name,
                     DateMonth = monthAtivo.DateMonth,
-                    ROIC = roic,
-                    KE = wacc,
-                    CriacaoValor = criacaoValor,
+                    ROIC = Math.Round(roic, 2),          // opcional arredondar 2 casas decimais
+                    KE = Math.Round(wacc, 2),
+                    CriacaoValor = Math.Round(criacaoValor, 2),
                 });
             }
 
@@ -269,6 +256,7 @@ namespace _2___Application._1_Services.Results
                 }
             };
         }
+
 
         #endregion
         #region EBITDA
