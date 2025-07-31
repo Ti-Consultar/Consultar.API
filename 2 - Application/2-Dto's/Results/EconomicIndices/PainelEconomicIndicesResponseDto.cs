@@ -102,7 +102,7 @@ namespace _2___Application._2_Dto_s.Results.EconomicIndices
         public string Name { get; set; }
         public int DateMonth { get; set; }
         public decimal LucroOperacionalAntes { get; set; }
-        public decimal MargemOperacional { get; set; }
+        public decimal MargemOperacionalDRE { get; set; }
         public decimal ProvisaoIRPJCSLL { get; set; }
         public decimal MargemNOPAT { get; set; }
         public decimal NOPAT { get; set; }

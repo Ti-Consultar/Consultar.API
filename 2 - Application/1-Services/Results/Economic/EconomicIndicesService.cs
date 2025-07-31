@@ -366,7 +366,7 @@ namespace _2___Application._1_Services.Results
                     DateMonth = monthDRE.DateMonth,
                     MargemNOPAT = margemNOPAT,
                     LucroOperacionalAntes = lucroAntesDoResultadoFinanceiro,
-                   MargemOperacional = margemOperacional,
+                    MargemOperacionalDRE = margemOperacional,
                    ProvisaoIRPJCSLL = provisaoIRPSCSLL,
                    NOPAT = noPAT
                 });
