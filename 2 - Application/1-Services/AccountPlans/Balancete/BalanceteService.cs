@@ -555,7 +555,6 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
                 var filtrados = lookup.Values
                     .Where(x => x.CostCenter.StartsWith(tipo)) // Começa com tipo + ponto (ex: 1.1, 1.2)
-                    .Concat(lookup.Values.Where(x => x.CostCenter == tipo)) // Ou é exatamente "1"
                     .OrderBy(x => x.CostCenter)
                     .ToList();
 
