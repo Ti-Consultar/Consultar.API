@@ -130,7 +130,25 @@ namespace _2___Application._1_Services.Parameter
                 return ErrorResponse(ex);
             }
         }
+        public async Task<ResultValue> Delete(int id)
+        {
+            try
+            {
+                var parameter = await _repository.GetById(id);
 
+                if (parameter == null)
+                    return ErrorResponse(Message.NotFound);
+
+                
+                await _repository.DeletePermanently(parameter.Id);
+
+                return SuccessResponse(Message.DeleteSuccess);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
 
         #endregion
     }

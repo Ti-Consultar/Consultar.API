@@ -88,5 +88,21 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        [HttpDelete]
+        [Route("")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> Update([FromQuery]int id)
+        {
+            try
+            {
+
+                var response = await _service.Delete(id);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
