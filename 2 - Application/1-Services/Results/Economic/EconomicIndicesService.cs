@@ -183,7 +183,7 @@ namespace _2___Application._1_Services.Results
             var parameter = await _parameterRepository.GetByAccountPlanIdYear(accountPlanId, year);
             decimal wacc = parameter
                 .FirstOrDefault(a => a.Name == "WACC")?.ParameterValue ?? 0;
-
+            wacc = wacc / 12;
             foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
             {
                 var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
