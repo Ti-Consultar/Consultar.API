@@ -85,8 +85,8 @@ namespace _2___Application._1_Services.Results
 
                 var cdg = (passivoNaoCirculante + patrimonioLiquido) - (ativoNaoCirculante + ativoFixo);
 
-                var saldoTesouraria = valorAtivoFinanceiro - valorPassivoFinanceiro;
-                var ncg = valorAtivoOperacional - valorPassivoOperacional;
+                var saldoTesouraria = valorAtivoFinanceiro + valorPassivoFinanceiro;
+                var ncg = valorAtivoOperacional + valorPassivoOperacional;
                 decimal? indiceDeLiquidez = ncg != 0 ? saldoTesouraria / ncg : (decimal?)null;
 
 

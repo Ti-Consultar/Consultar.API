@@ -9,20 +9,23 @@ namespace _2___Application._2_Dto_s.Results.CILeEC
 {
     public class PainelCILeECResponseDto
     {
-        public List<MonthCileECResponse> Months { get; set; }
+        public CILeECGroupedDto CILeEC { get; set; }
     }
-    public class MonthCileECResponse
+
+
+    public class CILeECGroupedDto
     {
-        public int Id { get; set; }
+        public List<CILeECResponseDto> Months { get; set; }
+    }
+
+
+
+
+
+    public class CILeECResponseDto
+    {
         public string Name { get; set; }
         public int DateMonth { get; set; }
-        public List<CILResponseDto>? CILs { get; set; }
-        public List<ECResponseDto>? ECs { get; set; }
-
-    }
-
-    public class CILResponseDto
-    {
         public decimal Disponibilidades { get; set; }
         public decimal Clientes { get; set; }
         public decimal Estoques { get; set; }
@@ -35,12 +38,13 @@ namespace _2___Application._2_Dto_s.Results.CILeEC
         public decimal ExigivelALongoPrazoOperacional { get; set; }
         public decimal AtivosFixos { get; set; }
         public decimal CapitalInvestidoLiquido { get; set; }
+        public ECResponseDto EstruturaDeCapital { get; set; }
 
     }
     public class ECResponseDto
     {
         public decimal Emprestimos { get; set; }
-        public decimal PossicaoFinanceiraCurtoPrazo { get; set; }
+        public decimal PosicaoFinanceiraCurtoPrazo { get; set; }
         public decimal ExigivelaLongoPrazoFinanceiro { get; set; }
         public decimal PosicaoFinanceiraTerceiros { get; set; }
         public decimal PatrimonioLiquido { get; set; }
