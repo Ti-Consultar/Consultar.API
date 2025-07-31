@@ -108,6 +108,35 @@ namespace _2___Application._1_Services.Parameter
                 return ErrorResponse(ex);
             }
         }
+
+        public async Task<ResultValue> GetWACCById(int accountPlanId, int year)
+        {
+            try
+            {
+                var parameter = await _repository.GetByAccountPlanIdYear(accountPlanId, year);
+
+
+                var wacc = parameter.FirstOrDefault(a => a.Name.ToLower() == "WACC");
+
+                if (wacc == null)
+                    return ErrorResponse(Message.NotFound);
+
+                var result = new ParameterResponseDto
+                {
+                    Id = wacc.Id,
+                    Name = wacc.Name,
+                    ParameterValue = wacc.ParameterValue,
+                    ParameterYear = wacc.ParameterYear,
+                };
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
         public async Task<ResultValue> Update(UpdateParameterDto dto)
         {
             try

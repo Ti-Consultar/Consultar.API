@@ -72,6 +72,24 @@ namespace _5_API.Controllers
             }
         }
 
+
+        [HttpGet]
+        [Route("wacc")]
+        //[Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetWACCById([FromQuery] int accountPlanId, [FromQuery]int year)
+        {
+            try
+            {
+
+                var response = await _service.GetWACCById(accountPlanId , year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPut]
         [Route("")]
        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
