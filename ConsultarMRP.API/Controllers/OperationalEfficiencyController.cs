@@ -15,21 +15,21 @@ namespace ConsultarMRP.API.Controllers
         {
             _Service = service;
         }
-        //[HttpGet]
-        //[Route("template")]
-        //// [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
-        //public async Task<IActionResult> GetAll()
-        //{
-        //    try
-        //    {
+        [HttpGet]
+        [Route("")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetOperationalEfficiency([FromQuery] int accountPlanId, [FromQuery] int year)
+        {
+            try
+            {
 
-        //        var response = await _Service.GetAll();
-        //        return Ok(response);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(new { message = ex.Message });
-        //    }
-        //}
+                var response = await _Service.GetOperationalEfficiency(accountPlanId, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
