@@ -551,19 +551,22 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                     }
                 }
 
-                var pais = lookup.Values
-                    .Where(x => x.CostCenter.StartsWith(tipoInicial.ToString() )) //+ ".")) // filtro dinâmico
-                    .Where(x => data.Any(d => d.CostCenter.StartsWith(x.CostCenter + "."))) // tem filhos
+                var tipo = tipoInicial.ToString();
+
+                var filtrados = lookup.Values
+                    .Where(x => x.CostCenter.StartsWith(tipo)) // Começa com tipo + ponto (ex: 1.1, 1.2)
+                    .Concat(lookup.Values.Where(x => x.CostCenter == tipo)) // Ou é exatamente "1"
                     .OrderBy(x => x.CostCenter)
                     .ToList();
 
-                return SuccessResponse(pais);
+                return SuccessResponse(filtrados);
             }
             catch (Exception ex)
             {
                 return ErrorResponse(ex);
             }
         }
+
 
 
 
