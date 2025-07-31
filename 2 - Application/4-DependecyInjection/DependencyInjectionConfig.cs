@@ -19,6 +19,7 @@ using _2___Application._1_Services.TotalizerClassification;
 using _2___Application._1_Services.Results.CIL_e_EC;
 using _2___Application._1_Services.Results;
 using _2___Application._1_Services.Results.OperationalEfficiency;
+using _2___Application._1_Services.Parameter;
 
 
 namespace _2___Application._4__DependencyInjectionConfig
@@ -90,6 +91,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<EconomicIndicesService>();
             services.AddScoped<LiquidManagementService>();
             services.AddScoped<OperationalEfficiencyService>();
+            services.AddScoped<ParameterService>();
 
 
 
@@ -114,6 +116,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<TotalizerClassificationTemplateRepository>();
             services.AddScoped<BalancoReclassificadoRepository>();
             services.AddScoped<BalancoReclassificadoTemplateRepository>();
+            services.AddScoped<ParameterRepository>();
             #endregion
 
             #endregion

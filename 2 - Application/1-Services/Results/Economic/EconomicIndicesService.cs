@@ -24,6 +24,7 @@ namespace _2___Application._1_Services.Results
         private readonly BalancoReclassificadoTemplateRepository _balancoReclassificadoTemplateRepository;
         private readonly BalancoReclassificadoRepository _balancoReclassificadoRepository;
         private readonly AccountPlansRepository _accountPlansRepository;
+        private readonly ParameterRepository _parameterRepository;
 
         public EconomicIndicesService(
             ClassificationRepository repository,
@@ -35,6 +36,7 @@ namespace _2___Application._1_Services.Results
             BalancoReclassificadoTemplateRepository balancoReclassificadoTemplateRepository,
             BalancoReclassificadoRepository balancoReclassificadoRepository,
             AccountPlansRepository accountPlansRepository,
+            ParameterRepository parameterRepository,
             IAppSettings appSettings) : base(appSettings)
         {
             _repository = repository;
@@ -46,6 +48,7 @@ namespace _2___Application._1_Services.Results
             _balancoReclassificadoTemplateRepository = balancoReclassificadoTemplateRepository;
             _balancoReclassificadoRepository = balancoReclassificadoRepository;
             _accountPlansRepository = accountPlansRepository;
+            _parameterRepository = parameterRepository;
         }
         #region Lucratividade
 
@@ -161,60 +164,111 @@ namespace _2___Application._1_Services.Results
 
         #region Expectativa de Retorno
 
-        //public async Task<PainelReturnExpectationResponseDto> GetReturnExpectation(int accountPlanId, int year)
-        //{
-        //    var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
-        //    var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
-        //    var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
+        public async Task<PainelReturnExpectationResponseDto> GetReturnExpectation(int accountPlanId, int year)
+        {
+            var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
+            var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
+            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
 
-        //    // 🔁 Carrega também o painel do ANO ANTERIOR (somente o Ativo é necessário aqui)
-        //    var painelAtivoAnoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1);
+            // 🔁 Carrega também o painel do ANO ANTERIOR (somente o Ativo é necessário aqui)
+            var painelAtivoAnoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1);
 
-        //    var dezembroAnoAnterior = painelAtivoAnoAnterior.Months
-        //        .FirstOrDefault(a => a.DateMonth == 12);
+            var dezembroAnoAnterior = painelAtivoAnoAnterior.Months
+                .FirstOrDefault(a => a.DateMonth == 12);
 
-        //    decimal patrimonioLiquidoAnoAnterior = dezembroAnoAnterior?.Totalizer
-        //        .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+            decimal patrimonioLiquidoAnoAnterior = dezembroAnoAnterior?.Totalizer
+                .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
-        //    var returnExpectations = new List<ReturnExpectationResponseDto>();
+            var returnExpectations = new List<ReturnExpectationResponseDto>();
 
-        //    foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
-        //    {
-        //        var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
-        //        var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
+            foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
+            {
+                var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
+                var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
 
-        //        decimal nOPAT = monthDRE?.Totalizer
-        //            .FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
 
-        //        decimal ativoTotal = monthAtivo?.Totalizer
-        //            .FirstOrDefault(t => t.Name == "Total Ativo Circulante")?.TotalValue ?? 0;
 
-        //        decimal patrimonioLiquido = monthAtivo?.Totalizer
-        //            .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+                // mesmo calculo para trazer o Capital Investido Liquido de CIL
+                decimal disponibilidade = monthAtivo?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
 
-        //        // ⚠️ Evita divisão por zero
-        //        decimal roi = ativoTotal != 0 ? lucroLiquido / ativoTotal : 0;
-        //        decimal roe = patrimonioLiquido != 0 ? lucroLiquido / patrimonioLiquido : 0;
-        //        decimal roeInicial = patrimonioLiquidoAnoAnterior != 0 ? lucroLiquido / patrimonioLiquidoAnoAnterior : 0;
+                decimal clientes = monthAtivo?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
 
-        //        returnExpectations.Add(new ReturnExpectationResponseDto
-        //        {
-        //            Name = monthAtivo.Name,
-        //            DateMonth = monthAtivo.DateMonth,
-        //            ROIC = roi,
-        //            KE = roe,
-        //            CriacaoValor = roeInicial,
-        //        });
-        //    }
+                decimal estoque = monthAtivo?.Totalizer
+                        .FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
 
-        //    return new PainelReturnExpectationResponseDto
-        //    {
-        //        ReturnExpectation = new ReturnExpectationGroupedDto
-        //        {
-        //            Months = returnExpectations
-        //        }
-        //    };
-        //}
+                decimal outrosAtivosOperacionaisTotal = monthAtivo?.Totalizer
+                   .FirstOrDefault(t => t.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
+
+                decimal fornecedores = monthPassivo?.Totalizer
+                       .FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
+
+                decimal obrigacoesTributariasETrabalhistas = monthPassivo?.Totalizer
+                      .FirstOrDefault(t => t.Name == "Obrigações Tributárias e Trabalhistas")?.TotalValue ?? 0;
+
+                decimal outrosPassivosOperacionaisTotal = monthPassivo?.Totalizer
+                     .FirstOrDefault(t => t.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
+
+                decimal somaAtivos = disponibilidade + clientes + estoque + outrosAtivosOperacionaisTotal;
+
+                decimal somaPassivo = fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal;
+
+                decimal necessidadeDeCapitalDeGiro = somaAtivos + somaPassivo;
+
+                decimal realizavelLongoPrazo = monthAtivo?.Totalizer
+                   .FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
+
+                decimal exigivelLongoPrazo = monthPassivo?.Totalizer
+                     .FirstOrDefault(t => t.Name == "Passivo Não Circulante Operacional")?.TotalValue ?? 0;
+
+                decimal ativosFixos = monthAtivo?.Totalizer
+                  .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
+
+                decimal capitalInvestidoLiquido = necessidadeDeCapitalDeGiro + realizavelLongoPrazo + exigivelLongoPrazo + ativosFixos;
+
+
+                decimal nOPAT = monthDRE?.Totalizer
+                    .FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
+
+                decimal ativoTotal = monthAtivo?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Total Ativo Circulante")?.TotalValue ?? 0;
+
+                decimal patrimonioLiquido = monthAtivo?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+
+                // ⚠️ Evita divisão por zero
+                decimal roic = nOPAT / capitalInvestidoLiquido;
+
+                var parameter = await _parameterRepository.GetByAccountPlanIdYear(accountPlanId, year);
+
+
+                decimal wacc = parameter
+                .FirstOrDefault(a => a.Name == "WACC")?.ParameterValue ?? 0;
+
+                decimal criacaoValor = roic - wacc;
+
+                //  decimal roe = patrimonioLiquido != 0 ? lucroLiquido / patrimonioLiquido : 0;
+                // decimal roeInicial = patrimonioLiquidoAnoAnterior != 0 ? lucroLiquido / patrimonioLiquidoAnoAnterior : 0;
+
+                returnExpectations.Add(new ReturnExpectationResponseDto
+                {
+                    Name = monthAtivo.Name,
+                    DateMonth = monthAtivo.DateMonth,
+                    ROIC = roic,
+                    KE = wacc,
+                    CriacaoValor = criacaoValor,
+                });
+            }
+
+            return new PainelReturnExpectationResponseDto
+            {
+                ReturnExpectation = new ReturnExpectationGroupedDto
+                {
+                    Months = returnExpectations
+                }
+            };
+        }
 
         #endregion
         #region EBITDA
