@@ -26,6 +26,14 @@ namespace _2___Application._2_Dto_s.Results.CILeEC
     {
         public string Name { get; set; }
         public int DateMonth { get; set; }
+       
+        public CILResponseDto Cil { get; set; }
+        public ECResponseDto EstruturaDeCapital { get; set; }
+
+    }
+
+    public class CILResponseDto
+    {
         public decimal Disponibilidades { get; set; }
         public decimal Clientes { get; set; }
         public decimal Estoques { get; set; }
@@ -38,7 +46,6 @@ namespace _2___Application._2_Dto_s.Results.CILeEC
         public decimal ExigivelALongoPrazoOperacional { get; set; }
         public decimal AtivosFixos { get; set; }
         public decimal CapitalInvestidoLiquido { get; set; }
-        public ECResponseDto EstruturaDeCapital { get; set; }
 
     }
     public class ECResponseDto

@@ -123,19 +123,21 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
                 {
                     Name = monthAtivo.Name,
                     DateMonth = monthAtivo.DateMonth,
-                    Disponibilidades = disponibilidade,
-                    Clientes = clientes,
-                    Estoques = estoque,
-                    OutrosAtivosOperacionais = outrosAtivosOperacionaisTotal,
-                    Fornecedores = fornecedores,
-                    ObrigacoesTributariasTrabalhistas = obrigacoesTributariasETrabalhistas,
-                    OutrosPassivosOperacionais = outrosPassivosOperacionaisTotal,
-                    NCG = necessidadeDeCapitalDeGiro,
-                    RealizavelLongoPrazo = realizavelLongoPrazo,
-                    ExigivelALongoPrazoOperacional = exigivelLongoPrazo,
-                    AtivosFixos = ativosFixos,
-                    CapitalInvestidoLiquido = capitalInvestidoLiquido,
+                    Cil = new CILResponseDto {
+                        Disponibilidades = disponibilidade,
+                        Clientes = clientes,
+                        Estoques = estoque,
+                        OutrosAtivosOperacionais = outrosAtivosOperacionaisTotal,
+                        Fornecedores = fornecedores,
+                        ObrigacoesTributariasTrabalhistas = obrigacoesTributariasETrabalhistas,
+                        OutrosPassivosOperacionais = outrosPassivosOperacionaisTotal,
+                        NCG = necessidadeDeCapitalDeGiro,
+                        RealizavelLongoPrazo = realizavelLongoPrazo,
+                        ExigivelALongoPrazoOperacional = exigivelLongoPrazo,
+                        AtivosFixos = ativosFixos,
+                        CapitalInvestidoLiquido = capitalInvestidoLiquido,
 
+                    },
                     EstruturaDeCapital = new ECResponseDto
                     {
                         Emprestimos = emprestimos,
