@@ -37,8 +37,8 @@ namespace _2___Application._2_Dto_s.Results.OperationalEfficiency
         public decimal Clientes { get; set; }
         public decimal Estoques { get; set; }
         public decimal Fornecedores { get; set; }
-        public decimal NCGTotal { get; set; }
         public decimal NCGCEF { get; set; }//NCG Clientes + estoques - fornecedores
+        public decimal NCGTotal { get; set; }
         public decimal InvestimentosAtivosFixos { get; set; }
         public decimal CapitalInvestidoLiquido { get; set; }
         public decimal CapitalTurnover { get; set; }
