@@ -124,6 +124,7 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
                     Name = monthAtivo.Name,
                     DateMonth = monthAtivo.DateMonth,
                     Cil = new CILResponseDto {
+                        Name = "Capital Investido Líquido",
                         Disponibilidades = disponibilidade,
                         Clientes = clientes,
                         Estoques = estoque,
@@ -140,6 +141,7 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
                     },
                     EstruturaDeCapital = new ECResponseDto
                     {
+                        Name = "Posição Financeira Líquida",
                         Emprestimos = emprestimos,
                         PosicaoFinanceiraCurtoPrazo = posicaoFinanceiraDeCurtoPrazo,
                         ExigivelaLongoPrazoFinanceiro = exigivelLongoPrazo,

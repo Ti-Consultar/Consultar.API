@@ -34,6 +34,7 @@ namespace _2___Application._2_Dto_s.Results.CILeEC
 
     public class CILResponseDto
     {
+        public string Name { get; set; }
         public decimal Disponibilidades { get; set; }
         public decimal Clientes { get; set; }
         public decimal Estoques { get; set; }
@@ -50,6 +51,7 @@ namespace _2___Application._2_Dto_s.Results.CILeEC
     }
     public class ECResponseDto
     {
+        public string Name { get; set; }
         public decimal Emprestimos { get; set; }
         public decimal PosicaoFinanceiraCurtoPrazo { get; set; }
         public decimal ExigivelaLongoPrazoFinanceiro { get; set; }
