@@ -507,7 +507,7 @@ namespace _2___Application._1_Services
 
                     case "Lucros / Prejuízos Acumulados":
                         classification.BalancoReclassificadoId = reclassifications
-                            .Where(r => r.Name == "Lucros / Prejuízos Acumulados")
+                            .Where(r => r.Name == "Lucros / Prejuízos Acumulado")
                             .Select(r => (int?)r.Id)
                             .FirstOrDefault();
                         break;
