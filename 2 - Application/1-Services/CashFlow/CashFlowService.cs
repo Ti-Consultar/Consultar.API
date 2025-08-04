@@ -103,7 +103,9 @@ namespace _2___Application._1_Services.CashFlow
                 var patrimonioLiquido = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
                 var emprestimoEFinanciamento = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Empréstimos e Financiamentos")?.TotalValue ?? 0;
-                var imobilizado = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Imobilizado")?.TotalValue ?? 0;
+                var imobilizado = (monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Imobilizado")?.TotalValue ?? 0) * -1;
+
+
 
 
                 var depreciacaoAmortAcumulada = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Depreciação / Amort. Acumulada")?.TotalValue ?? 0;
@@ -135,7 +137,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoClientes = (clientes - (previousMonth?.Clientes ?? 0)) * -1;
                 decimal variacaoEstoques = (estoque - (previousMonth?.Estoques ?? 0)) * -1;
                 decimal variacaoOutrosAtivosOperacionais = (outrosAtivosOperacionaisTotal - (previousMonth?.OutrosAtivosOperacionais ?? 0)) * -1;
-                decimal variacaoDepreciacaoAmortAcumulada = (depreciacaoAmortAcumulada - (previousMonth?.DepreciacaoAmortizacao ?? 0)) * -1;
+                decimal variacaoDepreciacaoAmortAcumulada = (depreciacaoAmortAcumulada - (previousMonth?.DepreciacaoAmortizacao ?? 0));
                 decimal variacaoFornecedores = (fornecedores - (previousMonth?.Fornecedores ?? 0));
                 decimal variacaoObrigacoes = (obrigacoesTributariasETrabalhistas - (previousMonth?.ObrigacoesTributariasTrabalhistas ?? 0)) ;
                 decimal variacaoOutrosPassivosOperacionais = (outrosPassivosOperacionaisTotal - (previousMonth?.OutrosPassivosOperacionais ?? 0));
@@ -158,6 +160,9 @@ namespace _2___Application._1_Services.CashFlow
 
                 var fluxoCaixaOperacional = lucroLiquido + depreciacaoAmortAcumulada + variacaoNCG ;
                 var fluxoCaixaLivre = fluxoCaixaOperacional + variacaoAtivoNaoCirculante + variacaoInvestimento + variacaoPatrimonioLiquido;
+
+
+                var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoDepreciacaoAmortAcumulada + variacaoPassivoNaoCirculante + variacaoPatrimonioLiquido;
 
                 var dto = new CashFlowResponseDto
                 {
@@ -187,9 +192,9 @@ namespace _2___Application._1_Services.CashFlow
                     CaptacoesAmortizacoesFinanceira = emprestimoEFinanciamento,
                     PassivoNaoCirculante = variacaoPassivoNaoCirculante,
                     VariacaoPatrimonioLiquido = variacaoPatrimonioLiquido,
-                    FluxoDeCaixaDaEmpresa = variacaoPL,
+                    FluxoDeCaixaDaEmpresa = fluxoDeCaixaEmpresa,
                     DisponibilidadeInicioDoPeriodo = previousMonth?.DisponibilidadeFinalDoPeriodo ?? 0,
-                    DisponibilidadeFinalDoPeriodo = disponibilidade + fluxoCaixaLivre,
+                    DisponibilidadeFinalDoPeriodo = disponibilidade,
                 };
 
                 cashFlow.Add(dto);
