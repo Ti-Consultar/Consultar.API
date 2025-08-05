@@ -64,6 +64,7 @@ namespace _2___Application._1_Services.Parameter
                 var parameters = await _repository.GetAllAsync();
 
                 if (parameters == null || !parameters.Any())
+
                     return SuccessResponse( new List<ParameterResponseDto>());
 
                 var result = parameters

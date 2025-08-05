@@ -1,6 +1,6 @@
-﻿using _2___Application._2_Dto_s.Results.EconomicIndices;
-using _2___Application._2_Dto_s.Results.LiquidManagement;
+﻿using _2___Application._2_Dto_s.CashFlow;
 using _2___Application._2_Dto_s.TotalizerClassification;
+using _2___Application._2_Dto_s.ValueTree;
 using _2___Application.Base;
 using _4_InfraData._1_Repositories;
 using _4_InfraData._2_AppSettings;
@@ -11,9 +11,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace _2___Application._1_Services.Results
+namespace _2___Application._1_Services.ValueTree
 {
-    public class EconomicIndicesService : BaseService
+    public class ValueTreeService : BaseService
     {
         private readonly ClassificationRepository _repository;
         private readonly AccountPlanClassificationRepository _accountClassificationRepository;
@@ -26,7 +26,7 @@ namespace _2___Application._1_Services.Results
         private readonly AccountPlansRepository _accountPlansRepository;
         private readonly ParameterRepository _parameterRepository;
 
-        public EconomicIndicesService(
+        public ValueTreeService(
             ClassificationRepository repository,
             AccountPlanClassificationRepository accountClassificationRepository,
             BalanceteDataRepository balanceteDataRepository,
@@ -50,338 +50,188 @@ namespace _2___Application._1_Services.Results
             _accountPlansRepository = accountPlansRepository;
             _parameterRepository = parameterRepository;
         }
-        #region Lucratividade
 
-        public async Task<PainelProfitabilityResponseDto> GetProfitability(int accountPlanId, int year)
+        #region
+
+
+        public async Task<ValueTreeResultDto> GetAll(int accountPlanId, int month, int year)
         {
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
 
-            var profitabilities = new List<ProfitabilityResponseDto>();
-
-            decimal? ncgMesAnterior = null; // <- inicializa como nulo
-
-            foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
-            {
-                var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
-                var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
-
-                decimal margemBruta = monthDRE?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Margem Bruta %")?.TotalValue ?? 0;
-
-                decimal margemEbitda = monthDRE?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Margem EBITDA %")?.TotalValue ?? 0;
-
-                decimal margemOperacional = monthDRE?.Totalizer
-                      .FirstOrDefault(t => t.Name == "Margem Operacional %")?.TotalValue ?? 0;
-
-                decimal margemNOPAT = monthDRE?.Totalizer
-                     .FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0;
-
-                decimal margemLAIR = monthDRE?.Totalizer
-                     .FirstOrDefault(t => t.Name == "Margem LAIR %")?.TotalValue ?? 0;
-
-                profitabilities.Add(new ProfitabilityResponseDto
-                {
-                    Name = monthAtivo.Name,
-                    DateMonth = monthAtivo.DateMonth,
-                    MargemBruta = margemBruta,
-                    MargemEBITDA = margemEbitda,
-                    MargemOperacional = margemOperacional,
-                    MargemNOPAT = margemNOPAT,
-                    MargemLiquida = margemLAIR
-                });
-            }
-
-            return new PainelProfitabilityResponseDto
-            {
-                Profitability = new ProfitabilityGroupedDto
-                {
-                    Months = profitabilities
-                }
-            };
-        }
-        #endregion
-
-        #region Rentabilidade
-        public async Task<PainelRentabilityResponseDto> GetRentabilibty(int accountPlanId, int year)
-        {
-            var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
-            var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
-            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
-
-            // 🔁 Carrega também o painel do ANO ANTERIOR (somente o Ativo é necessário aqui)
-            var painelAtivoAnoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1);
-
-            var dezembroAnoAnterior = painelAtivoAnoAnterior.Months
-                .FirstOrDefault(a => a.DateMonth == 12);
-
-            decimal patrimonioLiquidoAnoAnterior = dezembroAnoAnterior?.Totalizer
-                .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
-
-            var rentabilities = new List<RentabilityResponseDto>();
-
-            foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
-            {
-                var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
-                var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
-
-                decimal lucroLiquido = monthDRE?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
-
-                decimal ativoTotal = monthAtivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Total Ativo Circulante")?.TotalValue ?? 0;
-
-                decimal patrimonioLiquido = monthAtivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
-
-                // ⚠️ Evita divisão por zero
-                decimal roi = ativoTotal != 0 ? lucroLiquido / ativoTotal : 0;
-                decimal roe = patrimonioLiquido != 0 ? lucroLiquido / patrimonioLiquido : 0;
-                decimal roeInicial = patrimonioLiquidoAnoAnterior != 0 ? lucroLiquido / patrimonioLiquidoAnoAnterior : 0;
-
-                rentabilities.Add(new RentabilityResponseDto
-                {
-                    Name = monthAtivo.Name,
-                    DateMonth = monthAtivo.DateMonth,
-                    ROI = roi,
-                    LiquidoMensalROE = roe,
-                    LiquidoInicioROE = roeInicial,
-                });
-            }
-
-            return new PainelRentabilityResponseDto
-            {
-                Rentability = new RentabilityGroupedDto
-                {
-                    Months = rentabilities
-                }
-            };
-        }
-
-        #endregion
-
-        #region Expectativa de Retorno
-
-        public async Task<PainelReturnExpectationResponseDto> GetReturnExpectation(int accountPlanId, int year)
-        {
-            var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
-            var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
-            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
-
-            var painelAtivoAnoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1);
-
-            var dezembroAnoAnterior = painelAtivoAnoAnterior.Months
-                .FirstOrDefault(a => a.DateMonth == 12);
-
-            decimal patrimonioLiquidoAnoAnterior = dezembroAnoAnterior?.Totalizer
-                .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
-
-            var returnExpectations = new List<ReturnExpectationResponseDto>();
-
+            var monthAtivo = painelAtivo.Months.FirstOrDefault(m => m.DateMonth == month);
+            var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == month);
+            var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == month);
             var parameter = await _parameterRepository.GetByAccountPlanIdYear(accountPlanId, year);
-            decimal wacc = parameter
-                .FirstOrDefault(a => a.Name == "WACC")?.ParameterValue ?? 0;
-            wacc = wacc / 12;
-            foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
-            {
-                var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
-                var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
+            // === Parâmetros iniciais ===
+            decimal wacc = parameter.FirstOrDefault(a => a.Name == "WACC")?.ParameterValue ?? 0;
+            wacc /= 12;
 
-                decimal disponibilidade = monthAtivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
+            // === Custos Variáveis ===
+            var custoMercadorias = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                .FirstOrDefault(c => c.Name == "(-) Custos das Mercadorias")?.Value ?? 0;
 
-                decimal clientes = monthAtivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
+            var custoServicosPrestados = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                .FirstOrDefault(c => c.Name == "(-) Custos dos Serviços Prestados")?.Value ?? 0;
 
-                decimal estoque = monthAtivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
+            var despesasVariaveis = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                .FirstOrDefault(c => c.Name == "Despesas Variáveis")?.Value ?? 0;
 
-                decimal outrosAtivosOperacionaisTotal = monthAtivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
+            var custos = custoMercadorias + custoServicosPrestados + despesasVariaveis;
 
-                decimal fornecedores = monthPassivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
+            // === Despesas Operacionais ===
+            var despesasVendas = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                .FirstOrDefault(c => c.Name == "Despesas com Vendas")?.Value ?? 0;
 
-                decimal obrigacoesTributariasETrabalhistas = monthPassivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Obrigações Tributárias e Trabalhistas")?.TotalValue ?? 0;
+            var despesasPessoalEncargos = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                .FirstOrDefault(c => c.Name == "Despesas com Pessoal e Encargos")?.Value ?? 0;
 
-                decimal outrosPassivosOperacionaisTotal = monthPassivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
+            var despesasAdministrativas = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                .FirstOrDefault(c => c.Name == "Despesas Administrativas e Gerais")?.Value ?? 0;
 
-                decimal somaAtivos = disponibilidade + clientes + estoque + outrosAtivosOperacionaisTotal;
+            var outrosResultadosOperacionais = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
 
-                decimal somaPassivo = fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal;
+            var despesasOperacionaisTotalSomaDRE = monthDRE?.Totalizer
+                .FirstOrDefault(c => c.Name == "(-) Despesas Operacionais")?.TotalValue ?? 0;
 
-                decimal necessidadeDeCapitalDeGiro = somaAtivos + somaPassivo;
+            var despesasOperacionais = despesasVendas + despesasPessoalEncargos + despesasAdministrativas;
 
-                decimal realizavelLongoPrazo = monthAtivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
+            // === Impostos ===
+            var provisaoCSLL = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                .FirstOrDefault(c => c.Name == "Provisão para CSLL")?.Value ?? 0;
 
-                decimal exigivelLongoPrazo = monthPassivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Passivo Não Circulante Operacional")?.TotalValue ?? 0;
+            var provisaoIRPJ = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                .FirstOrDefault(c => c.Name == "Provisão para IRPJ")?.Value ?? 0;
 
-                decimal ativosFixos = monthAtivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
+            var impostos = provisaoCSLL + provisaoIRPJ;
 
-                decimal capitalInvestidoLiquido = necessidadeDeCapitalDeGiro + realizavelLongoPrazo + exigivelLongoPrazo + ativosFixos;
+            // === Ativo Circulante ===
+            decimal disponibilidade = monthAtivo?.Totalizer
+                .FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
 
-                decimal nOPAT = monthDRE?.Totalizer
-                    .FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
+            decimal clientes = monthAtivo?.Totalizer
+                .FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
 
-                // Evitar divisão por zero e calcular ROIC já em percentual
-                decimal roic = capitalInvestidoLiquido != 0 ? (nOPAT / capitalInvestidoLiquido) * 100 : 0;
+            decimal estoque = monthAtivo?.Totalizer
+                .FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
 
-                // O WACC deve estar já no formato percentual, se estiver decimal, ajuste aqui:
-                // Exemplo: wacc = wacc * 100; (se necessário)
+            decimal outrosAtivosOperacionaisTotal = monthPassivo?.Totalizer
+                .FirstOrDefault(t => t.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
 
-                decimal criacaoValor = roic - wacc;
+            // === Passivo Circulante ===
+            decimal fornecedores = monthPassivo?.Totalizer
+                .FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
 
-                returnExpectations.Add(new ReturnExpectationResponseDto
-                {
-                    Name = monthAtivo.Name,
-                    DateMonth = monthAtivo.DateMonth,
-                    ROIC = Math.Round(roic, 2),          // opcional arredondar 2 casas decimais
-                    KE = Math.Round(wacc, 2),
-                    CriacaoValor = Math.Round(criacaoValor, 2),
-                });
-            }
+            decimal obrigacoesTributariasETrabalhistas = monthPassivo?.Totalizer
+                .FirstOrDefault(t => t.Name == "Obrigações Tributárias e Trabalhistas")?.TotalValue ?? 0;
 
-            return new PainelReturnExpectationResponseDto
-            {
-                ReturnExpectation = new ReturnExpectationGroupedDto
-                {
-                    Months = returnExpectations
-                }
-            };
-        }
+            decimal outrosPassivosOperacionaisTotal = monthPassivo?.Totalizer
+                .FirstOrDefault(t => t.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
 
+            // === Longo Prazo e Investimentos ===
+            decimal exigivelLongoPrazo = monthPassivo?.Totalizer
+                .FirstOrDefault(t => t.Name == "Passivo Não Circulante Operacional")?.TotalValue ?? 0;
 
-        #endregion
-        #region EBITDA
-        public async Task<PainelEBITDAResponseDto> GetEBITDA(int accountPlanId, int year)
-        {
-            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
+            decimal realizavelLongoPrazo = monthAtivo?.Totalizer
+                .FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
 
-            // 🔁 Carrega também o painel do ANO ANTERIOR (somente o Ativo é necessário aqui)
-            var painelAtivoAnoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1);
+            decimal ativosFixos = monthAtivo?.Totalizer
+                .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
-            var dezembroAnoAnterior = painelAtivoAnoAnterior.Months
-                .FirstOrDefault(a => a.DateMonth == 12);
+            // === Indicadores e Métricas ===
+            decimal receitaLiquida = monthAtivo.Totalizer
+                .FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
 
-            decimal patrimonioLiquidoAnoAnterior = dezembroAnoAnterior?.Totalizer
+            decimal nOPAT = monthDRE?.Totalizer
+                .FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
+
+            decimal lajir = monthDRE?.Totalizer
+                .FirstOrDefault(t => t.Name == "Margem LAJIR %")?.TotalValue ?? 0;
+
+            decimal margemDeContribuicao = monthDRE?.Totalizer
+                .FirstOrDefault(t => t.Name == "Margem Contribuição %")?.TotalValue ?? 0;
+
+            // === Cálculo de NCG e Capital Investido ===
+            decimal somaAtivos = disponibilidade + clientes + estoque + outrosAtivosOperacionaisTotal;
+            decimal somaPassivo = fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal;
+
+            decimal necessidadeDeCapitalDeGiro = somaAtivos + somaPassivo;
+            decimal capitalInvestidoLiquido = necessidadeDeCapitalDeGiro + realizavelLongoPrazo + exigivelLongoPrazo + ativosFixos;
+
+            // === ROIC e EVA ===
+            decimal roic = capitalInvestidoLiquido != 0 ? (nOPAT / capitalInvestidoLiquido) * 100 : 0;
+            decimal evaSPREAD = roic - wacc;
+            decimal eva = capitalInvestidoLiquido != 0 ? evaSPREAD / capitalInvestidoLiquido : 0;
+
+            // === Cálculo do CDG ===
+            var passivoNaoCirculante = monthPassivo?.Totalizer
+                .FirstOrDefault(t => t.Name == "Passivo Não Circulante")?.TotalValue ?? 0;
+
+            var patrimonioLiquido = monthPassivo?.Totalizer
                 .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
-            var eBITDA = new List<EBITDAResponseDto>();
+            var ativoNaoCirculante = monthAtivo.Totalizer
+                .FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
 
-            foreach (var monthDRE in painelDRE.Months.OrderBy(m => m.DateMonth))
+            var ativoFixo = monthAtivo.Totalizer
+                .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
+
+            var cdg = (passivoNaoCirculante - patrimonioLiquido) + (ativoNaoCirculante + ativoFixo);
+
+            // === DTO Final ===
+            var economic = new EconomicViewDto
             {
-               
+                ReceitaLiquida = receitaLiquida,
+                CustoDespesaVariavel = custos,
+                MargemContribuicao = margemDeContribuicao,
+                DespesasOperacionais = despesasOperacionaisTotalSomaDRE,
+                OutrosResultadosOperacionais = outrosResultadosOperacionais,
+                LAJIR = lajir,
+                NOPAT = nOPAT,
+                Impostos = impostos
+            };
 
-                decimal ebitda = monthDRE?.Totalizer
-                    .FirstOrDefault(t => t.Name == "EBITDA")?.TotalValue ?? 0;
-
-                decimal lucroAntesDoResultadoFinanceiro = monthDRE?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro")?.TotalValue ?? 0;
-                decimal despesasComDepreciacao = monthDRE.Totalizer
-                    .SelectMany(t => t.Classifications)
-                    .Where(c => c.Name == "Despesas com Depreciação")
-                    .Sum(c => c.Value);
-
-
-                eBITDA.Add(new EBITDAResponseDto
-                {
-                    Name = monthDRE.Name,
-                    DateMonth = monthDRE.DateMonth,
-                    EBITDA = ebitda,
-                    LucroOperacionalAntesDoResultadoFinanceiro = lucroAntesDoResultadoFinanceiro,
-                    DespesasDepreciacao = despesasComDepreciacao
-                });
-            }
-
-            return new PainelEBITDAResponseDto
+            var financial = new FinancialViewDto
             {
-                EBITDA = new EBITDAGroupedDto
-                {
-                    Months = eBITDA
-                }
+                Disponivel = disponibilidade,
+                Clientes =clientes,
+                Estoques = estoque,
+                OutrosAtivosOperacionais = outrosAtivosOperacionaisTotal,
+                Fornecedores = fornecedores,
+                OutrosPassivosOperacionais = outrosPassivosOperacionaisTotal,
+                RealizavelLongoPrazo = realizavelLongoPrazo,
+                ExigivelLongoPrazo = exigivelLongoPrazo,
+                AtivosFixos = ativosFixos,
+                CapitalDeGiro = cdg,
+                CapitalInvestido =capitalInvestidoLiquido
+            };
+
+            var indicators = new ReturnIndicatorsDto
+            {
+                NOPAT = nOPAT,
+                CapitalInvestido = capitalInvestidoLiquido,
+                ROIC = roic,
+                WACC = wacc,
+                SPREAD = evaSPREAD,
+                EVA= eva
+
+                
+            };
+
+            return new ValueTreeResultDto
+            {
+                EconomicView = economic,
+                FinancialView = financial,
+                Indicators = indicators
             };
         }
+
+
+
+
         #endregion
-
-        #region NOPAT
-        public async Task<PainelNOPATResponseDto> GetNOPAT(int accountPlanId, int year)
-        {
-            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
-
-            // 🔁 Carrega também o painel do ANO ANTERIOR (somente o Ativo é necessário aqui)
-            var painelAtivoAnoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1);
-
-            var dezembroAnoAnterior = painelAtivoAnoAnterior.Months
-                .FirstOrDefault(a => a.DateMonth == 12);
-
-            decimal patrimonioLiquidoAnoAnterior = dezembroAnoAnterior?.Totalizer
-                .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
-
-            var nOPAT = new List<NOPATResponseDto>();
-
-            foreach (var monthDRE in painelDRE.Months.OrderBy(m => m.DateMonth))
-            {
-
-
-                decimal noPAT = monthDRE?.Totalizer
-                    .FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
-                decimal margemNOPAT = monthDRE?.Totalizer
-                   .FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0;
-                decimal lucroAntesDoResultadoFinanceiro = monthDRE?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro")?.TotalValue ?? 0;
-
-                decimal margemOperacional = monthDRE?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Margem Operacional %")?.TotalValue ?? 0;
-
-
-
-                decimal despesasComDepreciacao = monthDRE.Totalizer
-                    .SelectMany(t => t.Classifications)
-                    .Where(c => c.Name == "Despesas com Depreciação")
-                    .Sum(c => c.Value);
-
-
-                decimal provisaoCSLL = monthDRE.Totalizer
-                   .SelectMany(t => t.Classifications)
-                   .Where(c => c.Name == "Despesas com Depreciação")
-                   .Sum(c => c.Value);
-
-                decimal provisaoIRPJ = monthDRE.Totalizer
-                   .SelectMany(t => t.Classifications)
-                   .Where(c => c.Name == "Despesas com Depreciação")
-                   .Sum(c => c.Value);
-
-                decimal provisaoIRPSCSLL = provisaoIRPJ + provisaoCSLL;
-
-                nOPAT.Add(new NOPATResponseDto
-                {
-                    Name = monthDRE.Name,
-                    DateMonth = monthDRE.DateMonth,
-                    MargemNOPAT = margemNOPAT,
-                    LucroOperacionalAntes = lucroAntesDoResultadoFinanceiro,
-                    MargemOperacionalDRE = margemOperacional,
-                   ProvisaoIRPJCSLL = provisaoIRPSCSLL,
-                   NOPAT = noPAT
-                });
-            }
-
-            return new PainelNOPATResponseDto
-            {
-                NOPAT = new NOPATGroupedDto
-                {
-                    Months = nOPAT
-                }
-            };
-        }
-        #endregion
-
         #region Dados
         private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypeAtivo(int accountPlanId, int year, int typeClassification)
         {
@@ -670,21 +520,14 @@ namespace _2___Application._1_Services.Results
 
                 var deducoes = totalizerResponses
                     .FirstOrDefault(t => t.Name == "(-) Deduções da Receita Bruta")?.TotalValue ?? 0;
-                var receitaLiquida = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas");
 
-                if (receitaLiquida != null)
-                {
-                    receitaLiquida.TotalValue = 0;
-                }
+                var receitaLiquida = totalizerResponses
+                   .FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas");
+                receitaLiquida.TotalValue = 0;
 
                 var lucroBruto = totalizerResponses
                   .FirstOrDefault(t => t.Name == "Lucro Bruto");
-                if (lucroBruto != null)
-                {
-                    lucroBruto.TotalValue = 0;
-                }
-
+                lucroBruto.TotalValue = 0;
                 var margemContribuicao = totalizerResponses
                  .FirstOrDefault(t => t.Name == "Margem Contribuição");
 
@@ -694,41 +537,21 @@ namespace _2___Application._1_Services.Results
                 var lucroOperacional = totalizerResponses
                  .FirstOrDefault(t => t.Name == "Lucro Operacional");
 
-                if (lucroOperacional != null)
-                {
-                    lucroOperacional.TotalValue = 0;
-                }
-
-
-
+                lucroOperacional.TotalValue = 0;
 
                 var lucroAntes = totalizerResponses
                 .FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro");
 
-                if (lucroAntes != null)
-                {
-                    lucroAntes.TotalValue = 0;
-                }
+                lucroAntes.TotalValue = 0;
 
                 var resultadoAntes = totalizerResponses
               .FirstOrDefault(t => t.Name == "Resultado do Exercício Antes do Imposto");
-
-                if (resultadoAntes != null)
-                {
-                    resultadoAntes.TotalValue = 0;
-                }
-
+                resultadoAntes.TotalValue = 0;
 
                 var lucroLiquido = totalizerResponses
                .FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
 
-
-                if (lucroLiquido != null)
-                {
-                    lucroLiquido.TotalValue = 0;
-                }
-
-
+                lucroLiquido.TotalValue = 0;
 
                 var ebitda = totalizerResponses
                .FirstOrDefault(t => t.Name == "EBITDA");
@@ -779,106 +602,92 @@ namespace _2___Application._1_Services.Results
               .SelectMany(t => t.Classifications)
               .FirstOrDefault(c => c.Name == "Outros Resultados Operacionais")?.Value ?? 0;
 
+                despesasOperacionais.TotalValue = despesasOperacionais.TotalValue - outrosResultadosOperacionais;
 
-
-                if (despesasOperacionais != null)
-                {
-                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue - outrosResultadosOperacionais;
-                }
-
+                // calculos 
                 var receitaLiquidaValor = receitaOperacionalBruta + deducoes;
+                receitaLiquida.TotalValue = receitaLiquidaValor;
+                lucroBruto.TotalValue = receitaLiquidaValor + custoMercadorias;
 
-                if (receitaLiquida != null)
-                    receitaLiquida.TotalValue = receitaLiquidaValor;
+                margemContribuicao.TotalValue = (lucroBruto?.TotalValue ?? 0) + despesasV;
+                lucroOperacional.TotalValue = (lucroBruto?.TotalValue ?? 0) + despesasOperacionais?.TotalValue ?? 0 + outrosResultadosOperacionais;
 
-                if (lucroBruto != null)
-                    lucroBruto.TotalValue = receitaLiquidaValor + custoMercadorias;
-
-                if (margemContribuicao != null)
-                    margemContribuicao.TotalValue = (lucroBruto?.TotalValue ?? 0) + despesasV;
-
-                if (lucroOperacional != null)
-                    lucroOperacional.TotalValue =
-                        (lucroBruto?.TotalValue ?? 0) +
-                        (despesasOperacionais?.TotalValue ?? 0) +
-                        outrosResultadosOperacionais;
-
-                if (lucroAntes != null)
-                    lucroAntes.TotalValue =
-                        (lucroOperacional?.TotalValue ?? 0) +
-                        outrosReceitas + ganhosEPerdas;
-
-                if (resultadoAntes != null)
-                    resultadoAntes.TotalValue =
-                        (lucroAntes?.TotalValue ?? 0) +
-                        receitasFinanceiras + despesasFinanceiras;
-
-                if (lucroLiquido != null)
-                    lucroLiquido.TotalValue =
-                        (resultadoAntes?.TotalValue ?? 0) +
-                        provisaoCSLL + provisaoIRPJ;
-
-                if (ebitda != null)
-                    ebitda.TotalValue =
-                        (lucroAntes?.TotalValue ?? 0) +
-                        despesasDepreciacao;
-
-                if (nopat != null)
-                    nopat.TotalValue =
-                        (lucroAntes?.TotalValue ?? 0) +
-                        provisaoCSLL + provisaoIRPJ;
+                lucroAntes.TotalValue = (lucroOperacional?.TotalValue ?? 0) + outrosReceitas + ganhosEPerdas;
+                resultadoAntes.TotalValue = (lucroAntes?.TotalValue ?? 0) + receitasFinanceiras + despesasFinanceiras;
+                lucroLiquido.TotalValue = (resultadoAntes?.TotalValue ?? 0) + provisaoCSLL + provisaoIRPJ;
+                ebitda.TotalValue = (lucroAntes?.TotalValue ?? 0) + despesasDepreciacao;
+                nopat.TotalValue = (lucroAntes?.TotalValue ?? 0) + provisaoCSLL + provisaoIRPJ;
 
 
                 // calculos de Margens
 
-                var margemBruta = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Bruta %");
-                if (margemBruta != null && receitaLiquida?.TotalValue != 0)
-                    margemBruta.TotalValue = Math.Round((lucroBruto?.TotalValue ?? 0) / receitaLiquida.TotalValue * 100, 2);
-                else if (margemBruta != null)
-                    margemBruta.TotalValue = 0;
 
-                var margemContribuicaoPorcentagem = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Contribuição %");
-                if (margemContribuicaoPorcentagem != null && receitaLiquida?.TotalValue != 0)
-                    margemContribuicaoPorcentagem.TotalValue = Math.Round((margemContribuicao?.TotalValue ?? 0) / receitaLiquida.TotalValue * 100, 2);
-                else if (margemContribuicaoPorcentagem != null)
-                    margemContribuicaoPorcentagem.TotalValue = 0;
+                var margemBruta = totalizerResponses
+                   .FirstOrDefault(t => t.Name == "Margem Bruta %");
 
-                var margemOperacional = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Operacional %");
-                if (margemOperacional != null && receitaLiquida?.TotalValue != 0)
-                    margemOperacional.TotalValue = Math.Round((lucroOperacional?.TotalValue ?? 0) / receitaLiquida.TotalValue * 100, 2);
-                else if (margemOperacional != null)
-                    margemOperacional.TotalValue = 0;
+                margemBruta.TotalValue = 0;
 
-                var margemLajir = totalizerResponses.FirstOrDefault(t => t.Name == "Margem LAJIR %");
-                if (margemLajir != null && receitaLiquida?.TotalValue != 0)
-                    margemLajir.TotalValue = Math.Round((lucroAntes?.TotalValue ?? 0) / receitaLiquida.TotalValue * 100, 2);
-                else if (margemLajir != null)
-                    margemLajir.TotalValue = 0;
+                margemBruta.TotalValue = receitaLiquida.TotalValue != 0
+                    ? Math.Round((lucroBruto.TotalValue / receitaLiquida.TotalValue) * 100, 2)
+                    : 0;
 
-                var margemLAIR = totalizerResponses.FirstOrDefault(t => t.Name == "Margem LAIR %");
-                if (margemLAIR != null && receitaLiquida?.TotalValue != 0)
-                    margemLAIR.TotalValue = Math.Round((resultadoAntes?.TotalValue ?? 0) / receitaLiquida.TotalValue * 100, 2);
-                else if (margemLAIR != null)
-                    margemLAIR.TotalValue = 0;
 
-                var margemLiquida = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Líquida %");
-                if (margemLiquida != null && receitaLiquida?.TotalValue != 0)
-                    margemLiquida.TotalValue = Math.Round((lucroLiquido?.TotalValue ?? 0) / receitaLiquida.TotalValue * 100, 2);
-                else if (margemLiquida != null)
-                    margemLiquida.TotalValue = 0;
+                var margemContribuicaoPorcentagem = totalizerResponses
+                   .FirstOrDefault(t => t.Name == "Margem Contribuição %");
 
-                var margemEBITDA = totalizerResponses.FirstOrDefault(t => t.Name == "Margem EBITDA %");
-                if (margemEBITDA != null && receitaLiquida?.TotalValue != 0)
-                    margemEBITDA.TotalValue = Math.Round((ebitda?.TotalValue ?? 0) / receitaLiquida.TotalValue * 100, 2);
-                else if (margemEBITDA != null)
-                    margemEBITDA.TotalValue = 0;
+                margemContribuicaoPorcentagem.TotalValue = receitaLiquida.TotalValue != 0
+                   ? Math.Round((margemContribuicao.TotalValue / receitaLiquida.TotalValue) * 100, 2)
+                   : 0;
 
-                var margemNOPAT = totalizerResponses.FirstOrDefault(t => t.Name == "Margem NOPAT %");
-                if (margemNOPAT != null && receitaLiquida?.TotalValue != 0)
-                    margemNOPAT.TotalValue = Math.Round((nopat?.TotalValue ?? 0) / receitaLiquida.TotalValue * 100, 2);
-                else if (margemNOPAT != null)
-                    margemNOPAT.TotalValue = 0;
+                var margemOperacional = totalizerResponses
+                   .FirstOrDefault(t => t.Name == "Margem Operacional %");
 
+                margemOperacional.TotalValue = 0;
+
+                margemOperacional.TotalValue = receitaLiquida.TotalValue != 0
+                  ? Math.Round((lucroOperacional.TotalValue / receitaLiquida.TotalValue) * 100, 2)
+                  : 0;
+
+                var margemLajir = totalizerResponses
+                   .FirstOrDefault(t => t.Name == "Margem LAJIR %");
+
+                margemLajir.TotalValue = 0;
+
+                margemLajir.TotalValue = receitaLiquida.TotalValue != 0
+                 ? Math.Round((lucroAntes.TotalValue / receitaLiquida.TotalValue) * 100, 2)
+                 : 0;
+
+                var margemLAIR = totalizerResponses
+                   .FirstOrDefault(t => t.Name == "Margem LAIR %");
+
+                margemLAIR.TotalValue = 0;
+
+                margemLAIR.TotalValue = receitaLiquida.TotalValue != 0
+                ? Math.Round((resultadoAntes.TotalValue / receitaLiquida.TotalValue) * 100, 2)
+                : 0;
+
+                var margemLiquida = totalizerResponses
+                  .FirstOrDefault(t => t.Name == "Margem Líquida %");
+
+                margemLiquida.TotalValue = 0;
+
+                margemLiquida.TotalValue = receitaLiquida.TotalValue != 0
+               ? Math.Round((lucroLiquido.TotalValue / receitaLiquida.TotalValue) * 100, 2)
+               : 0;
+
+                var margemEBITDA = totalizerResponses
+                   .FirstOrDefault(t => t.Name == "Margem EBITDA %");
+
+                margemEBITDA.TotalValue = receitaLiquida.TotalValue != 0
+              ? Math.Round((ebitda.TotalValue / receitaLiquida.TotalValue) * 100, 2)
+              : 0;
+
+                var margemNOPAT = totalizerResponses
+                   .FirstOrDefault(t => t.Name == "Margem NOPAT %");
+
+                margemNOPAT.TotalValue = receitaLiquida.TotalValue != 0
+              ? Math.Round((nopat.TotalValue / receitaLiquida.TotalValue) * 100, 2)
+              : 0;
 
                 months.Add(new MonthPainelContabilRespone
                 {
@@ -927,11 +736,6 @@ namespace _2___Application._1_Services.Results
             };
         }
 
+        #endregion
     }
-    #endregion
 }
-
-
-
-
-
