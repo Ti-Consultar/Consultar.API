@@ -55,6 +55,13 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
 
+
+            if(painelAtivo is null || painelPassivo is null)
+            {
+
+                return new PainelCILeECResponseDto();
+            }
+
             var cilEec = new List<CILeECResponseDto>();
 
             foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))

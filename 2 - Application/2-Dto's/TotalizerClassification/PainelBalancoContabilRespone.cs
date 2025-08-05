@@ -9,6 +9,8 @@ namespace _2___Application._2_Dto_s.TotalizerClassification
   public  class PainelBalancoContabilRespone
     {
         public List<MonthPainelContabilRespone> Months { get; set; }
+        public List<TotalizerParentRespone> Totalizador { get; set; }
+
     }
     public class MonthPainelContabilRespone
     {
