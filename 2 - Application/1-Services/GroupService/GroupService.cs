@@ -263,32 +263,78 @@ public class GroupService : BaseService
             return ErrorResponse(ex);
         }
     }
-    public async Task<ResultValue> Restore(int groupId)
+    //public async Task<ResultValue> Restore(int groupId)
+    //{
+    //    try
+    //    {
+    //        if (!await _groupRepository.UserHasManagerPermissionInGroup(_currentUserId, groupId))
+    //            return SuccessResponse(Message.Unauthorized);
+
+    //        var group = await _groupRepository.GetById(groupId);
+    //        if (group == null) return ErrorResponse(Message.NotFound);
+
+    //        if (group.BusinessEntityId != 0)
+    //        {
+    //            var entity = await _businessEntityRepository.GetById(group.BusinessEntityId);
+    //            if (entity != null)
+    //                await _businessEntityRepository.Restore(entity.Id);
+    //        }
+
+    //        await _groupRepository.Restore(group.Id);
+
+    //        return SuccessResponse(Message.RestoreSuccess);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        return ErrorResponse(ex);
+    //    }
+    //}
+
+    public async Task<ResultValue> Restore(List<int> groupIds)
     {
         try
         {
-            if (!await _groupRepository.UserHasManagerPermissionInGroup(_currentUserId, groupId))
-                return SuccessResponse(Message.Unauthorized);
+            var user = await GetCurrentUserAsync();
 
-            var group = await _groupRepository.GetById(groupId);
-            if (group == null) return ErrorResponse(Message.NotFound);
+            var notAuthorizedIds = new List<int>();
+            var notFoundIds = new List<int>();
+            var restoredIds = new List<int>();
 
-            if (group.BusinessEntityId != 0)
+            foreach (var id in groupIds)
             {
-                var entity = await _businessEntityRepository.GetById(group.BusinessEntityId);
-                if (entity != null)
-                    await _businessEntityRepository.Restore(entity.Id);
+                var hasPermission = await _groupRepository.ExistsCompanyUser(user.Id, id);
+                if (!hasPermission)
+                {
+                    notAuthorizedIds.Add(id);
+                    continue;
+                }
+
+                var group = await _groupRepository.GetById(id);
+                if (group == null)
+                {
+                    notFoundIds.Add(id);
+                    continue;
+                }
+
+                await _groupRepository.Restore(group.Id);
+                restoredIds.Add(group.Id);
             }
 
-            await _groupRepository.Restore(group.Id);
-
-            return SuccessResponse(Message.RestoreSuccess);
+            return SuccessResponse(new
+            {
+                Restored = restoredIds,
+                NotFound = notFoundIds,
+                Unauthorized = notAuthorizedIds,
+                Message = Message.RestoreSuccess
+            });
         }
         catch (Exception ex)
         {
             return ErrorResponse(ex);
         }
     }
+
+
     #endregion
 
     #region Helpers
