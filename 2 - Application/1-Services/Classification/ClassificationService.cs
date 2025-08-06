@@ -1551,10 +1551,6 @@ namespace _2___Application._1_Services
                     decimal ativoOperacional = totalizerResponses.FirstOrDefault(a => a.Name == "Ativo Operacional")?.TotalValue ?? 0;
                     decimal ativoFixo = totalizerResponses.FirstOrDefault(a => a.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
-                    decimal outrosAtivosOperacionaisTotal = totalizerResponses.FirstOrDefault(a => a.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
-
-                    ativoOperacional = ativoOperacional + outrosAtivosOperacionaisTotal;
-
                     decimal totalAtivo = ativoFinanceiro + ativoOperacional + ativoFixo;
 
                     return new MonthPainelContabilRespone
