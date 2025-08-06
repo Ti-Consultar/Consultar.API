@@ -630,7 +630,24 @@ namespace _2___Application._1_Services
             {
                 var exists = await _accountClassificationRepository.ExistsAccountPlanClassification(accountPlanId);
 
-                return SuccessResponse(exists);
+                if(exists is false)
+                {
+                    return SuccessResponse(exists);
+                }
+                else
+                {
+                    var model = await _accountClassificationRepository.GetAllAsync(accountPlanId);
+                    if (model == null || !model.Any())
+                        return ErrorResponse(Message.NotFound);
+                    var response = model
+                        .OrderBy(x => x.TypeOrder)
+                        .Select(MapToClassificationRealResponse)
+                        .ToList();
+                    return SuccessResponse(response);
+                }
+
+
+               
             }
             catch (Exception ex)
             {
@@ -685,31 +702,20 @@ namespace _2___Application._1_Services
             try
             {
                 var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
+
                 if (model == null || !model.Any())
                     return ErrorResponse(Message.NotFound);
 
-                var costCenters = model.Select(a => a.CostCenter).ToList();
-                var balancete = await _balanceteDataRepository.GetAgrupadoPorCostCenterListAsync(costCenters);
-
                 var response = model
-                    .GroupBy(x => new { x.AccountPlanClassificationId, x.AccountPlanClassification.Name })
-                    .Select(group =>
+                    .GroupBy(x => new {
+                        x.AccountPlanClassificationId,
+                        x.AccountPlanClassification.Name
+                    })
+                    .Select(group => new BalanceteDataAccountPlanClassificationResponse
                     {
-                        var groupCostCenters = model
-                            .Where(m => m.AccountPlanClassificationId == group.Key.AccountPlanClassificationId)
-                            .Select(m => m.CostCenter)
-                            .ToList();
-
-                        var totalValue = balancete
-                            .Where(b => groupCostCenters.Contains(b.CostCenter))
-                            .Sum(b => b.FinalValue);
-
-                        return new BalanceteDataAccountPlanClassificationResponse
-                        {
-                            Id = group.Key.AccountPlanClassificationId,
-                            Name = group.Key.Name,
-                            Value = totalValue
-                        };
+                        Id = group.Key.AccountPlanClassificationId,
+                        Name = group.Key.Name,
+                        CostCenters = group.Select(g => g.CostCenter).Distinct().ToList()
                     })
                     .ToList();
 
@@ -720,6 +726,7 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
+
 
         public async Task<ResultValue> GetPainelBalancoAsync(int accountPlanId, int year, int typeClassification)
         {
@@ -1538,6 +1545,14 @@ namespace _2___Application._1_Services
                         }
                     }
 
+                    // cálculos 
+
+                    decimal ativoFinanceiro = totalizerResponses.FirstOrDefault(a => a.Name == "Ativo Financeiro")?.TotalValue ?? 0;
+                    decimal ativoOperacional = totalizerResponses.FirstOrDefault(a => a.Name == "Ativo Operacional")?.TotalValue ?? 0;
+                    decimal ativoFixo = totalizerResponses.FirstOrDefault(a => a.Name == "Ativo Fixo")?.TotalValue ?? 0;
+
+                    decimal totalAtivo = ativoFinanceiro + ativoOperacional + ativoFixo;
+
                     return new MonthPainelContabilRespone
                     {
                         Id = balancete.Id,
@@ -1547,7 +1562,7 @@ namespace _2___Application._1_Services
                         MonthPainelContabilTotalizer = new MonthPainelContabilTotalizerRespone
                         {
                             Name = "TOTAL DO ATIVO",
-                            TotalValue = totalizerResponses.Sum(t => t.TotalValue)
+                            TotalValue = totalAtivo
                         }
                     };
                 })
@@ -1646,6 +1661,15 @@ namespace _2___Application._1_Services
                         }
                     }
 
+
+                    // cálculos 
+
+                    decimal passivoFinanceiro = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Financeiro")?.TotalValue ?? 0;
+                    decimal passivoOperacional = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Operacional")?.TotalValue ?? 0;
+                    decimal patrimonioLiquido = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+
+                    decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquido;
+
                     return new MonthPainelContabilRespone
                     {
                         Id = balancete.Id,
@@ -1655,7 +1679,7 @@ namespace _2___Application._1_Services
                         MonthPainelContabilTotalizer = new MonthPainelContabilTotalizerRespone
                         {
                             Name = "TOTAL DO PASSIVO",
-                            TotalValue = totalizerResponses.Sum(t => t.TotalValue)
+                            TotalValue = totalPassivo
                         }
                     };
                 })

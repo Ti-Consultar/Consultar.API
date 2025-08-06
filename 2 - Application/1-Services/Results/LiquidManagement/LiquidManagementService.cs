@@ -620,6 +620,14 @@ namespace _2___Application._1_Services.Results
                         }
                     }
 
+                    // cálculos 
+
+                    decimal ativoFinanceiro = totalizerResponses.FirstOrDefault(a => a.Name == "Ativo Financeiro")?.TotalValue ?? 0;
+                    decimal ativoOperacional = totalizerResponses.FirstOrDefault(a => a.Name == "Ativo Operacional")?.TotalValue ?? 0;
+                    decimal ativoFixo = totalizerResponses.FirstOrDefault(a => a.Name == "Ativo Fixo")?.TotalValue ?? 0;
+
+                    decimal totalAtivo = ativoFinanceiro + ativoOperacional + ativoFixo;
+
                     return new MonthPainelContabilRespone
                     {
                         Id = balancete.Id,
@@ -629,7 +637,7 @@ namespace _2___Application._1_Services.Results
                         MonthPainelContabilTotalizer = new MonthPainelContabilTotalizerRespone
                         {
                             Name = "TOTAL DO ATIVO",
-                            TotalValue = totalizerResponses.Sum(t => t.TotalValue)
+                            TotalValue = totalAtivo
                         }
                     };
                 })
@@ -641,6 +649,7 @@ namespace _2___Application._1_Services.Results
                 Months = months
             };
         }
+
         private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypePassivo(int accountPlanId, int year, int typeClassification)
         {
             var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
@@ -727,6 +736,15 @@ namespace _2___Application._1_Services.Results
                         }
                     }
 
+
+                    // cálculos 
+
+                    decimal passivoFinanceiro = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Financeiro")?.TotalValue ?? 0;
+                    decimal passivoOperacional = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Operacional")?.TotalValue ?? 0;
+                    decimal patrimonioLiquido = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+
+                    decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquido;
+
                     return new MonthPainelContabilRespone
                     {
                         Id = balancete.Id,
@@ -736,7 +754,7 @@ namespace _2___Application._1_Services.Results
                         MonthPainelContabilTotalizer = new MonthPainelContabilTotalizerRespone
                         {
                             Name = "TOTAL DO PASSIVO",
-                            TotalValue = totalizerResponses.Sum(t => t.TotalValue)
+                            TotalValue = totalPassivo
                         }
                     };
                 })
