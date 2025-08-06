@@ -1669,8 +1669,6 @@ namespace _2___Application._1_Services
                     decimal patrimonioLiquido = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
                     decimal outrosPassivosOperacionaisTotal = totalizerResponses.FirstOrDefault(a => a.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
 
-                    passivoOperacional = passivoOperacional + outrosPassivosOperacionaisTotal;
-
                     decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquido;
 
                     return new MonthPainelContabilRespone
