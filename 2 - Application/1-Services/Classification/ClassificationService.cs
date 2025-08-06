@@ -507,7 +507,7 @@ namespace _2___Application._1_Services
 
                     case "Lucros / Prejuízos Acumulados":
                         classification.BalancoReclassificadoId = reclassifications
-                            .Where(r => r.Name == "Lucros / Prejuízos Acumulado")
+                            .Where(r => r.Name == "Lucros / Prejuízos Acumulados")
                             .Select(r => (int?)r.Id)
                             .FirstOrDefault();
                         break;
@@ -848,7 +848,7 @@ namespace _2___Application._1_Services
             var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
 
-            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3); // Painel da DRE para pegar o lucro líquido
+            var painelDRE = await BuildPainelByTypeeDRE(accountPlanId, year, 3); // Painel da DRE para pegar o lucro líquido
 
 
 
@@ -1250,11 +1250,11 @@ namespace _2___Application._1_Services
 
                 var provisaoCSLL = totalizerResponses
                     .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Provisão CSLL")?.Value ?? 0;
+                    .FirstOrDefault(c => c.Name == "Provisão para CSLL")?.Value ?? 0;
 
                 var provisaoIRPJ = totalizerResponses
                     .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Provisão IRPJ")?.Value ?? 0;
+                    .FirstOrDefault(c => c.Name == "Provisão para IRPJ")?.Value ?? 0;
 
                 var despesasDepreciacao = totalizerResponses
                     .SelectMany(t => t.Classifications)
