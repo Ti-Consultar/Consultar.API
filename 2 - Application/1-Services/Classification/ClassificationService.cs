@@ -630,23 +630,10 @@ namespace _2___Application._1_Services
             {
                 var exists = await _accountClassificationRepository.ExistsAccountPlanClassification(accountPlanId);
 
-                if(exists is false)
-                {
+               
                     return SuccessResponse(exists);
-                }
-                else
-                {
-                    var model = await _accountClassificationRepository.GetAllAsync(accountPlanId);
-                    if (model == null || !model.Any())
-                        return ErrorResponse(Message.NotFound);
-                    var response = model
-                        .OrderBy(x => x.TypeOrder)
-                        .Select(MapToClassificationRealResponse)
-                        .ToList();
-                    return SuccessResponse(response);
-                }
-
-
+                
+              
                
             }
             catch (Exception ex)
@@ -1408,18 +1395,6 @@ namespace _2___Application._1_Services
                 classification.TotalizerClassificationId = totalizerId.Value;
             }
         }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
         private decimal? ApplyBalancoReclassificadoTotalPassivoValueRules(string name, Dictionary<string, TotalizerParentRespone> totals, Dictionary<string, ClassificationRespone> classes)
