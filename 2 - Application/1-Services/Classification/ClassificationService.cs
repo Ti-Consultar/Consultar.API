@@ -1109,10 +1109,10 @@ namespace _2___Application._1_Services
             return name switch
             {
                 "Ativo Financeiro" => GetValue("Caixa e Equivalente de Caixa") + GetValue("Aplicação Financeira"),
-                "Ativo Operacional" => GetValue("Clientes") + GetValue("Estoques") + GetValue("Outros Ativos Operacionais"),
+                "Ativo Operacional" => GetValue("Clientes") + GetValue("Estoques") + GetValue("Outros Ativos Operacionais") + GetValue("Contas Transitórias Ativo"),
                 "Outros Ativos Operacionais Total" => GetValue("Outros Ativos Operacionais") + GetValue("Contas Transitórias Ativo"),
                 "Ativo Não Circulante" => GetValue("Ativo Não Circulante Financeiro") + GetValue("Ativo Não Circulante Operacional"),
-                "Ativo Fixo" => GetValue("Investimentos") + GetValue("Imobilizado") + GetValue("Depreciação / Amort. Acumulada"),
+                "Ativo Fixo" => GetValue("Investimentos") + GetValue("Imobilizado") + GetValue("Depreciação / Amort. Acumulada") + GetValue("Intangível"),
 
                 _ => null
             };
@@ -1551,6 +1551,10 @@ namespace _2___Application._1_Services
                     decimal ativoOperacional = totalizerResponses.FirstOrDefault(a => a.Name == "Ativo Operacional")?.TotalValue ?? 0;
                     decimal ativoFixo = totalizerResponses.FirstOrDefault(a => a.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
+                    decimal outrosAtivosOperacionaisTotal = totalizerResponses.FirstOrDefault(a => a.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
+
+                    ativoOperacional = ativoOperacional + outrosAtivosOperacionaisTotal;
+
                     decimal totalAtivo = ativoFinanceiro + ativoOperacional + ativoFixo;
 
                     return new MonthPainelContabilRespone
@@ -1667,6 +1671,9 @@ namespace _2___Application._1_Services
                     decimal passivoFinanceiro = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Financeiro")?.TotalValue ?? 0;
                     decimal passivoOperacional = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Operacional")?.TotalValue ?? 0;
                     decimal patrimonioLiquido = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+                    decimal outrosPassivosOperacionaisTotal = totalizerResponses.FirstOrDefault(a => a.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
+
+                    passivoOperacional = passivoOperacional + outrosPassivosOperacionaisTotal;
 
                     decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquido;
 
