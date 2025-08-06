@@ -2,6 +2,7 @@
 using _2___Application._2_Dto_s.AccountPlan.Balancete;
 using _2___Application._2_Dto_s.Classification;
 using _2___Application._2_Dto_s.Classification.AccountPlanClassification;
+using _2___Application._2_Dto_s.Painel;
 using _2___Application._2_Dto_s.Permissions;
 using _2___Application._2_Dto_s.TotalizerClassification;
 using _2___Application.Base;
@@ -428,6 +429,7 @@ namespace _2___Application._1_Services
 
         private void MapPassivos(List<AccountPlanClassification> models, List<BalancoReclassificadoModel> reclassifications)
         {
+
             foreach (var classification in models.Where(m => m.TypeClassification == ETypeClassification.Passivo)) // exemplo filtro Passivo
             {
                 switch (classification.Name)
@@ -906,15 +908,30 @@ namespace _2___Application._1_Services
 
                 if (resultadoAcumuladoClass != null)
                 {
-                    resultadoAcumuladoClass.Value = 0; // Agora sim, pode setar o valor
 
+                  
+                    resultadoAcumuladoClass.Value = 0; // Agora sim, pode setar o valor
+                    
                     var lucroLiquidoMes = painelDRE.Months
                         .Where(m => m.DateMonth == (int)balancete.DateMonth)
                         .SelectMany(m => m.Totalizer)
                         .FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
 
                     var lucroLiquidoValor = lucroLiquidoMes?.TotalValue ?? 0;
+
                     var resultadoAcumuladoAtual = acumuladoAnterior + lucroLiquidoValor;
+                    var data = new BalanceteDataResponse
+                    {
+                        CostCenter = "0",
+                        CreditValue = 0,
+                        DebitValue = 0,
+                        Name = "Lucro Líquido do Periodo (DRE)",
+                        InitialValue = 0,
+                        Id = 1,
+                        TypeOrder = 1,
+                        Value = lucroLiquidoValor
+                    };
+                    resultadoAcumuladoClass.Datas.Add(data);
 
                     resultadoAcumuladoClass.Value = resultadoAcumuladoAtual;
 
@@ -1571,6 +1588,11 @@ namespace _2___Application._1_Services
 
             var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
+            var painelBalancoContabilPassivo= await BuildPainelByTypePassivo(accountPlanId, year, 2);
+
+
+            decimal acumuladoAnterior = 0;
+
 
             var months = balancetes
                 .Select(balancete =>
@@ -1638,6 +1660,20 @@ namespace _2___Application._1_Services
 
 
                     // cálculos 
+
+
+                    var resultadodoExercicioAcumulado = painelBalancoContabilPassivo.Months
+                      .Where(m => m.DateMonth == (int)balancete.DateMonth)
+                      .SelectMany(m => m.Totalizer)
+                      .SelectMany(a => a.Classifications)
+                      .FirstOrDefault(t => t.Name == "Resultado do Exercício Acumulado");
+
+                    var resultadoAcumulado = totalizerResponses.FirstOrDefault(a => a.Name == "Resultado Acumulado");
+
+                    if (resultadodoExercicioAcumulado != null && resultadoAcumulado != null)
+                    {
+                        resultadoAcumulado.TotalValue = resultadodoExercicioAcumulado.Value;
+                    }
 
                     decimal passivoFinanceiro = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Financeiro")?.TotalValue ?? 0;
                     decimal passivoOperacional = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Operacional")?.TotalValue ?? 0;
