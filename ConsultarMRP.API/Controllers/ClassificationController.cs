@@ -157,8 +157,23 @@ namespace ConsultarMRP.API.Controllers
             }
         }
 
-        
-        
+        [HttpGet]
+        [Route("/bond")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetPainelBalancoAsync([FromQuery] int accountPlanId, [FromQuery] int typeClassification)
+        {
+            try
+            {
+
+                var response = await _Service.GetBond(accountPlanId, typeClassification);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
 
         [HttpGet]
         [Route("/painel")]
