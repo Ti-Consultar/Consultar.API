@@ -1648,17 +1648,6 @@ namespace _2___Application._1_Services
                 if (despesasOperacionais != null)
                     despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despesasDepreciacao - outrosResultadosOperacionais;
 
-              
-                    despesasOperacionais.Classifications.Add(new ClassificationRespone
-                    {
-                        Id = 1,
-                        TypeOrder = 4,
-                        Name = "Despesas com Depreciação",
-                        Value = despesasDepreciacao * -1,
-                    });
-                
-
-       
 
                 // cálculos 
                 var receitaLiquidaValor = receitaOperacionalBruta + deducoes;
