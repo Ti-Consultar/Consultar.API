@@ -1704,7 +1704,12 @@ namespace _2___Application._1_Services
                     decimal patrimonioLiquido = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
                     decimal outrosPassivosOperacionaisTotal = totalizerResponses.FirstOrDefault(a => a.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
 
-                    decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquido;
+
+                    decimal lucrosPrejuizos = totalizerResponses.FirstOrDefault(a => a.Name == "Lucros / Prejuízos Acumulados")?.TotalValue ?? 0;
+
+                    patrimonioLiquido = patrimonioLiquido + lucrosPrejuizos;
+
+                    decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquido + resultadoAcumulado.TotalValue;
 
                     return new MonthPainelContabilRespone
                     {
