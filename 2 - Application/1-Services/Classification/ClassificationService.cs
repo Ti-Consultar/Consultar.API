@@ -1253,6 +1253,12 @@ namespace _2___Application._1_Services
                     .SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "(-) Custos das Mercadorias")?.Value ?? 0;
 
+
+                // classificaton
+                var custoDosServicosPrestados = totalizerResponses
+                    .SelectMany(t => t.Classifications)
+                    .FirstOrDefault(c => c.Name == "(-) Custos dos Serviços Prestados")?.Value ?? 0;
+
                 var despesasV = totalizerResponses
                     .SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Despesas Variáveis")?.Value ?? 0;
@@ -1295,7 +1301,7 @@ namespace _2___Application._1_Services
                 // cálculos 
                 var receitaLiquidaValor = receitaOperacionalBruta + deducoes;
                 if (receitaLiquida != null) receitaLiquida.TotalValue = receitaLiquidaValor;
-                if (lucroBruto != null) lucroBruto.TotalValue = receitaLiquidaValor + custoMercadorias;
+                if (lucroBruto != null) lucroBruto.TotalValue = receitaLiquidaValor + custoMercadorias + custoDosServicosPrestados;
                 if (margemContribuicao != null && lucroBruto != null)
                     margemContribuicao.TotalValue = lucroBruto.TotalValue + despesasV;
 
