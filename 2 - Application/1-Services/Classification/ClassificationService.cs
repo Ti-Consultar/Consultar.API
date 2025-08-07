@@ -943,8 +943,18 @@ namespace _2___Application._1_Services
 
                     patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + resultadoAcumuladoClass.Value;
                 }
+                var patrimonioLiquidos = totalizerResponses
+                       .FirstOrDefault(c => c.Name == "Patrimônio Liquido").TotalValue;
+               
+                var contasTransitorias = totalizerResponses
+                    .SelectMany(t => t.Classifications)
+                    .FirstOrDefault(c => c.Name == "Contas Transitórias").Value;
 
                 
+                var totalPassivoCirculante = totalizerResponses
+                    .FirstOrDefault(c => c.Name == "Total Passivo Circulante").TotalValue;
+
+                decimal total = totalPassivoCirculante + contasTransitorias + patrimonioLiquidos;
 
                 return new MonthPainelContabilRespone
                 {
@@ -955,7 +965,7 @@ namespace _2___Application._1_Services
                     MonthPainelContabilTotalizer = new MonthPainelContabilTotalizerRespone
                     {
                         Name = "TOTAL GERAL DO PASSIVO",
-                        TotalValue = totalizerResponses.Sum(t => t.TotalValue)
+                        TotalValue = total
                     }
                 };
             }).ToList();
