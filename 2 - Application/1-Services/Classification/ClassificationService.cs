@@ -1289,7 +1289,7 @@ namespace _2___Application._1_Services
 
                 var despesasDepreciacao = totalizerResponses
                     .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Despesas Com Depreciação")?.Value ?? 0;
+                    .FirstOrDefault(c => c.Name == "Despesas com Depreciação")?.Value ?? 0;
 
                 var outrosResultadosOperacionais = totalizerResponses
                     .SelectMany(t => t.Classifications)
