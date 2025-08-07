@@ -1701,15 +1701,15 @@ namespace _2___Application._1_Services
 
                     decimal passivoFinanceiro = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Financeiro")?.TotalValue ?? 0;
                     decimal passivoOperacional = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Operacional")?.TotalValue ?? 0;
-                    decimal patrimonioLiquido = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+                    var patrimonioLiquido = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido");
                     decimal outrosPassivosOperacionaisTotal = totalizerResponses.FirstOrDefault(a => a.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
 
 
                     decimal lucrosPrejuizos = totalizerResponses.FirstOrDefault(a => a.Name == "Lucros / Prejuízos Acumulados")?.TotalValue ?? 0;
 
-                    patrimonioLiquido = patrimonioLiquido + lucrosPrejuizos;
+                    patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + lucrosPrejuizos;
 
-                    decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquido + resultadoAcumulado.TotalValue;
+                    decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquido.TotalValue + resultadoAcumulado.TotalValue;
 
                     return new MonthPainelContabilRespone
                     {
