@@ -1709,7 +1709,7 @@ namespace _2___Application._1_Services
 
                     patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + lucrosPrejuizos;
 
-                    decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquido.TotalValue + resultadoAcumulado.TotalValue;
+                    decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquido.TotalValue + (resultadoAcumulado.TotalValue * -1);
 
                     return new MonthPainelContabilRespone
                     {
