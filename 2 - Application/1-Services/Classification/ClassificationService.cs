@@ -936,7 +936,15 @@ namespace _2___Application._1_Services
                     resultadoAcumuladoClass.Value = resultadoAcumuladoAtual;
 
                     acumuladoAnterior = resultadoAcumuladoAtual; // Atualiza para o próximo mês
+
+                    // Aplicar a regra do resultado acumulado
+                    var patrimonioLiquido = totalizerResponses
+                        .FirstOrDefault(c => c.Name == "Patrimônio Liquido");
+
+                    patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + resultadoAcumuladoClass.Value;
                 }
+
+                
 
                 return new MonthPainelContabilRespone
                 {
