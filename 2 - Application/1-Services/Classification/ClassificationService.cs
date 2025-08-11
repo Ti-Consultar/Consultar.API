@@ -1646,7 +1646,7 @@ namespace _2___Application._1_Services
                     .FirstOrDefault(c => c.Name == "Outros Resultados Operacionais")?.Value ?? 0;
 
                 if (despesasOperacionais != null)
-                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despesasDepreciacao - outrosResultadosOperacionais;
+                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despesasDepreciacao;// - outrosResultadosOperacionais; // comentando o - outros resultados pois e a conta que falta para fechar o resultado, ams no excel fornecido nao conta com esse campo
 
 
                 // cálculos 
