@@ -1646,7 +1646,7 @@ namespace _2___Application._1_Services
                     .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
 
                 if (despesasOperacionais != null)
-                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despesasDepreciacao - outrosResultadosOperacionais; // comentando o - outros resultados pois e a conta que falta para fechar o resultado, ams no excel fornecido nao conta com esse campo
+                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despesasDepreciacao - outrosResultadosOperacionais; 
 
 
                 // cálculos 
@@ -1669,7 +1669,7 @@ namespace _2___Application._1_Services
                     lucroLiquido.TotalValue = (resultadoAntes.TotalValue + provisaoCSLL + provisaoIRPJ) * -1;
 
                 if (ebitda != null && lucroAntes != null)
-                    ebitda.TotalValue = lucroAntes.TotalValue + despesasDepreciacao;
+                    ebitda.TotalValue = lucroAntes.TotalValue - despesasDepreciacao;
 
                 if (nopat != null && lucroAntes != null)
                     nopat.TotalValue = (lucroAntes.TotalValue + provisaoCSLL + provisaoIRPJ) * -1;
