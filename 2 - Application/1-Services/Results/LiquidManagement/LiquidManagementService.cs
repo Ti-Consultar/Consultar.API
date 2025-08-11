@@ -92,7 +92,7 @@ namespace _2___Application._1_Services.Results
                 var ativoFixo = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
-                var cdg = (passivoNaoCirculante + patrimonioLiquido) + (ativoNaoCirculante + ativoFixo);
+                var cdg = ((passivoNaoCirculante + patrimonioLiquido) + (ativoNaoCirculante + ativoFixo)) * -1;
 
                 var saldoTesouraria = valorAtivoFinanceiro + valorPassivoFinanceiro;
 
@@ -171,7 +171,7 @@ namespace _2___Application._1_Services.Results
 
 
 
-            var cdg = (passivoNaoCirculante + patrimonioLiquido) + (ativoNaoCirculante + ativoFixo);
+            var cdg = ((passivoNaoCirculante + patrimonioLiquido) + (ativoNaoCirculante + ativoFixo))* -1;
 
             var saldoTesouraria = valorAtivoFinanceiro + valorPassivoFinanceiro;
 
