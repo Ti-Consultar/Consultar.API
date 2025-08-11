@@ -314,7 +314,10 @@ namespace _2___Application._1_Services.Results
 
                 decimal ncg = valorAtivoOperacional + valorPassivoOperacional;
 
-                decimal variacaoNCG = ncgMesAnterior.HasValue ? ncg - ncgMesAnterior.Value : 0;
+                decimal variacaoNCG = (ncgMesAnterior.HasValue && ncgMesAnterior.Value != 0)
+                    ? ncg - ncgMesAnterior.Value
+                    : ncg;
+
                 ncgMesAnterior = ncg;
 
                 decimal fluxoDeCaixaOperacional = variacaoNCG - ebitda;
