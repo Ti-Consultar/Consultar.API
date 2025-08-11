@@ -944,15 +944,15 @@ namespace _2___Application._1_Services
                     patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + resultadoAcumuladoClass.Value;
                 }
                 var patrimonioLiquidos = totalizerResponses
-                       .FirstOrDefault(c => c.Name == "Patrimônio Liquido").TotalValue;
+                       .FirstOrDefault(c => c.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
                
                 var contasTransitorias = totalizerResponses
                     .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Contas Transitórias").Value;
+                    .FirstOrDefault(c => c.Name == "Contas Transitórias")?.Value ?? 0;
 
                 
                 var totalPassivoCirculante = totalizerResponses
-                    .FirstOrDefault(c => c.Name == "Total Passivo Circulante").TotalValue;
+                    .FirstOrDefault(c => c.Name == "Total Passivo Circulante")?.TotalValue ?? 0;
 
                 decimal total = totalPassivoCirculante + contasTransitorias + patrimonioLiquidos;
 

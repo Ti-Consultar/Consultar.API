@@ -69,7 +69,7 @@ namespace _2___Application._1_Services.CashFlow
                 var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
                 var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
 
-                var receitaLiquida = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
+                var receitaLiquida = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
                 var outrosResultadosOperacionais = monthDRE.Totalizer.SelectMany(t => t.Classifications)
                     .FirstOrDefault(t => t.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
                 var outrosResultadosNaoOperacionais = monthDRE.Totalizer.SelectMany(t => t.Classifications)
@@ -99,11 +99,26 @@ namespace _2___Application._1_Services.CashFlow
                     .FirstOrDefault(c => c.Name == "Provisão para IRPJ")?.Value ?? 0;
                 var impostos = provisaoCSLL + provisaoIRPJ;
 
-                var lucroLiquido = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
+                var lucroAntes = monthDRE.Totalizer
+                   .FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro");
+                if (lucroAntes != null) lucroAntes.TotalValue = 0;
+
+                var resultadoAntes = monthDRE.Totalizer
+                    .FirstOrDefault(t => t.Name == "Resultado do Exercício Antes do Imposto");
+
+                if (resultadoAntes != null && lucroAntes != null)
+                    resultadoAntes.TotalValue = lucroAntes.TotalValue + receitaFinanceira + despesaFinanceira;
+
+                var lucroLiquido = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
+
+                if (lucroLiquido != null && resultadoAntes != null)
+                    lucroLiquido.TotalValue = resultadoAntes.TotalValue + provisaoCSLL + provisaoIRPJ;
+
+
                 var patrimonioLiquido = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
-                var emprestimoEFinanciamento = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Empréstimos e Financiamentos")?.TotalValue ?? 0;
-                var imobilizado = (monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Imobilizado")?.TotalValue ?? 0) * -1;
+                var emprestimoEFinanciamento = monthPassivo.Totalizer.FirstOrDefault(t => t.Name == "Empréstimos e Financiamentos")?.TotalValue ?? 0;
+                var imobilizado = (monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Imobilizado")?.TotalValue ?? 0) * -1;
 
 
 
@@ -147,18 +162,18 @@ namespace _2___Application._1_Services.CashFlow
 
 
 
-                decimal variacaoPatrimonioLiquido = patrimonioLiquido  - lucroLiquido;
+                decimal variacaoPatrimonioLiquido = patrimonioLiquido  - lucroLiquido.TotalValue;
 
 
 
-                decimal variacaoPL = previousMonth != null ? lucroLiquido - previousMonth.LucroOperacionalLiquido : 0;
+                decimal variacaoPL = previousMonth != null ? lucroLiquido.TotalValue - previousMonth.LucroOperacionalLiquido : 0;
 
 
                 var variacaoNCG = clientes + estoque + outrosAtivosOperacionaisTotal + fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal;
 
 
 
-                var fluxoCaixaOperacional = lucroLiquido + depreciacaoAmortAcumulada + variacaoNCG ;
+                var fluxoCaixaOperacional = lucroLiquido.TotalValue + depreciacaoAmortAcumulada + variacaoNCG ;
                 var fluxoCaixaLivre = fluxoCaixaOperacional + variacaoAtivoNaoCirculante + variacaoInvestimento + variacaoPatrimonioLiquido;
 
 
@@ -175,7 +190,7 @@ namespace _2___Application._1_Services.CashFlow
                     OutrosResultados = outrosResultados,
                     ResultadosFinanceiros = resultadosFinanceiros,
                     Provisoes = impostos,
-                    LucroOperacionalLiquido = lucroLiquido,
+                    LucroOperacionalLiquido = lucroLiquido.TotalValue,
                     DepreciacaoAmortizacao = variacaoDepreciacaoAmortAcumulada,
                     VariacaoNCG = variacaoNCG,
                     Clientes = variacaoClientes,
@@ -331,15 +346,14 @@ namespace _2___Application._1_Services.CashFlow
                     patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + resultadoAcumuladoClass.Value;
                 }
                 var patrimonioLiquidos = totalizerResponses
-                       .FirstOrDefault(c => c.Name == "Patrimônio Liquido").TotalValue;
-
+        .FirstOrDefault(c => c.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
                 var contasTransitorias = totalizerResponses
                     .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Contas Transitórias").Value;
+                    .FirstOrDefault(c => c.Name == "Contas Transitórias")?.Value ?? 0;
 
 
                 var totalPassivoCirculante = totalizerResponses
-                    .FirstOrDefault(c => c.Name == "Total Passivo Circulante").TotalValue;
+                    .FirstOrDefault(c => c.Name == "Total Passivo Circulante")?.TotalValue ?? 0;
 
                 decimal total = totalPassivoCirculante + contasTransitorias + patrimonioLiquidos;
 
@@ -862,6 +876,30 @@ namespace _2___Application._1_Services.CashFlow
             }
 
             return new PainelBalancoContabilRespone { Months = months };
+        }
+
+        private decimal? ApplyDRETotalValueRules(
+    string name,
+    Dictionary<string, TotalizerParentRespone> totals,
+    Dictionary<string, ClassificationRespone> classes)
+        {
+            decimal GetValue(string key) =>
+                totals.TryGetValue(key, out var t) ? t.TotalValue :
+                classes.TryGetValue(key, out var c) ? c.Value : 0;
+
+            return name switch
+            {
+                "(=) Receita Líquida de Vendas" => GetValue("Receita Operacional Bruta") - GetValue("(-) Deduções da Receita Bruta"),
+                "Lucro Bruto" => GetValue("(=) Receita Líquida de Vendas") - GetValue("(-) Custos das Mercadorias"),
+                "Margem Contribuição" => GetValue("Lucro Bruto") - GetValue("Despesas Variáveis"),
+                "Lucro Operacional" => GetValue("Lucro Bruto") - GetValue("(-) Despesas Operacionais") + GetValue("Outros Resultados Operacionais"),
+                "Lucro Antes do Resultado Financeiro" => GetValue("Lucro Operacional") + GetValue("Outras Receitas Não Operacionais") + GetValue("Ganhos e Perdas de Capital"),
+                "Resultado do Exercício Antes do Imposto" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Receitas Financeiras") - GetValue("Despesas Financeiras"),
+                "Lucro Líquido do Periodo" => GetValue("Resultado do Exercício Antes do Imposto") - GetValue("Provisão para CSLL") - GetValue("Provisão para IRPJ"),
+                "EBITDA" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Despesas com Depreciação"),
+                "NOPAT" => GetValue("Lucro Antes do Resultado Financeiro") - GetValue("Provisão para CSLL") - GetValue("Provisão para IRPJ"),
+                _ => null
+            };
         }
         private decimal? ApplyBalancoReclassificadoTotalAtivoValueRules(string name, Dictionary<string, TotalizerParentRespone> totals, Dictionary<string, ClassificationRespone> classes)
         {
