@@ -92,10 +92,10 @@ namespace _2___Application._1_Services.Results
                 var ativoFixo = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
-                var cdg = (passivoNaoCirculante - patrimonioLiquido) + (ativoNaoCirculante + ativoFixo);
+                var cdg = (passivoNaoCirculante - patrimonioLiquido) - (ativoNaoCirculante + ativoFixo);
 
                 var saldoTesouraria = valorAtivoFinanceiro + valorPassivoFinanceiro;
-                var ncg = valorAtivoOperacional + valorPassivoOperacional;
+                var ncg = valorAtivoOperacional - valorPassivoOperacional;
                 decimal? indiceDeLiquidez = ncg != 0 ? saldoTesouraria / ncg : (decimal?)null;
 
 
@@ -366,7 +366,7 @@ namespace _2___Application._1_Services.Results
                 var estoque = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
                 var receitaMensal = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "Receita Operacional Bruta")?.TotalValue ?? 0;
                 var cliente = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
-                var fornecedor = monthPassivo.Totalizer.FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
+                var fornecedor = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
 
                 var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
                 var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
