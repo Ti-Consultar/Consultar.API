@@ -231,7 +231,6 @@ namespace _2___Application._1_Services.CashFlow
 
         #endregion
         #region Dados
-
         private async Task<PainelBalancoContabilRespone> BuildPainelByTypePassivo(int accountPlanId, int year, int typeClassification)
         {
             var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
@@ -346,14 +345,15 @@ namespace _2___Application._1_Services.CashFlow
                     patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + resultadoAcumuladoClass.Value;
                 }
                 var patrimonioLiquidos = totalizerResponses
-        .FirstOrDefault(c => c.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+                       .FirstOrDefault(c => c.Name == "Patrimônio Liquido").TotalValue;
+
                 var contasTransitorias = totalizerResponses
                     .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Contas Transitórias")?.Value ?? 0;
+                    .FirstOrDefault(c => c.Name == "Contas Transitórias").Value;
 
 
                 var totalPassivoCirculante = totalizerResponses
-                    .FirstOrDefault(c => c.Name == "Total Passivo Circulante")?.TotalValue ?? 0;
+                    .FirstOrDefault(c => c.Name == "Total Passivo Circulante").TotalValue;
 
                 decimal total = totalPassivoCirculante + contasTransitorias + patrimonioLiquidos;
 
@@ -877,30 +877,6 @@ namespace _2___Application._1_Services.CashFlow
 
             return new PainelBalancoContabilRespone { Months = months };
         }
-
-        private decimal? ApplyDRETotalValueRules(
-    string name,
-    Dictionary<string, TotalizerParentRespone> totals,
-    Dictionary<string, ClassificationRespone> classes)
-        {
-            decimal GetValue(string key) =>
-                totals.TryGetValue(key, out var t) ? t.TotalValue :
-                classes.TryGetValue(key, out var c) ? c.Value : 0;
-
-            return name switch
-            {
-                "(=) Receita Líquida de Vendas" => GetValue("Receita Operacional Bruta") - GetValue("(-) Deduções da Receita Bruta"),
-                "Lucro Bruto" => GetValue("(=) Receita Líquida de Vendas") - GetValue("(-) Custos das Mercadorias"),
-                "Margem Contribuição" => GetValue("Lucro Bruto") - GetValue("Despesas Variáveis"),
-                "Lucro Operacional" => GetValue("Lucro Bruto") - GetValue("(-) Despesas Operacionais") + GetValue("Outros Resultados Operacionais"),
-                "Lucro Antes do Resultado Financeiro" => GetValue("Lucro Operacional") + GetValue("Outras Receitas Não Operacionais") + GetValue("Ganhos e Perdas de Capital"),
-                "Resultado do Exercício Antes do Imposto" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Receitas Financeiras") - GetValue("Despesas Financeiras"),
-                "Lucro Líquido do Periodo" => GetValue("Resultado do Exercício Antes do Imposto") - GetValue("Provisão para CSLL") - GetValue("Provisão para IRPJ"),
-                "EBITDA" => GetValue("Lucro Antes do Resultado Financeiro") + GetValue("Despesas com Depreciação"),
-                "NOPAT" => GetValue("Lucro Antes do Resultado Financeiro") - GetValue("Provisão para CSLL") - GetValue("Provisão para IRPJ"),
-                _ => null
-            };
-        }
         private decimal? ApplyBalancoReclassificadoTotalAtivoValueRules(string name, Dictionary<string, TotalizerParentRespone> totals, Dictionary<string, ClassificationRespone> classes)
         {
             decimal GetValue(string key) =>
@@ -910,10 +886,10 @@ namespace _2___Application._1_Services.CashFlow
             return name switch
             {
                 "Ativo Financeiro" => GetValue("Caixa e Equivalente de Caixa") + GetValue("Aplicação Financeira"),
-                "Ativo Operacional" => GetValue("Clientes") + GetValue("Estoques") + GetValue("Outros Ativos Operacionais"),
+                "Ativo Operacional" => GetValue("Clientes") + GetValue("Estoques") + GetValue("Outros Ativos Operacionais") + GetValue("Contas Transitórias Ativo"),
                 "Outros Ativos Operacionais Total" => GetValue("Outros Ativos Operacionais") + GetValue("Contas Transitórias Ativo"),
                 "Ativo Não Circulante" => GetValue("Ativo Não Circulante Financeiro") + GetValue("Ativo Não Circulante Operacional"),
-                "Ativo Fixo" => GetValue("Investimentos") + GetValue("Imobilizado") + GetValue("Depreciação / Amort. Acumulada"),
+                "Ativo Fixo" => GetValue("Investimentos") + GetValue("Imobilizado") + GetValue("Depreciação / Amort. Acumulada") + GetValue("Intangível"),
 
                 _ => null
             };
@@ -928,7 +904,7 @@ namespace _2___Application._1_Services.CashFlow
             return name switch
             {
                 "Passivo Financeiro" => GetValue("Empréstimos e Financiamentos"),
-                "Passivo Operacional" => GetValue("Fornecedores") + GetValue("Obrigações Trabalhistas") + GetValue("Obrigações Tributárias"),
+                "Passivo Operacional" => GetValue("Fornecedores") + GetValue("Obrigações Tributárias e Trabalhistas") + GetValue("Outros Passivos Operacionais") + GetValue("Contas Transitórias Passivo"),
                 "Outros Passivos Operacionais Total" => GetValue("Outros Passivos Operacionais") + GetValue("Contas Transitórias Passivo"),
                 "Passivo Não Circulante" => GetValue("Passivo Não Circulante Financeiro") + GetValue("Passivo Não Circulante Operacional"),
                 "Patrimônio Liquido" => GetValue("Capital Social") + GetValue("Reservas") + GetValue("Lucros / Prejuízos Acumulado") + GetValue("Distribuição de Lucro") + GetValue("Resultado Acumulado"),
