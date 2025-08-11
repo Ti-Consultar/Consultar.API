@@ -1657,22 +1657,22 @@ namespace _2___Application._1_Services
                     margemContribuicao.TotalValue = lucroBruto.TotalValue + despesasV;
 
                 if (lucroOperacional != null && lucroBruto != null && despesasOperacionais != null)
-                    lucroOperacional.TotalValue = lucroBruto.TotalValue + despesasOperacionais.TotalValue + outrosResultadosOperacionais;
+                    lucroOperacional.TotalValue = (lucroBruto.TotalValue + despesasOperacionais.TotalValue + outrosResultadosOperacionais) * -1;
 
                 if (lucroAntes != null && lucroOperacional != null)
-                    lucroAntes.TotalValue = lucroOperacional.TotalValue + outrosReceitas + ganhosEPerdas;
+                    lucroAntes.TotalValue = (lucroOperacional.TotalValue + outrosReceitas + ganhosEPerdas)* -1;
 
                 if (resultadoAntes != null && lucroAntes != null)
-                    resultadoAntes.TotalValue = lucroAntes.TotalValue + receitasFinanceiras + despesasFinanceiras;
+                    resultadoAntes.TotalValue = (lucroAntes.TotalValue + receitasFinanceiras + despesasFinanceiras) * -1;
 
                 if (lucroLiquido != null && resultadoAntes != null)
-                    lucroLiquido.TotalValue = resultadoAntes.TotalValue + provisaoCSLL + provisaoIRPJ;
+                    lucroLiquido.TotalValue = (resultadoAntes.TotalValue + provisaoCSLL + provisaoIRPJ) * -1;
 
                 if (ebitda != null && lucroAntes != null)
                     ebitda.TotalValue = lucroAntes.TotalValue + despesasDepreciacao;
 
                 if (nopat != null && lucroAntes != null)
-                    nopat.TotalValue = lucroAntes.TotalValue + provisaoCSLL + provisaoIRPJ;
+                    nopat.TotalValue = (lucroAntes.TotalValue + provisaoCSLL + provisaoIRPJ) * -1;
 
                 // margens
                 var margemBruta = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Bruta %");
