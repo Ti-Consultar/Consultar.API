@@ -782,8 +782,7 @@ namespace _2___Application._1_Services.Results
                 Months = months
             };
         }
-
-        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDRE(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeeDRE(int accountPlanId, int year, int typeClassification)
         {
             var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
@@ -941,7 +940,8 @@ namespace _2___Application._1_Services.Results
                     .FirstOrDefault(c => c.Name == "Outros Resultados Operacionais")?.Value ?? 0;
 
                 if (despesasOperacionais != null)
-                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despesasDepreciacao - outrosResultadosOperacionais;
+                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despesasDepreciacao;// - outrosResultadosOperacionais; // comentando o - outros resultados pois e a conta que falta para fechar o resultado, ams no excel fornecido nao conta com esse campo
+
 
                 // cálculos 
                 var receitaLiquidaValor = receitaOperacionalBruta + deducoes;
@@ -951,22 +951,22 @@ namespace _2___Application._1_Services.Results
                     margemContribuicao.TotalValue = lucroBruto.TotalValue + despesasV;
 
                 if (lucroOperacional != null && lucroBruto != null && despesasOperacionais != null)
-                    lucroOperacional.TotalValue = lucroBruto.TotalValue + despesasOperacionais.TotalValue + outrosResultadosOperacionais;
+                    lucroOperacional.TotalValue = (lucroBruto.TotalValue + despesasOperacionais.TotalValue + outrosResultadosOperacionais) * -1;
 
                 if (lucroAntes != null && lucroOperacional != null)
-                    lucroAntes.TotalValue = lucroOperacional.TotalValue + outrosReceitas + ganhosEPerdas;
+                    lucroAntes.TotalValue = (lucroOperacional.TotalValue + outrosReceitas + ganhosEPerdas) * -1;
 
                 if (resultadoAntes != null && lucroAntes != null)
-                    resultadoAntes.TotalValue = lucroAntes.TotalValue + receitasFinanceiras + despesasFinanceiras;
+                    resultadoAntes.TotalValue = (lucroAntes.TotalValue + receitasFinanceiras + despesasFinanceiras) * -1;
 
                 if (lucroLiquido != null && resultadoAntes != null)
-                    lucroLiquido.TotalValue = resultadoAntes.TotalValue + provisaoCSLL + provisaoIRPJ;
+                    lucroLiquido.TotalValue = (resultadoAntes.TotalValue + provisaoCSLL + provisaoIRPJ) * -1;
 
                 if (ebitda != null && lucroAntes != null)
                     ebitda.TotalValue = lucroAntes.TotalValue + despesasDepreciacao;
 
                 if (nopat != null && lucroAntes != null)
-                    nopat.TotalValue = lucroAntes.TotalValue + provisaoCSLL + provisaoIRPJ;
+                    nopat.TotalValue = (lucroAntes.TotalValue + provisaoCSLL + provisaoIRPJ) * -1;
 
                 // margens
                 var margemBruta = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Bruta %");

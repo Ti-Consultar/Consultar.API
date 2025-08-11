@@ -939,7 +939,7 @@ namespace _2___Application._1_Services.Results
             };
         }
 
-        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDRE(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeeDRE(int accountPlanId, int year, int typeClassification)
         {
             var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
@@ -1097,7 +1097,7 @@ namespace _2___Application._1_Services.Results
                     .FirstOrDefault(c => c.Name == "Outros Resultados Operacionais")?.Value ?? 0;
 
                 if (despesasOperacionais != null)
-                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despesasDepreciacao - outrosResultadosOperacionais;
+                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despesasDepreciacao;// - outrosResultadosOperacionais; // comentando o - outros resultados pois e a conta que falta para fechar o resultado, ams no excel fornecido nao conta com esse campo
 
 
                 // cálculos 
