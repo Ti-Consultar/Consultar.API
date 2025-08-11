@@ -92,7 +92,7 @@ namespace _2___Application._1_Services.Results
                 var ativoFixo = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
-                var cdg = (passivoNaoCirculante + patrimonioLiquido) + (ativoNaoCirculante + ativoFixo);
+                var cdg = (passivoNaoCirculante - patrimonioLiquido) + (ativoNaoCirculante + ativoFixo);
 
                 var saldoTesouraria = valorAtivoFinanceiro + valorPassivoFinanceiro;
 
@@ -173,7 +173,9 @@ namespace _2___Application._1_Services.Results
             var cdg = (passivoNaoCirculante - patrimonioLiquido) + (ativoNaoCirculante + ativoFixo);
 
             var saldoTesouraria = valorAtivoFinanceiro + valorPassivoFinanceiro;
+
             var ncg = valorAtivoOperacional + valorPassivoOperacional;
+
             decimal? indiceDeLiquidez = ncg != 0 ? saldoTesouraria / ncg : (decimal?)null;
             var liquidityMonth = new LiquidityMonthlyDto
             {
