@@ -312,7 +312,7 @@ namespace _2___Application._1_Services.Results
                 decimal valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
                 decimal valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
 
-                decimal ncg = valorAtivoOperacional - valorPassivoOperacional;
+                decimal ncg = valorAtivoOperacional + valorPassivoOperacional;
 
                 decimal variacaoNCG = ncgMesAnterior.HasValue ? ncg - ncgMesAnterior.Value : 0;
                 ncgMesAnterior = ncg;
