@@ -25,7 +25,7 @@ namespace ConsultarMRP.API.Controllers
             try
             {
 
-                var response = await _Service.GetAll(accountPlanId, month, year);
+                var response = await _Service.GettAll(accountPlanId, month, year);
                 return Ok(response);
             }
             catch (Exception ex)

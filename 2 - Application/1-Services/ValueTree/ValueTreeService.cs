@@ -228,6 +228,184 @@ namespace _2___Application._1_Services.ValueTree
             };
         }
 
+        public async Task<ValueTreeResultDto> GettAll(int accountPlanId, int month, int year)
+        {
+            // === Painéis completos do ano ===
+            var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
+            var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
+            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
+
+            // === Valores do mês selecionado ===
+            var monthAtivo = painelAtivo.Months.FirstOrDefault(m => m.DateMonth == month);
+            var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == month);
+            var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == month);
+
+            // === Acumulados do ano ===
+            var acumuladoAtivo = painelAtivo.Months
+                .SelectMany(m => m.Totalizer)
+                .GroupBy(t => t.Name)
+                .ToDictionary(g => g.Key, g => g.Sum(t => t.TotalValue));
+
+            var acumuladoPassivo = painelPassivo.Months
+                .SelectMany(m => m.Totalizer)
+                .GroupBy(t => t.Name)
+                .ToDictionary(g => g.Key, g => g.Sum(t => t.TotalValue));
+
+            var acumuladoDRE = painelDRE.Months
+                .SelectMany(m => m.Totalizer)
+                .GroupBy(t => t.Name)
+                .ToDictionary(g => g.Key, g => g.Sum(t => t.TotalValue));
+
+            var acumuladoClassDRE = painelDRE.Months
+                .SelectMany(m => m.Totalizer.SelectMany(t => t.Classifications))
+                .GroupBy(c => c.Name)
+                .ToDictionary(g => g.Key, g => g.Sum(c => c.Value));
+
+            var parameter = await _parameterRepository.GetByAccountPlanIdYear(accountPlanId, year);
+            decimal wacc = (parameter.FirstOrDefault(a => a.Name == "WACC")?.ParameterValue ?? 0) / 12;
+
+            // === Custos Variáveis ===
+            decimal custoMercadoriasMes = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                .FirstOrDefault(c => c.Name == "(-) Custos das Mercadorias")?.Value ?? 0;
+            decimal custoMercadoriasAcum = acumuladoClassDRE.ContainsKey("(-) Custos das Mercadorias")
+                ? acumuladoClassDRE["(-) Custos das Mercadorias"] : 0;
+
+            decimal custoServicosMes = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                .FirstOrDefault(c => c.Name == "(-) Custos dos Serviços Prestados")?.Value ?? 0;
+            decimal custoServicosAcum = acumuladoClassDRE.ContainsKey("(-) Custos dos Serviços Prestados")
+                ? acumuladoClassDRE["(-) Custos dos Serviços Prestados"] : 0;
+
+            decimal despesasVariaveisMes = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                .FirstOrDefault(c => c.Name == "Despesas Variáveis")?.Value ?? 0;
+            decimal despesasVariaveisAcum = acumuladoClassDRE.ContainsKey("Despesas Variáveis")
+                ? acumuladoClassDRE["Despesas Variáveis"] : 0;
+
+            decimal custosMes = custoMercadoriasMes + custoServicosMes + despesasVariaveisMes;
+            decimal custosAcum = custoMercadoriasAcum + custoServicosAcum + despesasVariaveisAcum;
+
+            // === Despesas Operacionais ===
+            decimal despesasOpMes = monthDRE?.Totalizer
+                .FirstOrDefault(c => c.Name == "(-) Despesas Operacionais")?.TotalValue ?? 0;
+            decimal despesasOpAcum = acumuladoDRE.ContainsKey("(-) Despesas Operacionais")
+                ? acumuladoDRE["(-) Despesas Operacionais"] : 0;
+
+            decimal outrosResOpMes = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
+            decimal outrosResOpAcum = acumuladoClassDRE.ContainsKey("Outros  Resultados Operacionais")
+                ? acumuladoClassDRE["Outros  Resultados Operacionais"] : 0;
+
+            // === Impostos ===
+            decimal impostosMes = (monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                .FirstOrDefault(c => c.Name == "Provisão para CSLL")?.Value ?? 0)
+                + (monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                .FirstOrDefault(c => c.Name == "Provisão para IRPJ")?.Value ?? 0);
+
+            decimal impostosAcum = (acumuladoClassDRE.ContainsKey("Provisão para CSLL") ? acumuladoClassDRE["Provisão para CSLL"] : 0)
+                + (acumuladoClassDRE.ContainsKey("Provisão para IRPJ") ? acumuladoClassDRE["Provisão para IRPJ"] : 0);
+
+            // === Ativos e Passivos ===
+            decimal disponibilidadeMes = monthAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
+            decimal disponibilidadeAcum = acumuladoAtivo.ContainsKey("Ativo Financeiro") ? acumuladoAtivo["Ativo Financeiro"] : 0;
+
+            decimal clientesMes = monthAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
+            decimal clientesAcum = acumuladoAtivo.ContainsKey("Clientes") ? acumuladoAtivo["Clientes"] : 0;
+
+            decimal estoqueMes = monthAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
+            decimal estoqueAcum = acumuladoAtivo.ContainsKey("Estoques") ? acumuladoAtivo["Estoques"] : 0;
+
+            decimal outrosAtivosOpMes = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
+            decimal outrosAtivosOpAcum = acumuladoPassivo.ContainsKey("Outros Ativos Operacionais Total") ? acumuladoPassivo["Outros Ativos Operacionais Total"] : 0;
+
+            decimal fornecedoresMes = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
+            decimal fornecedoresAcum = acumuladoPassivo.ContainsKey("Fornecedores") ? acumuladoPassivo["Fornecedores"] : 0;
+
+            decimal outrosPassivosOpMes = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
+            decimal outrosPassivosOpAcum = acumuladoPassivo.ContainsKey("Outros Passivos Operacionais Total") ? acumuladoPassivo["Outros Passivos Operacionais Total"] : 0;
+
+            decimal realizavelLongoPrazoMes = monthAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
+            decimal realizavelLongoPrazoAcum = acumuladoAtivo.ContainsKey("Ativo Não Circulante") ? acumuladoAtivo["Ativo Não Circulante"] : 0;
+
+            decimal exigivelLongoPrazoMes = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Não Circulante Operacional")?.TotalValue ?? 0;
+            decimal exigivelLongoPrazoAcum = acumuladoPassivo.ContainsKey("Passivo Não Circulante Operacional") ? acumuladoPassivo["Passivo Não Circulante Operacional"] : 0;
+
+            decimal ativosFixosMes = monthAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
+            decimal ativosFixosAcum = acumuladoAtivo.ContainsKey("Ativo Fixo") ? acumuladoAtivo["Ativo Fixo"] : 0;
+
+            // === Indicadores ===
+            decimal receitaLiquidaMes = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
+            decimal receitaLiquidaAcum = acumuladoDRE.ContainsKey("(=) Receita Líquida de Vendas") ? acumuladoDRE["(=) Receita Líquida de Vendas"] : 0;
+
+            decimal nOPATMes = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
+            decimal nOPATAcum = acumuladoDRE.ContainsKey("NOPAT") ? acumuladoDRE["NOPAT"] : 0;
+
+            decimal roicMes = 0, roicAcum = 0;
+            decimal capitalInvestidoMes = disponibilidadeMes + clientesMes + estoqueMes + outrosAtivosOpMes - (fornecedoresMes + outrosPassivosOpMes) + realizavelLongoPrazoMes + exigivelLongoPrazoMes + ativosFixosMes;
+            decimal capitalInvestidoAcum = disponibilidadeAcum + clientesAcum + estoqueAcum + outrosAtivosOpAcum - (fornecedoresAcum + outrosPassivosOpAcum) + realizavelLongoPrazoAcum + exigivelLongoPrazoAcum + ativosFixosAcum;
+
+            if (capitalInvestidoMes != 0) roicMes = (nOPATMes / capitalInvestidoMes) * 100;
+            if (capitalInvestidoAcum != 0) roicAcum = (nOPATAcum / capitalInvestidoAcum) * 100;
+
+            // === DTOs ===
+            var economic = new EconomicViewDto
+            {
+                ReceitaLiquida = receitaLiquidaMes,
+                ReceitaLiquidaAcumulado = receitaLiquidaAcum,
+                CustoDespesaVariavel = custosMes,
+                CustoDespesaVariavelAcumulado = custosAcum,
+                DespesasOperacionais = despesasOpMes,
+                DespesasOperacionaisAcumulado = despesasOpAcum,
+                OutrosResultadosOperacionais = outrosResOpMes,
+                OutrosResultadosOperacionaisAcumulado = outrosResOpAcum,
+                NOPAT = nOPATMes,
+                NOPATAcumulado = nOPATAcum,
+                Impostos = impostosMes,
+                ImpostosAcumulado = impostosAcum
+            };
+
+            var financial = new FinancialViewDto
+            {
+                Disponivel = disponibilidadeMes,
+                DisponivelAcumulado = disponibilidadeAcum,
+                Clientes = clientesMes,
+                ClientesAcumulado = clientesAcum,
+                Estoques = estoqueMes,
+                EstoquesAcumulado = estoqueAcum,
+                OutrosAtivosOperacionais = outrosAtivosOpMes,
+                OutrosAtivosOperacionaisAcumulado = outrosAtivosOpAcum,
+                Fornecedores = fornecedoresMes,
+                FornecedoresAcumulado = fornecedoresAcum,
+                OutrosPassivosOperacionais = outrosPassivosOpMes,
+                OutrosPassivosOperacionaisAcumulado = outrosPassivosOpAcum,
+                RealizavelLongoPrazo = realizavelLongoPrazoMes,
+                RealizavelLongoPrazoAcumulado = realizavelLongoPrazoAcum,
+                ExigivelLongoPrazo = exigivelLongoPrazoMes,
+                ExigivelLongoPrazoAcumulado = exigivelLongoPrazoAcum,
+                AtivosFixos = ativosFixosMes,
+                AtivosFixosAcumulado = ativosFixosAcum,
+                CapitalInvestido = capitalInvestidoMes,
+                CapitalInvestidoAcumulado= capitalInvestidoAcum
+            };
+
+            var indicators = new ReturnIndicatorsDto
+            {
+                NOPAT = nOPATMes,
+                NOPATAcumulado = nOPATAcum,
+                CapitalInvestido = capitalInvestidoMes,
+                CapitalInvestidoAcumulado = capitalInvestidoAcum,
+                ROIC = roicMes,
+                ROICAcumulado = roicAcum,
+                WACC = wacc,
+                SPREAD = roicMes - wacc,
+                SPREADAcumulado = roicAcum - wacc
+            };
+
+            return new ValueTreeResultDto
+            {
+                EconomicView = economic,
+                FinancialView = financial,
+                Indicators = indicators
+            };
+        }
 
 
 
