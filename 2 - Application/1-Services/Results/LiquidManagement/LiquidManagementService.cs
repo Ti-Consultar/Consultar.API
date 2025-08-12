@@ -525,7 +525,7 @@ namespace _2___Application._1_Services.Results
                     TerceirosCurtoPrazo = endividamentoTerceirosCurtoPrazo,
                     TerceirosLongoPrazo = endividamentoTerceirosLongoPrazo,
                     ParticipacaoCapitalTerceiros = participacaoCapitaldeTerceiros,
-                    ParticipacaoCapitalProprio = participacaoCapitaldeProprio
+                    ParticipacaoCapitalProprio = participacaoCapitaldeProprio * 100
                 });
             }
 
