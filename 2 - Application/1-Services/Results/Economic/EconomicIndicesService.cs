@@ -360,7 +360,7 @@ namespace _2___Application._1_Services.Results
                    .Where(c => c.Name == "Despesas com Depreciação")
                    .Sum(c => c.Value);
 
-                decimal provisaoIRPSCSLL = provisaoIRPJ + provisaoCSLL;
+                decimal provisaoIRPSCSLL = provisaoIRPJ - provisaoCSLL;
 
                 nOPAT.Add(new NOPATResponseDto
                 {
