@@ -132,14 +132,14 @@ namespace _2___Application._1_Services.Results
                 decimal lucroLiquido = monthDRE?.Totalizer
                     .FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
 
-                decimal ativoTotal = monthBcAtivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "TOTAL GERAL DO ATIVO")?.TotalValue ?? 0;
+                var  ativoTotal = monthBcAtivo?.Totalizer.Sum(a => a.TotalValue);
+                  
 
-                decimal patrimonioLiquido = monthAtivo?.Totalizer
+                decimal patrimonioLiquido = monthPassivo?.Totalizer
                     .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
                 // ⚠️ Evita divisão por zero
-                decimal roi = ativoTotal != 0 ? lucroLiquido / ativoTotal : 0;
+                decimal roi = ativoTotal != 0 ? lucroLiquido / ativoTotal.Value : 0;
                 decimal roe = patrimonioLiquido != 0 ? lucroLiquido / patrimonioLiquido : 0;
                 decimal roeInicial = patrimonioLiquidoAnoAnterior != 0 ? lucroLiquido / patrimonioLiquidoAnoAnterior : 0;
 
