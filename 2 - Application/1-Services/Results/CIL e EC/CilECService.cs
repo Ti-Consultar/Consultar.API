@@ -69,34 +69,32 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
                 var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
 
 
-               
 
                 decimal disponibilidade = monthAtivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
+                                    .FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
 
                 decimal clientes = monthAtivo?.Totalizer
                     .FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
 
                 decimal estoque = monthAtivo?.Totalizer
-                        .FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
 
                 decimal outrosAtivosOperacionaisTotal = monthAtivo?.Totalizer
-                   .FirstOrDefault(t => t.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
 
                 decimal fornecedores = monthPassivo?.Totalizer
-                       .FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
 
                 decimal obrigacoesTributariasETrabalhistas = monthPassivo?.Totalizer
-                      .FirstOrDefault(t => t.Name == "Obrigações Tributárias e Trabalhistas")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Obrigações Tributárias e Trabalhistas")?.TotalValue ?? 0;
 
                 decimal outrosPassivosOperacionaisTotal = monthPassivo?.Totalizer
-                     .FirstOrDefault(t => t.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
 
                 decimal somaAtivos = disponibilidade + clientes + estoque + outrosAtivosOperacionaisTotal;
 
-                decimal somaPassivo = fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal ;
-
-                decimal necessidadeDeCapitalDeGiro = somaAtivos - somaPassivo;
+                decimal somaPassivo = fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal;
+                decimal necessidadeDeCapitalDeGiro = somaAtivos + somaPassivo;
 
 
                 decimal realizavelLongoPrazo = monthAtivo?.Totalizer
