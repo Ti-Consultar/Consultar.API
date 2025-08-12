@@ -403,7 +403,7 @@ namespace _2___Application._1_Services.Results
                     Name = monthAtivo.Name,
                     DateMonth = monthAtivo.DateMonth,
                     GiroPME = giroPME,
-                    GiroPMP = giroPMP,
+                    GiroPMP = giroPMP * -1,
                     GiroPMR = giroPMR,
                     GiroCaixa = giroCaixa,
                 });
@@ -454,9 +454,9 @@ namespace _2___Application._1_Services.Results
                 {
                     Name = monthAtivo.Name,
                     DateMonth = monthAtivo.DateMonth,
-                    LiquidezCorrente = lc,
-                    LiquidezImediata = li,
-                    LiquidezSeca = ls
+                    LiquidezCorrente = lc * -1,
+                    LiquidezImediata = li * -1,
+                    LiquidezSeca = ls * -1
                 });
             }
 
