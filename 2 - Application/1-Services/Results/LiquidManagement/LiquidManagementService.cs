@@ -378,16 +378,15 @@ namespace _2___Application._1_Services.Results
 
                 var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
                 var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
-                var ncg = valorAtivoOperacional - valorPassivoOperacional;
+                var ncg = valorAtivoOperacional + valorPassivoOperacional;
 
                 decimal pMR = 0, pME = 0, pMP = 0, cicloNCG = 0;
 
                 if (receitaMensal > 0)
                 {
                     int multiplicadorDias = monthAtivo.DateMonth * 30;
-
-                    pMR = (estoque / receitaMensal) * multiplicadorDias;
-                    pME = (cliente / receitaMensal) * multiplicadorDias;
+                    pMR = (cliente / receitaMensal) * multiplicadorDias;
+                    pME = (estoque / receitaMensal) * multiplicadorDias;
                     pMP = (fornecedor / receitaMensal) * multiplicadorDias;
                     cicloNCG = (ncg / receitaMensal) * multiplicadorDias;
                 }
@@ -404,8 +403,8 @@ namespace _2___Application._1_Services.Results
                     Name = monthAtivo.Name,
                     DateMonth = monthAtivo.DateMonth,
                     GiroPME = giroPME,
-                    GiroPMP = giroPMR,
-                    GiroPMR = giroPMP,
+                    GiroPMP = giroPMP,
+                    GiroPMR = giroPMR,
                     GiroCaixa = giroCaixa,
                 });
             }
