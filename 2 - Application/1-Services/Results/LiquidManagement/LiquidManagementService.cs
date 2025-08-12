@@ -268,7 +268,7 @@ namespace _2___Application._1_Services.Results
                     DateMonth = dateMonth,
                     PME = pME,
                     PMR = pMR,
-                    PMP = pMP,
+                    PMP = pMP * -1,
                     CicloFinanceiroDasOperacoesPrincipais = cicloFinanceiroOperacoesPrincipaisNCG,
                     CicloFinanceiroNCG = cicloNCG
                 });
