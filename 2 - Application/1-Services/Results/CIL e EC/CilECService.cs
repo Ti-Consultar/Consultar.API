@@ -146,7 +146,7 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
                         RealizavelLongoPrazo = realizavelLongoPrazo,
                         ExigivelALongoPrazoOperacional = exigivelLongoPrazo,
                         AtivosFixos = ativosFixos,
-                        CapitalInvestidoLiquido = patrimonioLiquido,
+                        CapitalInvestidoLiquido = patrimonioLiquido * -1,
 
                     },
                     EstruturaDeCapital = new ECResponseDto
