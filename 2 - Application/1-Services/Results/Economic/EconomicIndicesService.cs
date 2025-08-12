@@ -216,7 +216,12 @@ namespace _2___Application._1_Services.Results
 
                 decimal somaPassivo = fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal;
 
-                decimal necessidadeDeCapitalDeGiro = somaAtivos + somaPassivo;
+
+                var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+                var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
+                var ncg = valorAtivoOperacional + valorPassivoOperacional;
+
+                decimal necessidadeDeCapitalDeGiro = ncg;
 
                 decimal realizavelLongoPrazo = monthAtivo?.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
