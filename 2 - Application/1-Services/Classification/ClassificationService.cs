@@ -1365,7 +1365,7 @@ namespace _2___Application._1_Services
 
                     decimal lucrosPrejuizos = totalizerResponses.FirstOrDefault(a => a.Name == "Lucros / Prejuízos Acumulados")?.TotalValue ?? 0;
 
-                    patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + lucrosPrejuizos + resultadoAcumulado?.TotalValue ?? 0;
+                    patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + lucrosPrejuizos + (resultadoAcumulado.TotalValue * -1);
 
                     decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquido.TotalValue + (resultadoAcumulado.TotalValue * -1);
 
