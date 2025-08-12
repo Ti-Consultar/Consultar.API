@@ -320,7 +320,7 @@ namespace _2___Application._1_Services.Results
 
                 ncgMesAnterior = ncg;
 
-                decimal fluxoDeCaixaOperacional = variacaoNCG - ebitda;
+                decimal fluxoDeCaixaOperacional = (variacaoNCG - ebitda) * -1;// teste para ver o calculo ;
 
                 var receitaMensal = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
 
