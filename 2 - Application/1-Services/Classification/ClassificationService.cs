@@ -742,7 +742,7 @@ namespace _2___Application._1_Services
 
         private async Task<PainelBalancoContabilRespone> BuildPainelDRE(int accountPlanId, int year)
         {
-            return await BuildPainelByTypeeDRE(accountPlanId, year, 3);
+            return await BuildPainelByTypeDRE(accountPlanId, year, 3);
         }
 
         private async Task<PainelBalancoContabilRespone> BuildPainelByTypeAtivo(int accountPlanId, int year, int typeClassification)
@@ -850,7 +850,7 @@ namespace _2___Application._1_Services
             var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
 
-            var painelDRE = await BuildPainelByTypeeDRE(accountPlanId, year, 3); // Painel da DRE para pegar o lucro líquido
+            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3); // Painel da DRE para pegar o lucro líquido
 
 
 
@@ -973,104 +973,7 @@ namespace _2___Application._1_Services
             return new PainelBalancoContabilRespone { Months = months };
         }
 
-        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDRE(int accountPlanId, int year, int typeClassification)
-        {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
-            var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
-            var totalizers = await _totalizerClassificationRepository.GetByAccountPlansId(accountPlanId);
-            var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
 
-            var balanceteIds = balancetes.Select(b => b.Id).ToList();
-            var costCenters = model.Select(a => a.CostCenter).ToList();
-
-            var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
-            var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
-
-            var months = balancetes.Select(balancete =>
-            {
-                var totalizerResponses = totalizers.Select(totalizer =>
-                {
-                    var relatedClassifications = classifications
-                        .Where(c => c.TotalizerClassificationId == totalizer.Id)
-                        .ToList();
-
-                    var classificationsResp = relatedClassifications.Select(classification =>
-                    {
-                        var datas = balanceteDataClassifications
-                            .Where(x => x.AccountPlanClassificationId == classification.Id)
-                            .SelectMany(x =>
-                                balanceteData
-                                    .Where(bd => bd.CostCenter == x.CostCenter && bd.BalanceteId == balancete.Id)
-                                    .Select(bd => new BalanceteDataResponse
-                                    {
-                                        Id = bd.Id,
-                                        CostCenter = bd.CostCenter,
-                                        Name = bd.Name,
-                                        InitialValue = bd.InitialValue,
-                                        CreditValue = bd.Credit,
-                                        DebitValue = bd.Debit,
-                                        Value = bd.FinalValue
-                                    })
-                            ).ToList();
-
-                        return new ClassificationRespone
-                        {
-                            Id = classification.Id,
-                            Name = classification.Name,
-                            TypeOrder = classification.TypeOrder,
-                            Value = datas.Sum(a => a.CreditValue - a.DebitValue),
-                            Datas = datas
-                        };
-                    }).ToList();
-
-                    return new TotalizerParentRespone
-                    {
-                        Id = totalizer.Id,
-                        Name = totalizer.Name,
-                        TypeOrder = totalizer.TypeOrder,
-                        Classifications = classificationsResp,
-                        TotalValue = classificationsResp.Sum(a => a.Value)
-                    };
-
-                }).ToList();
-
-                // Map para facilitar lookup rápido
-                var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
-                var classificationMap = totalizerResponses
-                    .SelectMany(t => t.Classifications)
-                    .ToDictionary(c => c.Name);
-
-                // Aplicar regras de totalização especiais (Lucros, NOPAT, etc)
-                for (int i = 0; i < 3; i++) // Executar várias vezes para garantir dependências resolvidas
-                {
-                    foreach (var totalizer in totalizerResponses.OrderBy(t => t.TypeOrder))
-                    {
-                        var ruleValue = ApplyDRETotalValueRules(totalizer.Name, totalizerMap, classificationMap);
-                        if (ruleValue.HasValue)
-                            totalizer.TotalValue = ruleValue.Value;
-                    }
-                }
-
-                // Aplicar regras de percentual (%)
-                foreach (var totalizer in totalizerResponses)
-                {
-                    var percentage = ApplyDREPercentageRules(totalizer.Name, totalizerMap, totalizer.TotalValue);
-                    if (percentage.HasValue)
-                        totalizer.TotalValue = percentage.Value;
-                }
-
-                return new MonthPainelContabilRespone
-                {
-                    Id = balancete.Id,
-                    Name = balancete.DateMonth.GetDescription(),
-                    DateMonth = (int)balancete.DateMonth,
-                    Totalizer = totalizerResponses.OrderBy(t => t.TypeOrder).ToList()
-                };
-
-            }).OrderBy(m => m.DateMonth).ToList();
-
-            return new PainelBalancoContabilRespone { Months = months };
-        }
 
 
         private decimal? ApplyDRETotalValueRules(
@@ -1488,7 +1391,7 @@ namespace _2___Application._1_Services
             };
         }
 
-        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeeDRE(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDRE(int accountPlanId, int year, int typeClassification)
         {
             var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
