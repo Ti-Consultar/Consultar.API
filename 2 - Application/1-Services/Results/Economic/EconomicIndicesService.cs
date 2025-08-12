@@ -352,12 +352,12 @@ namespace _2___Application._1_Services.Results
 
                 decimal provisaoCSLL = monthDRE.Totalizer
                    .SelectMany(t => t.Classifications)
-                   .Where(c => c.Name == "Despesas com Depreciação")
+                   .Where(c => c.Name == "Provisão para CSLL")
                    .Sum(c => c.Value);
 
                 decimal provisaoIRPJ = monthDRE.Totalizer
                    .SelectMany(t => t.Classifications)
-                   .Where(c => c.Name == "Despesas com Depreciação")
+                   .Where(c => c.Name == "Provisão para IRPJ")
                    .Sum(c => c.Value);
 
                 decimal provisaoIRPSCSLL = provisaoIRPJ - provisaoCSLL;
