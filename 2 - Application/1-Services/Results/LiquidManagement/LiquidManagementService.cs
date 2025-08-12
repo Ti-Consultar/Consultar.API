@@ -223,7 +223,7 @@ namespace _2___Application._1_Services.Results
 
             foreach (var mes in painelDRE.Months.OrderBy(m => m.DateMonth))
             {
-                var lucroMes = mes.Totalizer.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
+                var lucroMes = mes.Totalizer.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
                 acumulado += lucroMes;
                 lucroLiquidoAcumuladoPorMes[mes.DateMonth] = acumulado;
             }
