@@ -372,7 +372,7 @@ namespace _2___Application._1_Services.Results
                 var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
 
                 var estoque = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
-                var receitaMensal = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "Receita Operacional Bruta")?.TotalValue ?? 0;
+                var receitaMensal = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
                 var cliente = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
                 var fornecedor = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
 
@@ -392,7 +392,7 @@ namespace _2___Application._1_Services.Results
                     cicloNCG = (ncg / receitaMensal) * multiplicadorDias;
                 }
 
-                var cicloFinanceiroOperacoesPrincipaisNCG = (pME + pMR) - pMP;
+                var cicloFinanceiroOperacoesPrincipaisNCG = pME + pMR + pMP;
 
                 var giroPME = pME != 0 ? 30 / pME : 0;
                 var giroPMR = pMR != 0 ? 30 / pMR : 0;
