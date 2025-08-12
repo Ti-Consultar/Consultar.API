@@ -96,7 +96,7 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
 
                 decimal somaPassivo = fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal ;
 
-                decimal necessidadeDeCapitalDeGiro = somaAtivos + somaPassivo;
+                decimal necessidadeDeCapitalDeGiro = somaAtivos - somaPassivo;
 
 
                 decimal realizavelLongoPrazo = monthAtivo?.Totalizer
