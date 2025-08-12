@@ -244,7 +244,7 @@ namespace _2___Application._1_Services.Results
 
                 var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
                 var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
-                var ncg = valorAtivoOperacional - valorPassivoOperacional;
+                var ncg = valorAtivoOperacional + valorPassivoOperacional;
 
                 decimal pMR = 0;
                 decimal pME = 0;
@@ -254,13 +254,13 @@ namespace _2___Application._1_Services.Results
                 if (receitaLiquidaAcumulada > 0)
                 {
                     int multiplicadorDias = dateMonth * 30;
-                    pMR = (estoque / receitaLiquidaAcumulada) * multiplicadorDias;
-                    pME = (cliente / receitaLiquidaAcumulada) * multiplicadorDias;
+                    pMR = (cliente / receitaLiquidaAcumulada) * multiplicadorDias;
+                    pME = (estoque / receitaLiquidaAcumulada) * multiplicadorDias;
                     pMP = (fornecedor / receitaLiquidaAcumulada) * multiplicadorDias;
                     cicloNCG = (ncg / receitaLiquidaAcumulada) * multiplicadorDias;
                 }
 
-                var cicloFinanceiroOperacoesPrincipaisNCG = (pME + pMR) - pMP;
+                var cicloFinanceiroOperacoesPrincipaisNCG = pME + pMR + pMP;
 
                 capitalDinamics.Add(new CapitalDynamicsResponseDto
                 {
