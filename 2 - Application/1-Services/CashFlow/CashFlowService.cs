@@ -154,16 +154,16 @@ namespace _2___Application._1_Services.CashFlow
                   .FirstOrDefault(c => c.Name == "Investimentos")?.TotalValue ?? 0;
 
                 // Variações
-                decimal variacaoClientes = (clientes - (previousMonth?.Clientes ?? 0)) * -1;
-                decimal variacaoEstoques = (estoque - (previousMonth?.Estoques ?? 0)) * -1;
-                decimal variacaoOutrosAtivosOperacionais = (outrosAtivosOperacionaisTotal - (previousMonth?.OutrosAtivosOperacionais ?? 0)) * -1;
+                decimal variacaoClientes = (clientes + (previousMonth?.Clientes ?? 0)) * -1;
+                decimal variacaoEstoques = (estoque + (previousMonth?.Estoques ?? 0)) * -1;
+                decimal variacaoOutrosAtivosOperacionais = (outrosAtivosOperacionaisTotal + (previousMonth?.OutrosAtivosOperacionais ?? 0)) * -1;
                 decimal variacaoDepreciacaoAmortAcumulada = (depreciacaoAmortAcumulada - (previousMonth?.DepreciacaoAmortizacao ?? 0));
-                decimal variacaoFornecedores = (fornecedores - (previousMonth?.Fornecedores ?? 0));
-                decimal variacaoObrigacoes = (obrigacoesTributariasETrabalhistas - (previousMonth?.ObrigacoesTributariasTrabalhistas ?? 0)) ;
-                decimal variacaoOutrosPassivosOperacionais = (outrosPassivosOperacionaisTotal - (previousMonth?.OutrosPassivosOperacionais ?? 0));
-                decimal variacaoAtivoNaoCirculante = (realizavelLongoPrazo - (previousMonth?.AtivoNaoCirculante ?? 0)) * -1;
-                decimal variacaoInvestimento = (investimentos - (previousMonth?.VariacaoInvestimento ?? 0)) * -1;
-                decimal variacaoPassivoNaoCirculante = (exigivelLongoPrazo - (previousMonth?.PassivoNaoCirculante ?? 0));
+                decimal variacaoFornecedores = (fornecedores + (previousMonth?.Fornecedores ?? 0));
+                decimal variacaoObrigacoes = (obrigacoesTributariasETrabalhistas + (previousMonth?.ObrigacoesTributariasTrabalhistas ?? 0)) ;
+                decimal variacaoOutrosPassivosOperacionais = (outrosPassivosOperacionaisTotal + (previousMonth?.OutrosPassivosOperacionais ??S 0));
+                decimal variacaoAtivoNaoCirculante = (realizavelLongoPrazo + (previousMonth?.AtivoNaoCirculante ?? 0)) * -1;
+                decimal variacaoInvestimento = (investimentos + (previousMonth?.VariacaoInvestimento ?? 0)) * -1;
+                decimal variacaoPassivoNaoCirculante = (exigivelLongoPrazo + (previousMonth?.PassivoNaoCirculante ?? 0));
 
 
 
