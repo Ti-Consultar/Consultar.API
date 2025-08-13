@@ -153,7 +153,7 @@ namespace _2___Application._1_Services.CashFlow
                 var investimentos = monthAtivo?.Totalizer
                   .FirstOrDefault(c => c.Name == "Investimentos")?.TotalValue ?? 0;
 
-                investimentoAnterior = investimentos; 
+              
 
                 // Variações
                 decimal variacaoClientes = (clientes + (previousMonth?.Clientes ?? 0)) * -1;
@@ -167,7 +167,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoInvestimento = investimentos - investimentoAnterior ;
                 decimal variacaoPassivoNaoCirculante = (exigivelLongoPrazo + (previousMonth?.PassivoNaoCirculante ?? 0));
 
-
+                investimentoAnterior = investimentos;
 
                 decimal variacaoPatrimonioLiquido = patrimonioLiquido  - lucroLiquido.TotalValue;
                
