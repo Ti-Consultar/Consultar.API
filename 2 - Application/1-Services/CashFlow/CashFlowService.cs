@@ -111,6 +111,8 @@ namespace _2___Application._1_Services.CashFlow
 
                 var lucroLiquido = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
 
+                var teste = lucroLiquido.TotalValue;
+
                 if (lucroLiquido != null && resultadoAntes != null)
                     lucroLiquido.TotalValue = resultadoAntes.TotalValue + provisaoCSLL + provisaoIRPJ;
 
@@ -163,7 +165,7 @@ namespace _2___Application._1_Services.CashFlow
 
 
                 decimal variacaoPatrimonioLiquido = patrimonioLiquido  - lucroLiquido.TotalValue;
-                var teste = lucroLiquido.TotalValue + provisaoCSLL + provisaoCSLL;
+               
 
 
                 decimal variacaoPL = previousMonth != null ? lucroLiquido.TotalValue - previousMonth.LucroOperacionalLiquido : 0;
