@@ -163,7 +163,7 @@ namespace _2___Application._1_Services.CashFlow
 
 
                 decimal variacaoPatrimonioLiquido = patrimonioLiquido  - lucroLiquido.TotalValue;
-
+                var teste = lucroLiquido.TotalValue + provisaoCSLL + provisaoCSLL;
 
 
                 decimal variacaoPL = previousMonth != null ? lucroLiquido.TotalValue - previousMonth.LucroOperacionalLiquido : 0;
@@ -190,7 +190,7 @@ namespace _2___Application._1_Services.CashFlow
                     OutrosResultados = outrosResultados,
                     ResultadosFinanceiros = resultadosFinanceiros,
                     Provisoes = impostos,
-                    LucroOperacionalLiquido = resultadoAntes.TotalValue,
+                    LucroOperacionalLiquido = teste,
                     DepreciacaoAmortizacao = variacaoDepreciacaoAmortAcumulada,
                     VariacaoNCG = variacaoNCG,
                     Clientes = variacaoClientes,
