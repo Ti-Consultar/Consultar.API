@@ -160,7 +160,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoDepreciacaoAmortAcumulada = (depreciacaoAmortAcumulada - (previousMonth?.DepreciacaoAmortizacao ?? 0));
                 decimal variacaoFornecedores = (fornecedores + (previousMonth?.Fornecedores ?? 0));
                 decimal variacaoObrigacoes = (obrigacoesTributariasETrabalhistas + (previousMonth?.ObrigacoesTributariasTrabalhistas ?? 0)) ;
-                decimal variacaoOutrosPassivosOperacionais = (outrosPassivosOperacionaisTotal + (previousMonth?.OutrosPassivosOperacionais ??S 0));
+                decimal variacaoOutrosPassivosOperacionais = (outrosPassivosOperacionaisTotal + (previousMonth?.OutrosPassivosOperacionais ?? 0));
                 decimal variacaoAtivoNaoCirculante = (realizavelLongoPrazo + (previousMonth?.AtivoNaoCirculante ?? 0)) * -1;
                 decimal variacaoInvestimento = (investimentos + (previousMonth?.VariacaoInvestimento ?? 0)) * -1;
                 decimal variacaoPassivoNaoCirculante = (exigivelLongoPrazo + (previousMonth?.PassivoNaoCirculante ?? 0));
