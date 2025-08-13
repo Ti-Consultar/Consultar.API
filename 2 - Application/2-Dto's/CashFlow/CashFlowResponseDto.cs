@@ -43,7 +43,7 @@ namespace _2___Application._2_Dto_s.CashFlow
         public decimal  OutrosPassivosOperacionais { get; set; }
         public decimal  FluxoDeCaixaOperacional { get; set; }
         public decimal  AtivoNaoCirculante { get; set; }
-        public decimal  VariacaoInvetimento { get; set; }
+        public decimal  VariacaoInvestimento { get; set; }
         public decimal  VariacaoImobilizado { get; set; }
         public decimal  FluxoDeCaixaLivre { get; set; }
         public decimal  CaptacoesAmortizacoesFinanceira { get; set; }

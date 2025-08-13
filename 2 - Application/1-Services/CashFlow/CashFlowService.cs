@@ -162,7 +162,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoObrigacoes = (obrigacoesTributariasETrabalhistas - (previousMonth?.ObrigacoesTributariasTrabalhistas ?? 0)) ;
                 decimal variacaoOutrosPassivosOperacionais = (outrosPassivosOperacionaisTotal - (previousMonth?.OutrosPassivosOperacionais ?? 0));
                 decimal variacaoAtivoNaoCirculante = (realizavelLongoPrazo - (previousMonth?.AtivoNaoCirculante ?? 0)) * -1;
-                decimal variacaoInvestimento = (investimentos - (previousMonth?.VariacaoInvetimento ?? 0)) * -1;
+                decimal variacaoInvestimento = (investimentos - (previousMonth?.VariacaoInvestimento ?? 0)) * -1;
                 decimal variacaoPassivoNaoCirculante = (exigivelLongoPrazo - (previousMonth?.PassivoNaoCirculante ?? 0));
 
 
@@ -206,7 +206,7 @@ namespace _2___Application._1_Services.CashFlow
                     OutrosPassivosOperacionais = variacaoOutrosPassivosOperacionais,
                     FluxoDeCaixaOperacional = fluxoCaixaOperacional,
                     AtivoNaoCirculante = variacaoAtivoNaoCirculante,
-                    VariacaoInvetimento = variacaoInvestimento,
+                    VariacaoInvestimento = variacaoInvestimento,
                     VariacaoImobilizado = imobilizado,
                     FluxoDeCaixaLivre = fluxoCaixaLivre,
                     CaptacoesAmortizacoesFinanceira = emprestimoEFinanciamento,
