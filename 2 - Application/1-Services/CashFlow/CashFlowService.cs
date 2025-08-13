@@ -80,7 +80,7 @@ namespace _2___Application._1_Services.CashFlow
                     .FirstOrDefault(c => c.Name == "Receitas Financeiras")?.Value ?? 0;
                 var despesaFinanceira = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Despesas Financeiras")?.Value ?? 0;
-                var resultadosFinanceiros = receitaFinanceira - despesaFinanceira;
+                var resultadosFinanceiros = receitaFinanceira + despesaFinanceira;
 
                 var custoMercadorias = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "(-) Custos das Mercadorias")?.Value ?? 0;
@@ -150,6 +150,9 @@ namespace _2___Application._1_Services.CashFlow
                 decimal ncgTotal = necessidadeDeCapitalDeGiro + ativoFinanceiro;
                 decimal investimentosAtivosFixos = capitalInvestidoLiquido - ncgTotal;
 
+                var investimentos = monthAtivo?.Totalizer
+                  .FirstOrDefault(c => c.Name == "Investimentos")?.TotalValue ?? 0;
+
                 // Variações
                 decimal variacaoClientes = (clientes - (previousMonth?.Clientes ?? 0)) * -1;
                 decimal variacaoEstoques = (estoque - (previousMonth?.Estoques ?? 0)) * -1;
@@ -159,7 +162,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoObrigacoes = (obrigacoesTributariasETrabalhistas - (previousMonth?.ObrigacoesTributariasTrabalhistas ?? 0)) ;
                 decimal variacaoOutrosPassivosOperacionais = (outrosPassivosOperacionaisTotal - (previousMonth?.OutrosPassivosOperacionais ?? 0));
                 decimal variacaoAtivoNaoCirculante = (realizavelLongoPrazo - (previousMonth?.AtivoNaoCirculante ?? 0)) * -1;
-                decimal variacaoInvestimento = (investimentosAtivosFixos - (previousMonth?.VariacaoInvetimento ?? 0)) * -1;
+                decimal variacaoInvestimento = (investimentos - (previousMonth?.VariacaoInvetimento ?? 0)) * -1;
                 decimal variacaoPassivoNaoCirculante = (exigivelLongoPrazo - (previousMonth?.PassivoNaoCirculante ?? 0));
 
 
