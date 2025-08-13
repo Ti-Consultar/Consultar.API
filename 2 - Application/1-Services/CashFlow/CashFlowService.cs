@@ -63,7 +63,7 @@ namespace _2___Application._1_Services.CashFlow
             var cashFlow = new List<CashFlowResponseDto>();
 
             CashFlowResponseDto previousMonth = null;
-
+            decimal investimentoAnterior = 0;
             foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
             {
                 var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
@@ -153,6 +153,8 @@ namespace _2___Application._1_Services.CashFlow
                 var investimentos = monthAtivo?.Totalizer
                   .FirstOrDefault(c => c.Name == "Investimentos")?.TotalValue ?? 0;
 
+                investimentoAnterior = investimentos; 
+
                 // Variações
                 decimal variacaoClientes = (clientes + (previousMonth?.Clientes ?? 0)) * -1;
                 decimal variacaoEstoques = (estoque + (previousMonth?.Estoques ?? 0)) * -1;
@@ -162,7 +164,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoObrigacoes = (obrigacoesTributariasETrabalhistas + (previousMonth?.ObrigacoesTributariasTrabalhistas ?? 0)) ;
                 decimal variacaoOutrosPassivosOperacionais = (outrosPassivosOperacionaisTotal + (previousMonth?.OutrosPassivosOperacionais ?? 0));
                 decimal variacaoAtivoNaoCirculante = (realizavelLongoPrazo + (previousMonth?.AtivoNaoCirculante ?? 0)) * -1;
-                decimal variacaoInvestimento = (investimentos + (previousMonth?.VariacaoInvestimento ?? 0)) * -1;
+                decimal variacaoInvestimento = (investimentos + investimentoAnterior );
                 decimal variacaoPassivoNaoCirculante = (exigivelLongoPrazo + (previousMonth?.PassivoNaoCirculante ?? 0));
 
 
