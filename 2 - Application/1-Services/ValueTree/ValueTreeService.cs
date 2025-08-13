@@ -995,7 +995,7 @@ namespace _2___Application._1_Services.ValueTree
                     ebitda.TotalValue = lucroAntes.TotalValue - despesasDepreciacao;
 
                 if (nopat != null && lucroAntes != null)
-                    nopat.TotalValue = (lucroAntes.TotalValue + provisaoCSLL + provisaoIRPJ) * -1;
+                    nopat.TotalValue = (lucroAntes.TotalValue + provisaoCSLL + provisaoIRPJ);
 
                 // margens
                 var margemBruta = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Bruta %");
