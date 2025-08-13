@@ -164,7 +164,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoObrigacoes = (obrigacoesTributariasETrabalhistas + (previousMonth?.ObrigacoesTributariasTrabalhistas ?? 0)) ;
                 decimal variacaoOutrosPassivosOperacionais = (outrosPassivosOperacionaisTotal + (previousMonth?.OutrosPassivosOperacionais ?? 0));
                 decimal variacaoAtivoNaoCirculante = (realizavelLongoPrazo + (previousMonth?.AtivoNaoCirculante ?? 0)) * -1;
-                decimal variacaoInvestimento = (investimentos - investimentoAnterior );
+                decimal variacaoInvestimento = investimentos - investimentoAnterior ;
                 decimal variacaoPassivoNaoCirculante = (exigivelLongoPrazo + (previousMonth?.PassivoNaoCirculante ?? 0));
 
 
