@@ -156,8 +156,8 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
                         PosicaoFinanceiraCurtoPrazo = posicaoFinanceiraDeCurtoPrazo,
                         ExigivelaLongoPrazoFinanceiro = exigivelLongoPrazo,
                         PosicaoFinanceiraTerceiros = posicaoFinanceiraTerceiros,
-                        PatrimonioLiquido = patrimonioLiquido, 
-                        EstruturaDeCapital = estruturaDeCapital,
+                        PatrimonioLiquido = patrimonioLiquido * -1, 
+                        EstruturaDeCapital = estruturaDeCapital * -1,
                         
                     }
 
