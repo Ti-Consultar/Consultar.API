@@ -112,7 +112,7 @@ namespace _2___Application._1_Services.CashFlow
                 var lucroLiquido = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
 
                 if (lucroLiquido != null && resultadoAntes != null)
-                    lucroLiquido.TotalValue = resultadoAntes.TotalValue - provisaoCSLL - provisaoIRPJ;
+                    lucroLiquido.TotalValue = resultadoAntes.TotalValue + provisaoCSLL + provisaoIRPJ;
 
 
                 var patrimonioLiquido = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
@@ -190,7 +190,7 @@ namespace _2___Application._1_Services.CashFlow
                     OutrosResultados = outrosResultados,
                     ResultadosFinanceiros = resultadosFinanceiros,
                     Provisoes = impostos,
-                    LucroOperacionalLiquido = lucroLiquido.TotalValue,
+                    LucroOperacionalLiquido = resultadoAntes.TotalValue,
                     DepreciacaoAmortizacao = variacaoDepreciacaoAmortAcumulada,
                     VariacaoNCG = variacaoNCG,
                     Clientes = variacaoClientes,
