@@ -63,7 +63,20 @@ namespace _2___Application._1_Services.CashFlow
             var cashFlow = new List<CashFlowResponseDto>();
 
             CashFlowResponseDto previousMonth = null;
+
             decimal investimentoAnterior = 0;
+            decimal clienteAnterior = 0;
+            decimal estoqueAnterior = 0;
+            decimal outrosAtivosAnterior = 0;
+            decimal depreciacaoAnterior = 0;
+            decimal fornecedoresAnterior = 0;
+            decimal obrigacoesTributariasETrabalhistasAnterior = 0;
+            decimal outrosPassivosOperacionaisAnterior = 0;
+            decimal AtivoNaoCirculanteAnterior = 0;
+            decimal realizavelLongoPrazoAnterior = 0;
+            decimal exigivelLongoPrazoAnterior = 0;
+            decimal patrimonioLiquidoAnterior = 0;
+
             foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
             {
                 var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
@@ -156,21 +169,35 @@ namespace _2___Application._1_Services.CashFlow
               
 
                 // Variações
-                decimal variacaoClientes = (clientes + (previousMonth?.Clientes ?? 0)) * -1;
-                decimal variacaoEstoques = (estoque + (previousMonth?.Estoques ?? 0)) * -1;
-                decimal variacaoOutrosAtivosOperacionais = (outrosAtivosOperacionaisTotal + (previousMonth?.OutrosAtivosOperacionais ?? 0)) * -1;
-                decimal variacaoDepreciacaoAmortAcumulada = (depreciacaoAmortAcumulada - (previousMonth?.DepreciacaoAmortizacao ?? 0));
-                decimal variacaoFornecedores = (fornecedores + (previousMonth?.Fornecedores ?? 0));
-                decimal variacaoObrigacoes = (obrigacoesTributariasETrabalhistas + (previousMonth?.ObrigacoesTributariasTrabalhistas ?? 0)) ;
-                decimal variacaoOutrosPassivosOperacionais = (outrosPassivosOperacionaisTotal + (previousMonth?.OutrosPassivosOperacionais ?? 0));
-                decimal variacaoAtivoNaoCirculante = (realizavelLongoPrazo + (previousMonth?.AtivoNaoCirculante ?? 0)) * -1;
-                decimal variacaoInvestimento = investimentos - investimentoAnterior ;
-                decimal variacaoPassivoNaoCirculante = (exigivelLongoPrazo + (previousMonth?.PassivoNaoCirculante ?? 0));
+                decimal variacaoClientes = clientes - clienteAnterior * -1;
+                decimal variacaoEstoques = estoque - estoqueAnterior * -1;
+                decimal variacaoOutrosAtivosOperacionais = outrosAtivosOperacionaisTotal - outrosAtivosAnterior * -1;
+                decimal variacaoDepreciacaoAmortAcumulada = depreciacaoAmortAcumulada - depreciacaoAnterior;
+                decimal variacaoFornecedores = fornecedores - fornecedoresAnterior;
+                decimal variacaoObrigacoes = obrigacoesTributariasETrabalhistas - obrigacoesTributariasETrabalhistasAnterior ;
+                decimal variacaoOutrosPassivosOperacionais = outrosPassivosOperacionaisTotal - outrosPassivosOperacionaisAnterior;
+                decimal variacaoAtivoNaoCirculante = realizavelLongoPrazo - AtivoNaoCirculanteAnterior;
+                decimal variacaoInvestimento = investimentos - investimentoAnterior;
+                decimal variacaoPassivoNaoCirculante = exigivelLongoPrazo - exigivelLongoPrazoAnterior;
+
+                decimal variacaoPatrimonioLiquido = patrimonioLiquido - patrimonioLiquidoAnterior;
+
 
                 investimentoAnterior = investimentos;
+                clienteAnterior = clientes;
+                estoqueAnterior = estoque;
+                outrosAtivosAnterior = outrosAtivosOperacionaisTotal;
+                depreciacaoAnterior = depreciacaoAmortAcumulada;
+                fornecedoresAnterior = fornecedores;
+                obrigacoesTributariasETrabalhistasAnterior = obrigacoesTributariasETrabalhistas;
+                outrosPassivosOperacionaisAnterior = outrosPassivosOperacionaisTotal;
+                AtivoNaoCirculanteAnterior = realizavelLongoPrazo;
+                exigivelLongoPrazoAnterior = exigivelLongoPrazo;
+                patrimonioLiquidoAnterior = patrimonioLiquido;
 
-                decimal variacaoPatrimonioLiquido = patrimonioLiquido  - lucroLiquido.TotalValue;
-               
+
+
+
 
 
                 decimal variacaoPL = previousMonth != null ? lucroLiquido.TotalValue - previousMonth.LucroOperacionalLiquido : 0;
@@ -213,7 +240,7 @@ namespace _2___Application._1_Services.CashFlow
                     FluxoDeCaixaLivre = fluxoCaixaLivre,
                     CaptacoesAmortizacoesFinanceira = emprestimoEFinanciamento,
                     PassivoNaoCirculante = variacaoPassivoNaoCirculante,
-                    VariacaoPatrimonioLiquido = variacaoPL,
+                    VariacaoPatrimonioLiquido = variacaoPatrimonioLiquido,
                     FluxoDeCaixaDaEmpresa = fluxoDeCaixaEmpresa,
                     DisponibilidadeInicioDoPeriodo = previousMonth?.DisponibilidadeFinalDoPeriodo ?? 0,
                     DisponibilidadeFinalDoPeriodo = disponibilidade,
