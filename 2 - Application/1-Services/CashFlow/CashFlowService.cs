@@ -206,7 +206,7 @@ namespace _2___Application._1_Services.CashFlow
                     OutrosPassivosOperacionais = variacaoOutrosPassivosOperacionais,
                     FluxoDeCaixaOperacional = fluxoCaixaOperacional,
                     AtivoNaoCirculante = variacaoAtivoNaoCirculante,
-                    VariacaoInvetimento = variacaoInvestimento,
+                    VariacaoInvetimento = previousMonth.VariacaoInvetimento,
                     VariacaoImobilizado = imobilizado,
                     FluxoDeCaixaLivre = fluxoCaixaLivre,
                     CaptacoesAmortizacoesFinanceira = emprestimoEFinanciamento,
