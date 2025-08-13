@@ -140,7 +140,7 @@ namespace _2___Application._1_Services.Results
                     .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
                 // ⚠️ Evita divisão por zero
-                decimal roi = lucroLiquido != 0 ? nopat / lucroLiquido.Value : 0;
+                decimal roi = lucroLiquido != 0 ? nopat / lucroLiquido : 0;
                 decimal roe = patrimonioLiquido != 0 ? lucroLiquido / patrimonioLiquido : 0;
                 decimal roeInicial = patrimonioLiquidoAnoAnterior != 0 ? lucroLiquido / patrimonioLiquidoAnoAnterior : 0;
 
@@ -149,7 +149,7 @@ namespace _2___Application._1_Services.Results
                     Name = monthAtivo.Name,
                     DateMonth = monthAtivo.DateMonth,
                     ROI = roi,
-                    LiquidoMensalROE = roe,
+                    LiquidoMensalROE = roe * -1,
                     LiquidoInicioROE = roeInicial,
                 });
             }
