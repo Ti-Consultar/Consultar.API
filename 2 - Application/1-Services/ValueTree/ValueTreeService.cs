@@ -242,9 +242,40 @@ namespace _2___Application._1_Services.ValueTree
             var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == month);
             var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == month);
             var monthOperationalEfficiency = painelOperationalEfficiency
-     .OperationalEfficiency
-     .Months
-     .FirstOrDefault(m => m.DateMonth == month);
+                .OperationalEfficiency
+                        .Months
+                    .FirstOrDefault(m => m.DateMonth == month);
+
+
+            var meses = painelOperationalEfficiency.OperationalEfficiency.Months;
+
+            var monthOperationalEfficiencyAcum = new
+            {
+                ReceitasLiquidas = meses.Sum(m => m.ReceitasLiquidas),
+                CustosDespesas = meses.Sum(m => m.CustosDespesas),
+                EBITDA = meses.Sum(m => m.EBITDA),
+                MargemEBITDA = meses.Sum(m => m.MargemEBITDA),
+                LucroOperacionalAntesJurosImpostos = meses.Sum(m => m.LucroOperacionalAntesJurosImpostos),
+                ResultadoFinanceiro = meses.Sum(m => m.ResultadoFinanceiro),
+                Impostos = meses.Sum(m => m.Impostos),
+                LucroLiquido = meses.Sum(m => m.LucroLiquido),
+                NOPAT = meses.Sum(m => m.NOPAT),
+                MargemNOPAT = meses.Sum(m => m.MargemNOPAT),
+                Disponivel = meses.Sum(m => m.Disponivel),
+                Clientes = meses.Sum(m => m.Clientes),
+                Estoques = meses.Sum(m => m.Estoques),
+                Fornecedores = meses.Sum(m => m.Fornecedores),
+                NCGCEF = meses.Sum(m => m.NCGCEF),
+                NCGTotal = meses.Sum(m => m.NCGTotal),
+                InvestimentosAtivosFixos = meses.Sum(m => m.InvestimentosAtivosFixos),
+                CapitalInvestidoLiquido = meses.Sum(m => m.CapitalInvestidoLiquido),
+                CapitalTurnover = meses.Sum(m => m.CapitalTurnover),
+                ROIC = meses.Sum(m => m.ROIC),
+                WACC = meses.Sum(m => m.WACC),
+                EVASPREAD = meses.Sum(m => m.EVASPREAD),
+                EVA = meses.Sum(m => m.EVA)
+            };
+
 
 
             // === Acumulados do ano ===
@@ -374,17 +405,22 @@ namespace _2___Application._1_Services.ValueTree
 
 
             decimal capitalInvestidoMes = monthOperationalEfficiency.CapitalInvestidoLiquido;
+          roicMes= monthOperationalEfficiency.ROIC;
+            // fazer para todos os que dependem de eficiencia operacional obtendo ele;
+            // fazer para o acumulado esse operational Eficiency
 
-            decimal capitalInvestidoAcum = necessidadeDeCapitalDeGiroAcum + realizavelLongoPrazoAcum + exigivelLongoPrazoAcum + ativosFixosAcum;
 
-            if (capitalInvestidoMes != 0) roicMes = (nOPATMes / capitalInvestidoMes) * 100;
-            if (capitalInvestidoAcum != 0) roicAcum = (nOPATAcum / capitalInvestidoAcum) * 100;
 
-            decimal spread = Math.Round( roicMes - wacc, 2);
-            decimal spreadAcumulado = Math.Round( roicAcum - waccAcumulado, 2);
+            decimal capitalInvestidoAcum = monthOperationalEfficiencyAcum.CapitalInvestidoLiquido;
 
-            decimal eva = capitalInvestidoMes != 0 ? spread * capitalInvestidoMes : 0;
-            decimal evaAcmulado = capitalInvestidoAcum != 0 ? spreadAcumulado * capitalInvestidoAcum : 0;
+
+            roicAcum = monthOperationalEfficiencyAcum.ROIC;
+
+            decimal spread = Math.Round(monthOperationalEfficiency.EVASPREAD, 2);
+            decimal spreadAcumulado = Math.Round(monthOperationalEfficiencyAcum.EVASPREAD, 2);
+
+            decimal eva = Math.Round(monthOperationalEfficiency.EVA, 2);
+            decimal evaAcmulado = monthOperationalEfficiencyAcum.EVA;
 
 
             // === DTOs ===
