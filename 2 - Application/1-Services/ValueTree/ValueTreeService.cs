@@ -263,6 +263,7 @@ namespace _2___Application._1_Services.ValueTree
 
             var parameter = await _parameterRepository.GetByAccountPlanIdYear(accountPlanId, year);
             decimal wacc = (parameter.FirstOrDefault(a => a.Name == "WACC")?.ParameterValue ?? 0) / 12;
+            decimal waccAcumulado = (parameter.FirstOrDefault(a => a.Name == "WACC")?.ParameterValue ?? 0);
 
             // === Custos Variáveis ===
             decimal custoMercadoriasMes = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
@@ -338,12 +339,31 @@ namespace _2___Application._1_Services.ValueTree
             decimal nOPATMes = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
             decimal nOPATAcum = acumuladoDRE.ContainsKey("NOPAT") ? acumuladoDRE["NOPAT"] : 0;
 
+            decimal margemLajir = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+               .FirstOrDefault(c => c.Name == "Margem LAJIR %")?.Value ?? 0;
+            decimal margemLajirAcumulada = acumuladoDRE.ContainsKey("Margem LAJIR %") ? acumuladoDRE["Margem LAJIR %"] : 0;
+
+
+            decimal margemContribuicao = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+               .FirstOrDefault(c => c.Name == "Margem Contribuição %")?.Value ?? 0;
+            decimal margemContribuicaoAcumulada = acumuladoDRE.ContainsKey("Margem Contribuição %") ? acumuladoDRE["Margem Contribuição %"] : 0;
+
+            decimal patrimonioLiquido = monthPassivo?.Totalizer
+         .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+
             decimal roicMes = 0, roicAcum = 0;
             decimal capitalInvestidoMes = disponibilidadeMes + clientesMes + estoqueMes + outrosAtivosOpMes - (fornecedoresMes + outrosPassivosOpMes) + realizavelLongoPrazoMes + exigivelLongoPrazoMes + ativosFixosMes;
             decimal capitalInvestidoAcum = disponibilidadeAcum + clientesAcum + estoqueAcum + outrosAtivosOpAcum - (fornecedoresAcum + outrosPassivosOpAcum) + realizavelLongoPrazoAcum + exigivelLongoPrazoAcum + ativosFixosAcum;
 
             if (capitalInvestidoMes != 0) roicMes = (nOPATMes / capitalInvestidoMes) * 100;
             if (capitalInvestidoAcum != 0) roicAcum = (nOPATAcum / capitalInvestidoAcum) * 100;
+
+            decimal spread = roicMes - wacc;
+            decimal spreadAcumulado = roicAcum - wacc;
+
+            decimal eva = capitalInvestidoMes != 0 ? spread * capitalInvestidoMes : 0;
+            decimal evaAcmulado = capitalInvestidoAcum != 0 ? spreadAcumulado * capitalInvestidoAcum : 0;
+
 
             // === DTOs ===
             var economic = new EconomicViewDto
@@ -359,7 +379,11 @@ namespace _2___Application._1_Services.ValueTree
                 NOPAT = nOPATMes,
                 NOPATAcumulado = nOPATAcum,
                 Impostos = impostosMes,
-                ImpostosAcumulado = impostosAcum
+                ImpostosAcumulado = impostosAcum,
+                LAJIR = margemLajir,
+                LAJIRAcumulado = margemLajirAcumulada,
+                MargemContribuicao = margemContribuicao,
+                MargemContribuicaoAcumulado = margemContribuicaoAcumulada
             };
 
             var financial = new FinancialViewDto
@@ -395,8 +419,12 @@ namespace _2___Application._1_Services.ValueTree
                 ROIC = roicMes,
                 ROICAcumulado = roicAcum,
                 WACC = wacc,
+                WACCAcumulado = waccAcumulado,
                 SPREAD = roicMes - wacc,
-                SPREADAcumulado = roicAcum - wacc
+                SPREADAcumulado = roicAcum - wacc,
+                EVA = eva,
+                EVA_Acumulado = evaAcmulado
+                
             };
 
             return new ValueTreeResultDto
