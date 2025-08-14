@@ -351,9 +351,24 @@ namespace _2___Application._1_Services.ValueTree
             decimal patrimonioLiquido = monthPassivo?.Totalizer
          .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
+            decimal obrigacoesTributariasETrabalhistasMes = monthPassivo?.Totalizer
+                  .FirstOrDefault(t => t.Name == "Obrigações Tributárias e Trabalhistas")?.TotalValue ?? 0;
+            decimal obrigacoesTributariasETrabalhistasAcum = acumuladoDRE.ContainsKey("Obrigações Tributárias e Trabalhistas") ? acumuladoDRE["Obrigações Tributárias e Trabalhistas"] : 0;
+
+            decimal somaAtivos = disponibilidadeMes + clientesMes + estoqueMes + outrosAtivosOpMes;
+            decimal somaPassivo = fornecedoresMes + obrigacoesTributariasETrabalhistasMes + outrosPassivosOpMes;
+            decimal necessidadeDeCapitalDeGiro = somaAtivos + somaPassivo;
+
+            decimal somaAtivosAcum = disponibilidadeAcum + clientesAcum + estoqueAcum + outrosAtivosOpAcum;
+            decimal somaPassivoAcum = fornecedoresAcum + obrigacoesTributariasETrabalhistasAcum + outrosAtivosOpAcum;
+            decimal necessidadeDeCapitalDeGiroAcum = somaAtivosAcum + somaPassivoAcum;
+
             decimal roicMes = 0, roicAcum = 0;
-            decimal capitalInvestidoMes = disponibilidadeMes + clientesMes + estoqueMes + outrosAtivosOpMes - (fornecedoresMes + outrosPassivosOpMes) + realizavelLongoPrazoMes + exigivelLongoPrazoMes + ativosFixosMes;
-            decimal capitalInvestidoAcum = disponibilidadeAcum + clientesAcum + estoqueAcum + outrosAtivosOpAcum - (fornecedoresAcum + outrosPassivosOpAcum) + realizavelLongoPrazoAcum + exigivelLongoPrazoAcum + ativosFixosAcum;
+
+
+            decimal capitalInvestidoMes = necessidadeDeCapitalDeGiro + realizavelLongoPrazoMes + exigivelLongoPrazoMes + ativosFixosMes;
+
+            decimal capitalInvestidoAcum = necessidadeDeCapitalDeGiroAcum + realizavelLongoPrazoAcum + exigivelLongoPrazoAcum + ativosFixosAcum;
 
             if (capitalInvestidoMes != 0) roicMes = (nOPATMes / capitalInvestidoMes) * 100;
             if (capitalInvestidoAcum != 0) roicAcum = (nOPATAcum / capitalInvestidoAcum) * 100;
@@ -417,11 +432,11 @@ namespace _2___Application._1_Services.ValueTree
                 CapitalInvestido = capitalInvestidoMes,
                 CapitalInvestidoAcumulado = capitalInvestidoAcum,
                 ROIC = Math.Round(roicMes , 2),
-                ROICAcumulado = roicAcum,
-                WACC = wacc,
-                WACCAcumulado = waccAcumulado,
-                SPREAD = roicMes - wacc,
-                SPREADAcumulado = roicAcum - wacc,
+                ROICAcumulado = Math.Round(roicAcum, 2),
+                WACC = Math.Round(wacc,2),
+                WACCAcumulado = Math.Round(waccAcumulado, 2),
+                SPREAD = spread,
+                SPREADAcumulado = spreadAcumulado,
                 EVA = eva,
                 EVA_Acumulado = evaAcmulado
                 
