@@ -215,7 +215,7 @@ namespace _2___Application._1_Services.CashFlow
 
 
                 var fluxoCaixaOperacional = (variacaoNCG + variacaoDepreciacaoAmortAcumulada) - teste ;
-                var fluxoCaixaLivre = fluxoCaixaOperacional + variacaoAtivoNaoCirculante - variacaoInvestimento + variacaoPatrimonioLiquido;
+                var fluxoCaixaLivre = fluxoCaixaOperacional + variacaoAtivoNaoCirculante + variacaoInvestimento - variacaoImobilizado;
 
 
                 var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoDepreciacaoAmortAcumulada + variacaoPassivoNaoCirculante + variacaoPatrimonioLiquido;
@@ -247,7 +247,7 @@ namespace _2___Application._1_Services.CashFlow
                     FluxoDeCaixaLivre = fluxoCaixaLivre,
                     CaptacoesAmortizacoesFinanceira = emprestimoEFinanciamento,
                     PassivoNaoCirculante = variacaoPassivoNaoCirculante,
-                    VariacaoPatrimonioLiquido = 1,
+                    VariacaoPatrimonioLiquido = variacaoPatrimonioLiquido,
                     FluxoDeCaixaDaEmpresa = fluxoDeCaixaEmpresa,
                     DisponibilidadeInicioDoPeriodo = previousMonth?.DisponibilidadeFinalDoPeriodo ?? 0,
                     DisponibilidadeFinalDoPeriodo = disponibilidade,
