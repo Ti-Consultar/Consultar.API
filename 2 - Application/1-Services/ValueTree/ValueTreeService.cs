@@ -339,13 +339,13 @@ namespace _2___Application._1_Services.ValueTree
             decimal nOPATMes = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
             decimal nOPATAcum = acumuladoDRE.ContainsKey("NOPAT") ? acumuladoDRE["NOPAT"] : 0;
 
-            decimal margemLajir = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
-               .FirstOrDefault(c => c.Name == "Margem LAJIR %")?.Value ?? 0;
+            decimal margemLajir = monthDRE?.Totalizer
+               .FirstOrDefault(c => c.Name == "Margem LAJIR %")?.TotalValue ?? 0;
             decimal margemLajirAcumulada = acumuladoDRE.ContainsKey("Margem LAJIR %") ? acumuladoDRE["Margem LAJIR %"] : 0;
 
 
-            decimal margemContribuicao = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
-               .FirstOrDefault(c => c.Name == "Margem Contribuição %")?.Value ?? 0;
+            decimal margemContribuicao = monthDRE?.Totalizer
+               .FirstOrDefault(c => c.Name == "Margem Contribuição %")?.TotalValue ?? 0;
             decimal margemContribuicaoAcumulada = acumuladoDRE.ContainsKey("Margem Contribuição %") ? acumuladoDRE["Margem Contribuição %"] : 0;
 
             decimal patrimonioLiquido = monthPassivo?.Totalizer
