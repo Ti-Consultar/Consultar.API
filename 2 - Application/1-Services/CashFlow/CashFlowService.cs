@@ -170,9 +170,9 @@ namespace _2___Application._1_Services.CashFlow
               
 
                 // Variações
-                decimal variacaoClientes = clientes + clienteAnterior ;
-                decimal variacaoEstoques = estoque  + estoqueAnterior ;
-                decimal variacaoOutrosAtivosOperacionais = outrosAtivosOperacionaisTotal + outrosAtivosAnterior ;
+                decimal variacaoClientes = clientes + clienteAnterior * -1;
+                decimal variacaoEstoques = estoque  + estoqueAnterior * -1;
+                decimal variacaoOutrosAtivosOperacionais = outrosAtivosOperacionaisTotal + outrosAtivosAnterior * -1;
                 decimal variacaoDepreciacaoAmortAcumulada = depreciacaoAmortAcumulada - depreciacaoAnterior;
                 decimal variacaoFornecedores = fornecedores - fornecedoresAnterior;
                 decimal variacaoObrigacoes = obrigacoesTributariasETrabalhistas - obrigacoesTributariasETrabalhistasAnterior ;
