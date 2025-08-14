@@ -181,8 +181,10 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoInvestimento = investimentos - investimentoAnterior;
                 decimal variacaoPassivoNaoCirculante = exigivelLongoPrazo - exigivelLongoPrazoAnterior;
 
-                decimal variacaoPatrimonioLiquido = patrimonioLiquido - patrimonioLiquidoAnterior;
+              
                 decimal variacaoImobilizado = imobilizado - imobilizadoAnterior;
+
+                decimal variacaoPL =  patrimonioLiquido - lucroLiquido.TotalValue;
 
 
                 investimentoAnterior = investimentos;
@@ -195,15 +197,17 @@ namespace _2___Application._1_Services.CashFlow
                 outrosPassivosOperacionaisAnterior = outrosPassivosOperacionaisTotal;
                 AtivoNaoCirculanteAnterior = realizavelLongoPrazo;
                 exigivelLongoPrazoAnterior = exigivelLongoPrazo;
-                patrimonioLiquidoAnterior = patrimonioLiquido;
+                patrimonioLiquidoAnterior = variacaoPL;
                 imobilizadoAnterior = imobilizado;
 
 
 
 
+                decimal variacaoPatrimonioLiquido = variacaoPL - patrimonioLiquidoAnterior;
+
+              
 
 
-                decimal variacaoPL = previousMonth != null ? lucroLiquido.TotalValue - previousMonth.LucroOperacionalLiquido : 0;
 
 
                 var variacaoNCG = variacaoClientes + variacaoEstoques + variacaoOutrosAtivosOperacionais + variacaoFornecedores + variacaoObrigacoes + variacaoOutrosPassivosOperacionais;
@@ -211,7 +215,7 @@ namespace _2___Application._1_Services.CashFlow
 
 
                 var fluxoCaixaOperacional = (variacaoNCG + variacaoDepreciacaoAmortAcumulada) - teste ;
-                var fluxoCaixaLivre = fluxoCaixaOperacional + variacaoAtivoNaoCirculante + variacaoInvestimento + variacaoPatrimonioLiquido;
+                var fluxoCaixaLivre = fluxoCaixaOperacional + variacaoAtivoNaoCirculante - variacaoInvestimento + variacaoPatrimonioLiquido;
 
 
                 var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoDepreciacaoAmortAcumulada + variacaoPassivoNaoCirculante + variacaoPatrimonioLiquido;
