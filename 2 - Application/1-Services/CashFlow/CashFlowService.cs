@@ -210,7 +210,7 @@ namespace _2___Application._1_Services.CashFlow
 
 
 
-                var fluxoCaixaOperacional = teste + variacaoDepreciacaoAmortAcumulada - variacaoNCG ;
+                var fluxoCaixaOperacional = (variacaoNCG + variacaoDepreciacaoAmortAcumulada) - teste ;
                 var fluxoCaixaLivre = fluxoCaixaOperacional + variacaoAtivoNaoCirculante + variacaoInvestimento + variacaoPatrimonioLiquido;
 
 
