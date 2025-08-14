@@ -358,8 +358,8 @@ namespace _2___Application._1_Services.ValueTree
             if (capitalInvestidoMes != 0) roicMes = (nOPATMes / capitalInvestidoMes) * 100;
             if (capitalInvestidoAcum != 0) roicAcum = (nOPATAcum / capitalInvestidoAcum) * 100;
 
-            decimal spread = roicMes - wacc;
-            decimal spreadAcumulado = roicAcum - wacc;
+            decimal spread = Math.Round( roicMes - wacc, 2);
+            decimal spreadAcumulado = Math.Round( roicAcum - waccAcumulado, 2);
 
             decimal eva = capitalInvestidoMes != 0 ? spread * capitalInvestidoMes : 0;
             decimal evaAcmulado = capitalInvestidoAcum != 0 ? spreadAcumulado * capitalInvestidoAcum : 0;

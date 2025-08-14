@@ -174,8 +174,11 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 decimal ncgTotal = necessidadeDeCapitalDeGiro + ativoFinanceiro;
                 decimal realNCG = clientes + estoque - fornecedores;
                 decimal investimentosAtivosFixos = capitalInvestidoLiquido - ncgTotal;
-                decimal eva = capitalInvestidoLiquido != 0 ? evaSPREAD * capitalInvestidoLiquido : 0;
 
+                decimal evaSpreadPorcentagem = Math.Round(roic - wacc, 2);
+
+                decimal eva = capitalInvestidoLiquido != 0 ? evaSpreadPorcentagem * capitalInvestidoLiquido : 0;
+            
                 // Adiciona ao resultado
                 operationalEfficiency.Add(new OperationalEfficiencyResponseDto
                 {
