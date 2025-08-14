@@ -206,11 +206,11 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoPL = previousMonth != null ? lucroLiquido.TotalValue - previousMonth.LucroOperacionalLiquido : 0;
 
 
-                var variacaoNCG = clientes + estoque + outrosAtivosOperacionaisTotal + fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal;
+                var variacaoNCG = variacaoClientes + variacaoEstoques + variacaoOutrosAtivosOperacionais + variacaoFornecedores + variacaoObrigacoes + variacaoOutrosPassivosOperacionais;
 
 
 
-                var fluxoCaixaOperacional = lucroLiquido.TotalValue + depreciacaoAmortAcumulada + variacaoNCG ;
+                var fluxoCaixaOperacional = teste + variacaoDepreciacaoAmortAcumulada + variacaoNCG ;
                 var fluxoCaixaLivre = fluxoCaixaOperacional + variacaoAtivoNaoCirculante + variacaoInvestimento + variacaoPatrimonioLiquido;
 
 
