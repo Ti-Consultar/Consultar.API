@@ -416,7 +416,7 @@ namespace _2___Application._1_Services.ValueTree
                 NOPATAcumulado = nOPATAcum,
                 CapitalInvestido = capitalInvestidoMes,
                 CapitalInvestidoAcumulado = capitalInvestidoAcum,
-                ROIC = roicMes,
+                ROIC = Math.Round(roicMes , 2),
                 ROICAcumulado = roicAcum,
                 WACC = wacc,
                 WACCAcumulado = waccAcumulado,
