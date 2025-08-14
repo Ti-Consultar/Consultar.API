@@ -76,6 +76,7 @@ namespace _2___Application._1_Services.CashFlow
             decimal realizavelLongoPrazoAnterior = 0;
             decimal exigivelLongoPrazoAnterior = 0;
             decimal patrimonioLiquidoAnterior = 0;
+            decimal imobilizadoAnterior = 0;
 
             foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
             {
@@ -181,6 +182,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoPassivoNaoCirculante = exigivelLongoPrazo - exigivelLongoPrazoAnterior;
 
                 decimal variacaoPatrimonioLiquido = patrimonioLiquido - patrimonioLiquidoAnterior;
+                decimal variacaoImobilizado = imobilizado - imobilizadoAnterior;
 
 
                 investimentoAnterior = investimentos;
@@ -194,6 +196,7 @@ namespace _2___Application._1_Services.CashFlow
                 AtivoNaoCirculanteAnterior = realizavelLongoPrazo;
                 exigivelLongoPrazoAnterior = exigivelLongoPrazo;
                 patrimonioLiquidoAnterior = patrimonioLiquido;
+                imobilizadoAnterior = imobilizado;
 
 
 
@@ -236,7 +239,7 @@ namespace _2___Application._1_Services.CashFlow
                     FluxoDeCaixaOperacional = fluxoCaixaOperacional,
                     AtivoNaoCirculante = variacaoAtivoNaoCirculante,
                     VariacaoInvestimento = variacaoInvestimento,
-                    VariacaoImobilizado = imobilizado,
+                    VariacaoImobilizado = variacaoImobilizado,
                     FluxoDeCaixaLivre = fluxoCaixaLivre,
                     CaptacoesAmortizacoesFinanceira = emprestimoEFinanciamento,
                     PassivoNaoCirculante = variacaoPassivoNaoCirculante,
