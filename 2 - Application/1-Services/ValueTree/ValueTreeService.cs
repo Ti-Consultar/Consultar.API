@@ -197,7 +197,7 @@ namespace _2___Application._1_Services.ValueTree
             var financial = new FinancialViewDto
             {
                 Disponivel = disponibilidade,
-                Clientes =clientes,
+                Clientes = clientes,
                 Estoques = estoque,
                 OutrosAtivosOperacionais = outrosAtivosOperacionaisTotal,
                 Fornecedores = fornecedores,
@@ -206,7 +206,7 @@ namespace _2___Application._1_Services.ValueTree
                 ExigivelLongoPrazo = exigivelLongoPrazo,
                 AtivosFixos = ativosFixos,
                 CapitalDeGiro = cdg,
-                CapitalInvestido =capitalInvestidoLiquido
+                CapitalInvestido = capitalInvestidoLiquido
             };
 
             var indicators = new ReturnIndicatorsDto
@@ -216,9 +216,9 @@ namespace _2___Application._1_Services.ValueTree
                 ROIC = roic,
                 WACC = wacc,
                 SPREAD = evaSPREAD,
-                EVA= eva
+                EVA = eva
 
-                
+
             };
 
             return new ValueTreeResultDto
@@ -235,7 +235,7 @@ namespace _2___Application._1_Services.ValueTree
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
-            var painelOperationalEfficiency= await GetOperationalEfficiency(accountPlanId, year);
+            var painelOperationalEfficiency = await GetOperationalEfficiency(accountPlanId, year);
 
             // === Valores do mês selecionado ===
             var monthAtivo = painelAtivo.Months.FirstOrDefault(m => m.DateMonth == month);
@@ -352,8 +352,8 @@ namespace _2___Application._1_Services.ValueTree
             decimal estoqueMes = monthAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
             decimal estoqueAcum = acumuladoAtivo.ContainsKey("Estoques") ? acumuladoAtivo["Estoques"] : 0;
 
-            decimal outrosAtivosOpMes = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
-            decimal outrosAtivosOpAcum = acumuladoPassivo.ContainsKey("Outros Ativos Operacionais Total") ? acumuladoPassivo["Outros Ativos Operacionais Total"] : 0;
+            decimal outrosAtivosOpMes = monthAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
+            decimal outrosAtivosOpAcum = acumuladoAtivo.ContainsKey("Outros Ativos Operacionais Total") ? acumuladoPassivo["Outros Ativos Operacionais Total"] : 0;
 
             decimal fornecedoresMes = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
             decimal fornecedoresAcum = acumuladoPassivo.ContainsKey("Fornecedores") ? acumuladoPassivo["Fornecedores"] : 0;
@@ -405,11 +405,22 @@ namespace _2___Application._1_Services.ValueTree
 
 
             decimal capitalInvestidoMes = monthOperationalEfficiency.CapitalInvestidoLiquido;
-          roicMes= monthOperationalEfficiency.ROIC;
+            roicMes = monthOperationalEfficiency.ROIC;
             // fazer para todos os que dependem de eficiencia operacional obtendo ele;
             // fazer para o acumulado esse operational Eficiency
 
+            var passivoNaoCirculante = monthPassivo?.Totalizer
+            .FirstOrDefault(t => t.Name == "Passivo Não Circulante")?.TotalValue ?? 0;
 
+            var patrimonioLiquidoGestaoLiquidez = monthPassivo?.Totalizer
+                .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+
+            var ativoNaoCirculante = monthAtivo.Totalizer
+                .FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
+
+            var ativoFixo = monthAtivo.Totalizer
+                .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
+            var cdg = ((passivoNaoCirculante + patrimonioLiquidoGestaoLiquidez) + (ativoNaoCirculante + ativoFixo)) * -1;
 
             decimal capitalInvestidoAcum = monthOperationalEfficiencyAcum.CapitalInvestidoLiquido;
 
@@ -465,7 +476,8 @@ namespace _2___Application._1_Services.ValueTree
                 AtivosFixos = ativosFixosMes,
                 AtivosFixosAcumulado = ativosFixosAcum,
                 CapitalInvestido = capitalInvestidoMes,
-                CapitalInvestidoAcumulado= capitalInvestidoAcum
+                CapitalInvestidoAcumulado = capitalInvestidoAcum,
+                CapitalDeGiro = cdg,
             };
 
             var indicators = new ReturnIndicatorsDto
@@ -474,15 +486,15 @@ namespace _2___Application._1_Services.ValueTree
                 NOPATAcumulado = nOPATAcum,
                 CapitalInvestido = capitalInvestidoMes,
                 CapitalInvestidoAcumulado = capitalInvestidoAcum,
-                ROIC = Math.Round(roicMes , 2),
+                ROIC = Math.Round(roicMes, 2),
                 ROICAcumulado = Math.Round(roicAcum, 2),
-                WACC = Math.Round(wacc,2),
+                WACC = Math.Round(wacc, 2),
                 WACCAcumulado = Math.Round(waccAcumulado, 2),
                 SPREAD = spread,
                 SPREADAcumulado = spreadAcumulado,
                 EVA = eva,
                 EVA_Acumulado = evaAcmulado
-                
+
             };
 
             return new ValueTreeResultDto
