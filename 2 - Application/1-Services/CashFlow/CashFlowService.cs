@@ -203,7 +203,7 @@ namespace _2___Application._1_Services.CashFlow
 
 
 
-                decimal variacaoPatrimonioLiquido = variacaoPL - patrimonioLiquidoAnterior;
+                decimal variacaoPatrimonioLiquido = variacaoPL + patrimonioLiquidoAnterior;
 
               
 
@@ -247,7 +247,7 @@ namespace _2___Application._1_Services.CashFlow
                     FluxoDeCaixaLivre = fluxoCaixaLivre,
                     CaptacoesAmortizacoesFinanceira = emprestimoEFinanciamento,
                     PassivoNaoCirculante = variacaoPassivoNaoCirculante,
-                    VariacaoPatrimonioLiquido = variacaoPL,
+                    VariacaoPatrimonioLiquido = variacaoPatrimonioLiquido,
                     FluxoDeCaixaDaEmpresa = fluxoDeCaixaEmpresa,
                     DisponibilidadeInicioDoPeriodo = previousMonth?.DisponibilidadeFinalDoPeriodo ?? 0,
                     DisponibilidadeFinalDoPeriodo = disponibilidade,
