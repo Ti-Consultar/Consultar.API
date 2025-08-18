@@ -247,7 +247,7 @@ namespace _2___Application._1_Services.CashFlow
                     FluxoDeCaixaLivre = fluxoCaixaLivre,
                     CaptacoesAmortizacoesFinanceira = emprestimoEFinanciamento,
                     PassivoNaoCirculante = variacaoPassivoNaoCirculante,
-                    VariacaoPatrimonioLiquido = variacaoPatrimonioLiquido,
+                    VariacaoPatrimonioLiquido = variacaoPL,
                     FluxoDeCaixaDaEmpresa = fluxoDeCaixaEmpresa,
                     DisponibilidadeInicioDoPeriodo = previousMonth?.DisponibilidadeFinalDoPeriodo ?? 0,
                     DisponibilidadeFinalDoPeriodo = disponibilidade,
