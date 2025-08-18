@@ -131,7 +131,7 @@ namespace _2___Application._1_Services.CashFlow
                     lucroLiquido.TotalValue = resultadoAntes.TotalValue + provisaoCSLL + provisaoIRPJ;
 
 
-                var patrimonioLiquido = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+                var patrimonioLiquido = monthPassivo.Totalizer.FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
                 var emprestimoEFinanciamento = monthPassivo.Totalizer.FirstOrDefault(t => t.Name == "Empréstimos e Financiamentos")?.TotalValue ?? 0;
                 var imobilizado = (monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Imobilizado")?.TotalValue ?? 0) * -1;
