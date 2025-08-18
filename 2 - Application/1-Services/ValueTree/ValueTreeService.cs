@@ -352,8 +352,8 @@ namespace _2___Application._1_Services.ValueTree
             decimal estoqueMes = monthAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
             decimal estoqueAcum = acumuladoAtivo.ContainsKey("Estoques") ? acumuladoAtivo["Estoques"] : 0;
 
-            decimal outrosAtivosOpMes = monthAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
-            decimal outrosAtivosOpAcum = acumuladoAtivo.ContainsKey("Outros Ativos Operacionais Total") ? acumuladoPassivo["Outros Ativos Operacionais Total"] : 0;
+            //decimal outrosAtivosOpMes = monthAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
+            //decimal outrosAtivosOpAcum = acumuladoAtivo.ContainsKey("Outros Ativos Operacionais Total") ? acumuladoPassivo["Outros Ativos Operacionais Total"] : 0;
 
             decimal fornecedoresMes = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
             decimal fornecedoresAcum = acumuladoPassivo.ContainsKey("Fornecedores") ? acumuladoPassivo["Fornecedores"] : 0;
