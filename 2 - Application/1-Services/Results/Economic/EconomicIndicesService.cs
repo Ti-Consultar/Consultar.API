@@ -79,8 +79,8 @@ namespace _2___Application._1_Services.Results
                 decimal margemNOPAT = monthDRE?.Totalizer
                      .FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0;
 
-                decimal margemLAIR = monthDRE?.Totalizer
-                     .FirstOrDefault(t => t.Name == "Margem LAIR %")?.TotalValue ?? 0;
+                decimal margemLiquida = monthDRE?.Totalizer
+                     .FirstOrDefault(t => t.Name == "Margem Líquida %")?.TotalValue ?? 0;
 
                 profitabilities.Add(new ProfitabilityResponseDto
                 {
@@ -90,7 +90,7 @@ namespace _2___Application._1_Services.Results
                     MargemEBITDA = margemEbitda,
                     MargemOperacional = margemOperacional,
                     MargemNOPAT = margemNOPAT,
-                    MargemLiquida = margemLAIR
+                    MargemLiquida = margemLiquida
                 });
             }
 
@@ -240,6 +240,9 @@ namespace _2___Application._1_Services.Results
                 // Exemplo: wacc = wacc * 100; (se necessário)
 
                 decimal criacaoValor = roic - wacc;
+
+
+
 
                 returnExpectations.Add(new ReturnExpectationResponseDto
                 {
