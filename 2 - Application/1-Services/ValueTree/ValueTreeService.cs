@@ -528,7 +528,7 @@ namespace _2___Application._1_Services.ValueTree
                 var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
 
                 // Receitas
-                var receitaLiquida = monthAtivo.Totalizer
+                var receitaLiquida = monthDRE.Totalizer
                     .FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
 
                 var receitaFinanceira = monthDRE?.Totalizer
@@ -573,7 +573,7 @@ namespace _2___Application._1_Services.ValueTree
 
                 var impostos = provisaoCSLL + provisaoIRPJ;
 
-                var lucroLiquido = monthAtivo.Totalizer
+                var lucroLiquido = monthDRE.Totalizer
                     .FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
 
                 // Ativos Circulantes

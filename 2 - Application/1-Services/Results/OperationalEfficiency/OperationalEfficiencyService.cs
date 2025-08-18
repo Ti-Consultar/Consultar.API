@@ -116,7 +116,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
 
                 var impostos = provisaoCSLL + provisaoIRPJ;
 
-                var lucroLiquido = monthAtivo.Totalizer
+                var lucroLiquido = monthDRE.Totalizer
                     .FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
 
                 // Ativos Circulantes
