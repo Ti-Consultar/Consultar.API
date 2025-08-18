@@ -1626,6 +1626,7 @@ namespace _2___Application._1_Services
                         ? Math.Round(nopat.TotalValue / receitaLiquidaValor * 100, 2)
                         : 0;
 
+                despesasDepreciacao = despesasDepreciacao * -1; // Inverter o sinal para refletir a despesa
 
                 months.Add(new MonthPainelContabilRespone
                 {
