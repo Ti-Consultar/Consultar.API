@@ -203,7 +203,7 @@ namespace _2___Application._1_Services.CashFlow
 
 
 
-                decimal variacaoPatrimonioLiquido = patrimonioLiquidoAnterior  - variacaoPL;
+                decimal variacaoPatrimonioLiquido = (patrimonioLiquidoAnterior* -1)  - (variacaoPL * -1);
 
               
 
