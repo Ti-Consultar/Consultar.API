@@ -184,8 +184,10 @@ namespace _2___Application._1_Services.CashFlow
               
                 decimal variacaoImobilizado = imobilizado - imobilizadoAnterior;
 
-                decimal variacaoPL =  patrimonioLiquido - lucroLiquido.TotalValue;
+                decimal Patrimonio =  patrimonioLiquido - lucroLiquido.TotalValue;
 
+
+                decimal variacaoPatrimonioLiquido = (patrimonioLiquidoAnterior * -1) - (Patrimonio * -1);
 
                 investimentoAnterior = investimentos;
                 clienteAnterior = clientes;
@@ -197,13 +199,11 @@ namespace _2___Application._1_Services.CashFlow
                 outrosPassivosOperacionaisAnterior = outrosPassivosOperacionaisTotal;
                 AtivoNaoCirculanteAnterior = realizavelLongoPrazo;
                 exigivelLongoPrazoAnterior = exigivelLongoPrazo;
-                patrimonioLiquidoAnterior = variacaoPL;
+                patrimonioLiquidoAnterior = Patrimonio;
                 imobilizadoAnterior = imobilizado;
 
 
 
-
-                decimal variacaoPatrimonioLiquido = (patrimonioLiquidoAnterior* -1)  - (variacaoPL * -1);
 
               
 
