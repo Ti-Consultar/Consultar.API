@@ -187,7 +187,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal Patrimonio =  patrimonioLiquido - lucroLiquido.TotalValue;
 
 
-                decimal variacaoPatrimonioLiquido = (patrimonioLiquidoAnterior * -1) - (Patrimonio * -1);
+                decimal variacaoPatrimonioLiquido = patrimonioLiquidoAnterior  - Patrimonio ;
 
                 investimentoAnterior = investimentos;
                 clienteAnterior = clientes;
