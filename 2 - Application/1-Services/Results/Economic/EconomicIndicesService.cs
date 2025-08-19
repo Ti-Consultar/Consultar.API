@@ -114,6 +114,7 @@ namespace _2___Application._1_Services.Results
 
             var dashboard = new List<DashBoardDto>();
 
+            decimal? receitaAnterior = null;
             decimal? margemBrutaAnterior = null;
             decimal? margemLiquidaAnterior = null;
 
@@ -131,6 +132,10 @@ namespace _2___Application._1_Services.Results
                     .FirstOrDefault(t => t.Name == "Margem Líquida %")?.TotalValue ?? 0;
 
                 // Calcula variação em relação ao mês anterior
+                decimal variacaoReceitaLiquida = receitaAnterior.HasValue
+                    ? receitaLiquida - receitaAnterior.Value
+                    : 0;
+
                 decimal variacaoMargemBruta = margemBrutaAnterior.HasValue
                     ? margemBruta - margemBrutaAnterior.Value
                     : 0;
@@ -144,19 +149,22 @@ namespace _2___Application._1_Services.Results
                     Name = monthAtivo.Name,
                     DateMonth = monthAtivo.DateMonth,
                     ReceitaLiquida = receitaLiquida,
+                    VariacaoReceitaLiquida = variacaoReceitaLiquida,
                     MargemBruta = margemBruta,
                     VariacaoMargemBruta = variacaoMargemBruta,
                     MargemLiquida = margemLiquida,
                     VariacaoMargemLiquida = variacaoMargemLiquida
                 });
 
-                // Atualiza margens para o próximo loop
+                // Atualiza valores para o próximo loop
+                receitaAnterior = receitaLiquida;
                 margemBrutaAnterior = margemBruta;
                 margemLiquidaAnterior = margemLiquida;
             }
 
             return dashboard;
         }
+
 
         #endregion
 
