@@ -1,4 +1,5 @@
-﻿using _2___Application._2_Dto_s.Results.EconomicIndices;
+﻿using _2___Application._2_Dto_s.DashBoards;
+using _2___Application._2_Dto_s.Results.EconomicIndices;
 using _2___Application._2_Dto_s.Results.LiquidManagement;
 using _2___Application._2_Dto_s.TotalizerClassification;
 using _2___Application.Base;
@@ -102,6 +103,61 @@ namespace _2___Application._1_Services.Results
                 }
             };
         }
+
+
+
+        public async Task<List<DashBoardDto>> GetDashboard(int accountPlanId, int year)
+        {
+            var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
+            var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
+            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
+
+            var dashboard = new List<DashBoardDto>();
+
+            decimal? margemBrutaAnterior = null;
+            decimal? margemLiquidaAnterior = null;
+
+            foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
+            {
+                var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
+
+                decimal receitaLiquida = monthDRE?.Totalizer
+                    .FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
+
+                decimal margemBruta = monthDRE?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Margem Bruta %")?.TotalValue ?? 0;
+
+                decimal margemLiquida = monthDRE?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Margem Líquida %")?.TotalValue ?? 0;
+
+                // Calcula variação em relação ao mês anterior
+                decimal variacaoMargemBruta = margemBrutaAnterior.HasValue
+                    ? margemBruta - margemBrutaAnterior.Value
+                    : 0;
+
+                decimal variacaoMargemLiquida = margemLiquidaAnterior.HasValue
+                    ? margemLiquida - margemLiquidaAnterior.Value
+                    : 0;
+
+                dashboard.Add(new DashBoardDto
+                {
+                    Name = monthAtivo.Name,
+                    DateMonth = monthAtivo.DateMonth,
+                    ReceitaLiquida = receitaLiquida,
+                    MargemBruta = margemBruta,
+                    VariacaoMargemBruta = variacaoMargemBruta,
+                    MargemLiquida = margemLiquida,
+                    VariacaoMargemLiquida = variacaoMargemLiquida
+                });
+
+                // Atualiza margens para o próximo loop
+                margemBrutaAnterior = margemBruta;
+                margemLiquidaAnterior = margemLiquida;
+            }
+
+            return dashboard;
+        }
+
         #endregion
 
         #region Rentabilidade
