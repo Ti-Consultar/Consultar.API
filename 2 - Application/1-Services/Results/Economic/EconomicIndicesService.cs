@@ -133,7 +133,7 @@ namespace _2___Application._1_Services.Results
 
                 // Calcula variação em relação ao mês anterior
                 decimal variacaoReceitaLiquida = receitaAnterior.HasValue
-                    ? receitaLiquida - receitaAnterior.Value
+                    ? (receitaLiquida - receitaAnterior.Value) / receitaAnterior.Value * 100
                     : 0;
 
                 decimal variacaoMargemBruta = margemBrutaAnterior.HasValue
@@ -148,7 +148,7 @@ namespace _2___Application._1_Services.Results
                 {
                     Name = monthAtivo.Name,
                     DateMonth = monthAtivo.DateMonth,
-                    ReceitaLiquida = receitaLiquida,
+                    ReceitaLiquida =  receitaLiquida,
                     VariacaoReceitaLiquida = variacaoReceitaLiquida,
                     MargemBruta = margemBruta,
                     VariacaoMargemBruta = variacaoMargemBruta,
