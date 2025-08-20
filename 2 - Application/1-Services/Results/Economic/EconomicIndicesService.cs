@@ -1,4 +1,5 @@
 ﻿using _2___Application._2_Dto_s.DashBoards;
+using _2___Application._2_Dto_s.Painel;
 using _2___Application._2_Dto_s.Results.EconomicIndices;
 using _2___Application._2_Dto_s.Results.LiquidManagement;
 using _2___Application._2_Dto_s.TotalizerClassification;
@@ -165,7 +166,44 @@ namespace _2___Application._1_Services.Results
             return dashboard;
         }
 
+        public async Task<List<DashBoardGestaoPrazoMedioDto>> GetDashboardGestaoPrazoMedio(int accountPlanId, int year)
+        {
+            var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
+            var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
 
+            var dashboard = new List<DashBoardGestaoPrazoMedioDto>();
+
+   
+
+            foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
+            {
+
+                var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
+                decimal clientes = monthAtivo?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
+
+                decimal estoques = monthAtivo?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
+
+                decimal fornecedores = monthPassivo?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
+
+            
+                dashboard.Add(new DashBoardGestaoPrazoMedioDto
+                {
+                    Name = monthAtivo.Name,
+                    DateMonth = monthAtivo.DateMonth,
+                    Clientes = clientes,
+                    Estoques = estoques,
+                    Fornecedores = fornecedores,
+               
+                });
+
+        
+            }
+
+            return dashboard;
+        }
         #endregion
 
         #region Rentabilidade

@@ -17,4 +17,14 @@ namespace _2___Application._2_Dto_s.DashBoards
         public decimal MargemLiquida { get; set; }
         public decimal VariacaoMargemLiquida { get; set; }
     }
+
+    public class DashBoardGestaoPrazoMedioDto
+    {
+        public string Name { get; set; }
+        public int DateMonth { get; set; }
+        public decimal Clientes { get; set; }
+        public decimal Estoques { get; set; }
+        public decimal Fornecedores { get; set; }
+
+    }
 }
