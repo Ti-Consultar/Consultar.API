@@ -113,6 +113,11 @@ namespace _2___Application._1_Services.Results
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
 
+            if(painelAtivo is null)
+            {
+                return new List<DashBoardDto>();
+            }
+
             var dashboard = new List<DashBoardDto>();
 
             decimal? receitaAnterior = null;
@@ -171,6 +176,10 @@ namespace _2___Application._1_Services.Results
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
 
+            if (painelAtivo is null)
+            {
+                return new List<DashBoardGestaoPrazoMedioDto>();
+            }
             var dashboard = new List<DashBoardGestaoPrazoMedioDto>();
 
    
