@@ -113,10 +113,6 @@ namespace _2___Application._1_Services.Results
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
 
-            if(painelAtivo is null)
-            {
-                return new List<DashBoardDto>();
-            }
 
             var dashboard = new List<DashBoardDto>();
 
@@ -138,15 +134,15 @@ namespace _2___Application._1_Services.Results
                     .FirstOrDefault(t => t.Name == "Margem Líquida %")?.TotalValue ?? 0;
 
                 // Calcula variação em relação ao mês anterior
-                decimal variacaoReceitaLiquida = receitaAnterior.HasValue
+                decimal variacaoReceitaLiquida = receitaAnterior.HasValue && receitaAnterior.Value != 0
                     ? (receitaLiquida - receitaAnterior.Value) / receitaAnterior.Value * 100
                     : 0;
 
-                decimal variacaoMargemBruta = margemBrutaAnterior.HasValue
+                decimal variacaoMargemBruta = margemBrutaAnterior.HasValue && margemBrutaAnterior.Value != 0
                     ? (margemBruta - margemBrutaAnterior.Value) / margemBrutaAnterior.Value * 100
                     : 0;
 
-                decimal variacaoMargemLiquida = margemLiquidaAnterior.HasValue
+                decimal variacaoMargemLiquida = margemLiquidaAnterior.HasValue && margemLiquidaAnterior.Value != 0
                     ? (margemLiquida - margemLiquidaAnterior.Value) / margemLiquidaAnterior.Value * 100
                     : 0;
 
@@ -176,10 +172,7 @@ namespace _2___Application._1_Services.Results
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
 
-            if (painelAtivo is null)
-            {
-                return new List<DashBoardGestaoPrazoMedioDto>();
-            }
+           
             var dashboard = new List<DashBoardGestaoPrazoMedioDto>();
 
    
