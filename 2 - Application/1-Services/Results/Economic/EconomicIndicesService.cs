@@ -195,7 +195,7 @@ namespace _2___Application._1_Services.Results
                     DateMonth = monthAtivo.DateMonth,
                     Clientes = clientes,
                     Estoques = estoques,
-                    Fornecedores = fornecedores,
+                    Fornecedores = fornecedores * -1,
                
                 });
 
