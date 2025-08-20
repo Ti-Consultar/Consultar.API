@@ -137,11 +137,11 @@ namespace _2___Application._1_Services.Results
                     : 0;
 
                 decimal variacaoMargemBruta = margemBrutaAnterior.HasValue
-                    ? margemBruta - margemBrutaAnterior.Value
+                    ? (margemBruta - margemBrutaAnterior.Value) / margemBrutaAnterior.Value * 100
                     : 0;
 
                 decimal variacaoMargemLiquida = margemLiquidaAnterior.HasValue
-                    ? margemLiquida - margemLiquidaAnterior.Value
+                    ? (margemLiquida - margemLiquidaAnterior.Value) / margemLiquidaAnterior.Value * 100
                     : 0;
 
                 dashboard.Add(new DashBoardDto
@@ -151,9 +151,9 @@ namespace _2___Application._1_Services.Results
                     ReceitaLiquida = receitaLiquida,
                     VariacaoReceitaLiquida = Math.Round(variacaoReceitaLiquida, 2),
                     MargemBruta = margemBruta,
-                    VariacaoMargemBruta = variacaoMargemBruta,
+                    VariacaoMargemBruta = Math.Round(variacaoMargemBruta, 2),
                     MargemLiquida = margemLiquida,
-                    VariacaoMargemLiquida = variacaoMargemLiquida
+                    VariacaoMargemLiquida = Math.Round(variacaoMargemLiquida, 2)
                 });
 
                 // Atualiza valores para o próximo loop
