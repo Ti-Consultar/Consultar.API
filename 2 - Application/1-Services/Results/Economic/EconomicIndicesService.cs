@@ -148,8 +148,8 @@ namespace _2___Application._1_Services.Results
                 {
                     Name = monthAtivo.Name,
                     DateMonth = monthAtivo.DateMonth,
-                    ReceitaLiquida = Math.Round(receitaLiquida, 2),
-                    VariacaoReceitaLiquida = variacaoReceitaLiquida,
+                    ReceitaLiquida = receitaLiquida,
+                    VariacaoReceitaLiquida = Math.Round(variacaoReceitaLiquida, 2),
                     MargemBruta = margemBruta,
                     VariacaoMargemBruta = variacaoMargemBruta,
                     MargemLiquida = margemLiquida,
