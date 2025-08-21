@@ -25,13 +25,13 @@ namespace _2___Application._2_Dto_s.CashFlow
     {
         public string Name { get; set; }
         public int DateMonth { get; set; }
-        public decimal  ReceitaLiquida { get; set; }
-        public decimal  CustosOperacionais { get; set; }
-        public decimal  DespesasVariaveis { get; set; }
-        public decimal  DespesasOperacionais { get; set; }
-        public decimal  OutrosResultados { get; set; }
-        public decimal  ResultadosFinanceiros { get; set; }
-        public decimal  Provisoes { get; set; }
+        //public decimal  ReceitaLiquida { get; set; }
+        //public decimal  CustosOperacionais { get; set; }
+        //public decimal  DespesasVariaveis { get; set; }
+        //public decimal  DespesasOperacionais { get; set; }
+        //public decimal  OutrosResultados { get; set; }
+        //public decimal  ResultadosFinanceiros { get; set; }
+        //public decimal  Provisoes { get; set; }
         public decimal  LucroOperacionalLiquido { get; set; }
         public decimal  DepreciacaoAmortizacao { get; set; }
         public decimal  VariacaoNCG { get; set; }

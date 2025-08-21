@@ -600,19 +600,39 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             var firstRowUsed = worksheet.FirstRowUsed();
             var row = firstRowUsed.RowUsed().RowBelow();
 
-            while (!row.IsEmpty())
-            {
-                var costCenter = row.Cell(0).GetFormattedString().Trim();
-                var name = row.Cell(1).GetFormattedString().Trim();
+            int emptyRowCount = 0; // contador de linhas vazias consecutivas
 
-                // Ignorar linhas vazias ou de cabeçalho no meio
+            while (true)
+            {
+                // Se chegou ao fim da planilha, para
+                if (row == null)
+                    break;
+
+                if (row.IsEmpty())
+                {
+                    emptyRowCount++;
+
+                    // se encontrou 3 linhas vazias seguidas, considera fim do arquivo
+                    if (emptyRowCount >= 3)
+                        break;
+
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                emptyRowCount = 0; // reset se linha válida
+
+                var costCenter = row.Cell(1).GetFormattedString().Trim(); // Coluna A
+                var name = row.Cell(2).GetFormattedString().Trim();       // Coluna B
+
+                // Ignorar cabeçalhos no meio
                 if (string.IsNullOrWhiteSpace(costCenter) && string.IsNullOrWhiteSpace(name))
                 {
                     row = row.RowBelow();
                     continue;
                 }
 
-                if (name != null && name.ToUpper().Contains("DESCRIÇÃO"))
+                if (!string.IsNullOrWhiteSpace(name) && name.ToUpper().Contains("DESCRIÇÃO"))
                 {
                     row = row.RowBelow();
                     continue;
@@ -623,10 +643,10 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                     BalanceteId = balanceteId,
                     CostCenter = costCenter,
                     Name = name,
-                    InitialValue = ParseDecimal(row.Cell(2).GetFormattedString()),
-                    Debit = ParseDecimal(row.Cell(3).GetFormattedString()),
-                    Credit = ParseDecimal(row.Cell(4).GetFormattedString()),
-                    FinalValue = ParseDecimal(row.Cell(5).GetFormattedString()),
+                    InitialValue = ParseDecimal(row.Cell(3).GetFormattedString()), // Coluna C
+                    Debit = ParseDecimal(row.Cell(4).GetFormattedString()),        // Coluna D
+                    Credit = ParseDecimal(row.Cell(5).GetFormattedString()),       // Coluna E
+                    FinalValue = ParseDecimal(row.Cell(6).GetFormattedString()),   // Coluna F
                     BudgetedAmount = false
                 };
 
@@ -636,6 +656,8 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
             return list;
         }
+
+
         private List<BalanceteDataModel> ReadFromCsv(Stream stream, int balanceteId)
         {
             var list = new List<BalanceteDataModel>();
@@ -648,22 +670,34 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 Delimiter = ";",
                 BadDataFound = null,
                 MissingFieldFound = null,
-                IgnoreBlankLines = true
+                IgnoreBlankLines = false // ⚠️ vamos controlar manualmente
             });
 
             csv.Read();
             csv.ReadHeader();
+
+            int emptyRowCount = 0;
 
             while (csv.Read())
             {
                 var costCenter = csv.GetField(0)?.Trim();
                 var name = csv.GetField(1)?.Trim();
 
-                // Ignorar linhas vazias ou cabeçalho no meio
+                // Se linha for totalmente vazia
                 if (string.IsNullOrWhiteSpace(costCenter) && string.IsNullOrWhiteSpace(name))
-                    continue;
+                {
+                    emptyRowCount++;
 
-                if (name != null && name.ToUpper().Contains("DESCRIÇÃO"))
+                    if (emptyRowCount >= 3) // 3 linhas vazias seguidas → fim
+                        break;
+
+                    continue;
+                }
+
+                emptyRowCount = 0; // reseta contador se linha válida
+
+                // Ignorar cabeçalho no meio do arquivo
+                if (!string.IsNullOrWhiteSpace(name) && name.ToUpper().Contains("DESCRIÇÃO"))
                     continue;
 
                 var model = new BalanceteDataModel
@@ -683,6 +717,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
             return list;
         }
+
 
         private static BalanceteDataDto MapToBalanceteDataDto(List<BalanceteDataModel> data)
 
