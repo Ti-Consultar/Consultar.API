@@ -169,10 +169,10 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoFornecedores = (fornecedores - fornecedoresAnterior) * -1;
                 decimal variacaoObrigacoes = (obrigacoesTributariasETrabalhistas - obrigacoesTributariasETrabalhistasAnterior) * -1;
                 decimal variacaoOutrosPassivosOperacionais = (outrosPassivosOperacionaisTotal - outrosPassivosOperacionaisAnterior) * -1;
-                decimal variacaoAtivoNaoCirculante = realizavelLongoPrazo - AtivoNaoCirculanteAnterior;
-                decimal variacaoInvestimento = investimentos - investimentoAnterior;
+                decimal variacaoAtivoNaoCirculante = (realizavelLongoPrazo - AtivoNaoCirculanteAnterior) * -1;
+                decimal variacaoInvestimento = (investimentos - investimentoAnterior) * -1;
                 decimal variacaoPassivoNaoCirculante = exigivelLongoPrazo - exigivelLongoPrazoAnterior;
-                decimal variacaoImobilizado = imobilizado - imobilizadoAnterior;
+                decimal variacaoImobilizado = (imobilizado - imobilizadoAnterior) * -1;
 
                 decimal Patrimonio = patrimonioLiquido - lucroLiquido.TotalValue;
                 decimal variacaoPatrimonioLiquido = patrimonioLiquidoAnterior - Patrimonio;
