@@ -203,8 +203,6 @@ namespace _2___Application._1_Services.Results
 
         public async Task<PainelCapitalDynamicsResponseDto> GetCapitalDynamics(int accountPlanId, int year)
         {
-          
-
 
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);

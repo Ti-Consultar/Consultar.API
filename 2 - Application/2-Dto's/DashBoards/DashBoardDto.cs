@@ -25,6 +25,11 @@ namespace _2___Application._2_Dto_s.DashBoards
         public decimal Clientes { get; set; }
         public decimal Estoques { get; set; }
         public decimal Fornecedores { get; set; }
+  
+        public decimal GiroPME { get; set; }
+        public decimal GiroPMR { get; set; }
+        public decimal GiroPMP { get; set; }
+        public decimal GiroCaixa { get; set; }
 
     }
 }

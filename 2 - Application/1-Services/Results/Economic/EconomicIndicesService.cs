@@ -171,26 +171,45 @@ namespace _2___Application._1_Services.Results
         {
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
+            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
 
-           
             var dashboard = new List<DashBoardGestaoPrazoMedioDto>();
-
-   
 
             foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
             {
-
                 var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
-                decimal clientes = monthAtivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
+                var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
 
-                decimal estoques = monthAtivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
+                decimal clientes = monthAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
+                decimal estoques = monthAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
+                decimal fornecedores = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
 
-                decimal fornecedores = monthPassivo?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
+                // --- Cálculos Turnover ---
+                var receitaMensal = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
 
-            
+                var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+                var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
+                var ncg = valorAtivoOperacional + valorPassivoOperacional;
+
+                decimal pMR = 0, pME = 0, pMP = 0, cicloNCG = 0;
+
+                if (receitaMensal > 0)
+                {
+                    int multiplicadorDias = monthAtivo.DateMonth * 30;
+                    pMR = (clientes / receitaMensal) * multiplicadorDias;
+                    pME = (estoques / receitaMensal) * multiplicadorDias;
+                    pMP = (fornecedores / receitaMensal) * multiplicadorDias;
+                    cicloNCG = (ncg / receitaMensal) * multiplicadorDias;
+                }
+
+                var cicloFinanceiroOperacoesPrincipaisNCG = pME + pMR + pMP;
+
+                var giroPME = pME != 0 ? 30 / pME : 0;
+                var giroPMR = pMR != 0 ? 30 / pMR : 0;
+                var giroPMP = pMP != 0 ? 30 / pMP : 0;
+                var giroCaixa = cicloFinanceiroOperacoesPrincipaisNCG != 0 ? 30 / cicloFinanceiroOperacoesPrincipaisNCG : 0;
+
+                // --- Monta DTO unificado ---
                 dashboard.Add(new DashBoardGestaoPrazoMedioDto
                 {
                     Name = monthAtivo.Name,
@@ -198,14 +217,18 @@ namespace _2___Application._1_Services.Results
                     Clientes = clientes,
                     Estoques = estoques,
                     Fornecedores = fornecedores * -1,
-               
-                });
 
-        
+                    // Turnover
+                    GiroPME = giroPME,
+                    GiroPMR = giroPMR,
+                    GiroPMP = giroPMP * -1,
+                    GiroCaixa = giroCaixa
+                });
             }
 
             return dashboard;
         }
+
         #endregion
 
         #region Rentabilidade
