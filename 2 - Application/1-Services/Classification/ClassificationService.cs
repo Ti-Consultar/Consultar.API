@@ -1228,14 +1228,12 @@ namespace _2___Application._1_Services
 
                     decimal totalAtivo = ativoFinanceiro + ativoOperacional + ativoFixo;
 
-
                     var depreciacao = totalizerResponses.FirstOrDefault(a => a.Name == "Depreciação / Amort. Acumulada");
 
-                    decimal depreciacaoNegativa = totalizerResponses.FirstOrDefault(a => a.Name == "Depreciação / Amort. Acumulada").TotalValue * -1;
-
-                   
-
-                    depreciacao.TotalValue = depreciacaoNegativa;
+                    if (depreciacao != null)
+                    {
+                        depreciacao.TotalValue = -Math.Abs(depreciacao.TotalValue);
+                    }
 
                     return new MonthPainelContabilRespone
                     {
