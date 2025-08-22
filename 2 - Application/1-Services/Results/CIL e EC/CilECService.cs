@@ -729,15 +729,15 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
 
                 var despesasDepreciacao = totalizerResponses
                     .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Despesas com Depreciação")?.Value ?? 0;
+                    .FirstOrDefault(c => c.Name == "Despesas com Depreciação");
 
                 var outrosResultadosOperacionais = totalizerResponses
                     .SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
 
                 if (despesasOperacionais != null)
-                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despesasDepreciacao - outrosResultadosOperacionais;
-
+                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue - outrosResultadosOperacionais;
+                //+ despesasDepreciacao.Value
 
                 // cálculos 
                 var receitaLiquidaValor = receitaOperacionalBruta + deducoes;
@@ -759,7 +759,7 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
                     lucroLiquido.TotalValue = (resultadoAntes.TotalValue + provisaoCSLL + provisaoIRPJ);
 
                 if (ebitda != null && lucroAntes != null)
-                    ebitda.TotalValue = lucroAntes.TotalValue - despesasDepreciacao;
+                    ebitda.TotalValue = lucroAntes.TotalValue - despesasDepreciacao.Value;
 
                 if (nopat != null && lucroAntes != null)
                     nopat.TotalValue = (lucroAntes.TotalValue + provisaoCSLL + provisaoIRPJ);
@@ -813,6 +813,7 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
                         ? Math.Round(nopat.TotalValue / receitaLiquidaValor * 100, 2)
                         : 0;
 
+                despesasDepreciacao.Value = despesasDepreciacao.Value * -1;
 
                 months.Add(new MonthPainelContabilRespone
                 {
