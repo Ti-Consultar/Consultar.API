@@ -1560,8 +1560,11 @@ namespace _2___Application._1_Services
                 if (margemContribuicao != null && lucroBruto != null)
                     margemContribuicao.TotalValue = lucroBruto.TotalValue + despesasV;
 
+                decimal margemContri = totalizerResponses
+                    .FirstOrDefault(t => t.Name == "Margem Contribuição")?.TotalValue ?? 0;
+
                 if (lucroOperacional != null && lucroBruto != null && despesasOperacionais != null)
-                    lucroOperacional.TotalValue = (margemContribuicao?.TotalValue ?? 0 + despesasOperacionais.TotalValue + outrosResultadosOperacionais) ;
+                    lucroOperacional.TotalValue = (margemContri + despesasOperacionais.TotalValue + outrosResultadosOperacionais) ;
 
                 if (lucroAntes != null && lucroOperacional != null)
                     lucroAntes.TotalValue = (lucroOperacional.TotalValue + outrosReceitas + ganhosEPerdas);
