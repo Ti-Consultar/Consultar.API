@@ -1561,7 +1561,7 @@ namespace _2___Application._1_Services
                     margemContribuicao.TotalValue = lucroBruto.TotalValue + despesasV;
 
                 if (lucroOperacional != null && lucroBruto != null && despesasOperacionais != null)
-                    lucroOperacional.TotalValue = (lucroBruto.TotalValue + despesasOperacionais.TotalValue + outrosResultadosOperacionais) ;
+                    lucroOperacional.TotalValue = (margemContribuicao?.TotalValue ?? 0 + despesasOperacionais.TotalValue + outrosResultadosOperacionais) ;
 
                 if (lucroAntes != null && lucroOperacional != null)
                     lucroAntes.TotalValue = (lucroOperacional.TotalValue + outrosReceitas + ganhosEPerdas);
