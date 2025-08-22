@@ -521,8 +521,8 @@ namespace _2___Application._1_Services.Results
                     Name = monthAtivo.Name,
                     DateMonth = monthAtivo.DateMonth,
                     TerceirosCurtoPrazo = endividamentoTerceirosCurtoPrazo,
-                    TerceirosLongoPrazo = endividamentoTerceirosLongoPrazo,
-                    ParticipacaoCapitalTerceiros = participacaoCapitaldeTerceiros,
+                    TerceirosLongoPrazo = endividamentoTerceirosLongoPrazo ,
+                    ParticipacaoCapitalTerceiros = participacaoCapitaldeTerceiros * 100,
                     ParticipacaoCapitalProprio = participacaoCapitaldeProprio * 100
                 });
             }
