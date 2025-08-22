@@ -653,17 +653,18 @@ namespace _2___Application._1_Services.Results
                     patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + resultadoAcumuladoClass.Value;
                 }
                 var patrimonioLiquidos = totalizerResponses
-                       .FirstOrDefault(c => c.Name == "Patrimônio Liquido").TotalValue;
+                       .FirstOrDefault(c => c.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
                 var contasTransitorias = totalizerResponses
                     .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Contas Transitórias").Value;
-
+                    .FirstOrDefault(c => c.Name == "Contas Transitórias")?.Value ?? 0;
+                var totalPassivoNaoCirculante = totalizerResponses
+                   .FirstOrDefault(c => c.Name == "Total Passivo Não Circulante")?.TotalValue ?? 0;
 
                 var totalPassivoCirculante = totalizerResponses
-                    .FirstOrDefault(c => c.Name == "Total Passivo Circulante").TotalValue;
+                    .FirstOrDefault(c => c.Name == "Total Passivo Circulante")?.TotalValue ?? 0;
 
-                decimal total = totalPassivoCirculante + contasTransitorias + patrimonioLiquidos;
+                decimal total = totalPassivoCirculante + totalPassivoNaoCirculante + patrimonioLiquidos;
 
                 return new MonthPainelContabilRespone
                 {
@@ -1107,8 +1108,11 @@ namespace _2___Application._1_Services.Results
                 if (margemContribuicao != null && lucroBruto != null)
                     margemContribuicao.TotalValue = lucroBruto.TotalValue + despesasV;
 
+                decimal margemContri = totalizerResponses
+                    .FirstOrDefault(t => t.Name == "Margem Contribuição")?.TotalValue ?? 0;
+
                 if (lucroOperacional != null && lucroBruto != null && despesasOperacionais != null)
-                    lucroOperacional.TotalValue = (lucroBruto.TotalValue + despesasOperacionais.TotalValue + outrosResultadosOperacionais);
+                    lucroOperacional.TotalValue = (margemContri + despesasOperacionais.TotalValue + outrosResultadosOperacionais);
 
                 if (lucroAntes != null && lucroOperacional != null)
                     lucroAntes.TotalValue = (lucroOperacional.TotalValue + outrosReceitas + ganhosEPerdas);
