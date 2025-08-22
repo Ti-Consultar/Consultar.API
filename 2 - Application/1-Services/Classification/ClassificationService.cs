@@ -1233,7 +1233,7 @@ namespace _2___Application._1_Services
 
                     decimal sinalInvertido = depreciacao.TotalValue * -1;
 
-                    depreciacao.TotalValue = sinalInvertido;
+                    depreciacao.TotalValue = 1;
 
                     return new MonthPainelContabilRespone
                     {
