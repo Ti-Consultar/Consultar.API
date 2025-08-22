@@ -84,6 +84,7 @@ namespace _2___Application._1_Services.CashFlow
             decimal exigivelLongoPrazoAnterior = dezembroPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Passivo Não Circulante Operacional")?.TotalValue ?? 0;
             decimal patrimonioLiquidoAnterior = dezembroPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
             decimal imobilizadoAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Imobilizado")?.TotalValue ?? 0;
+            decimal EmprestimoEFinanciamentoAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Empréstimos e Financiamentos")?.TotalValue ?? 0;
             decimal disponibilidadeDezembroAnterior =
                 dezembroAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
 
@@ -177,7 +178,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoInvestimento = (investimentos - investimentoAnterior) * -1;
                 decimal variacaoPassivoNaoCirculante = exigivelLongoPrazo - exigivelLongoPrazoAnterior;
                 decimal variacaoImobilizado = (imobilizado - imobilizadoAnterior) * -1;
-
+                decimal variacaoEmprestimosFinanciamento = (emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior) * -1;
                 decimal Patrimonio = patrimonioLiquido - lucroLiquido.TotalValue;
                 decimal variacaoPatrimonioLiquido = patrimonioLiquidoAnterior - Patrimonio;
 
@@ -193,11 +194,11 @@ namespace _2___Application._1_Services.CashFlow
                 exigivelLongoPrazoAnterior = exigivelLongoPrazo;
                 patrimonioLiquidoAnterior = Patrimonio;
                 imobilizadoAnterior = imobilizado;
-
+                EmprestimoEFinanciamentoAnterior = emprestimoEFinanciamento;
                 var variacaoNCG = variacaoClientes + variacaoEstoques + variacaoOutrosAtivosOperacionais + variacaoFornecedores + variacaoObrigacoes + variacaoOutrosPassivosOperacionais;
                 var fluxoCaixaOperacional = variacaoNCG + variacaoDepreciacaoAmortAcumulada + lucroLiquidoDoPeriodo;
                 var fluxoCaixaLivre = fluxoCaixaOperacional + variacaoAtivoNaoCirculante + variacaoInvestimento + variacaoImobilizado;
-                var fluxoDeCaixaEmpresa = fluxoCaixaLivre  + variacaoPassivoNaoCirculante + variacaoPatrimonioLiquido;
+                var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante + variacaoPatrimonioLiquido;
 
                 var dto = new CashFlowResponseDto
                 {
