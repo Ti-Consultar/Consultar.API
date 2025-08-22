@@ -520,8 +520,8 @@ namespace _2___Application._1_Services.Results
                 {
                     Name = monthAtivo.Name,
                     DateMonth = monthAtivo.DateMonth,
-                    TerceirosCurtoPrazo = endividamentoTerceirosCurtoPrazo,
-                    TerceirosLongoPrazo = endividamentoTerceirosLongoPrazo ,
+                    TerceirosCurtoPrazo = endividamentoTerceirosCurtoPrazo * 100,
+                    TerceirosLongoPrazo = endividamentoTerceirosLongoPrazo * 100 ,
                     ParticipacaoCapitalTerceiros = participacaoCapitaldeTerceiros * 100,
                     ParticipacaoCapitalProprio = participacaoCapitaldeProprio * 100
                 });
