@@ -1228,6 +1228,12 @@ namespace _2___Application._1_Services
 
                     decimal totalAtivo = ativoFinanceiro + ativoOperacional + ativoFixo;
 
+
+                    var depreciacao = totalizerResponses.FirstOrDefault(a => a.Name == "Depreciação / Amort. Acumulada");
+
+
+                    depreciacao.TotalValue = depreciacao.TotalValue * -1; // Inverte o sinal da depreciação
+
                     return new MonthPainelContabilRespone
                     {
                         Id = balancete.Id,
