@@ -1231,9 +1231,9 @@ namespace _2___Application._1_Services
 
                     var depreciacao = totalizerResponses.FirstOrDefault(a => a.Name == "Depreciação / Amort. Acumulada");
 
-                    decimal sinalInvertido = depreciacao.TotalValue * -1;
+                    decimal sinalInvertido = depreciacao.TotalValue * depreciacao.TotalValue;
 
-                    depreciacao.TotalValue = depreciacao.TotalValue;
+                    depreciacao.TotalValue = sinalInvertido;
 
                     return new MonthPainelContabilRespone
                     {
