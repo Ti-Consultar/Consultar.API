@@ -195,7 +195,7 @@ namespace _2___Application._1_Services.CashFlow
                 imobilizadoAnterior = imobilizado;
 
                 var variacaoNCG = variacaoClientes + variacaoEstoques + variacaoOutrosAtivosOperacionais + variacaoFornecedores + variacaoObrigacoes + variacaoOutrosPassivosOperacionais;
-                var fluxoCaixaOperacional = (variacaoNCG + variacaoDepreciacaoAmortAcumulada) - lucroLiquido.TotalValue;
+                var fluxoCaixaOperacional = variacaoNCG + variacaoDepreciacaoAmortAcumulada + lucroLiquidoDoPeriodo;
                 var fluxoCaixaLivre = fluxoCaixaOperacional + variacaoAtivoNaoCirculante + variacaoInvestimento - variacaoImobilizado;
                 var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoDepreciacaoAmortAcumulada + variacaoPassivoNaoCirculante + variacaoPatrimonioLiquido;
 
