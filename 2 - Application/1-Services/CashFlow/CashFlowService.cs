@@ -690,6 +690,13 @@ namespace _2___Application._1_Services.CashFlow
 
                     decimal totalAtivo = ativoFinanceiro + ativoOperacional + ativoFixo;
 
+                    var depreciacao = totalizerResponses.FirstOrDefault(a => a.Name == "Depreciação / Amort. Acumulada");
+
+                    if (depreciacao != null)
+                    {
+                        depreciacao.TotalValue = -Math.Abs(depreciacao.TotalValue);
+                    }
+
                     return new MonthPainelContabilRespone
                     {
                         Id = balancete.Id,
@@ -1012,7 +1019,7 @@ namespace _2___Application._1_Services.CashFlow
                     .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
 
                 if (despesasOperacionais != null)
-                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue - outrosResultadosOperacionais;
+                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despesasDepreciacao.Value - outrosResultadosOperacionais;
                 //+ despesasDepreciacao.Value
 
                 // cálculos 
