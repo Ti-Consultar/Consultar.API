@@ -84,6 +84,8 @@ namespace _2___Application._1_Services.CashFlow
             decimal exigivelLongoPrazoAnterior = dezembroPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Passivo Não Circulante Operacional")?.TotalValue ?? 0;
             decimal patrimonioLiquidoAnterior = dezembroPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
             decimal imobilizadoAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Imobilizado")?.TotalValue ?? 0;
+            decimal disponibilidadeDezembroAnterior =
+                dezembroAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
 
             foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
             {
@@ -226,7 +228,10 @@ namespace _2___Application._1_Services.CashFlow
                     PassivoNaoCirculante = variacaoPassivoNaoCirculante,
                     VariacaoPatrimonioLiquido = variacaoPatrimonioLiquido,
                     FluxoDeCaixaDaEmpresa = fluxoDeCaixaEmpresa,
-                    DisponibilidadeInicioDoPeriodo = previousMonth?.DisponibilidadeFinalDoPeriodo ?? 0,
+                    DisponibilidadeInicioDoPeriodo = monthAtivo.DateMonth == 1
+                                                                    ? disponibilidadeDezembroAnterior // se janeiro, pega dezembro anterior
+        :                                                           (previousMonth?.DisponibilidadeFinalDoPeriodo ?? 0),
+
                     DisponibilidadeFinalDoPeriodo = disponibilidade,
                 };
 
