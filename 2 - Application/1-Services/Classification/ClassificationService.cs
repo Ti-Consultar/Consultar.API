@@ -949,12 +949,13 @@ namespace _2___Application._1_Services
                 var contasTransitorias = totalizerResponses
                     .SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Contas Transitórias")?.Value ?? 0;
+                var totalPassivoNaoCirculante = totalizerResponses
+                   .FirstOrDefault(c => c.Name == "Total Passivo Não Circulante")?.TotalValue ?? 0;
 
-                
                 var totalPassivoCirculante = totalizerResponses
                     .FirstOrDefault(c => c.Name == "Total Passivo Circulante")?.TotalValue ?? 0;
 
-                decimal total = totalPassivoCirculante + contasTransitorias + patrimonioLiquidos;
+                decimal total = totalPassivoCirculante + totalPassivoNaoCirculante + patrimonioLiquidos;
 
                 return new MonthPainelContabilRespone
                 {
