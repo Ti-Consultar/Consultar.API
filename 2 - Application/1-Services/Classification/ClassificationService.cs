@@ -1667,6 +1667,7 @@ namespace _2___Application._1_Services
 
             foreach (var balancete in balancetes.OrderBy(b => b.DateMonth))
             {
+                // 1. Calcular totalizadores normais
                 var totalizerResponses = totalizersBase.Select(totalizer =>
                 {
                     var relatedClassifications = classifications
@@ -1712,178 +1713,87 @@ namespace _2___Application._1_Services
                     };
                 }).ToList();
 
-                // totalizerResponses 
-                var receitaOperacionalBruta = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "Receita Operacional Bruta")?.TotalValue ?? 0;
+                // === cálculos principais ===
+                var receitaOperacionalBruta = totalizerResponses.FirstOrDefault(t => t.Name == "Receita Operacional Bruta")?.TotalValue ?? 0;
+                var deducoes = totalizerResponses.FirstOrDefault(t => t.Name == "(-) Deduções da Receita Bruta")?.TotalValue ?? 0;
 
-                var deducoes = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "(-) Deduções da Receita Bruta")?.TotalValue ?? 0;
+                var receitaLiquida = totalizerResponses.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas");
+                if (receitaLiquida != null) receitaLiquida.TotalValue = receitaOperacionalBruta + deducoes;
 
-                var receitaLiquida = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas");
-                if (receitaLiquida != null) receitaLiquida.TotalValue = 0;
+                var custoMercadorias = totalizerResponses.SelectMany(t => t.Classifications).FirstOrDefault(c => c.Name == "(-) Custos das Mercadorias")?.Value ?? 0;
+                var custoServicos = totalizerResponses.SelectMany(t => t.Classifications).FirstOrDefault(c => c.Name == "(-) Custos dos Serviços Prestados")?.Value ?? 0;
 
-                var lucroBruto = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "Lucro Bruto");
-                if (lucroBruto != null) lucroBruto.TotalValue = 0;
+                var lucroBruto = totalizerResponses.FirstOrDefault(t => t.Name == "Lucro Bruto");
+                if (lucroBruto != null) lucroBruto.TotalValue = receitaLiquida?.TotalValue + custoMercadorias + custoServicos ?? 0;
 
-                var margemContribuicao = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "Margem Contribuição");
-
-                var despesasOperacionais = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "(-) Despesas Operacionais");
-
-                var lucroOperacional = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "Lucro Operacional");
-                if (lucroOperacional != null) lucroOperacional.TotalValue = 0;
-
-                var lucroAntes = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro");
-                if (lucroAntes != null) lucroAntes.TotalValue = 0;
-
-                var resultadoAntes = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "Resultado do Exercício Antes do Imposto");
-                if (resultadoAntes != null) resultadoAntes.TotalValue = 0;
-
-                var lucroLiquido = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
-                if (lucroLiquido != null) lucroLiquido.TotalValue = 0;
-
-                var ebitda = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "EBITDA");
-
-                var nopat = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "NOPAT");
-
-                // classificaton
-                var custoMercadorias = totalizerResponses
-                    .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "(-) Custos das Mercadorias")?.Value ?? 0;
-
-
-                // classificaton
-                var custoDosServicosPrestados = totalizerResponses
-                    .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "(-) Custos dos Serviços Prestados")?.Value ?? 0;
-
-                var despesasV = totalizerResponses
-                    .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Despesas Variáveis")?.Value ?? 0;
-
-                var outrosReceitas = totalizerResponses
-                    .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Outras Receitas não Operacionais")?.Value ?? 0;
-
-                var ganhosEPerdas = totalizerResponses
-                    .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Ganhos e Perdas de Capital")?.Value ?? 0;
-
-                var receitasFinanceiras = totalizerResponses
-                    .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Receitas Financeiras")?.Value ?? 0;
-
-                var despesasFinanceiras = totalizerResponses
-                    .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Despesas Financeiras")?.Value ?? 0;
-
-                var provisaoCSLL = totalizerResponses
-                    .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Provisão para CSLL")?.Value ?? 0;
-
-                var provisaoIRPJ = totalizerResponses
-                    .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Provisão para IRPJ")?.Value ?? 0;
-
-                var despesasDepreciacao = totalizerResponses
-                    .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Despesas com Depreciação");
-
-                var outrosResultadosOperacionais = totalizerResponses
-                    .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
-
-                if (despesasOperacionais != null)
-                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despesasDepreciacao.Value - outrosResultadosOperacionais;
-                //+ despesasDepreciacao.Value
-
-                // cálculos 
-                var receitaLiquidaValor = receitaOperacionalBruta + deducoes;
-                if (receitaLiquida != null) receitaLiquida.TotalValue = receitaLiquidaValor;
-                if (lucroBruto != null) lucroBruto.TotalValue = receitaLiquidaValor + custoMercadorias + custoDosServicosPrestados;
+                var margemContribuicao = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Contribuição");
                 if (margemContribuicao != null && lucroBruto != null)
+                {
+                    var despesasV = totalizerResponses.SelectMany(t => t.Classifications).FirstOrDefault(c => c.Name == "Despesas Variáveis")?.Value ?? 0;
                     margemContribuicao.TotalValue = lucroBruto.TotalValue + despesasV;
+                }
 
-                decimal margemContri = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "Margem Contribuição")?.TotalValue ?? 0;
+                var despesasOperacionais = totalizerResponses.FirstOrDefault(t => t.Name == "(-) Despesas Operacionais");
+                var outrosResultadosOperacionais = totalizerResponses.SelectMany(t => t.Classifications).FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
+                var despesasDepreciacao = totalizerResponses.SelectMany(t => t.Classifications).FirstOrDefault(c => c.Name == "Despesas com Depreciação");
 
-                if (lucroOperacional != null && lucroBruto != null && despesasOperacionais != null)
-                    lucroOperacional.TotalValue = (margemContri + despesasOperacionais.TotalValue + outrosResultadosOperacionais);
+                if (despesasOperacionais != null && despesasDepreciacao != null)
+                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despesasDepreciacao.Value - outrosResultadosOperacionais;
 
+                var lucroOperacional = totalizerResponses.FirstOrDefault(t => t.Name == "Lucro Operacional");
+                if (lucroOperacional != null && margemContribuicao != null && despesasOperacionais != null)
+                    lucroOperacional.TotalValue = margemContribuicao.TotalValue + despesasOperacionais.TotalValue + outrosResultadosOperacionais;
+
+                var outrosReceitas = totalizerResponses.SelectMany(t => t.Classifications).FirstOrDefault(c => c.Name == "Outras Receitas não Operacionais")?.Value ?? 0;
+                var ganhosEPerdas = totalizerResponses.SelectMany(t => t.Classifications).FirstOrDefault(c => c.Name == "Ganhos e Perdas de Capital")?.Value ?? 0;
+
+                var lucroAntes = totalizerResponses.FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro");
                 if (lucroAntes != null && lucroOperacional != null)
-                    lucroAntes.TotalValue = (lucroOperacional.TotalValue + outrosReceitas + ganhosEPerdas);
+                    lucroAntes.TotalValue = lucroOperacional.TotalValue + outrosReceitas + ganhosEPerdas;
 
+                var receitasFinanceiras = totalizerResponses.SelectMany(t => t.Classifications).FirstOrDefault(c => c.Name == "Receitas Financeiras")?.Value ?? 0;
+                var despesasFinanceiras = totalizerResponses.SelectMany(t => t.Classifications).FirstOrDefault(c => c.Name == "Despesas Financeiras")?.Value ?? 0;
+
+                var resultadoAntes = totalizerResponses.FirstOrDefault(t => t.Name == "Resultado do Exercício Antes do Imposto");
                 if (resultadoAntes != null && lucroAntes != null)
-                    resultadoAntes.TotalValue = (lucroAntes.TotalValue + receitasFinanceiras + despesasFinanceiras);
+                    resultadoAntes.TotalValue = lucroAntes.TotalValue + receitasFinanceiras + despesasFinanceiras;
 
+                var provisaoCSLL = totalizerResponses.SelectMany(t => t.Classifications).FirstOrDefault(c => c.Name == "Provisão para CSLL")?.Value ?? 0;
+                var provisaoIRPJ = totalizerResponses.SelectMany(t => t.Classifications).FirstOrDefault(c => c.Name == "Provisão para IRPJ")?.Value ?? 0;
+
+                var lucroLiquido = totalizerResponses.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
                 if (lucroLiquido != null && resultadoAntes != null)
-                    lucroLiquido.TotalValue = (resultadoAntes.TotalValue + provisaoCSLL + provisaoIRPJ);
+                    lucroLiquido.TotalValue = resultadoAntes.TotalValue + provisaoCSLL + provisaoIRPJ;
 
-                if (ebitda != null && lucroAntes != null)
+                var ebitda = totalizerResponses.FirstOrDefault(t => t.Name == "EBITDA");
+                if (ebitda != null && lucroAntes != null && despesasDepreciacao != null)
                     ebitda.TotalValue = lucroAntes.TotalValue - despesasDepreciacao.Value;
 
+                var nopat = totalizerResponses.FirstOrDefault(t => t.Name == "NOPAT");
                 if (nopat != null && lucroAntes != null)
-                    nopat.TotalValue = (lucroAntes.TotalValue + provisaoCSLL + provisaoIRPJ);
+                    nopat.TotalValue = lucroAntes.TotalValue + provisaoCSLL + provisaoIRPJ;
 
-                // margens
-                var margemBruta = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Bruta %");
-                if (margemBruta != null)
-                    margemBruta.TotalValue = receitaLiquidaValor != 0
-                        ? Math.Round((lucroBruto?.TotalValue ?? 0) / receitaLiquidaValor * 100, 2)
-                        : 0;
+                // margens por mês
+                if (receitaLiquida != null && receitaLiquida.TotalValue != 0)
+                {
+                    void CalcMargem(string nome, decimal numerador)
+                    {
+                        var margem = totalizerResponses.FirstOrDefault(t => t.Name == nome);
+                        if (margem != null)
+                            margem.TotalValue = Math.Round(numerador / receitaLiquida.TotalValue * 100, 2);
+                    }
 
-                var margemContribuicaoPorcentagem = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Contribuição %");
-                if (margemContribuicaoPorcentagem != null && margemContribuicao != null)
-                    margemContribuicaoPorcentagem.TotalValue = receitaLiquidaValor != 0
-                        ? Math.Round(margemContribuicao.TotalValue / receitaLiquidaValor * 100, 2)
-                        : 0;
+                    CalcMargem("Margem Bruta %", lucroBruto?.TotalValue ?? 0);
+                    CalcMargem("Margem Contribuição %", margemContribuicao?.TotalValue ?? 0);
+                    CalcMargem("Margem Operacional %", lucroOperacional?.TotalValue ?? 0);
+                    CalcMargem("Margem LAJIR %", lucroAntes?.TotalValue ?? 0);
+                    CalcMargem("Margem LAIR %", resultadoAntes?.TotalValue ?? 0);
+                    CalcMargem("Margem Líquida %", lucroLiquido?.TotalValue ?? 0);
+                    CalcMargem("Margem EBITDA %", ebitda?.TotalValue ?? 0);
+                    CalcMargem("Margem NOPAT %", nopat?.TotalValue ?? 0);
+                }
 
-                var margemOperacional = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Operacional %");
-                if (margemOperacional != null && lucroOperacional != null)
-                    margemOperacional.TotalValue = receitaLiquidaValor != 0
-                        ? Math.Round(lucroOperacional.TotalValue / receitaLiquidaValor * 100, 2)
-                        : 0;
-
-                var margemLajir = totalizerResponses.FirstOrDefault(t => t.Name == "Margem LAJIR %");
-                if (margemLajir != null && lucroAntes != null)
-                    margemLajir.TotalValue = receitaLiquidaValor != 0
-                        ? Math.Round(lucroAntes.TotalValue / receitaLiquidaValor * 100, 2)
-                        : 0;
-
-                var margemLAIR = totalizerResponses.FirstOrDefault(t => t.Name == "Margem LAIR %");
-                if (margemLAIR != null && resultadoAntes != null)
-                    margemLAIR.TotalValue = receitaLiquidaValor != 0
-                        ? Math.Round(resultadoAntes.TotalValue / receitaLiquidaValor * 100, 2)
-                        : 0;
-
-                var margemLiquida = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Líquida %");
-                if (margemLiquida != null && lucroLiquido != null)
-                    margemLiquida.TotalValue = receitaLiquidaValor != 0
-                        ? Math.Round(lucroLiquido.TotalValue / receitaLiquidaValor * 100, 2)
-                        : 0;
-
-                var margemEBITDA = totalizerResponses.FirstOrDefault(t => t.Name == "Margem EBITDA %");
-                if (margemEBITDA != null && ebitda != null)
-                    margemEBITDA.TotalValue = receitaLiquidaValor != 0
-                        ? Math.Round(ebitda.TotalValue / receitaLiquidaValor * 100, 2)
-                        : 0;
-
-                var margemNOPAT = totalizerResponses.FirstOrDefault(t => t.Name == "Margem NOPAT %");
-                if (margemNOPAT != null && nopat != null)
-                    margemNOPAT.TotalValue = receitaLiquidaValor != 0
-                        ? Math.Round(nopat.TotalValue / receitaLiquidaValor * 100, 2)
-                        : 0;
-
-                despesasDepreciacao.Value = despesasDepreciacao.Value * -1;
+                if (despesasDepreciacao != null) despesasDepreciacao.Value = despesasDepreciacao.Value * -1;
 
                 months.Add(new MonthPainelContabilRespone
                 {
@@ -1894,48 +1804,58 @@ namespace _2___Application._1_Services
                 });
             }
 
-            // 🔢 Totalizador geral (ano inteiro)
+            // ==== TOTAL GERAL ====
             var totalizadoresGerais = totalizersBase.Select(totalizer =>
             {
-                var todasClassificacoes = classifications
-                    .Where(c => c.TotalizerClassificationId == totalizer.Id)
-                    .ToList();
-
-                var classificacoesResp = todasClassificacoes.Select(c => new ClassificationRespone
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    TypeOrder = c.TypeOrder,
-                    Value = months.SelectMany(m => m.Totalizer)
-                                  .Where(t => t.Id == totalizer.Id)
-                                  .SelectMany(t => t.Classifications)
-                                  .Where(cls => cls.Id == c.Id)
-                                  .Sum(cls => cls.Value),
-                    Datas = new List<BalanceteDataResponse>() // não precisa detalhar no total anual
-                }).ToList();
-
+                var soma = months.Sum(m => m.Totalizer.FirstOrDefault(t => t.Id == totalizer.Id)?.TotalValue ?? 0);
                 return new TotalizerParentRespone
                 {
                     Id = totalizer.Id,
                     Name = totalizer.Name,
                     TypeOrder = totalizer.TypeOrder,
-                    Classifications = classificacoesResp,
-                    TotalValue = classificacoesResp.Sum(x => x.Value)
+                    TotalValue = soma
                 };
-            }).OrderBy(t => t.TypeOrder).ToList();
+            }).ToList();
 
-            var totalAno = new MonthPainelContabilRespone
+            // recalcular margens no total geral
+            var receitaLiquidaTotal = totalizadoresGerais.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
+            var lucroBrutoTotal = totalizadoresGerais.FirstOrDefault(t => t.Name == "Lucro Bruto")?.TotalValue ?? 0;
+            var lucroOperacionalTotal = totalizadoresGerais.FirstOrDefault(t => t.Name == "Lucro Operacional")?.TotalValue ?? 0;
+            var lucroAntesTotal = totalizadoresGerais.FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro")?.TotalValue ?? 0;
+            var resultadoAntesTotal = totalizadoresGerais.FirstOrDefault(t => t.Name == "Resultado do Exercício Antes do Imposto")?.TotalValue ?? 0;
+            var lucroLiquidoTotal = totalizadoresGerais.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
+            var ebitdaTotal = totalizadoresGerais.FirstOrDefault(t => t.Name == "EBITDA")?.TotalValue ?? 0;
+            var nopatTotal = totalizadoresGerais.FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
+
+            void RecalcularMargem(string nome, decimal numerador)
+            {
+                var margem = totalizadoresGerais.FirstOrDefault(t => t.Name == nome);
+                if (margem != null)
+                    margem.TotalValue = receitaLiquidaTotal != 0
+                        ? Math.Round(numerador / receitaLiquidaTotal * 100, 2)
+                        : 0;
+            }
+
+            RecalcularMargem("Margem Bruta %", lucroBrutoTotal);
+            RecalcularMargem("Margem Contribuição %", totalizadoresGerais.FirstOrDefault(t => t.Name == "Margem Contribuição")?.TotalValue ?? 0);
+            RecalcularMargem("Margem Operacional %", lucroOperacionalTotal);
+            RecalcularMargem("Margem LAJIR %", lucroAntesTotal);
+            RecalcularMargem("Margem LAIR %", resultadoAntesTotal);
+            RecalcularMargem("Margem Líquida %", lucroLiquidoTotal);
+            RecalcularMargem("Margem EBITDA %", ebitdaTotal);
+            RecalcularMargem("Margem NOPAT %", nopatTotal);
+
+            months.Add(new MonthPainelContabilRespone
             {
                 Id = 0,
                 Name = "ACUMULADO",
-                DateMonth = 13, // 👈 indicando depois de dezembro
-                Totalizer = totalizadoresGerais
-            };
-
-            months.Add(totalAno);
+                DateMonth = 13, // código especial
+                Totalizer = totalizadoresGerais.OrderBy(t => t.TypeOrder).ToList()
+            });
 
             return new PainelBalancoContabilRespone { Months = months };
         }
+
 
 
 
