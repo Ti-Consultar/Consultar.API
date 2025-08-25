@@ -410,18 +410,16 @@ namespace _2___Application._1_Services.Results
 
             foreach (var monthDRE in painelDRE.Months.OrderBy(m => m.DateMonth))
             {
-               
-
                 decimal ebitda = monthDRE?.Totalizer
                     .FirstOrDefault(t => t.Name == "EBITDA")?.TotalValue ?? 0;
 
                 decimal lucroAntesDoResultadoFinanceiro = monthDRE?.Totalizer
                     .FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro")?.TotalValue ?? 0;
+
                 decimal despesasComDepreciacao = monthDRE.Totalizer
                     .SelectMany(t => t.Classifications)
                     .Where(c => c.Name == "Despesas com Depreciação")
                     .Sum(c => c.Value);
-
 
                 eBITDA.Add(new EBITDAResponseDto
                 {
@@ -433,6 +431,18 @@ namespace _2___Application._1_Services.Results
                 });
             }
 
+            // 🔢 Totalizador geral (acumulado do ano)
+            var totalGeral = new EBITDAResponseDto
+            {
+                Name = "TOTAL GERAL",
+                DateMonth = 13, // 👈 opcional, para indicar "após dezembro"
+                EBITDA = eBITDA.Sum(x => x.EBITDA),
+                LucroOperacionalAntesDoResultadoFinanceiro = eBITDA.Sum(x => x.LucroOperacionalAntesDoResultadoFinanceiro),
+                DespesasDepreciacao = eBITDA.Sum(x => x.DespesasDepreciacao)
+            };
+
+            eBITDA.Add(totalGeral);
+
             return new PainelEBITDAResponseDto
             {
                 EBITDA = new EBITDAGroupedDto
@@ -441,6 +451,7 @@ namespace _2___Application._1_Services.Results
                 }
             };
         }
+
         #endregion
 
         #region NOPAT
