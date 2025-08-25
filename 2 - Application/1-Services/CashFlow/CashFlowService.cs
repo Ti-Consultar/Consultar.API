@@ -53,7 +53,7 @@ namespace _2___Application._1_Services.CashFlow
         }
 
         #region
-        public async Task<PainelCashFlowResponseDto> GetCashFlow(int accountPlanId, int year)
+        public async Task<PainelCashFlowResponseDto> GetCashFlowAntigoOficial(int accountPlanId, int year)
         {
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
@@ -119,13 +119,24 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoImobilizado = (imobilizado - imobilizadoAnterior) * -1;
                 decimal variacaoEmprestimosFinanciamento = (emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior) * -1;
 
+
+
+
+
+
+
                 decimal variacaoNCG = variacaoClientes + variacaoEstoques + variacaoOutrosAtivosOperacionais + variacaoFornecedores + variacaoObrigacoes + variacaoOutrosPassivosOperacionais;
                 decimal fluxoCaixaOperacional = variacaoNCG + variacaoDepreciacaoAmortAcumulada + lucroLiquidoDoPeriodo;
                 decimal fluxoCaixaLivre = fluxoCaixaOperacional + variacaoAtivoNaoCirculante + variacaoInvestimento + variacaoImobilizado;
                 decimal fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante;
 
                 decimal patrimonio = monthPassivo.Totalizer.FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
-                decimal variacaoPatrimonioLiquido = patrimonioLiquidoAnterior - patrimonio;
+
+
+                decimal PatrimonioL = patrimonio - lucroLiquidoDoPeriodo;
+                decimal variacaoPatrimonioLiquido = patrimonioLiquidoAnterior - PatrimonioL;
+
+                
 
                 var dto = new CashFlowResponseDto
                 {
@@ -210,7 +221,7 @@ namespace _2___Application._1_Services.CashFlow
             };
         }
 
-        public async Task<PainelCashFlowResponseDto> GetCashFlowAntigoOficial(int accountPlanId, int year)
+        public async Task<PainelCashFlowResponseDto> GetCashFlow(int accountPlanId, int year)
         {
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
