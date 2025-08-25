@@ -1808,47 +1808,24 @@ namespace _2___Application._1_Services
             var totalizadoresGerais = totalizersBase.Select(totalizer =>
             {
                 var soma = months.Sum(m => m.Totalizer.FirstOrDefault(t => t.Id == totalizer.Id)?.TotalValue ?? 0);
+
+                // Se for margem (%), não soma no total
+                bool isMargem = totalizer.Name.Contains("%");
+
                 return new TotalizerParentRespone
                 {
                     Id = totalizer.Id,
                     Name = totalizer.Name,
                     TypeOrder = totalizer.TypeOrder,
-                    TotalValue = soma
+                    TotalValue = isMargem ? 0 : soma
                 };
             }).ToList();
 
-            // recalcular margens no total geral
-            var receitaLiquidaTotal = totalizadoresGerais.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
-            var lucroBrutoTotal = totalizadoresGerais.FirstOrDefault(t => t.Name == "Lucro Bruto")?.TotalValue ?? 0;
-            var lucroOperacionalTotal = totalizadoresGerais.FirstOrDefault(t => t.Name == "Lucro Operacional")?.TotalValue ?? 0;
-            var lucroAntesTotal = totalizadoresGerais.FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro")?.TotalValue ?? 0;
-            var resultadoAntesTotal = totalizadoresGerais.FirstOrDefault(t => t.Name == "Resultado do Exercício Antes do Imposto")?.TotalValue ?? 0;
-            var lucroLiquidoTotal = totalizadoresGerais.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
-            var ebitdaTotal = totalizadoresGerais.FirstOrDefault(t => t.Name == "EBITDA")?.TotalValue ?? 0;
-            var nopatTotal = totalizadoresGerais.FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
-
-            void RecalcularMargem(string nome, decimal numerador)
-            {
-                var margem = totalizadoresGerais.FirstOrDefault(t => t.Name == nome);
-                if (margem != null)
-                    margem.TotalValue = receitaLiquidaTotal != 0
-                        ? Math.Round(numerador / receitaLiquidaTotal * 100, 2)
-                        : 0;
-            }
-
-            RecalcularMargem("Margem Bruta %", lucroBrutoTotal);
-            RecalcularMargem("Margem Contribuição %", totalizadoresGerais.FirstOrDefault(t => t.Name == "Margem Contribuição")?.TotalValue ?? 0);
-            RecalcularMargem("Margem Operacional %", lucroOperacionalTotal);
-            RecalcularMargem("Margem LAJIR %", lucroAntesTotal);
-            RecalcularMargem("Margem LAIR %", resultadoAntesTotal);
-            RecalcularMargem("Margem Líquida %", lucroLiquidoTotal);
-            RecalcularMargem("Margem EBITDA %", ebitdaTotal);
-            RecalcularMargem("Margem NOPAT %", nopatTotal);
-
+            // adicionar total geral
             months.Add(new MonthPainelContabilRespone
             {
                 Id = 0,
-                Name = "ACUMULADO",
+                Name = "TOTAL GERAL",
                 DateMonth = 13, // código especial
                 Totalizer = totalizadoresGerais.OrderBy(t => t.TypeOrder).ToList()
             });
