@@ -1263,31 +1263,24 @@ namespace _2___Application._1_Services
             var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
-
-
             var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
-
             var balancoReclassificadoIds = balancoReclassificados
-                 .Where(c => c.TypeOrder >= 18 && c.TypeOrder <= 33)
-                 .Distinct()
-                 .ToList();
+                .Where(c => c.TypeOrder >= 18 && c.TypeOrder <= 33)
+                .Distinct()
+                .ToList();
 
             var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
-
             var balanceteIds = balancetes.Select(b => b.Id).ToList();
             var costCenters = model.Select(a => a.CostCenter).ToList();
 
             var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
-            var painelBalancoContabilPassivo= await BuildPainelByTypePassivo(accountPlanId, year, 2);
-
-
-            decimal acumuladoAnterior = 0;
-
+            var painelBalancoContabilPassivo = await BuildPainelByTypePassivo(accountPlanId, year, 2);
 
             var months = balancetes
                 .Select(balancete =>
                 {
+                    // Monta os totalizadores do mês (Classifications permanecem como estão)
                     var totalizerResponses = balancoReclassificadoIds
                         .Select(totalizer =>
                         {
@@ -1332,13 +1325,13 @@ namespace _2___Application._1_Services
                             };
                         }).ToList();
 
-                    // Mapas para acesso rápido
+                    // Mapas para regras
                     var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
                     var classificationMap = totalizerResponses
                         .SelectMany(t => t.Classifications)
                         .ToDictionary(c => c.Name);
 
-                    // Aplicar regras de valor nos totalizadores
+                    // Regras de valor
                     for (int i = 0; i < 3; i++)
                     {
                         foreach (var totalizer in totalizerResponses.OrderBy(t => t.TypeOrder))
@@ -1349,34 +1342,46 @@ namespace _2___Application._1_Services
                         }
                     }
 
-
-                    // cálculos 
-
-
+                    // 🔹 Ajuste de "Resultado do Exercício Acumulado" -> "Resultado Acumulado"
                     var resultadodoExercicioAcumulado = painelBalancoContabilPassivo.Months
-                      .Where(m => m.DateMonth == (int)balancete.DateMonth)
-                      .SelectMany(m => m.Totalizer)
-                      .SelectMany(a => a.Classifications)
-                      .FirstOrDefault(t => t.Name == "Resultado do Exercício Acumulado");
+                        .Where(m => m.DateMonth == (int)balancete.DateMonth)
+                        .SelectMany(m => m.Totalizer)
+                        .SelectMany(a => a.Classifications)
+                        .FirstOrDefault(t => t.Name == "Resultado do Exercício Acumulado");
 
                     var resultadoAcumulado = totalizerResponses.FirstOrDefault(a => a.Name == "Resultado Acumulado");
-
                     if (resultadodoExercicioAcumulado != null && resultadoAcumulado != null)
                     {
                         resultadoAcumulado.TotalValue = resultadodoExercicioAcumulado.Value;
                     }
 
+                    // 🔹 Cálculo do PL
+                    var patrimonioLiquido = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido");
+                    var lucrosPrejuizos = totalizerResponses.FirstOrDefault(a => a.Name == "Lucros / Prejuízos Acumulados")?.TotalValue ?? 0;
+                    var resultadoAcumValor = resultadoAcumulado?.TotalValue ?? 0;
+
+                    if (patrimonioLiquido != null)
+                    {
+                        patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + lucrosPrejuizos + (resultadoAcumValor * -1);
+                    }
+
+                    // 🔹 NORMALIZAÇÃO: deixa todos os totalizadores POSITIVOS (sem mexer nas Classifications).
+                    // Se quiser preservar "Resultado Acumulado" com sinal original, comente a linha do IF e use a condição abaixo.
+                    foreach (var t in totalizerResponses)
+                    {
+                        // Para preservar o sinal do "Resultado Acumulado", troque por:
+                        if (!string.Equals(t.Name, "Resultado Acumulado", StringComparison.OrdinalIgnoreCase))
+                        t.TotalValue = Math.Abs(t.TotalValue);
+                    }
+
+                    // 🔹 Re-leitura após normalização (para garantir que o total do mês use os valores já positivos)
                     decimal passivoFinanceiro = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Financeiro")?.TotalValue ?? 0;
                     decimal passivoOperacional = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Operacional")?.TotalValue ?? 0;
-                    var patrimonioLiquido = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido");
-                    decimal outrosPassivosOperacionaisTotal = totalizerResponses.FirstOrDefault(a => a.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
+                    decimal patrimonioLiquidoPos = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
-
-                    decimal lucrosPrejuizos = totalizerResponses.FirstOrDefault(a => a.Name == "Lucros / Prejuízos Acumulados")?.TotalValue ?? 0;
-
-                    patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + lucrosPrejuizos + (resultadoAcumulado.TotalValue * -1);
-
-                    decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquido.TotalValue ;
+                    // 🔹 Total do mês (já positivo)
+                    decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquidoPos;
+                    totalPassivo = Math.Abs(totalPassivo);
 
                     return new MonthPainelContabilRespone
                     {
@@ -1399,6 +1404,7 @@ namespace _2___Application._1_Services
                 Months = months
             };
         }
+
 
         private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDRE(int accountPlanId, int year, int typeClassification)
         {
