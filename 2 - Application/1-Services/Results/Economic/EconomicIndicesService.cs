@@ -397,7 +397,6 @@ namespace _2___Application._1_Services.Results
         {
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
 
-            // 🔁 Carrega também o painel do ANO ANTERIOR (somente o Ativo é necessário aqui)
             var painelAtivoAnoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1);
 
             var dezembroAnoAnterior = painelAtivoAnoAnterior.Months
@@ -435,10 +434,11 @@ namespace _2___Application._1_Services.Results
             var totalGeral = new EBITDAResponseDto
             {
                 Name = "ACUMULADO",
-                DateMonth = 13, // 👈 opcional, para indicar "após dezembro"
+                DateMonth = 13, // 👈 opcional
                 EBITDA = eBITDA.Sum(x => x.EBITDA),
                 LucroOperacionalAntesDoResultadoFinanceiro = eBITDA.Sum(x => x.LucroOperacionalAntesDoResultadoFinanceiro),
                 DespesasDepreciacao = eBITDA.Sum(x => x.DespesasDepreciacao)
+                // aqui não existem margens, então nada pra zerar
             };
 
             eBITDA.Add(totalGeral);
@@ -452,6 +452,7 @@ namespace _2___Application._1_Services.Results
             };
         }
 
+
         #endregion
 
         #region NOPAT
@@ -459,7 +460,6 @@ namespace _2___Application._1_Services.Results
         {
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
 
-            // 🔁 Carrega também o painel do ANO ANTERIOR (somente o Ativo é necessário aqui)
             var painelAtivoAnoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1);
 
             var dezembroAnoAnterior = painelAtivoAnoAnterior.Months
@@ -517,12 +517,13 @@ namespace _2___Application._1_Services.Results
             var totalGeral = new NOPATResponseDto
             {
                 Name = "ACUMULADO",
-                DateMonth = 13, // 👈 opcional, indicando após dezembro
+                DateMonth = 13, // 👈 opcional
                 NOPAT = nOPAT.Sum(x => x.NOPAT),
-                MargemNOPAT = nOPAT.Sum(x => x.MargemNOPAT),
                 LucroOperacionalAntes = nOPAT.Sum(x => x.LucroOperacionalAntes),
-                MargemOperacionalDRE = nOPAT.Sum(x => x.MargemOperacionalDRE),
-                ProvisaoIRPJCSLL = nOPAT.Sum(x => x.ProvisaoIRPJCSLL)
+                ProvisaoIRPJCSLL = nOPAT.Sum(x => x.ProvisaoIRPJCSLL),
+                // margens não acumulam
+                MargemNOPAT = 0,
+                MargemOperacionalDRE = 0
             };
 
             nOPAT.Add(totalGeral);
@@ -535,6 +536,7 @@ namespace _2___Application._1_Services.Results
                 }
             };
         }
+
 
         #endregion
 
