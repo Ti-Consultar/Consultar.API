@@ -1139,12 +1139,14 @@ namespace _2___Application._1_Services
             var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
+            
+
             var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
 
             var balancoReclassificadoIds = balancoReclassificados
-                .Where(c => c.TypeOrder >= 1 && c.TypeOrder <= 17)
-                .Distinct()
-                .ToList();
+                 .Where(c => c.TypeOrder >= 1 && c.TypeOrder <= 17)   
+                 .Distinct()
+                 .ToList();
 
             var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
 
@@ -1189,9 +1191,7 @@ namespace _2___Application._1_Services
                                         Value = datas.Sum(d => d.Value),
                                         Datas = datas
                                     };
-                                })
-                                .OrderBy(c => c.TypeOrder) // 👈 Ordena as classificações
-                                .ToList();
+                                }).ToList();
 
                             return new TotalizerParentRespone
                             {
@@ -1201,9 +1201,7 @@ namespace _2___Application._1_Services
                                 Classifications = classificationsResp,
                                 TotalValue = classificationsResp.Sum(c => c.Value)
                             };
-                        })
-                        .OrderBy(t => t.TypeOrder) // 👈 Ordena os totalizadores
-                        .ToList();
+                        }).ToList();
 
                     // Mapas para acesso rápido
                     var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
@@ -1223,6 +1221,7 @@ namespace _2___Application._1_Services
                     }
 
                     // cálculos 
+
                     decimal ativoFinanceiro = totalizerResponses.FirstOrDefault(a => a.Name == "Ativo Financeiro")?.TotalValue ?? 0;
                     decimal ativoOperacional = totalizerResponses.FirstOrDefault(a => a.Name == "Ativo Operacional")?.TotalValue ?? 0;
                     decimal ativoFixo = totalizerResponses.FirstOrDefault(a => a.Name == "Ativo Fixo")?.TotalValue ?? 0;
@@ -1249,7 +1248,7 @@ namespace _2___Application._1_Services
                         }
                     };
                 })
-                .OrderBy(m => m.DateMonth) // 👈 Ordena os meses
+                .OrderBy(m => m.DateMonth)
                 .ToList();
 
             return new PainelBalancoContabilRespone
@@ -1257,7 +1256,6 @@ namespace _2___Application._1_Services
                 Months = months
             };
         }
-
 
         private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypePassivo(int accountPlanId, int year, int typeClassification)
         {
