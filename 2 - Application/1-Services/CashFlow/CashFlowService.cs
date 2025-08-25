@@ -124,6 +124,9 @@ namespace _2___Application._1_Services.CashFlow
                 decimal fluxoCaixaLivre = fluxoCaixaOperacional + variacaoAtivoNaoCirculante + variacaoInvestimento + variacaoImobilizado;
                 decimal fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante;
 
+                decimal patrimonio = monthPassivo.Totalizer.FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+                decimal variacaoPatrimonioLiquido = patrimonioLiquidoAnterior - patrimonio;
+
                 var dto = new CashFlowResponseDto
                 {
                     Name = monthAtivo.Name,
@@ -145,6 +148,7 @@ namespace _2___Application._1_Services.CashFlow
                     VariacaoImobilizado = variacaoImobilizado,
                     PassivoNaoCirculante = variacaoPassivoNaoCirculante,
                     CaptacoesAmortizacoesFinanceira = emprestimoEFinanciamento,
+                    VariacaoPatrimonioLiquido = variacaoPatrimonioLiquido,
                     DisponibilidadeInicioDoPeriodo = monthAtivo.DateMonth == 1 ? disponibilidadeDezembroAnterior : previousMonth?.DisponibilidadeFinalDoPeriodo ?? 0,
                     DisponibilidadeFinalDoPeriodo = ativoFinanceiro
                 };
@@ -165,6 +169,7 @@ namespace _2___Application._1_Services.CashFlow
                 exigivelLongoPrazoAnterior = exigivelLongoPrazo;
                 imobilizadoAnterior = imobilizado;
                 EmprestimoEFinanciamentoAnterior = emprestimoEFinanciamento;
+                patrimonioLiquidoAnterior = patrimonio;
             }
 
             // 🔢 Totalizador geral (acumulado do ano)
@@ -188,6 +193,7 @@ namespace _2___Application._1_Services.CashFlow
                 VariacaoInvestimento = cashFlow.Sum(x => x.VariacaoInvestimento),
                 VariacaoImobilizado = cashFlow.Sum(x => x.VariacaoImobilizado),
                 PassivoNaoCirculante = cashFlow.Sum(x => x.PassivoNaoCirculante),
+                VariacaoPatrimonioLiquido = cashFlow.Sum(x => x.VariacaoPatrimonioLiquido),
                 CaptacoesAmortizacoesFinanceira = cashFlow.Sum(x => x.CaptacoesAmortizacoesFinanceira),
                 DisponibilidadeInicioDoPeriodo = cashFlow.FirstOrDefault()?.DisponibilidadeInicioDoPeriodo ?? 0,
                 DisponibilidadeFinalDoPeriodo = cashFlow.LastOrDefault()?.DisponibilidadeFinalDoPeriodo ?? 0
