@@ -434,7 +434,7 @@ namespace _2___Application._1_Services.Results
             // 🔢 Totalizador geral (acumulado do ano)
             var totalGeral = new EBITDAResponseDto
             {
-                Name = "TOTAL GERAL",
+                Name = "ACUMULADO",
                 DateMonth = 13, // 👈 opcional, para indicar "após dezembro"
                 EBITDA = eBITDA.Sum(x => x.EBITDA),
                 LucroOperacionalAntesDoResultadoFinanceiro = eBITDA.Sum(x => x.LucroOperacionalAntesDoResultadoFinanceiro),
@@ -472,25 +472,22 @@ namespace _2___Application._1_Services.Results
 
             foreach (var monthDRE in painelDRE.Months.OrderBy(m => m.DateMonth))
             {
-
-
                 decimal noPAT = monthDRE?.Totalizer
                     .FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
+
                 decimal margemNOPAT = monthDRE?.Totalizer
                    .FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0;
+
                 decimal lucroAntesDoResultadoFinanceiro = monthDRE?.Totalizer
                     .FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro")?.TotalValue ?? 0;
 
                 decimal margemOperacional = monthDRE?.Totalizer
                     .FirstOrDefault(t => t.Name == "Margem Operacional %")?.TotalValue ?? 0;
 
-
-
                 decimal despesasComDepreciacao = monthDRE.Totalizer
                     .SelectMany(t => t.Classifications)
                     .Where(c => c.Name == "Despesas com Depreciação")
                     .Sum(c => c.Value);
-
 
                 decimal provisaoCSLL = monthDRE.Totalizer
                    .SelectMany(t => t.Classifications)
@@ -511,10 +508,24 @@ namespace _2___Application._1_Services.Results
                     MargemNOPAT = margemNOPAT,
                     LucroOperacionalAntes = lucroAntesDoResultadoFinanceiro,
                     MargemOperacionalDRE = margemOperacional,
-                   ProvisaoIRPJCSLL = provisaoIRPSCSLL,
-                   NOPAT = noPAT
+                    ProvisaoIRPJCSLL = provisaoIRPSCSLL,
+                    NOPAT = noPAT
                 });
             }
+
+            // 🔢 Totalizador geral (acumulado do ano)
+            var totalGeral = new NOPATResponseDto
+            {
+                Name = "ACUMULADO",
+                DateMonth = 13, // 👈 opcional, indicando após dezembro
+                NOPAT = nOPAT.Sum(x => x.NOPAT),
+                MargemNOPAT = nOPAT.Sum(x => x.MargemNOPAT),
+                LucroOperacionalAntes = nOPAT.Sum(x => x.LucroOperacionalAntes),
+                MargemOperacionalDRE = nOPAT.Sum(x => x.MargemOperacionalDRE),
+                ProvisaoIRPJCSLL = nOPAT.Sum(x => x.ProvisaoIRPJCSLL)
+            };
+
+            nOPAT.Add(totalGeral);
 
             return new PainelNOPATResponseDto
             {
@@ -524,6 +535,7 @@ namespace _2___Application._1_Services.Results
                 }
             };
         }
+
         #endregion
 
         #region Dados
