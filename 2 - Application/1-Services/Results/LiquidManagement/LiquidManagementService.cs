@@ -322,7 +322,7 @@ namespace _2___Application._1_Services.Results
 
                 var receitaMensal = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
 
-                decimal geracaoCaixa = (receitaMensal != 0 ? fluxoDeCaixaOperacional / receitaMensal : 0) * 100;
+                decimal geracaoCaixa = ((receitaMensal != 0 ? fluxoDeCaixaOperacional / receitaMensal : 0) * 100) * -1;
                 decimal aumentoReducaoFluxoCaixa = margemEbitda != 0 ? geracaoCaixa - margemEbitda : 0;
 
                 grossCashFlow.Add(new GrossCashFlowResponseDto
