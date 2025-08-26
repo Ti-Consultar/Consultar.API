@@ -389,7 +389,7 @@ namespace _2___Application._1_Services.Results
                     cicloNCG = (ncg / receitaMensal) * multiplicadorDias;
                 }
 
-                var cicloFinanceiroOperacoesPrincipaisNCG = pME + pMR + pMP;
+                var cicloFinanceiroOperacoesPrincipaisNCG = pME + pMR - pMP;
 
                 var giroPME = pME != 0 ? 30 / pME : 0;
                 var giroPMR = pMR != 0 ? 30 / pMR : 0;
@@ -401,7 +401,7 @@ namespace _2___Application._1_Services.Results
                     Name = monthAtivo.Name,
                     DateMonth = monthAtivo.DateMonth,
                     GiroPME = giroPME,
-                    GiroPMP = giroPMP * -1,
+                    GiroPMP = giroPMP,
                     GiroPMR = giroPMR,
                     GiroCaixa = giroCaixa,
                 });
