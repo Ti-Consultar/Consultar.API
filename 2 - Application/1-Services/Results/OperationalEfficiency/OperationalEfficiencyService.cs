@@ -145,9 +145,12 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                     .FirstOrDefault(t => t.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
 
                 // Necessidade de Capital de Giro
+
                 decimal somaAtivos = disponibilidade + clientes + estoque + outrosAtivosOperacionaisTotal;
+
                 decimal somaPassivo = fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal;
-                decimal necessidadeDeCapitalDeGiro = somaAtivos + somaPassivo;
+
+                decimal necessidadeDeCapitalDeGiro = somaAtivos - somaPassivo;
 
                 var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
                 var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
@@ -163,7 +166,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 decimal ativosFixos = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
-                decimal capitalInvestidoLiquido = ncg + realizavelLongoPrazo + exigivelLongoPrazo + ativosFixos;
+                decimal capitalInvestidoLiquido = necessidadeDeCapitalDeGiro + realizavelLongoPrazo + exigivelLongoPrazo + ativosFixos;
 
                 // Indicadores financeiros
                 decimal nOPAT = monthDRE?.Totalizer
@@ -181,7 +184,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 decimal turnover = receitaLiquida != 0 ? capitalInvestidoLiquido / receitaLiquida : 0;
               //  decimal ncgTotal = necessidadeDeCapitalDeGiro - ativoFinanceiro;
                 decimal realNCG = clientes + estoque - fornecedores;
-                decimal investimentosAtivosFixos = capitalInvestidoLiquido - ncg;
+                decimal investimentosAtivosFixos = capitalInvestidoLiquido - necessidadeDeCapitalDeGiro;
 
                 decimal evaSpreadPorcentagem = Math.Round(roic - wacc, 2);
 
