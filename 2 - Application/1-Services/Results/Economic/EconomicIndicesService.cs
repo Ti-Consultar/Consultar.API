@@ -344,7 +344,7 @@ namespace _2___Application._1_Services.Results
 
                 decimal somaPassivo = fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal;
 
-                decimal necessidadeDeCapitalDeGiro = somaAtivos + somaPassivo;
+                decimal necessidadeDeCapitalDeGiro = somaAtivos - somaPassivo;
 
                 decimal realizavelLongoPrazo = monthAtivo?.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
