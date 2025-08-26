@@ -110,7 +110,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                     .SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Provisão para IRPJ")?.Value ?? 0;
 
-                var resultadoFinanceiro = receitaFinanceira - (monthDRE?.Totalizer
+                var resultadoFinanceiro = receitaFinanceira + (monthDRE?.Totalizer
                     .SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Despesas Financeiras")?.Value ?? 0);
 
@@ -171,7 +171,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 decimal roic = capitalInvestidoLiquido != 0 ? (nOPAT / capitalInvestidoLiquido) * 100 : 0;
                 decimal evaSPREAD = roic - wacc;
                 decimal turnover = receitaLiquida != 0 ? capitalInvestidoLiquido / receitaLiquida : 0;
-                decimal ncgTotal = necessidadeDeCapitalDeGiro + ativoFinanceiro;
+                decimal ncgTotal = necessidadeDeCapitalDeGiro - ativoFinanceiro;
                 decimal realNCG = clientes + estoque - fornecedores;
                 decimal investimentosAtivosFixos = capitalInvestidoLiquido - ncgTotal;
 
