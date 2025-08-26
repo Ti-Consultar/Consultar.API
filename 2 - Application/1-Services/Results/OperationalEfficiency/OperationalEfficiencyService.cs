@@ -149,6 +149,10 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 decimal somaPassivo = fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal;
                 decimal necessidadeDeCapitalDeGiro = somaAtivos + somaPassivo;
 
+                var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+                var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
+                var ncg = valorAtivoOperacional - valorPassivoOperacional;
+
                 // Ativo e Passivo não circulantes + Ativos Fixos
                 decimal realizavelLongoPrazo = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
@@ -159,7 +163,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 decimal ativosFixos = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
-                decimal capitalInvestidoLiquido = necessidadeDeCapitalDeGiro + realizavelLongoPrazo + exigivelLongoPrazo + ativosFixos;
+                decimal capitalInvestidoLiquido = ncg + realizavelLongoPrazo + exigivelLongoPrazo + ativosFixos;
 
                 // Indicadores financeiros
                 decimal nOPAT = monthDRE?.Totalizer
@@ -170,9 +174,6 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
 
 
 
-                var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
-                var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
-                var ncg = valorAtivoOperacional - valorPassivoOperacional;
 
 
                 decimal roic = capitalInvestidoLiquido != 0 ? (nOPAT / capitalInvestidoLiquido) * 100 : 0;
