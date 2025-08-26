@@ -93,11 +93,11 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
 
                 decimal somaAtivos = disponibilidade + clientes + estoque + outrosAtivosOperacionaisTotal;
 
-                decimal somaPassivo = fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal;
+                decimal somaPassivo = fornecedores - obrigacoesTributariasETrabalhistas - outrosPassivosOperacionaisTotal;
 
                 var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
                 var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
-                var ncg = valorAtivoOperacional + valorPassivoOperacional;
+                var ncg = valorAtivoOperacional - valorPassivoOperacional;
 
                 decimal necessidadeDeCapitalDeGiro = ncg;
 
@@ -139,14 +139,14 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
                         Clientes = clientes,
                         Estoques = estoque,
                         OutrosAtivosOperacionais = outrosAtivosOperacionaisTotal,
-                        Fornecedores = fornecedores * - 1,
-                        ObrigacoesTributariasTrabalhistas = obrigacoesTributariasETrabalhistas * -1,
-                        OutrosPassivosOperacionais = outrosPassivosOperacionaisTotal * -1,
+                        Fornecedores = fornecedores,
+                        ObrigacoesTributariasTrabalhistas = obrigacoesTributariasETrabalhistas,
+                        OutrosPassivosOperacionais = outrosPassivosOperacionaisTotal,
                         NCG = necessidadeDeCapitalDeGiro,
                         RealizavelLongoPrazo = realizavelLongoPrazo,
                         ExigivelALongoPrazoOperacional = exigivelLongoPrazo,
                         AtivosFixos = ativosFixos,
-                        CapitalInvestidoLiquido = patrimonioLiquido * -1,
+                        CapitalInvestidoLiquido = patrimonioLiquido,
 
                     },
                     EstruturaDeCapital = new ECResponseDto
@@ -156,8 +156,8 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
                         PosicaoFinanceiraCurtoPrazo = posicaoFinanceiraDeCurtoPrazo,
                         ExigivelaLongoPrazoFinanceiro = exigivelLongoPrazo,
                         PosicaoFinanceiraTerceiros = posicaoFinanceiraTerceiros,
-                        PatrimonioLiquido = patrimonioLiquido * -1, 
-                        EstruturaDeCapital = estruturaDeCapital * -1,
+                        PatrimonioLiquido = patrimonioLiquido, 
+                        EstruturaDeCapital = estruturaDeCapital,
                         
                     }
 

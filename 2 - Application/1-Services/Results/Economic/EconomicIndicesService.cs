@@ -276,7 +276,7 @@ namespace _2___Application._1_Services.Results
                     Name = monthAtivo.Name,
                     DateMonth = monthAtivo.DateMonth,
                     ROI = roi,
-                    LiquidoMensalROE = roe * -1,
+                    LiquidoMensalROE = roe,
                     LiquidoInicioROE = roeInicial,
                 });
             }
