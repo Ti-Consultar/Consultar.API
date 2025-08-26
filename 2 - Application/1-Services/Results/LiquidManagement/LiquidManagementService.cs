@@ -171,7 +171,7 @@ namespace _2___Application._1_Services.Results
 
 
 
-            var cdg = ((passivoNaoCirculante + patrimonioLiquido) + (ativoNaoCirculante + ativoFixo))* -1;
+            var cdg = ((passivoNaoCirculante + patrimonioLiquido) - (ativoNaoCirculante + ativoFixo))* -1;
 
             var saldoTesouraria = valorAtivoFinanceiro + valorPassivoFinanceiro;
 
