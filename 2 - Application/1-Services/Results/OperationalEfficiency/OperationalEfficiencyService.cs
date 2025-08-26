@@ -168,6 +168,13 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 decimal margemNOPAT = monthDRE?.Totalizer
                     .FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0;
 
+
+
+                var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+                var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
+                var ncg = valorAtivoOperacional - valorPassivoOperacional;
+
+
                 decimal roic = capitalInvestidoLiquido != 0 ? (nOPAT / capitalInvestidoLiquido) * 100 : 0;
                 decimal evaSPREAD = roic - wacc;
                 decimal turnover = receitaLiquida != 0 ? capitalInvestidoLiquido / receitaLiquida : 0;
@@ -199,7 +206,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                     Estoques = estoque,
                     Fornecedores = fornecedores,
                     NCGCEF = realNCG,
-                    NCGTotal = ncgTotal,
+                    NCGTotal = ncg,
                     InvestimentosAtivosFixos = investimentosAtivosFixos,
                     CapitalInvestidoLiquido = capitalInvestidoLiquido,
                     CapitalTurnover = turnover,
