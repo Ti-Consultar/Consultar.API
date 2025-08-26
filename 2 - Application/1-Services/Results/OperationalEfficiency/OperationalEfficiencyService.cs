@@ -178,9 +178,9 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 decimal roic = capitalInvestidoLiquido != 0 ? (nOPAT / capitalInvestidoLiquido) * 100 : 0;
                 decimal evaSPREAD = roic - wacc;
                 decimal turnover = receitaLiquida != 0 ? capitalInvestidoLiquido / receitaLiquida : 0;
-                decimal ncgTotal = necessidadeDeCapitalDeGiro - ativoFinanceiro;
+              //  decimal ncgTotal = necessidadeDeCapitalDeGiro - ativoFinanceiro;
                 decimal realNCG = clientes + estoque - fornecedores;
-                decimal investimentosAtivosFixos = capitalInvestidoLiquido - ncgTotal;
+                decimal investimentosAtivosFixos = capitalInvestidoLiquido - ncg;
 
                 decimal evaSpreadPorcentagem = Math.Round(roic - wacc, 2);
 
