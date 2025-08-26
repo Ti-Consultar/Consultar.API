@@ -320,7 +320,7 @@ namespace _2___Application._1_Services.CashFlow
 
                 decimal somaAtivos = disponibilidade + clientes + estoque + outrosAtivosOperacionaisTotal;
                 decimal somaPassivo = fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal;
-                decimal necessidadeDeCapitalDeGiro = somaAtivos + somaPassivo;
+                decimal necessidadeDeCapitalDeGiro = somaAtivos - somaPassivo;
 
                 decimal realizavelLongoPrazo = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
                 decimal exigivelLongoPrazo = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Não Circulante Operacional")?.TotalValue ?? 0;
