@@ -337,7 +337,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoClientes = (clientes - clienteAnterior) * -1;
                 decimal variacaoEstoques = (estoque - estoqueAnterior) * -1;
                 decimal variacaoOutrosAtivosOperacionais = (outrosAtivosOperacionaisTotal - outrosAtivosAnterior) * -1;
-                decimal variacaoDepreciacaoAmortAcumulada = depreciacaoAmortAcumulada - depreciacaoAnterior;
+                decimal variacaoDepreciacaoAmortAcumulada = (depreciacaoAmortAcumulada - depreciacaoAnterior) * -1;
                 decimal variacaoFornecedores = (fornecedores - fornecedoresAnterior) * -1;
                 decimal variacaoObrigacoes = (obrigacoesTributariasETrabalhistas - obrigacoesTributariasETrabalhistasAnterior) * -1;
                 decimal variacaoOutrosPassivosOperacionais = (outrosPassivosOperacionaisTotal - outrosPassivosOperacionaisAnterior) * -1;
