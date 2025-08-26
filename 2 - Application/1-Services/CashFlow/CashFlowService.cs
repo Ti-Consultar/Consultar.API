@@ -362,7 +362,7 @@ namespace _2___Application._1_Services.CashFlow
                 patrimonioLiquidoAnterior = Patrimonio;
                 imobilizadoAnterior = imobilizado;
                 EmprestimoEFinanciamentoAnterior = emprestimoEFinanciamento;
-                var variacaoNCG = variacaoClientes + variacaoEstoques + variacaoOutrosAtivosOperacionais + variacaoFornecedores + variacaoObrigacoes + variacaoOutrosPassivosOperacionais;
+                var variacaoNCG = variacaoClientes + variacaoEstoques + variacaoOutrosAtivosOperacionais - variacaoFornecedores - variacaoObrigacoes - variacaoOutrosPassivosOperacionais;
                 var fluxoCaixaOperacional = variacaoNCG + variacaoDepreciacaoAmortAcumulada + lucroLiquidoDoPeriodo;
                 var fluxoCaixaLivre = fluxoCaixaOperacional + variacaoAtivoNaoCirculante + variacaoInvestimento + variacaoImobilizado;
                 var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante + variacaoPatrimonioLiquido;
