@@ -1266,7 +1266,7 @@ namespace _2___Application._1_Services
 
             var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
             var balancoReclassificadoIds = balancoReclassificados
-                .Where(c => c.TypeOrder >= 18 && c.TypeOrder <= 33)
+                .Where(c => c.TypeOrder >= 18 && c.TypeOrder <= 34)
                 .Distinct()
                 .ToList();
 
@@ -1379,9 +1379,10 @@ namespace _2___Application._1_Services
                     decimal passivoFinanceiro = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Financeiro")?.TotalValue ?? 0;
                     decimal passivoOperacional = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Operacional")?.TotalValue ?? 0;
                     decimal patrimonioLiquidoPos = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+                    decimal passivoNaoCirculante = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Não Circulante")?.TotalValue ?? 0;
 
                     // 🔹 Total do mês (já positivo)
-                    decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquidoPos;
+                    decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquidoPos + passivoNaoCirculante;
                     totalPassivo = Math.Abs(totalPassivo);
 
                     return new MonthPainelContabilRespone
