@@ -216,12 +216,12 @@ namespace _2___Application._1_Services.Results
                     DateMonth = monthAtivo.DateMonth,
                     Clientes = clientes,
                     Estoques = estoques,
-                    Fornecedores = fornecedores * -1,
+                    Fornecedores = fornecedores,
 
                     // Turnover
                     GiroPME = giroPME,
                     GiroPMR = giroPMR,
-                    GiroPMP = giroPMP * -1,
+                    GiroPMP = giroPMP,
                     GiroCaixa = giroCaixa
                 });
             }
