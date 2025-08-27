@@ -1,5 +1,4 @@
 ﻿using _2___Application._2_Dto_s.CashFlow;
-using _2___Application._2_Dto_s.Painel;
 using _2___Application._2_Dto_s.Results.OperationalEfficiency;
 using _2___Application._2_Dto_s.TotalizerClassification;
 using _2___Application.Base;
@@ -251,34 +250,6 @@ namespace _2___Application._1_Services.CashFlow
             decimal AtivoNaoCirculanteAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
             decimal exigivelLongoPrazoAnterior = dezembroPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Passivo Não Circulante Operacional")?.TotalValue ?? 0;
             decimal patrimonioLiquidoAnterior = dezembroPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
-
-            var receitaFinanceiraAnterior = dezembroDRE?.Totalizer.SelectMany(t => t.Classifications)
-                .FirstOrDefault(c => c.Name == "Receitas Financeiras")?.Value ?? 0;
-            var despesaFinanceiraAnterior = dezembroDRE?.Totalizer.SelectMany(t => t.Classifications)
-                .FirstOrDefault(c => c.Name == "Despesas Financeiras")?.Value ?? 0;
-
-
-            var provisaoCSLLAnterior = dezembroDRE?.Totalizer.SelectMany(t => t.Classifications)
-                .FirstOrDefault(c => c.Name == "Provisão para CSLL")?.Value ?? 0;
-            var provisaoIRPJAnterior = dezembroDRE?.Totalizer.SelectMany(t => t.Classifications)
-                .FirstOrDefault(c => c.Name == "Provisão para IRPJ")?.Value ?? 0;
-
-
-
-            var lucroAntesAnterior = dezembroDRE.Totalizer.FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro");
-            if (lucroAntesAnterior != null) lucroAntesAnterior.TotalValue = 0;
-
-            var resultadoAntesAnterior = dezembroDRE.Totalizer.FirstOrDefault(t => t.Name == "Resultado do Exercício Antes do Imposto");
-            if (resultadoAntesAnterior != null && lucroAntesAnterior != null)
-                resultadoAntesAnterior.TotalValue = lucroAntesAnterior.TotalValue + receitaFinanceiraAnterior + despesaFinanceiraAnterior;
-
-
-            var lucroLiquidoAnterior = dezembroDRE.Totalizer.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
-            if (lucroLiquidoAnterior != null && resultadoAntesAnterior != null)
-                lucroLiquidoAnterior.TotalValue = resultadoAntesAnterior.TotalValue + provisaoCSLLAnterior + provisaoIRPJAnterior;
-
-
-            decimal VariacaoPatrimonioAnterior = patrimonioLiquidoAnterior - lucroLiquidoAnterior.TotalValue;
             decimal imobilizadoAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Imobilizado")?.TotalValue ?? 0;
             decimal EmprestimoEFinanciamentoAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Empréstimos e Financiamentos")?.TotalValue ?? 0;
             decimal disponibilidadeDezembroAnterior =
@@ -375,8 +346,8 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoPassivoNaoCirculante = exigivelLongoPrazo - exigivelLongoPrazoAnterior;
                 decimal variacaoImobilizado = (imobilizado - imobilizadoAnterior);
                 decimal variacaoEmprestimosFinanciamento = (emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior);
-                decimal VariacaoPatrimonio = patrimonioLiquido - lucroLiquido.TotalValue;
-                decimal variacaoPatrimonioLiquido = VariacaoPatrimonio - VariacaoPatrimonioAnterior;
+                decimal Patrimonio = patrimonioLiquido - lucroLiquido.TotalValue;
+                decimal variacaoPatrimonioLiquido = patrimonioLiquidoAnterior - Patrimonio;
 
                 investimentoAnterior = investimentos;
                 clienteAnterior = clientes;
@@ -388,7 +359,7 @@ namespace _2___Application._1_Services.CashFlow
                 outrosPassivosOperacionaisAnterior = outrosPassivosOperacionaisTotal;
                 AtivoNaoCirculanteAnterior = realizavelLongoPrazo;
                 exigivelLongoPrazoAnterior = exigivelLongoPrazo;
-                patrimonioLiquidoAnterior = VariacaoPatrimonio;
+                patrimonioLiquidoAnterior = Patrimonio;
                 imobilizadoAnterior = imobilizado;
                 EmprestimoEFinanciamentoAnterior = emprestimoEFinanciamento;
                 var variacaoNCG = variacaoClientes + variacaoEstoques + variacaoOutrosAtivosOperacionais - variacaoFornecedores - variacaoObrigacoes - variacaoOutrosPassivosOperacionais;
@@ -405,10 +376,6 @@ namespace _2___Application._1_Services.CashFlow
                 decimal imobilizadoNegativo = variacaoImobilizado * -1;
 
                 var fluxoCaixaLivre = fluxoCaixaOperacional + AtivoNaoCirculanteNegativo + investimentoNegativo + imobilizadoNegativo;
-
-
-
-
                 var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante + variacaoPatrimonioLiquido;
 
                 var dto = new CashFlowResponseDto
