@@ -347,7 +347,10 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoImobilizado = (imobilizado - imobilizadoAnterior);
                 decimal variacaoEmprestimosFinanciamento = (emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior);
                 decimal Patrimonio = patrimonioLiquido - lucroLiquido.TotalValue;
-                decimal variacaoPatrimonioLiquido = patrimonioLiquidoAnterior - Patrimonio;
+
+                decimal variacaoAnteriorPatrimonio = patrimonioLiquidoAnterior + lucroLiquido.TotalValue;
+
+                decimal variacaoPatrimonioLiquido = patrimonioLiquidoAnterior - variacaoAnteriorPatrimonio;
 
                 investimentoAnterior = investimentos;
                 clienteAnterior = clientes;
@@ -405,7 +408,7 @@ namespace _2___Application._1_Services.CashFlow
                     FluxoDeCaixaLivre = fluxoCaixaLivre,
                     CaptacoesAmortizacoesFinanceira = emprestimoEFinanciamento,
                     PassivoNaoCirculante = variacaoPassivoNaoCirculante,
-                    VariacaoPatrimonioLiquido = variacaoPatrimonioLiquido,
+                    VariacaoPatrimonioLiquido = variacaoPatrimonioLiquido * -1,
                     FluxoDeCaixaDaEmpresa = fluxoDeCaixaEmpresa,
                     DisponibilidadeInicioDoPeriodo = monthAtivo.DateMonth == 1
                                                                     ? disponibilidadeDezembroAnterior // se janeiro, pega dezembro anterior
