@@ -334,17 +334,17 @@ namespace _2___Application._1_Services.CashFlow
 
 
                 // Variações
-                decimal variacaoClientes = (clientes - clienteAnterior) * -1;
-                decimal variacaoEstoques = (estoque - estoqueAnterior) *-1 ;
-                decimal variacaoOutrosAtivosOperacionais = (outrosAtivosOperacionaisTotal - outrosAtivosAnterior) * -1;
+                decimal variacaoClientes = (clientes - clienteAnterior);
+                decimal variacaoEstoques = (estoque - estoqueAnterior) ;
+                decimal variacaoOutrosAtivosOperacionais = (outrosAtivosOperacionaisTotal - outrosAtivosAnterior);
                 decimal variacaoDepreciacaoAmortAcumulada = (depreciacaoAmortAcumulada - depreciacaoAnterior) * -1;
                 decimal variacaoFornecedores = (fornecedores - fornecedoresAnterior);
                 decimal variacaoObrigacoes = (obrigacoesTributariasETrabalhistas - obrigacoesTributariasETrabalhistasAnterior);
                 decimal variacaoOutrosPassivosOperacionais = (outrosPassivosOperacionaisTotal - outrosPassivosOperacionaisAnterior);
-                decimal variacaoAtivoNaoCirculante = (realizavelLongoPrazo - AtivoNaoCirculanteAnterior) * -1;
-                decimal variacaoInvestimento = (investimentos - investimentoAnterior) * -1;
+                decimal variacaoAtivoNaoCirculante = (realizavelLongoPrazo - AtivoNaoCirculanteAnterior);
+                decimal variacaoInvestimento = (investimentos - investimentoAnterior);
                 decimal variacaoPassivoNaoCirculante = exigivelLongoPrazo - exigivelLongoPrazoAnterior;
-                decimal variacaoImobilizado = (imobilizado - imobilizadoAnterior) * -1;
+                decimal variacaoImobilizado = (imobilizado - imobilizadoAnterior);
                 decimal variacaoEmprestimosFinanciamento = (emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior);
                 decimal Patrimonio = patrimonioLiquido - lucroLiquido.TotalValue;
                 decimal variacaoPatrimonioLiquido = patrimonioLiquidoAnterior - Patrimonio;
