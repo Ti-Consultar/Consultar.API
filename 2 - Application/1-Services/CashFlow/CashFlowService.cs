@@ -376,7 +376,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoImobilizado = (imobilizado - imobilizadoAnterior);
                 decimal variacaoEmprestimosFinanciamento = (emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior);
                 decimal VariacaoPatrimonio = patrimonioLiquido - lucroLiquido.TotalValue;
-                decimal variacaoPatrimonioLiquido = VariacaoPatrimonioLiquidoAnterior - VariacaoPatrimonio;
+                decimal variacaoPatrimonioLiquido = VariacaoPatrimonioLiquidoAnterior + VariacaoPatrimonio;
 
                 investimentoAnterior = investimentos;
                 clienteAnterior = clientes;
