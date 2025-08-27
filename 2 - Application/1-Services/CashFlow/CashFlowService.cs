@@ -363,7 +363,11 @@ namespace _2___Application._1_Services.CashFlow
                 imobilizadoAnterior = imobilizado;
                 EmprestimoEFinanciamentoAnterior = emprestimoEFinanciamento;
                 var variacaoNCG = variacaoClientes + variacaoEstoques + variacaoOutrosAtivosOperacionais - variacaoFornecedores - variacaoObrigacoes - variacaoOutrosPassivosOperacionais;
-                var fluxoCaixaOperacional = variacaoNCG + variacaoDepreciacaoAmortAcumulada + lucroLiquidoDoPeriodo;
+
+
+                decimal ngcNegativa = variacaoNCG * -1;
+
+                var fluxoCaixaOperacional = ngcNegativa + variacaoDepreciacaoAmortAcumulada + lucroLiquidoDoPeriodo;
                 var fluxoCaixaLivre = fluxoCaixaOperacional + variacaoAtivoNaoCirculante + variacaoInvestimento + variacaoImobilizado;
                 var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante + variacaoPatrimonioLiquido;
 
@@ -380,7 +384,7 @@ namespace _2___Application._1_Services.CashFlow
                     //Provisoes = impostos,
                     LucroOperacionalLiquido = lucroLiquidoDoPeriodo,
                     DepreciacaoAmortizacao = variacaoDepreciacaoAmortAcumulada * -1,
-                    VariacaoNCG = variacaoNCG,
+                    VariacaoNCG = variacaoNCG * -1,
                     Clientes = variacaoClientes * -1,
                     Estoques = variacaoEstoques * -1,
                     OutrosAtivosOperacionais = variacaoOutrosAtivosOperacionais * -1,
