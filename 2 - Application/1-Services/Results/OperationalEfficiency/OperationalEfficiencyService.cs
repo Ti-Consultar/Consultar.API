@@ -188,7 +188,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
 
                 decimal evaSpreadPorcentagem = Math.Round(roic - wacc, 2);
 
-                decimal eva = capitalInvestidoLiquido != 0 ? (evaSpreadPorcentagem * 100) * capitalInvestidoLiquido : 0;
+                decimal eva = capitalInvestidoLiquido != 0 ? (evaSpreadPorcentagem / 100) * capitalInvestidoLiquido : 0;
             
                 // Adiciona ao resultado
                 operationalEfficiency.Add(new OperationalEfficiencyResponseDto
