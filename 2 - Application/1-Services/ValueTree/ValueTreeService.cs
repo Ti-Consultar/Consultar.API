@@ -421,7 +421,7 @@ namespace _2___Application._1_Services.ValueTree
 
             var ativoFixo = monthAtivo.Totalizer
                 .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
-            var cdg = ((passivoNaoCirculante + patrimonioLiquidoGestaoLiquidez) + (ativoNaoCirculante + ativoFixo)) * -1;
+            var cdg = ((passivoNaoCirculante + patrimonioLiquidoGestaoLiquidez) - (ativoNaoCirculante + ativoFixo)) ;
 
             decimal capitalInvestidoAcum = monthOperationalEfficiencyAcum.CapitalInvestidoLiquido;
 
