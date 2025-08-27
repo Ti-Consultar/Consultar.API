@@ -278,7 +278,7 @@ namespace _2___Application._1_Services.CashFlow
                 lucroLiquidoAnterior.TotalValue = resultadoAntesAnterior.TotalValue + provisaoCSLLAnterior + provisaoIRPJAnterior;
 
 
-            decimal VariacaoPatrimonioLiquidoAnterior = patrimonioLiquidoAnterior - lucroLiquidoAnterior.TotalValue;
+            decimal VariacaoPatrimonioAnterior = patrimonioLiquidoAnterior - lucroLiquidoAnterior.TotalValue;
             decimal imobilizadoAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Imobilizado")?.TotalValue ?? 0;
             decimal EmprestimoEFinanciamentoAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Empréstimos e Financiamentos")?.TotalValue ?? 0;
             decimal disponibilidadeDezembroAnterior =
@@ -376,7 +376,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoImobilizado = (imobilizado - imobilizadoAnterior);
                 decimal variacaoEmprestimosFinanciamento = (emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior);
                 decimal VariacaoPatrimonio = patrimonioLiquido - lucroLiquido.TotalValue;
-                decimal variacaoPatrimonioLiquido = VariacaoPatrimonioLiquidoAnterior - VariacaoPatrimonio;
+                decimal variacaoPatrimonioLiquido = VariacaoPatrimonio - VariacaoPatrimonioAnterior;
 
                 investimentoAnterior = investimentos;
                 clienteAnterior = clientes;
