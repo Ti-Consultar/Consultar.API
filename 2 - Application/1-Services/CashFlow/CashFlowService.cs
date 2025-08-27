@@ -368,7 +368,14 @@ namespace _2___Application._1_Services.CashFlow
                 decimal ngcNegativa = variacaoNCG * -1;
                 decimal depreciacaoNegativa = variacaoDepreciacaoAmortAcumulada * -1;
                 var fluxoCaixaOperacional = ngcNegativa + depreciacaoNegativa + lucroLiquidoDoPeriodo;
-                var fluxoCaixaLivre = fluxoCaixaOperacional + variacaoAtivoNaoCirculante + variacaoInvestimento + variacaoImobilizado;
+
+
+
+                decimal AtivoNaoCirculanteNegativo = variacaoAtivoNaoCirculante * -1;
+                decimal investimentoNegativo = variacaoInvestimento * -1;
+                decimal imobilizadoNegativo = variacaoImobilizado * -1;
+
+                var fluxoCaixaLivre = fluxoCaixaOperacional + AtivoNaoCirculanteNegativo + investimentoNegativo + imobilizadoNegativo;
                 var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante + variacaoPatrimonioLiquido;
 
                 var dto = new CashFlowResponseDto
