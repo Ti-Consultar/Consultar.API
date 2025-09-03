@@ -348,6 +348,12 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoEmprestimosFinanciamento = (emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior);
                 decimal Patrimonio = patrimonioLiquido - lucroLiquido.TotalValue;
 
+
+
+
+
+
+
                 decimal variacaoAnteriorPatrimonio = patrimonioLiquidoAnterior + lucroLiquido.TotalValue;
 
                 decimal variacaoPatrimonioLiquido = patrimonioLiquidoAnterior - variacaoAnteriorPatrimonio;
@@ -381,6 +387,24 @@ namespace _2___Application._1_Services.CashFlow
                 var fluxoCaixaLivre = fluxoCaixaOperacional + AtivoNaoCirculanteNegativo + investimentoNegativo + imobilizadoNegativo;
                 var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante + variacaoPatrimonioLiquido;
 
+
+
+                var diferenca = disponibilidade - (previousMonth?.DisponibilidadeFinalDoPeriodo ?? 0);
+
+                var fluxo = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante;
+
+                var x = diferenca - fluxo;
+
+                var xAnterior = x;
+
+                var variacaoPatri = xAnterior - x;
+
+
+
+
+
+
+
                 var dto = new CashFlowResponseDto
                 {
                     Name = monthAtivo.Name,
@@ -408,8 +432,11 @@ namespace _2___Application._1_Services.CashFlow
                     FluxoDeCaixaLivre = fluxoCaixaLivre,
                     CaptacoesAmortizacoesFinanceira = emprestimoEFinanciamento,
                     PassivoNaoCirculante = variacaoPassivoNaoCirculante,
-                    VariacaoPatrimonioLiquido = variacaoPatrimonioLiquido * -1,
-                    FluxoDeCaixaDaEmpresa = fluxoDeCaixaEmpresa,
+                   // VariacaoPatrimonioLiquido = variacaoPatrimonioLiquido * -1,
+                    VariacaoPatrimonioLiquido = variacaoPatri * -1,
+                    FluxoDeCaixaDaEmpresa = diferenca,
+                   // FluxoDeCaixaDaEmpresa = diferenca,
+
                     DisponibilidadeInicioDoPeriodo = monthAtivo.DateMonth == 1
                                                                     ? disponibilidadeDezembroAnterior // se janeiro, pega dezembro anterior
         :                                                           (previousMonth?.DisponibilidadeFinalDoPeriodo ?? 0),
