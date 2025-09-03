@@ -388,18 +388,18 @@ namespace _2___Application._1_Services.CashFlow
                 var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante + variacaoPatrimonioLiquido;
 
 
+                decimal xAnterior = 0;
+                decimal diferenca = disponibilidade - (previousMonth?.DisponibilidadeFinalDoPeriodo ?? 0);
 
-                var diferenca = disponibilidade - (previousMonth?.DisponibilidadeFinalDoPeriodo ?? 0);
+                decimal fluxo = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante;
 
-                var fluxo = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante;
-
-                var x = diferenca - fluxo;
-
-                var xAnterior = x;
-
-                var variacaoPatri = xAnterior - x;
+                decimal x = diferenca - fluxo;
 
 
+
+                decimal variacaoPatri = xAnterior - x;
+
+                 xAnterior = x;
 
 
 
