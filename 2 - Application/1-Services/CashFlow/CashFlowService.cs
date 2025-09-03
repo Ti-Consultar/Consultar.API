@@ -397,7 +397,7 @@ namespace _2___Application._1_Services.CashFlow
 
 
 
-                decimal variacaoPatri = xAnterior - x;
+                decimal variacaoPatri =  x - xAnterior;
 
                  xAnterior = x;
 
