@@ -387,19 +387,25 @@ namespace _2___Application._1_Services.CashFlow
                 var fluxoCaixaLivre = fluxoCaixaOperacional + AtivoNaoCirculanteNegativo + investimentoNegativo + imobilizadoNegativo;
                 var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante + variacaoPatrimonioLiquido;
 
+                // fora do loop (onde você declara os “anteriores”)
+                decimal xAnterior = 0m;
 
-                decimal xAnterior = 0;
-                decimal diferenca = disponibilidade - (previousMonth?.DisponibilidadeFinalDoPeriodo ?? 0);
+                // dentro do loop
+                decimal disponibilidadeInicial = previousMonth?.DisponibilidadeFinalDoPeriodo ?? 0m;
+                decimal disponibilidadeFinal = disponibilidade; // seu valor já calculado para o mês atual
 
+                // Diferença desejada: Inicial - Final
+                decimal diferenca = disponibilidadeInicial - disponibilidadeFinal;
+
+                // Fluxo que você já calcula pelas variações
                 decimal fluxo = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante;
 
+                // Fechamento (x): diferença - fluxo
                 decimal x = diferenca - fluxo;
 
-
-
-                decimal variacaoPatri =  x - xAnterior;
-
-                 xAnterior = x;
+                // Variação mês a mês do x (usando memória)
+                decimal variacaoPatri = x - xAnterior;
+                xAnterior = x;
 
 
 
