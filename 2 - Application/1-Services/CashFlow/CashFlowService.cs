@@ -436,7 +436,7 @@ namespace _2___Application._1_Services.CashFlow
                     VariacaoInvestimento = variacaoInvestimento * -1,
                     VariacaoImobilizado = variacaoImobilizado * -1,
                     FluxoDeCaixaLivre = fluxoCaixaLivre,
-                    CaptacoesAmortizacoesFinanceira = emprestimoEFinanciamento,
+                    CaptacoesAmortizacoesFinanceira = variacaoEmprestimosFinanciamento,
                     PassivoNaoCirculante = variacaoPassivoNaoCirculante,
                    // VariacaoPatrimonioLiquido = variacaoPatrimonioLiquido * -1,
                     VariacaoPatrimonioLiquido = variacaoPatri * -1,
