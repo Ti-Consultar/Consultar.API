@@ -438,9 +438,9 @@ namespace _2___Application._1_Services.CashFlow
                     FluxoDeCaixaLivre = fluxoCaixaLivre,
                     CaptacoesAmortizacoesFinanceira = variacaoEmprestimosFinanciamento,
                     PassivoNaoCirculante = variacaoPassivoNaoCirculante,
-                   // VariacaoPatrimonioLiquido = variacaoPatrimonioLiquido * -1,
-                    VariacaoPatrimonioLiquido = variacaoPatri * -1,
-                    FluxoDeCaixaDaEmpresa = diferenca,
+                    VariacaoPatrimonioLiquido = variacaoPatrimonioLiquido * -1,
+                   // VariacaoPatrimonioLiquido = variacaoPatri * -1,
+                    FluxoDeCaixaDaEmpresa = fluxoDeCaixaEmpresa,
                    // FluxoDeCaixaDaEmpresa = diferenca,
 
                     DisponibilidadeInicioDoPeriodo = monthAtivo.DateMonth == 1
