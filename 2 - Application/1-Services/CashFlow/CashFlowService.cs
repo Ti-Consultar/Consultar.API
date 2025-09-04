@@ -385,7 +385,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal imobilizadoNegativo = variacaoImobilizado * -1;
 
                 var fluxoCaixaLivre = fluxoCaixaOperacional + AtivoNaoCirculanteNegativo + investimentoNegativo + imobilizadoNegativo;
-                var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante + variacaoPatrimonioLiquido;
+                var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento;// + variacaoPassivoNaoCirculante + variacaoPatrimonioLiquido;
 
                 // fora do loop (onde você declara os “anteriores”)
                 decimal xAnterior = 0m;
