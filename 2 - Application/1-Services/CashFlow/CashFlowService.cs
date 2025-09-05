@@ -355,12 +355,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal Patrimonio = patrimonioLiquido - lucroLiquido.TotalValue;
 
 
-
-
-
-
-
-                decimal variacaoAnteriorPatrimonio = patrimonioLiquidoAnterior - resultadoExercicioAcumulado;
+                decimal variacaoAnteriorPatrimonio = patrimonioLiquidoAnterior + resultadoExercicioAcumulado;
 
                 decimal variacaoPatrimonioLiquido = patrimonioLiquidoAnterior - variacaoAnteriorPatrimonio;
 
@@ -384,8 +379,6 @@ namespace _2___Application._1_Services.CashFlow
                 decimal depreciacaoNegativa = variacaoDepreciacaoAmortAcumulada * -1;
                 var fluxoCaixaOperacional = ngcNegativa + depreciacaoNegativa + lucroLiquidoDoPeriodo;
 
-                variacaoPatrimonioLiquido = (patrimonioLiquido - lucroLiquido.TotalValue) -
-                            (patrimonioLiquidoAnterior - resultadoExercicioAcumulado);
 
 
                 decimal AtivoNaoCirculanteNegativo = variacaoAtivoNaoCirculante * -1;
@@ -393,7 +386,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal imobilizadoNegativo = variacaoImobilizado * -1;
 
                 var fluxoCaixaLivre = fluxoCaixaOperacional + AtivoNaoCirculanteNegativo + investimentoNegativo + imobilizadoNegativo;
-                var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento;// + variacaoPassivoNaoCirculante + variacaoPatrimonioLiquido;
+                var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante; ;// + variacaoPatrimonioLiquido;
 
                 // fora do loop (onde você declara os “anteriores”)
                 decimal xAnterior = 0m;
