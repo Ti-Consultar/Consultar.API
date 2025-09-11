@@ -301,11 +301,15 @@ namespace _2___Application._1_Services.ValueTree
                 .SelectMany(m => m.Totalizer.SelectMany(t => t.Classifications))
                 .GroupBy(c => c.Name)
                 .ToDictionary(g => g.Key, g => g.Sum(c => c.Value));
-
             var parameter = await _parameterRepository.GetByAccountPlanIdYear(accountPlanId, year);
-            decimal wacc = (parameter.FirstOrDefault(a => a.Name == "WACC")?.ParameterValue ?? 0) / 12;
-            decimal waccAcumulado = (parameter.FirstOrDefault(a => a.Name == "WACC")?.ParameterValue ?? 0);
 
+            decimal waccTotalAno = parameter.FirstOrDefault(a => a.Name == "WACC")?.ParameterValue ?? 0;
+
+            // valor mensal
+            decimal wacc = waccTotalAno / 12;
+
+            // acumulado até o mês selecionado (ex: março = 3 meses * valor mensal)
+            decimal waccAcumulado = wacc * month;
             // === Custos Variáveis ===
             decimal custoMercadoriasMes = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
                 .FirstOrDefault(c => c.Name == "(-) Custos das Mercadorias")?.Value ?? 0;
