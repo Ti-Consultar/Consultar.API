@@ -247,7 +247,8 @@ namespace _2___Application._1_Services.ValueTree
                     .FirstOrDefault(m => m.DateMonth == month);
 
 
-            var meses = painelOperationalEfficiency.OperationalEfficiency.Months;
+            var meses = painelOperationalEfficiency.OperationalEfficiency.Months
+     .Where(m => m.DateMonth <= month); // << filtro aqui
 
             var monthOperationalEfficiencyAcum = new
             {
@@ -276,25 +277,27 @@ namespace _2___Application._1_Services.ValueTree
                 EVA = meses.Sum(m => m.EVA)
             };
 
-
-
             // === Acumulados do ano ===
             var acumuladoAtivo = painelAtivo.Months
-                .SelectMany(m => m.Totalizer)
-                .GroupBy(t => t.Name)
-                .ToDictionary(g => g.Key, g => g.Sum(t => t.TotalValue));
+             .Where(m => m.DateMonth <= month) // << FILTRO
+             .SelectMany(m => m.Totalizer)
+             .GroupBy(t => t.Name)
+             .ToDictionary(g => g.Key, g => g.Sum(t => t.TotalValue));
 
-            var acumuladoPassivo = painelPassivo.Months
-                .SelectMany(m => m.Totalizer)
-                .GroupBy(t => t.Name)
-                .ToDictionary(g => g.Key, g => g.Sum(t => t.TotalValue));
+             var acumuladoPassivo = painelPassivo.Months
+             .Where(m => m.DateMonth <= month)
+             .SelectMany(m => m.Totalizer)
+             .GroupBy(t => t.Name)
+             .ToDictionary(g => g.Key, g => g.Sum(t => t.TotalValue));
 
             var acumuladoDRE = painelDRE.Months
+                .Where(m => m.DateMonth <= month)
                 .SelectMany(m => m.Totalizer)
                 .GroupBy(t => t.Name)
                 .ToDictionary(g => g.Key, g => g.Sum(t => t.TotalValue));
 
             var acumuladoClassDRE = painelDRE.Months
+                .Where(m => m.DateMonth <= month)
                 .SelectMany(m => m.Totalizer.SelectMany(t => t.Classifications))
                 .GroupBy(c => c.Name)
                 .ToDictionary(g => g.Key, g => g.Sum(c => c.Value));
@@ -421,7 +424,7 @@ namespace _2___Application._1_Services.ValueTree
 
             var ativoFixo = monthAtivo.Totalizer
                 .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
-            var cdg = ((passivoNaoCirculante + patrimonioLiquidoGestaoLiquidez) - (ativoNaoCirculante + ativoFixo)) ;
+            var cdg = ((passivoNaoCirculante + patrimonioLiquidoGestaoLiquidez) - (ativoNaoCirculante + ativoFixo));
 
             decimal capitalInvestidoAcum = monthOperationalEfficiencyAcum.CapitalInvestidoLiquido;
 
