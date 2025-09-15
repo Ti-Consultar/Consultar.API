@@ -230,14 +230,16 @@ namespace _2___Application._1_Services.CashFlow
 
             CashFlowResponseDto previousMonth = null;
 
-            // 🔥 inicializar com base em dezembro do ano anterior
+            // Inicializar com base em dezembro do ano anterior
             var painelAtivoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1);
             var painelPassivoAnterior = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year - 1, 2);
             var painelPassivoBcAnterior = await BuildPainelByTypePassivo(accountPlanId, year - 1, 2);
+            var painelDREAnterior = await BuildPainelByTypeDRE(accountPlanId, year - 1, 3);
 
             var dezembroAtivo = painelAtivoAnterior?.Months?.FirstOrDefault(m => m.DateMonth == 12);
             var dezembroPassivo = painelPassivoAnterior?.Months?.FirstOrDefault(m => m.DateMonth == 12);
             var dezembroBcPassivo = painelPassivoBcAnterior?.Months?.FirstOrDefault(m => m.DateMonth == 12);
+            var dezembroDRE = painelDREAnterior?.Months?.FirstOrDefault(m => m.DateMonth == 12);
 
             decimal investimentoAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Investimentos")?.TotalValue ?? 0;
             decimal clienteAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Clientes")?.TotalValue ?? 0;
@@ -253,8 +255,7 @@ namespace _2___Application._1_Services.CashFlow
             decimal resultadoAnterior = dezembroBcPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Resultado do Exercício Acumulado")?.TotalValue ?? 0;
             decimal imobilizadoAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Imobilizado")?.TotalValue ?? 0;
             decimal EmprestimoEFinanciamentoAnterior = dezembroPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Empréstimos e Financiamentos")?.TotalValue ?? 0;
-            decimal disponibilidadeDezembroAnterior =
-                dezembroAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
+            decimal disponibilidadeDezembroAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
 
             foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
             {
@@ -262,6 +263,30 @@ namespace _2___Application._1_Services.CashFlow
                 var monthBcPassivo = painelBcPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
                 var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
 
+                // --- DRE / Lucros ---
+                var lucroAntes = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro");
+                if (lucroAntes != null) lucroAntes.TotalValue = 0;
+
+                var receitaFinanceira = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                    .FirstOrDefault(c => c.Name == "Receitas Financeiras")?.Value ?? 0;
+                var despesaFinanceira = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                    .FirstOrDefault(c => c.Name == "Despesas Financeiras")?.Value ?? 0;
+
+                var resultadoAntes = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Resultado do Exercício Antes do Imposto");
+                if (resultadoAntes != null && lucroAntes != null)
+                    resultadoAntes.TotalValue = lucroAntes.TotalValue + receitaFinanceira + despesaFinanceira;
+
+                decimal lucroLiquidoDoPeriodo = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
+
+                var lucroLiquido = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
+                var provisaoCSLL = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                    .FirstOrDefault(c => c.Name == "Provisão para CSLL")?.Value ?? 0;
+                var provisaoIRPJ = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                    .FirstOrDefault(c => c.Name == "Provisão para IRPJ")?.Value ?? 0;
+                if (lucroLiquido != null && resultadoAntes != null)
+                    lucroLiquido.TotalValue = resultadoAntes.TotalValue + provisaoCSLL + provisaoIRPJ;
+
+                // --- Balanco / componentes ---
                 var patrimonioLiquido = monthPassivo.Totalizer.FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
                 var resultadoExercicioAcumulado = monthBcPassivo.Totalizer.FirstOrDefault(t => t.Name == "Resultado do Exercício Acumulado")?.TotalValue ?? 0;
                 var emprestimoEFinanciamento = monthPassivo.Totalizer.FirstOrDefault(t => t.Name == "Empréstimos e Financiamentos")?.TotalValue ?? 0;
@@ -279,11 +304,21 @@ namespace _2___Application._1_Services.CashFlow
                 decimal obrigacoesTributariasETrabalhistas = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Obrigações Tributárias e Trabalhistas")?.TotalValue ?? 0;
                 decimal outrosPassivosOperacionaisTotal = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
 
+                decimal somaAtivos = disponibilidade + clientes + estoque + outrosAtivosOperacionaisTotal;
+                decimal somaPassivo = fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal;
+                decimal necessidadeDeCapitalDeGiro = somaAtivos - somaPassivo;
+
                 decimal realizavelLongoPrazo = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
                 decimal exigivelLongoPrazo = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Não Circulante Operacional")?.TotalValue ?? 0;
-                decimal investimentos = monthAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Investimentos")?.TotalValue ?? 0;
+                decimal ativosFixos = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
-                // --- 🔥 Ajuste de janeiro vs outros meses ---
+                decimal capitalInvestidoLiquido = necessidadeDeCapitalDeGiro + realizavelLongoPrazo + exigivelLongoPrazo + ativosFixos;
+                decimal ncgTotal = necessidadeDeCapitalDeGiro + ativoFinanceiro;
+                decimal investimentosAtivosFixos = capitalInvestidoLiquido - ncgTotal;
+
+                var investimentos = monthAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Investimentos")?.TotalValue ?? 0;
+
+                // --- Variações (Janeiro vs DezembroAnterior) / (mês atual vs mês anterior) ---
                 decimal variacaoClientes, variacaoEstoques, variacaoOutrosAtivosOperacionais,
                     variacaoDepreciacaoAmortAcumulada, variacaoFornecedores, variacaoObrigacoes,
                     variacaoOutrosPassivosOperacionais, variacaoAtivoNaoCirculante, variacaoInvestimento,
@@ -306,7 +341,7 @@ namespace _2___Application._1_Services.CashFlow
                     variacaoImobilizado = imobilizado - imobilizadoAnterior;
                     variacaoEmprestimosFinanciamento = emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior;
 
-                    // Fórmula de janeiro (Excel)
+                    // PL ajustado = (PL - ResultadoAcumulado)
                     variacaoPatrimonioLiquido = (patrimonioLiquido - resultadoExercicioAcumulado) - patrimonioLiquidoAnterior;
                 }
                 else
@@ -325,13 +360,31 @@ namespace _2___Application._1_Services.CashFlow
                     variacaoImobilizado = imobilizado - imobilizadoAnterior;
                     variacaoEmprestimosFinanciamento = emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior;
 
-                    // Fórmula de fevereiro em diante (Excel)
-                    variacaoPatrimonioLiquido =
-                        (patrimonioLiquido - resultadoExercicioAcumulado) -
-                        (patrimonioLiquidoAnterior - resultadoAnterior);
+                    // PL ajustado (mês atual) - PL ajustado (mês anterior)
+                    variacaoPatrimonioLiquido = (patrimonioLiquido - resultadoExercicioAcumulado) - (patrimonioLiquidoAnterior - resultadoAnterior);
                 }
 
-                // --- Atualiza "anteriores" ---
+                // --- NCG e Fluxos ---
+                var variacaoNCG = variacaoClientes + variacaoEstoques + variacaoOutrosAtivosOperacionais
+                                  - variacaoFornecedores - variacaoObrigacoes - variacaoOutrosPassivosOperacionais;
+
+                // a convenção usada anteriormente: ngcNegativa = variacaoNCG * -1 (para transformar variação em saída/entrada)
+                decimal ngcNegativa = variacaoNCG * -1;
+                decimal depreciacaoNegativa = variacaoDepreciacaoAmortAcumulada * -1;
+
+                // Fluxo operacional: NCG (sinal invertido) + depreciação + lucro líquido do período
+                var fluxoCaixaOperacional = ngcNegativa + depreciacaoNegativa + lucroLiquidoDoPeriodo;
+
+                // Itens de investimento (sinal invertido para compor fluxo)
+                decimal AtivoNaoCirculanteNegativo = variacaoAtivoNaoCirculante * -1;
+                decimal investimentoNegativo = variacaoInvestimento * -1;
+                decimal imobilizadoNegativo = variacaoImobilizado * -1;
+
+                var fluxoCaixaLivre = fluxoCaixaOperacional + AtivoNaoCirculanteNegativo + investimentoNegativo + imobilizadoNegativo;
+
+                var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante;
+
+                // --- Atualiza "anteriores" para o próximo mês ---
                 investimentoAnterior = investimentos;
                 clienteAnterior = clientes;
                 estoqueAnterior = estoque;
@@ -347,26 +400,39 @@ namespace _2___Application._1_Services.CashFlow
                 imobilizadoAnterior = imobilizado;
                 EmprestimoEFinanciamentoAnterior = emprestimoEFinanciamento;
 
-                // --- DTO ---
+                // --- Monta DTO com todos os campos solicitados ---
                 var dto = new CashFlowResponseDto
                 {
                     Name = monthAtivo.Name,
                     DateMonth = monthAtivo.DateMonth,
+
+                    // itens operacionais
+                    LucroOperacionalLiquido = lucroLiquidoDoPeriodo,
+                    DepreciacaoAmortizacao = variacaoDepreciacaoAmortAcumulada * -1, // sinal consistente com planilha
+                    VariacaoNCG = variacaoNCG * -1,
                     Clientes = variacaoClientes * -1,
                     Estoques = variacaoEstoques * -1,
                     OutrosAtivosOperacionais = variacaoOutrosAtivosOperacionais * -1,
                     Fornecedores = variacaoFornecedores,
                     ObrigacoesTributariasTrabalhistas = variacaoObrigacoes,
                     OutrosPassivosOperacionais = variacaoOutrosPassivosOperacionais,
+
+                    // fluxos
+                    FluxoDeCaixaOperacional = fluxoCaixaOperacional,
                     AtivoNaoCirculante = variacaoAtivoNaoCirculante * -1,
                     VariacaoInvestimento = variacaoInvestimento * -1,
                     VariacaoImobilizado = variacaoImobilizado * -1,
+                    FluxoDeCaixaLivre = fluxoCaixaLivre,
                     CaptacoesAmortizacoesFinanceira = variacaoEmprestimosFinanciamento,
                     PassivoNaoCirculante = variacaoPassivoNaoCirculante,
                     VariacaoPatrimonioLiquido = variacaoPatrimonioLiquido * -1,
+                    FluxoDeCaixaDaEmpresa = fluxoDeCaixaEmpresa,
+
+                    // disponibilidades
                     DisponibilidadeInicioDoPeriodo = monthAtivo.DateMonth == 1
                         ? disponibilidadeDezembroAnterior
                         : (previousMonth?.DisponibilidadeFinalDoPeriodo ?? 0),
+
                     DisponibilidadeFinalDoPeriodo = disponibilidade,
                 };
 
@@ -382,6 +448,7 @@ namespace _2___Application._1_Services.CashFlow
                 }
             };
         }
+
 
         public async Task<PainelCashFlowResponseDto> GetCashFloww(int accountPlanId, int year)
         {
