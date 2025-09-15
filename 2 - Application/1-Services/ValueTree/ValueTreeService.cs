@@ -308,7 +308,6 @@ namespace _2___Application._1_Services.ValueTree
             // valor mensal
             decimal wacc = waccTotalAno / 12;
 
-            // acumulado até o mês selecionado (ex: março = 3 meses * valor mensal)
             decimal waccAcumulado = wacc * month;
             // === Custos Variáveis ===
             decimal custoMercadoriasMes = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
