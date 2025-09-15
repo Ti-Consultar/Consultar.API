@@ -154,7 +154,7 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
                         Name = "Posição Financeira Líquida",
                         Emprestimos = emprestimos,
                         PosicaoFinanceiraCurtoPrazo = posicaoFinanceiraDeCurtoPrazo,
-                        ExigivelaLongoPrazoFinanceiro = exigivelLongoPrazo,
+                        ExigivelaLongoPrazoFinanceiro = exigivelLongoPrazoFinanceiro,
                         PosicaoFinanceiraTerceiros = posicaoFinanceiraTerceiros,
                         PatrimonioLiquido = patrimonioLiquido, 
                         EstruturaDeCapital = estruturaDeCapital,
