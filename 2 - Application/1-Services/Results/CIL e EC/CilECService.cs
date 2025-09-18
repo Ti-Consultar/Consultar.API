@@ -127,7 +127,7 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
                 decimal patrimonioLiquido = monthPassivo?.Totalizer
              .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
-                decimal estruturaDeCapital = patrimonioLiquido + posicaoFinanceiraTerceiros + posicaoFinanceiraDeCurtoPrazo;
+                decimal estruturaDeCapital = patrimonioLiquido + posicaoFinanceiraTerceiros;
 
                 cilEec.Add(new CILeECResponseDto
                 {
