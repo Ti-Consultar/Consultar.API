@@ -174,6 +174,12 @@ namespace ConsultarMRP.API.Controllers
             }
         }
 
+        [HttpGet("bond-list/{accountPlanId}")]
+        public async Task<IActionResult> GetBondListByAccountPlanId(int accountPlanId)
+        {
+            var result = await _Service.GetBondListByAccountPlanId(accountPlanId);
+            return Ok(result);
+        }
 
         [HttpGet]
         [Route("/painel")]

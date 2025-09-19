@@ -100,8 +100,15 @@ namespace _4_InfraData._1_Repositories
                 .ToListAsync();
         }
 
-        
 
+        public async Task<List<BalanceteDataAccountPlanClassification>>
+         GetBondListByAccountPlanId(int accountPlanId)
+            {
+                return await _context.BalanceteDataAccountPlanClassification
+                    .Include(b => b.AccountPlanClassification) // traz o relacionamento
+                    .Where(b => b.AccountPlanClassification.AccountPlanId == accountPlanId)
+                    .ToListAsync();
+            }
 
         public async Task<List<AccountPlanClassification>> GetItemsToDecrementOrderAsync(int accountPlanId, ETypeClassification typeClassification, int oldOrder, int newOrder)
         {

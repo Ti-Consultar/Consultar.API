@@ -716,6 +716,31 @@ namespace _2___Application._1_Services
             }
         }
 
+        public async Task<ResultValue> GetBondListByAccountPlanId(int accountPlanId)
+        {
+            try
+            {
+                var bonds = await _accountClassificationRepository
+                    .GetBondListByAccountPlanId(accountPlanId);
+
+                if (bonds == null || !bonds.Any())
+                    return ErrorResponse("Nenhum vínculo encontrado.");
+
+                var result = bonds.Select(b => new
+                {
+                    b.Id,
+                    b.AccountPlanClassificationId,
+                    ClassificationName = b.AccountPlanClassification.Name, // exemplo se existir
+                    b.CostCenter
+                });
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
 
         public async Task<ResultValue> GetPainelBalancoAsync(int accountPlanId, int year, int typeClassification)
         {
