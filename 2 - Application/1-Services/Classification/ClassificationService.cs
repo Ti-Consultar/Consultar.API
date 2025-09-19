@@ -724,7 +724,7 @@ namespace _2___Application._1_Services
                     .GetBondListByAccountPlanId(accountPlanId);
 
                 if (bonds == null || !bonds.Any())
-                    return ErrorResponse("Nenhum vínculo encontrado.");
+                    return SuccessResponse(Message.NotFound);
 
                 var result = bonds.Select(b => new
                 {
@@ -741,6 +741,44 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
+
+        public async Task<ResultValue> UpdateBondList(int accountPlanId, BalanceteDataAccountPlanClassificationCreateList dto)
+        {
+            try
+            {
+                // Busca vínculos existentes
+                var existingBonds = await _accountClassificationRepository
+                    .GetBondListByAccountPlanId(accountPlanId);
+
+                // Se houver vínculos antigos, remove
+                if (existingBonds != null && existingBonds.Any())
+                {
+                    await _accountClassificationRepository.DeletePermanentlyList(existingBonds);
+                }
+
+                // Monta os novos vínculos
+                var newBonds = dto.BondList
+                    .SelectMany(bond => bond.CostCenters.Select(cc => new BalanceteDataAccountPlanClassification
+                    {
+                        AccountPlanClassificationId = bond.AccountPlanClassificationId,
+                        CostCenter = cc.CostCenter
+                    }))
+                    .ToList();
+
+                // Cria os vínculos novos
+                if (newBonds.Any())
+                {
+                    await _accountClassificationRepository.CreateBond(newBonds);
+                }
+
+                return SuccessResponse(Message.Success);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
 
         public async Task<ResultValue> GetPainelBalancoAsync(int accountPlanId, int year, int typeClassification)
         {

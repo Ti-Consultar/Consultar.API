@@ -104,11 +104,20 @@ namespace _4_InfraData._1_Repositories
         public async Task<List<BalanceteDataAccountPlanClassification>>
          GetBondListByAccountPlanId(int accountPlanId)
             {
-                return await _context.BalanceteDataAccountPlanClassification
+                var model = await _context.BalanceteDataAccountPlanClassification
                     .Include(b => b.AccountPlanClassification) // traz o relacionamento
                     .Where(b => b.AccountPlanClassification.AccountPlanId == accountPlanId)
                     .ToListAsync();
+
+            return model;
             }
+
+        public async Task DeletePermanentlyList(List<BalanceteDataAccountPlanClassification> entities)
+        {
+            _context.Set<BalanceteDataAccountPlanClassification>().RemoveRange(entities);
+            await _context.SaveChangesAsync();
+        }
+
 
         public async Task<List<AccountPlanClassification>> GetItemsToDecrementOrderAsync(int accountPlanId, ETypeClassification typeClassification, int oldOrder, int newOrder)
         {

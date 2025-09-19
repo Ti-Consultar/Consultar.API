@@ -157,6 +157,23 @@ namespace ConsultarMRP.API.Controllers
             }
         }
 
+        [HttpPut]
+        [Route("accountplan/{accountPlanId}/update-bond-list")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> CreateBondList(int accountPlanId,[FromBody] BalanceteDataAccountPlanClassificationCreateList dto)
+        {
+            try
+            {
+
+                var response = await _Service.UpdateBondList(accountPlanId,dto);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet]
         [Route("/bond")]
         // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
