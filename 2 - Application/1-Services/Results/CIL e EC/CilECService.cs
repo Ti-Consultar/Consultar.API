@@ -111,7 +111,7 @@ namespace _2___Application._1_Services.Results.CIL_e_EC
                 decimal ativosFixos = monthAtivo?.Totalizer
                   .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
-                decimal capitalInvestidoLiquido = disponibilidade + necessidadeDeCapitalDeGiro +  realizavelLongoPrazo - exigivelLongoPrazo + ativosFixos;
+                decimal capitalInvestidoLiquido = disponibilidade + necessidadeDeCapitalDeGiro +  realizavelLongoPrazo - exigivelLongoPrazo + ativosFixos;// inverti o exigivel para ser subtração
 
 
                 decimal emprestimos = monthPassivo?.Totalizer

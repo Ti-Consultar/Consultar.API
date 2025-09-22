@@ -84,9 +84,9 @@ namespace _2___Application._2_Dto_s.Results.EconomicIndices
     {
         public string Name { get; set; }
         public int DateMonth { get; set; }
-        public decimal EBITDA { get; set; }
         public decimal LucroOperacionalAntesDoResultadoFinanceiro { get; set; }
         public decimal DespesasDepreciacao { get; set; }
+        public decimal EBITDA { get; set; }
     }
     public class PainelNOPATResponseDto
     {

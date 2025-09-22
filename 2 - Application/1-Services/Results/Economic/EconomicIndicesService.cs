@@ -435,9 +435,10 @@ namespace _2___Application._1_Services.Results
             {
                 Name = "ACUMULADO",
                 DateMonth = 13, // 👈 opcional
-                EBITDA = eBITDA.Sum(x => x.EBITDA),
+            
                 LucroOperacionalAntesDoResultadoFinanceiro = eBITDA.Sum(x => x.LucroOperacionalAntesDoResultadoFinanceiro),
-                DespesasDepreciacao = eBITDA.Sum(x => x.DespesasDepreciacao)
+                DespesasDepreciacao = eBITDA.Sum(x => x.DespesasDepreciacao),
+                    EBITDA = eBITDA.Sum(x => x.EBITDA)
                 // aqui não existem margens, então nada pra zerar
             };
 
