@@ -726,13 +726,19 @@ namespace _2___Application._1_Services
                 if (bonds == null || !bonds.Any())
                     return SuccessResponse(Message.NotFound);
 
-                var result = bonds.Select(b => new
-                {
-                    b.Id,
-                    b.AccountPlanClassificationId,
-                    ClassificationName = b.AccountPlanClassification.Name, // exemplo se existir
-                    b.CostCenter
-                });
+                var result = bonds
+                    .GroupBy(b => new
+                    {
+                        b.AccountPlanClassificationId,
+                        ClassificationName = b.AccountPlanClassification.Name
+                    })
+                    .Select(g => new
+                    {
+                        AccountPlanClassificationId = g.Key.AccountPlanClassificationId,
+                        ClassificationName = g.Key.ClassificationName,
+                        CostCenters = g.Select(x => new { CostCenter = x.CostCenter }).ToList()
+                    })
+                    .ToList();
 
                 return SuccessResponse(result);
             }
@@ -741,6 +747,7 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
+
 
         public async Task<ResultValue> UpdateBondList(int accountPlanId, BalanceteDataAccountPlanClassificationCreateList dto)
         {
