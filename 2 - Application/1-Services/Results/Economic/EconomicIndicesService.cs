@@ -263,11 +263,53 @@ namespace _2___Application._1_Services.Results
                 decimal nopat = monthDRE?.Totalizer
                 .FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
 
+                decimal disponibilidade = monthAtivo?.Totalizer
+                                    .FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
+
+                decimal clientes = monthAtivo?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
+
+                decimal estoque = monthAtivo?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
+
+                decimal outrosAtivosOperacionaisTotal = monthAtivo?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
+
+                decimal fornecedores = monthPassivo?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
+
+                decimal obrigacoesTributariasETrabalhistas = monthPassivo?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Obrigações Tributárias e Trabalhistas")?.TotalValue ?? 0;
+
+                decimal outrosPassivosOperacionaisTotal = monthPassivo?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
+
+                decimal somaAtivos = disponibilidade + clientes + estoque + outrosAtivosOperacionaisTotal;
+
+                decimal somaPassivo = fornecedores - obrigacoesTributariasETrabalhistas - outrosPassivosOperacionaisTotal;
+
+                var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+                var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
+                var ncg = valorAtivoOperacional - valorPassivoOperacional;
+
+                decimal necessidadeDeCapitalDeGiro = ncg;
+
+                decimal realizavelLongoPrazo = monthAtivo?.Totalizer
+                  .FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
+
+                decimal exigivelLongoPrazo = monthPassivo?.Totalizer
+                     .FirstOrDefault(t => t.Name == "Passivo Não Circulante Operacional")?.TotalValue ?? 0;
+
+                decimal ativosFixos = monthAtivo?.Totalizer
+                  .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
+
+                decimal capitalInvestidoLiquido = disponibilidade + necessidadeDeCapitalDeGiro + realizavelLongoPrazo - exigivelLongoPrazo + ativosFixos;// inverti o exigivel para ser subtração
+
                 decimal patrimonioLiquido = monthPassivo?.Totalizer
                     .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
                 // ⚠️ Evita divisão por zero
-                decimal roi = lucroLiquido != 0 ? nopat / lucroLiquido : 0;
+                decimal roi = capitalInvestidoLiquido != 0 ? nopat / capitalInvestidoLiquido : 0;
                 decimal roe = patrimonioLiquido != 0 ? lucroLiquido / patrimonioLiquido : 0;
                 decimal roeInicial = patrimonioLiquidoAnoAnterior != 0 ? lucroLiquido / patrimonioLiquidoAnoAnterior : 0;
 
