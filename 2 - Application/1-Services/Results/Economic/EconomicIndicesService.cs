@@ -317,9 +317,9 @@ namespace _2___Application._1_Services.Results
                 {
                     Name = monthAtivo.Name,
                     DateMonth = monthAtivo.DateMonth,
-                    ROI = roi,
-                    LiquidoMensalROE = roe,
-                    LiquidoInicioROE = roeInicial,
+                    ROI = roi * 100,
+                    LiquidoMensalROE = roe * 100,
+                    LiquidoInicioROE = roeInicial * 100,
                 });
             }
 
