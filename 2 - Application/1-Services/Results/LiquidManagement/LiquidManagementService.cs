@@ -318,7 +318,7 @@ namespace _2___Application._1_Services.Results
 
                 ncgMesAnterior = ncg;
 
-                decimal fluxoDeCaixaOperacional = variacaoNCG - ebitda;
+                decimal fluxoDeCaixaOperacional = ebitda - variacaoNCG;
 
                 var receitaMensal = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
 
