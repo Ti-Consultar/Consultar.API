@@ -240,7 +240,7 @@ namespace _2___Application._1_Services.Results
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
 
             // 🔁 Carrega também o painel do ANO ANTERIOR (somente o Ativo é necessário aqui)
-            var painelPassivoAnoAnterior = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year - 1, 1);
+            var painelPassivoAnoAnterior = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year - 1, 2);
 
             var dezembroAnoAnterior = painelPassivoAnoAnterior.Months
                 .FirstOrDefault(a => a.DateMonth == 12);
