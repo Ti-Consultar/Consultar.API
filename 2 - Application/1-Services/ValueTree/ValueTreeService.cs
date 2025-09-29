@@ -639,7 +639,7 @@ namespace _2___Application._1_Services.ValueTree
                 decimal ativosFixos = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
-                decimal capitalInvestidoLiquido = disponibilidade + necessidadeDeCapitalDeGiro + realizavelLongoPrazo - exigivelLongoPrazo + ativosFixos;
+                decimal capitalInvestidoLiquido = disponibilidade + ncg + realizavelLongoPrazo - exigivelLongoPrazo + ativosFixos;
 
 
                 // Indicadores financeiros
@@ -650,7 +650,7 @@ namespace _2___Application._1_Services.ValueTree
                     .FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0;
 
 
-
+                var ncgTotal = ncg + disponibilidade;
 
 
                 decimal roic = capitalInvestidoLiquido != 0 ? (nOPAT / capitalInvestidoLiquido) * 100 : 0;
@@ -658,7 +658,7 @@ namespace _2___Application._1_Services.ValueTree
                 decimal turnover = receitaLiquida != 0 ? capitalInvestidoLiquido / receitaLiquida : 0;
                 //  decimal ncgTotal = necessidadeDeCapitalDeGiro - ativoFinanceiro;
                 decimal realNCG = clientes + estoque - fornecedores;
-                decimal investimentosAtivosFixos = capitalInvestidoLiquido - necessidadeDeCapitalDeGiro;
+                decimal investimentosAtivosFixos = capitalInvestidoLiquido - ncgTotal;
 
                 decimal evaSpreadPorcentagem = Math.Round(roic - wacc, 2);
 
@@ -684,7 +684,7 @@ namespace _2___Application._1_Services.ValueTree
                     Estoques = estoque,
                     Fornecedores = fornecedores,
                     NCGCEF = realNCG,
-                    NCGTotal = ncg,
+                    NCGTotal = ncgTotal,
                     InvestimentosAtivosFixos = investimentosAtivosFixos,
                     CapitalInvestidoLiquido = capitalInvestidoLiquido,
                     CapitalTurnover = turnover,
