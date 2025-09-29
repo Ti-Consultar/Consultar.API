@@ -432,10 +432,14 @@ namespace _2___Application._1_Services.ValueTree
 
             var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
             var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
+            
             var ncg = valorAtivoOperacional - valorPassivoOperacional;
 
             decimal necessidadeDeCapitalDeGiros = ncg;
             decimal capitalInvestidoAcum = monthOperationalEfficiencyAcum.CapitalInvestidoLiquido;
+
+
+
 
 
             roicAcum = monthOperationalEfficiencyAcum.ROIC;
@@ -635,7 +639,8 @@ namespace _2___Application._1_Services.ValueTree
                 decimal ativosFixos = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
-                decimal capitalInvestidoLiquido = necessidadeDeCapitalDeGiro + realizavelLongoPrazo + exigivelLongoPrazo + ativosFixos;
+                decimal capitalInvestidoLiquido = disponibilidade + necessidadeDeCapitalDeGiro + realizavelLongoPrazo - exigivelLongoPrazo + ativosFixos;
+
 
                 // Indicadores financeiros
                 decimal nOPAT = monthDRE?.Totalizer

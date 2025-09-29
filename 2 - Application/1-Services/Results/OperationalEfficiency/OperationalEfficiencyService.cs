@@ -166,7 +166,8 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 decimal ativosFixos = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
-                decimal capitalInvestidoLiquido = necessidadeDeCapitalDeGiro + realizavelLongoPrazo + exigivelLongoPrazo + ativosFixos;
+                decimal capitalInvestidoLiquido = disponibilidade + necessidadeDeCapitalDeGiro + realizavelLongoPrazo - exigivelLongoPrazo + ativosFixos;
+
 
                 // Indicadores financeiros
                 decimal nOPAT = monthDRE?.Totalizer
