@@ -177,7 +177,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                     .FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0;
 
 
-                var ncgTotal = necessidadeDeCapitalDeGiro + disponibilidade;
+                var ncgTotal = ncg + disponibilidade;
 
 
                 decimal roic = capitalInvestidoLiquido != 0 ? (nOPAT / capitalInvestidoLiquido) * 100 : 0;
