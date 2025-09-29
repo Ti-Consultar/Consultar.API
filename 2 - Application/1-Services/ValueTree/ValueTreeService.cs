@@ -429,6 +429,7 @@ namespace _2___Application._1_Services.ValueTree
                 .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
             var cdg = ((passivoNaoCirculante + patrimonioLiquidoGestaoLiquidez) - (ativoNaoCirculante + ativoFixo));
 
+
             decimal capitalInvestidoAcum = monthOperationalEfficiencyAcum.CapitalInvestidoLiquido;
 
 
@@ -484,7 +485,7 @@ namespace _2___Application._1_Services.ValueTree
                 AtivosFixosAcumulado = ativosFixosAcum,
                 CapitalInvestido = capitalInvestidoMes,
                 CapitalInvestidoAcumulado = capitalInvestidoAcum,
-                CapitalDeGiro = cdg,
+                CapitalDeGiro = necessidadeDeCapitalDeGiro,
             };
 
             var indicators = new ReturnIndicatorsDto
