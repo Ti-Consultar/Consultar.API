@@ -621,7 +621,7 @@ namespace _2___Application._1_Services.ValueTree
 
                 decimal somaAtivos = disponibilidade + clientes + estoque + outrosAtivosOperacionaisTotal;
 
-                decimal somaPassivo = fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal;
+                decimal somaPassivo = fornecedores - obrigacoesTributariasETrabalhistas - outrosPassivosOperacionaisTotal;
 
                 decimal necessidadeDeCapitalDeGiro = somaAtivos - somaPassivo;
 
