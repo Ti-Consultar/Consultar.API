@@ -439,10 +439,20 @@ namespace _2___Application._1_Services.ValueTree
             decimal capitalInvestidoAcum = monthOperationalEfficiencyAcum.CapitalInvestidoLiquido;
 
 
-
+            decimal roicAcumulado = capitalInvestidoAcum != 0
+                     ? nOPATAcum / capitalInvestidoAcum
+                        : 0;
 
 
             roicAcum = monthOperationalEfficiencyAcum.ROIC;
+
+
+
+            decimal waccAcum = waccTotalAno;
+            decimal spreadAcum = roicAcum - waccAcum;
+
+            decimal evaAcum = (roicAcum - waccAcum) * capitalInvestidoAcum;
+
 
             decimal spread = Math.Round(monthOperationalEfficiency.EVASPREAD, 2);
             decimal spreadAcumulado = Math.Round(monthOperationalEfficiencyAcum.EVASPREAD, 2);
@@ -504,13 +514,13 @@ namespace _2___Application._1_Services.ValueTree
                 CapitalInvestido = capitalInvestidoMes,
                 CapitalInvestidoAcumulado = capitalInvestidoAcum,
                 ROIC = Math.Round(roicMes, 2),
-                ROICAcumulado = Math.Round(roicAcum, 2),
+                ROICAcumulado = Math.Round(roicAcumulado, 2),
                 WACC = Math.Round(wacc, 2),
                 WACCAcumulado = Math.Round(waccAcumulado, 2),
                 SPREAD = spread,
-                SPREADAcumulado = spreadAcumulado,
+                SPREADAcumulado = Math.Round(spreadAcum, 2),
                 EVA = eva,
-                EVA_Acumulado = evaAcmulado
+                EVA_Acumulado = evaAcum
 
             };
 
