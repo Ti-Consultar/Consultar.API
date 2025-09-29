@@ -166,7 +166,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 decimal ativosFixos = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
-                decimal capitalInvestidoLiquido = disponibilidade + necessidadeDeCapitalDeGiro + realizavelLongoPrazo - exigivelLongoPrazo + ativosFixos;
+                decimal capitalInvestidoLiquido = disponibilidade + ncg + realizavelLongoPrazo - exigivelLongoPrazo + ativosFixos;
 
 
                 // Indicadores financeiros
@@ -185,7 +185,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 decimal turnover = receitaLiquida != 0 ? capitalInvestidoLiquido / receitaLiquida : 0;
               //  decimal ncgTotal = necessidadeDeCapitalDeGiro - ativoFinanceiro;
                 decimal realNCG = clientes + estoque - fornecedores;
-                decimal investimentosAtivosFixos = capitalInvestidoLiquido - necessidadeDeCapitalDeGiro;
+                decimal investimentosAtivosFixos = capitalInvestidoLiquido - ncg;
 
                 decimal evaSpreadPorcentagem = Math.Round(roic - wacc, 2);
 
