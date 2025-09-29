@@ -177,7 +177,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                     .FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0;
 
 
-
+                var ncgTotal = necessidadeDeCapitalDeGiro + ativoFinanceiro;
 
 
                 decimal roic = capitalInvestidoLiquido != 0 ? (nOPAT / capitalInvestidoLiquido) * 100 : 0;
@@ -211,7 +211,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                     Estoques = estoque,
                     Fornecedores = fornecedores,
                     NCGCEF = realNCG,
-                    NCGTotal = ncg,
+                    NCGTotal = ncgTotal,
                     InvestimentosAtivosFixos = investimentosAtivosFixos,
                     CapitalInvestidoLiquido = capitalInvestidoLiquido,
                     CapitalTurnover = turnover,
