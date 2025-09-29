@@ -185,7 +185,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 decimal turnover = receitaLiquida != 0 ? capitalInvestidoLiquido / receitaLiquida : 0;
               //  decimal ncgTotal = necessidadeDeCapitalDeGiro - ativoFinanceiro;
                 decimal realNCG = clientes + estoque - fornecedores;
-                decimal investimentosAtivosFixos = capitalInvestidoLiquido - ncg;
+                decimal investimentosAtivosFixos = capitalInvestidoLiquido - ncgTotal;
 
                 decimal evaSpreadPorcentagem = Math.Round(roic - wacc, 2);
 
