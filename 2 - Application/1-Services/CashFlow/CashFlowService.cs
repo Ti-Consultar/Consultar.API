@@ -324,8 +324,8 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoClientes, variacaoEstoques, variacaoOutrosAtivosOperacionais,
                     variacaoDepreciacaoAmortAcumulada, variacaoFornecedores, variacaoObrigacoes,
                     variacaoOutrosPassivosOperacionais, variacaoAtivoNaoCirculante, variacaoInvestimento,
-                    variacaoPassivoNaoCirculante, variacaoImobilizado, variacaoEmprestimosFinanciamento,
-                    variacaoPatrimonioLiquido;
+                    variacaoPassivoNaoCirculante, variacaoImobilizado, variacaoEmprestimosFinanciamento;
+                   decimal  variacaoPatrimonioLiquido = 0;
 
                 if (monthAtivo.DateMonth == 1)
                 {
@@ -344,7 +344,7 @@ namespace _2___Application._1_Services.CashFlow
                     variacaoEmprestimosFinanciamento = emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior;
 
                     // PL ajustado = (PL - ResultadoAcumulado)
-                    variacaoPatrimonioLiquido = 1;// (patrimonioLiquido - resultadoExercicioAcumulado) - patrimonioLiquidoAnterior;// inverti os sinais para + dentro do parentese
+                    variacaoPatrimonioLiquido = patrimonioLiquido; //(patrimonioLiquido - resultadoExercicioAcumulado) - patrimonioLiquidoAnterior;
                 }
                 else
                 {
