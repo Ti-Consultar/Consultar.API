@@ -363,7 +363,7 @@ namespace _2___Application._1_Services.CashFlow
                     variacaoEmprestimosFinanciamento = emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior;
 
                     // PL ajustado (mês atual) - PL ajustado (mês anterior)
-                    variacaoPatrimonioLiquido = (patrimonioLiquido.TotalValue - resultadoExercicioAcumulado) - (patrimonioLiquidoAnterior - resultadoAnterior)*-1;
+                    variacaoPatrimonioLiquido = ((patrimonioLiquido.TotalValue - resultadoExercicioAcumulado) - (patrimonioLiquidoAnterior - resultadoAnterior))*-1;
                 }
 
                 // --- NCG e Fluxos ---
