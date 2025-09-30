@@ -454,7 +454,8 @@ namespace _2___Application._1_Services.ValueTree
             roicAcum = monthOperationalEfficiencyAcum.ROIC;
 
             decimal spread = Math.Round(monthOperationalEfficiency.EVASPREAD, 2);
-            decimal spreadAcumulado = Math.Round(monthOperationalEfficiencyAcum.EVASPREAD, 2);
+            //decimal spreadAcumulado = Math.Round(monthOperationalEfficiencyAcum.EVASPREAD, 2);
+            decimal spreadAcumulado = roicAcumuladoFinal - waccAcumulado;
 
             decimal eva = Math.Round(monthOperationalEfficiency.EVA, 2);
             decimal evaAcmulado = monthOperationalEfficiencyAcum.EVA;
@@ -517,7 +518,7 @@ namespace _2___Application._1_Services.ValueTree
                 WACC = Math.Round(wacc, 2),
                 WACCAcumulado = Math.Round(waccAcumulado, 2),
                 SPREAD = spread,
-                SPREADAcumulado = spreadAcumulado,
+                SPREADAcumulado = Math.Round(spreadAcumulado, 2),
                 EVA = eva,
                 EVA_Acumulado = evaAcmulado
 
