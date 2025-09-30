@@ -344,7 +344,7 @@ namespace _2___Application._1_Services.CashFlow
                     variacaoEmprestimosFinanciamento = emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior;
 
                     // PL ajustado = (PL - ResultadoAcumulado)
-                    variacaoPatrimonioLiquido = (patrimonioLiquido - resultadoExercicioAcumulado) - patrimonioLiquidoAnterior;// inverti os sinais para + dentro do parentese
+                    variacaoPatrimonioLiquido = 1;// (patrimonioLiquido - resultadoExercicioAcumulado) - patrimonioLiquidoAnterior;// inverti os sinais para + dentro do parentese
                 }
                 else
                 {
@@ -363,7 +363,7 @@ namespace _2___Application._1_Services.CashFlow
                     variacaoEmprestimosFinanciamento = emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior;
 
                     // PL ajustado (mês atual) - PL ajustado (mês anterior)
-                    variacaoPatrimonioLiquido = (patrimonioLiquido - resultadoExercicioAcumulado) - (patrimonioLiquidoAnterior - resultadoAnterior);// inverti os sinais para + dentro do parentese
+                    variacaoPatrimonioLiquido = 2;//(patrimonioLiquido - resultadoExercicioAcumulado) - (patrimonioLiquidoAnterior - resultadoAnterior);// inverti os sinais para + dentro do parentese
                 }
 
                 // --- NCG e Fluxos ---
