@@ -461,6 +461,9 @@ namespace _2___Application._1_Services.ValueTree
             decimal evaAcmulado = monthOperationalEfficiencyAcum.EVA;
 
 
+            decimal evaAcumulado = capitalInvestidoMes != 0 ? (spreadAcumulado / 100) * capitalInvestidoMes : 0;
+
+
             // === DTOs ===
             var economic = new EconomicViewDto
             {
@@ -520,7 +523,7 @@ namespace _2___Application._1_Services.ValueTree
                 SPREAD = spread,
                 SPREADAcumulado = Math.Round(spreadAcumulado, 2),
                 EVA = eva,
-                EVA_Acumulado = evaAcmulado
+                EVA_Acumulado = evaAcumulado
 
             };
 
