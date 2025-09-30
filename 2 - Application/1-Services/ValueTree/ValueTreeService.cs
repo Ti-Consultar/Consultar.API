@@ -445,7 +445,7 @@ namespace _2___Application._1_Services.ValueTree
             ///decimal roic = capitalInvestidoLiquido != 0 ? (nOPAT / capitalInvestidoLiquido) * 100 : 0;
             ///decimal evaSPREAD = roic - wacc;
 
-            var roicAcumuladoFinal = capitalInvestidoAcum != 0 ? (nOPATAcum / capitalInvestidoAcum) * 100 : 0;
+            var roicAcumuladoFinal = capitalInvestidoMes != 0 ? (nOPATAcum / capitalInvestidoMes) * 100 : 0;
 
 
 
@@ -513,7 +513,7 @@ namespace _2___Application._1_Services.ValueTree
                 CapitalInvestido = capitalInvestidoMes,
                 CapitalInvestidoAcumulado = capitalInvestidoAcum,
                 ROIC = Math.Round(roicMes, 2),
-                ROICAcumulado = Math.Round(roicAcum, 2),
+                ROICAcumulado = Math.Round(roicAcumuladoFinal, 2),
                 WACC = Math.Round(wacc, 2),
                 WACCAcumulado = Math.Round(waccAcumulado, 2),
                 SPREAD = spread,
