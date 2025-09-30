@@ -288,8 +288,8 @@ namespace _2___Application._1_Services.CashFlow
                     lucroLiquido.TotalValue = resultadoAntes.TotalValue + provisaoCSLL + provisaoIRPJ;
 
                 // --- Balanco / componentes ---
-                var patrimonioLiquido = monthBcPassivo.Totalizer.FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
-                var resultadoExercicioAcumulado = monthBcPassivo.Totalizer.FirstOrDefault(t => t.Name == "Resultado do Exercício Acumulado")?.TotalValue ?? 0;
+                var patrimonioLiquido = monthBcPassivo.Totalizer.FirstOrDefault(t => t.Name == "Patrimônio Liquido");
+                var resultadoExercicioAcumulado = patrimonioLiquido?.Classifications.FirstOrDefault(c => c.Name == "Resultado do Exercício Acumulado")?.Value ?? 0;
                 var emprestimoEFinanciamento = monthPassivo.Totalizer.FirstOrDefault(t => t.Name == "Empréstimos e Financiamentos")?.TotalValue ?? 0;
                 var imobilizado = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Imobilizado")?.TotalValue ?? 0;
                 var depreciacaoAmortAcumulada = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Depreciação / Amort. Acumulada")?.TotalValue ?? 0;
@@ -344,7 +344,7 @@ namespace _2___Application._1_Services.CashFlow
                     variacaoEmprestimosFinanciamento = emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior;
 
                     // PL ajustado = (PL - ResultadoAcumulado)
-                    variacaoPatrimonioLiquido = patrimonioLiquidoAnterior; //(patrimonioLiquido - resultadoExercicioAcumulado) - patrimonioLiquidoAnterior;
+                    variacaoPatrimonioLiquido = (patrimonioLiquido.TotalValue - resultadoExercicioAcumulado) - patrimonioLiquidoAnterior;
                 }
                 else
                 {
@@ -363,7 +363,7 @@ namespace _2___Application._1_Services.CashFlow
                     variacaoEmprestimosFinanciamento = emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior;
 
                     // PL ajustado (mês atual) - PL ajustado (mês anterior)
-                    variacaoPatrimonioLiquido = resultadoExercicioAcumulado;//(patrimonioLiquido - resultadoExercicioAcumulado) - (patrimonioLiquidoAnterior - resultadoAnterior);// inverti os sinais para + dentro do parentese
+                    variacaoPatrimonioLiquido = (patrimonioLiquido.TotalValue - resultadoExercicioAcumulado) - (patrimonioLiquidoAnterior - resultadoAnterior);
                 }
 
                 // --- NCG e Fluxos ---
