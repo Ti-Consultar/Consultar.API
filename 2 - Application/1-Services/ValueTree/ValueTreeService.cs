@@ -277,6 +277,16 @@ namespace _2___Application._1_Services.ValueTree
                 EVA = meses.Sum(m => m.EVA)
             };
 
+
+            
+            ///decimal roic = capitalInvestidoLiquido != 0 ? (nOPAT / capitalInvestidoLiquido) * 100 : 0;
+            ///decimal evaSPREAD = roic - wacc;
+
+            var roicAcumuladoFinal =  monthOperationalEfficiencyAcum.CapitalInvestidoLiquido != 0 ? (monthOperationalEfficiencyAcum.NOPAT / monthOperationalEfficiencyAcum.CapitalInvestidoLiquido) * 100 : 0;
+
+
+
+
             // === Acumulados do ano ===
             var acumuladoAtivo = painelAtivo.Months
              .Where(m => m.DateMonth <= month) // << FILTRO
@@ -504,7 +514,7 @@ namespace _2___Application._1_Services.ValueTree
                 CapitalInvestido = capitalInvestidoMes,
                 CapitalInvestidoAcumulado = capitalInvestidoAcum,
                 ROIC = Math.Round(roicMes, 2),
-                ROICAcumulado = Math.Round(roicAcum, 2),
+                ROICAcumulado = Math.Round(roicAcumuladoFinal, 2),
                 WACC = Math.Round(wacc, 2),
                 WACCAcumulado = Math.Round(waccAcumulado, 2),
                 SPREAD = spread,
