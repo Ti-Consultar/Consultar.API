@@ -278,15 +278,6 @@ namespace _2___Application._1_Services.ValueTree
             };
 
 
-            
-            ///decimal roic = capitalInvestidoLiquido != 0 ? (nOPAT / capitalInvestidoLiquido) * 100 : 0;
-            ///decimal evaSPREAD = roic - wacc;
-
-            var roicAcumuladoFinal =  monthOperationalEfficiencyAcum.CapitalInvestidoLiquido != 0 ? (monthOperationalEfficiencyAcum.NOPAT / monthOperationalEfficiencyAcum.CapitalInvestidoLiquido) * 100 : 0;
-
-
-
-
             // === Acumulados do ano ===
             var acumuladoAtivo = painelAtivo.Months
              .Where(m => m.DateMonth <= month) // << FILTRO
@@ -447,6 +438,14 @@ namespace _2___Application._1_Services.ValueTree
 
             decimal necessidadeDeCapitalDeGiros = ncg;
             decimal capitalInvestidoAcum = monthOperationalEfficiencyAcum.CapitalInvestidoLiquido;
+
+
+
+
+            ///decimal roic = capitalInvestidoLiquido != 0 ? (nOPAT / capitalInvestidoLiquido) * 100 : 0;
+            ///decimal evaSPREAD = roic - wacc;
+
+            var roicAcumuladoFinal = capitalInvestidoAcum != 0 ? (nOPATAcum / capitalInvestidoAcum) * 100 : 0;
 
 
 
