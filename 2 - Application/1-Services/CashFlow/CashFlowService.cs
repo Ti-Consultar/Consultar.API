@@ -397,7 +397,7 @@ namespace _2___Application._1_Services.CashFlow
                 outrosPassivosOperacionaisAnterior = outrosPassivosOperacionaisTotal;
                 AtivoNaoCirculanteAnterior = realizavelLongoPrazo;
                 exigivelLongoPrazoAnterior = exigivelLongoPrazo;
-                patrimonioLiquidoAnterior = patrimonioLiquido;
+                patrimonioLiquidoAnterior = patrimonioLiquido.TotalValue;
                 resultadoAnterior = resultadoExercicioAcumulado;
                 imobilizadoAnterior = imobilizado;
                 EmprestimoEFinanciamentoAnterior = emprestimoEFinanciamento;
