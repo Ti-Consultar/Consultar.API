@@ -255,6 +255,7 @@ namespace _2___Application._1_Services.CashFlow
             decimal patrimonioLiquidoAnterior = dezembroBcPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
             decimal resultadoAnterior = dezembroBcPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Resultado do Exercício Acumulado")?.TotalValue ?? 0;
             decimal imobilizadoAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Imobilizado")?.TotalValue ?? 0;
+            decimal intangivelAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Intangível")?.TotalValue ?? 0;
             decimal EmprestimoEFinanciamentoAnterior = dezembroPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Empréstimos e Financiamentos")?.TotalValue ?? 0;
             decimal disponibilidadeDezembroAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
 
@@ -292,6 +293,7 @@ namespace _2___Application._1_Services.CashFlow
                 var resultadoExercicioAcumulado = patrimonioLiquido?.Classifications.FirstOrDefault(c => c.Name == "Resultado do Exercício Acumulado")?.Value ?? 0;
                 var emprestimoEFinanciamento = monthPassivo.Totalizer.FirstOrDefault(t => t.Name == "Empréstimos e Financiamentos")?.TotalValue ?? 0;
                 var imobilizado = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Imobilizado")?.TotalValue ?? 0;
+                var intangivel = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Intangível")?.TotalValue ?? 0;
                 var depreciacaoAmortAcumulada = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Depreciação / Amort. Acumulada")?.TotalValue ?? 0;
 
                 decimal ativoFinanceiro = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
@@ -324,7 +326,7 @@ namespace _2___Application._1_Services.CashFlow
                 decimal variacaoClientes, variacaoEstoques, variacaoOutrosAtivosOperacionais,
                     variacaoDepreciacaoAmortAcumulada, variacaoFornecedores, variacaoObrigacoes,
                     variacaoOutrosPassivosOperacionais, variacaoAtivoNaoCirculante, variacaoInvestimento,
-                    variacaoPassivoNaoCirculante, variacaoImobilizado, variacaoEmprestimosFinanciamento;
+                    variacaoPassivoNaoCirculante, variacaoImobilizado,variacaoIntangivel ,variacaoEmprestimosFinanciamento;
                    decimal  variacaoPatrimonioLiquido = 0;
 
                 if (monthAtivo.DateMonth == 1)
@@ -341,6 +343,7 @@ namespace _2___Application._1_Services.CashFlow
                     variacaoInvestimento = investimentos - investimentoAnterior;
                     variacaoPassivoNaoCirculante = passivoNaoCirculante - passivoNaoCirculanteAnterior;
                     variacaoImobilizado = imobilizado - imobilizadoAnterior;
+                    variacaoIntangivel = intangivel - intangivelAnterior;
                     variacaoEmprestimosFinanciamento = emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior;
 
                     // PL ajustado = (PL - ResultadoAcumulado)
@@ -360,6 +363,7 @@ namespace _2___Application._1_Services.CashFlow
                     variacaoInvestimento = investimentos - investimentoAnterior;
                     variacaoPassivoNaoCirculante = exigivelLongoPrazo - exigivelLongoPrazoAnterior;
                     variacaoImobilizado = imobilizado - imobilizadoAnterior;
+                    variacaoIntangivel = intangivel - intangivelAnterior;
                     variacaoEmprestimosFinanciamento = emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior;
 
                     // PL ajustado (mês atual) - PL ajustado (mês anterior)
@@ -381,8 +385,9 @@ namespace _2___Application._1_Services.CashFlow
                 decimal AtivoNaoCirculanteNegativo = variacaoAtivoNaoCirculante * -1;
                 decimal investimentoNegativo = variacaoInvestimento * -1;
                 decimal imobilizadoNegativo = variacaoImobilizado * -1;
+                decimal intangivelNegativo = variacaoIntangivel * -1;
 
-                var fluxoCaixaLivre = fluxoCaixaOperacional + AtivoNaoCirculanteNegativo + investimentoNegativo + imobilizadoNegativo;
+                var fluxoCaixaLivre = fluxoCaixaOperacional + AtivoNaoCirculanteNegativo + investimentoNegativo + imobilizadoNegativo + intangivelNegativo;
 
                 var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante - variacaoPatrimonioLiquido;
 
@@ -400,6 +405,7 @@ namespace _2___Application._1_Services.CashFlow
                 patrimonioLiquidoAnterior = patrimonioLiquido.TotalValue;
                 resultadoAnterior = resultadoExercicioAcumulado;
                 imobilizadoAnterior = imobilizado;
+                intangivelAnterior = intangivel;
                 EmprestimoEFinanciamentoAnterior = emprestimoEFinanciamento;
 
                 // --- Monta DTO com todos os campos solicitados ---
@@ -424,6 +430,7 @@ namespace _2___Application._1_Services.CashFlow
                     AtivoNaoCirculante = variacaoAtivoNaoCirculante * -1,
                     VariacaoInvestimento = variacaoInvestimento * -1,
                     VariacaoImobilizado = variacaoImobilizado * -1,
+                    VariacaoIntangivel = variacaoIntangivel * -1,
                     FluxoDeCaixaLivre = fluxoCaixaLivre,
                     CaptacoesAmortizacoesFinanceira = variacaoEmprestimosFinanciamento,
                     PassivoNaoCirculante = variacaoPassivoNaoCirculante,
