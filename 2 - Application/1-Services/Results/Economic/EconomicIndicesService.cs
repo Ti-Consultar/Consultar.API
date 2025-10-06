@@ -515,14 +515,17 @@ namespace _2___Application._1_Services.Results
 
             foreach (var monthDRE in painelDRE.Months.OrderBy(m => m.DateMonth))
             {
-                decimal receitaLiquida = monthDRE?.Totalizer
-                    .FirstOrDefault(t => t.Name == "Receita Líquida")?.TotalValue ?? 0;
-
                 decimal noPAT = monthDRE?.Totalizer
                     .FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
 
+                decimal margemNOPAT = monthDRE?.Totalizer
+                   .FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0;
+
                 decimal lucroAntesDoResultadoFinanceiro = monthDRE?.Totalizer
                     .FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro")?.TotalValue ?? 0;
+
+                decimal margemOperacional = monthDRE?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Margem Operacional %")?.TotalValue ?? 0;
 
                 decimal despesasComDepreciacao = monthDRE.Totalizer
                     .SelectMany(t => t.Classifications)
@@ -530,20 +533,16 @@ namespace _2___Application._1_Services.Results
                     .Sum(c => c.Value);
 
                 decimal provisaoCSLL = monthDRE.Totalizer
-                    .SelectMany(t => t.Classifications)
-                    .Where(c => c.Name == "Provisão para CSLL")
-                    .Sum(c => c.Value);
+                   .SelectMany(t => t.Classifications)
+                   .Where(c => c.Name == "Provisão para CSLL")
+                   .Sum(c => c.Value);
 
                 decimal provisaoIRPJ = monthDRE.Totalizer
-                    .SelectMany(t => t.Classifications)
-                    .Where(c => c.Name == "Provisão para IRPJ")
-                    .Sum(c => c.Value);
+                   .SelectMany(t => t.Classifications)
+                   .Where(c => c.Name == "Provisão para IRPJ")
+                   .Sum(c => c.Value);
 
                 decimal provisaoIRPSCSLL = provisaoIRPJ + provisaoCSLL;
-
-                // 🔹 Calcula margens mensais
-                decimal margemNOPAT = receitaLiquida != 0 ? Math.Round(noPAT / receitaLiquida * 100, 2) : 0;
-                decimal margemOperacional = receitaLiquida != 0 ? Math.Round(lucroAntesDoResultadoFinanceiro / receitaLiquida * 100, 2) : 0;
 
                 nOPAT.Add(new NOPATResponseDto
                 {
@@ -558,31 +557,16 @@ namespace _2___Application._1_Services.Results
             }
 
             // 🔢 Totalizador geral (acumulado do ano)
-            var totalReceitaLiquida = painelDRE.Months
-                .Sum(m => m.Totalizer.FirstOrDefault(t => t.Name == "Receita Líquida")?.TotalValue ?? 0);
-
-            var totalNOPAT = nOPAT.Sum(x => x.NOPAT);
-            var totalLucroOperacionalAntes = nOPAT.Sum(x => x.LucroOperacionalAntes);
-            var totalProvisao = nOPAT.Sum(x => x.ProvisaoIRPJCSLL);
-
-            // 🔹 Recalcula margens para o acumulado
-            decimal margemNOPATAcumulada = totalReceitaLiquida != 0
-                ? Math.Round(totalNOPAT / totalReceitaLiquida * 100, 2)
-                : 0;
-
-            decimal margemOperacionalAcumulada = totalReceitaLiquida != 0
-                ? Math.Round(totalLucroOperacionalAntes / totalReceitaLiquida * 100, 2)
-                : 0;
-
             var totalGeral = new NOPATResponseDto
             {
                 Name = "ACUMULADO",
-                DateMonth = 13, // mês "fictício"
-                NOPAT = totalNOPAT,
-                LucroOperacionalAntes = totalLucroOperacionalAntes,
-                ProvisaoIRPJCSLL = totalProvisao,
-                MargemNOPAT = margemNOPATAcumulada,
-                MargemOperacionalDRE = margemOperacionalAcumulada
+                DateMonth = 13, // 👈 opcional
+                NOPAT = nOPAT.Sum(x => x.NOPAT),
+                LucroOperacionalAntes = nOPAT.Sum(x => x.LucroOperacionalAntes),
+                ProvisaoIRPJCSLL = nOPAT.Sum(x => x.ProvisaoIRPJCSLL),
+                // margens não acumulam
+                MargemNOPAT = 0,
+                MargemOperacionalDRE = 0
             };
 
             nOPAT.Add(totalGeral);
@@ -595,7 +579,6 @@ namespace _2___Application._1_Services.Results
                 }
             };
         }
-
 
 
         #endregion
