@@ -1479,7 +1479,7 @@ namespace _2___Application._1_Services
         }
 
 
-        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDREe(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDRE(int accountPlanId, int year, int typeClassification)
         {
             var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
@@ -1732,7 +1732,7 @@ namespace _2___Application._1_Services
         }
 
 
-        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDRE(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDREE(int accountPlanId, int year, int typeClassification)
         {
             // ==== BUSCA DE DADOS ====
             var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
