@@ -2080,6 +2080,60 @@ namespace _2___Application._1_Services
                 if (nopat != null)
                     nopat.TotalValue = lucroAntes?.TotalValue + csll + irpj ?? 0;
 
+
+                // margens
+                var margemBruta = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Bruta %");
+                if (margemBruta != null)
+                    margemBruta.TotalValue = receitaLiquidaValor != 0
+                        ? Math.Round((lucroBruto?.TotalValue ?? 0) / receitaLiquidaValor * 100, 2)
+                        : 0;
+
+                var margemContribuicaoPorcentagem = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Contribuição %");
+                if (margemContribuicaoPorcentagem != null && margemContribuicao != null)
+                    margemContribuicaoPorcentagem.TotalValue = receitaLiquidaValor != 0
+                        ? Math.Round(margemContribuicao.TotalValue / receitaLiquidaValor * 100, 2)
+                        : 0;
+
+                var margemOperacional = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Operacional %");
+                if (margemOperacional != null && lucroOperacional != null)
+                    margemOperacional.TotalValue = receitaLiquidaValor != 0
+                        ? Math.Round(lucroOperacional.TotalValue / receitaLiquidaValor * 100, 2)
+                        : 0;
+
+                var margemLajir = totalizerResponses.FirstOrDefault(t => t.Name == "Margem LAJIR %");
+                if (margemLajir != null && lucroAntes != null)
+                    margemLajir.TotalValue = receitaLiquidaValor != 0
+                        ? Math.Round(lucroAntes.TotalValue / receitaLiquidaValor * 100, 2)
+                        : 0;
+
+                var margemLAIR = totalizerResponses.FirstOrDefault(t => t.Name == "Margem LAIR %");
+                if (margemLAIR != null && resultadoAntes != null)
+                    margemLAIR.TotalValue = receitaLiquidaValor != 0
+                        ? Math.Round(resultadoAntes.TotalValue / receitaLiquidaValor * 100, 2)
+                        : 0;
+
+                var margemLiquida = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Líquida %");
+                if (margemLiquida != null && lucroLiquido != null)
+                    margemLiquida.TotalValue = receitaLiquidaValor != 0
+                        ? Math.Round(lucroLiquido.TotalValue / receitaLiquidaValor * 100, 2)
+                        : 0;
+
+                var margemEBITDA = totalizerResponses.FirstOrDefault(t => t.Name == "Margem EBITDA %");
+                if (margemEBITDA != null && ebitda != null)
+                    margemEBITDA.TotalValue = receitaLiquidaValor != 0
+                        ? Math.Round(ebitda.TotalValue / receitaLiquidaValor * 100, 2)
+                        : 0;
+
+                var margemNOPAT = totalizerResponses.FirstOrDefault(t => t.Name == "Margem NOPAT %");
+                if (margemNOPAT != null && nopat != null)
+                    margemNOPAT.TotalValue = receitaLiquidaValor != 0
+                        ? Math.Round(nopat.TotalValue / receitaLiquidaValor * 100, 2)
+                        : 0;
+
+
+
+
+
                 despDep.Value = despDep.Value * -1;
 
                 months.Add(new MonthPainelContabilRespone
