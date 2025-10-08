@@ -2223,7 +2223,7 @@ namespace _2___Application._1_Services
             }
 
             SetMargem("Margem Bruta", lucroBruto);
-            SetMargem("Margem Contribuição", margemContribuicao);
+            SetMargem("Margem Contribuição %", margemContribuicao);
             SetMargem("Margem Operacional", lucroOperacional);
             SetMargem("Margem LAJIR", lucroAntes);
             SetMargem("Margem LAIR", resultadoAntes);
