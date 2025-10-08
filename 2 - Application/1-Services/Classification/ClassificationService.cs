@@ -2155,7 +2155,7 @@ namespace _2___Application._1_Services
 
         private MonthPainelContabilRespone CalcularAcumuladoSemMargens(List<MonthPainelContabilRespone> months)
         {
-            // === Junta todos os totalizadores que aparecem em qualquer mês ===
+            // Junta todos os totalizadores que aparecem em qualquer mês
             var todosTotalizers = months
                 .SelectMany(m => m.Totalizer)
                 .GroupBy(t => t.Id)
@@ -2163,28 +2163,13 @@ namespace _2___Application._1_Services
                 .OrderBy(t => t.TypeOrder)
                 .ToList();
 
-            var acumuladoTotalizers = todosTotalizers.Select(totalizer =>
+            var acumuladoTotalizers = new List<TotalizerParentRespone>();
+
+            foreach (var totalizer in todosTotalizers)
             {
                 bool isMargem = totalizer.Name.Contains("%");
 
-                // === Soma totalizador (ignorando margens %) ===
-                if (isMargem)
-                {
-                    return new TotalizerParentRespone
-                    {
-                        Id = totalizer.Id,
-                        Name = totalizer.Name,
-                        TypeOrder = totalizer.TypeOrder,
-                        TotalValue = 0,
-                        Classifications = new List<ClassificationRespone>()
-                    };
-                }
-
-                // === Soma o valor total em todos os meses ===
-                var totalValue = months.Sum(m =>
-                    m.Totalizer.FirstOrDefault(t => t.Id == totalizer.Id)?.TotalValue ?? 0);
-
-                // === Junta todas as classificações desse totalizador em qualquer mês ===
+                // mesmo que o totalizador seja de margem, precisamos somar as classificações internas
                 var classifAcumuladas = months
                     .SelectMany(m =>
                         m.Totalizer.FirstOrDefault(t => t.Id == totalizer.Id)?.Classifications
@@ -2200,19 +2185,23 @@ namespace _2___Application._1_Services
                     .OrderBy(c => c.TypeOrder)
                     .ToList();
 
-                return new TotalizerParentRespone
+                // Se for margem, o TotalValue fica zerado, mas as classificações ficam
+                var totalValue = isMargem
+                    ? 0
+                    : months.Sum(m =>
+                        m.Totalizer.FirstOrDefault(t => t.Id == totalizer.Id)?.TotalValue ?? 0);
+
+                acumuladoTotalizers.Add(new TotalizerParentRespone
                 {
                     Id = totalizer.Id,
                     Name = totalizer.Name,
                     TypeOrder = totalizer.TypeOrder,
                     TotalValue = totalValue,
                     Classifications = classifAcumuladas
-                };
-            })
-            .OrderBy(t => t.TypeOrder)
-            .ToList();
+                });
+            }
 
-            // === CAPTURA TOTALIZADORES PARA REAPLICAR MARGENS ===
+            // === CAPTURA TOTALIZADORES BASE ===
             decimal receitaLiquida = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Receita Líquida"))?.TotalValue ?? 0;
             decimal lucroBruto = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Lucro Bruto"))?.TotalValue ?? 0;
             decimal margemContribuicao = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Margem Contribuição") && !t.Name.Contains("%"))?.TotalValue ?? 0;
@@ -2251,6 +2240,7 @@ namespace _2___Application._1_Services
                 Totalizer = acumuladoTotalizers
             };
         }
+
 
 
 
