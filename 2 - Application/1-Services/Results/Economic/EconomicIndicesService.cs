@@ -451,8 +451,10 @@ namespace _2___Application._1_Services.Results
         #region EBITDA
         public async Task<PainelEBITDAResponseDto> GetEBITDA(int accountPlanId, int year)
         {
+            // Monta o painel DRE mensalizado com acumulado
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
 
+            // Monta o balanço reclassificado do ano anterior
             var painelAtivoAnoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1);
 
             var dezembroAnoAnterior = painelAtivoAnoAnterior.Months
@@ -461,13 +463,12 @@ namespace _2___Application._1_Services.Results
             decimal patrimonioLiquidoAnoAnterior = dezembroAnoAnterior?.Totalizer
                 .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
 
-            var eBITDA = new List<EBITDAResponseDto>();
+            // Lista dos meses do EBITDA
+            var ebitdaList = new List<EBITDAResponseDto>();
 
-            foreach (var monthDRE in painelDRE.Months.OrderBy(m => m.DateMonth))
+            // Itera pelos meses normais (exclui o acumulado do painel DRE)
+            foreach (var monthDRE in painelDRE.Months.Where(m => m.DateMonth != 13).OrderBy(m => m.DateMonth))
             {
-                decimal ebitda = monthDRE?.Totalizer
-                    .FirstOrDefault(t => t.Name == "EBITDA")?.TotalValue ?? 0;
-
                 decimal lucroAntesDoResultadoFinanceiro = monthDRE?.Totalizer
                     .FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro")?.TotalValue ?? 0;
 
@@ -476,13 +477,15 @@ namespace _2___Application._1_Services.Results
                     .Where(c => c.Name == "Despesas com Depreciação")
                     .Sum(c => c.Value);
 
-                eBITDA.Add(new EBITDAResponseDto
+                decimal ebitda = lucroAntesDoResultadoFinanceiro + despesasComDepreciacao;
+
+                ebitdaList.Add(new EBITDAResponseDto
                 {
                     Name = monthDRE.Name,
                     DateMonth = monthDRE.DateMonth,
-                    EBITDA = ebitda,
                     LucroOperacionalAntesDoResultadoFinanceiro = lucroAntesDoResultadoFinanceiro,
-                    DespesasDepreciacao = despesasComDepreciacao
+                    DespesasDepreciacao = despesasComDepreciacao,
+                    EBITDA = ebitda
                 });
             }
 
@@ -490,24 +493,24 @@ namespace _2___Application._1_Services.Results
             var totalGeral = new EBITDAResponseDto
             {
                 Name = "ACUMULADO",
-                DateMonth = 13, // 👈 opcional
-            
-                LucroOperacionalAntesDoResultadoFinanceiro = eBITDA.Sum(x => x.LucroOperacionalAntesDoResultadoFinanceiro),
-                DespesasDepreciacao = eBITDA.Sum(x => x.DespesasDepreciacao),
-                    EBITDA = eBITDA.Sum(x => x.EBITDA)
-                // aqui não existem margens, então nada pra zerar
+                DateMonth = 13,
+                LucroOperacionalAntesDoResultadoFinanceiro = ebitdaList.Sum(x => x.LucroOperacionalAntesDoResultadoFinanceiro),
+                DespesasDepreciacao = ebitdaList.Sum(x => x.DespesasDepreciacao),
+                EBITDA = ebitdaList.Sum(x => x.EBITDA)
             };
 
-            eBITDA.Add(totalGeral);
+            ebitdaList.Add(totalGeral);
 
+            // ✅ Retorno final
             return new PainelEBITDAResponseDto
             {
                 EBITDA = new EBITDAGroupedDto
                 {
-                    Months = eBITDA
+                    Months = ebitdaList
                 }
             };
         }
+
 
 
         #endregion
