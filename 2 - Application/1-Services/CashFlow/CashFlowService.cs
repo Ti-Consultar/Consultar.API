@@ -443,22 +443,7 @@ namespace _2___Application._1_Services.CashFlow
                 cashFlow.Add(dto);
                 previousMonth = dto;
 
-                // Atualiza valores anteriores
-                investimentoAnterior = investimentos;
-                clienteAnterior = clientes;
-                estoqueAnterior = estoque;
-                outrosAtivosAnterior = outrosAtivosOperacionaisTotal;
-                depreciacaoAnterior = variacaoDepreciacaoAmortAcumulada;
-                fornecedoresAnterior = fornecedores;
-                obrigacoesTributariasETrabalhistasAnterior = obrigacoesTributariasETrabalhistas;
-                outrosPassivosOperacionaisAnterior = outrosPassivosOperacionaisTotal;
-                AtivoNaoCirculanteAnterior = realizavelLongoPrazo;
-                exigivelLongoPrazoAnterior = exigivelLongoPrazo;
-                patrimonioLiquidoAnterior = patrimonioLiquido.TotalValue;
-                resultadoAnterior = resultadoExercicioAcumulado;
-                imobilizadoAnterior = imobilizado;
-                intangivelAnterior = intangivel;
-                EmprestimoEFinanciamentoAnterior = emprestimoEFinanciamento;
+              
             }
 
             // ACUMULADO anual
