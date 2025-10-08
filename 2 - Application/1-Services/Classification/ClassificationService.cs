@@ -2155,13 +2155,21 @@ namespace _2___Application._1_Services
 
         private MonthPainelContabilRespone CalcularAcumuladoSemMargens(List<MonthPainelContabilRespone> months)
         {
-            var totalizersBase = months.First().Totalizer;
+            // === Junta todos os totalizadores que aparecem em qualquer mês ===
+            var todosTotalizers = months
+                .SelectMany(m => m.Totalizer)
+                .GroupBy(t => t.Id)
+                .Select(g => g.First())
+                .OrderBy(t => t.TypeOrder)
+                .ToList();
 
-            // --- Soma todos os totalizadores e classificações (exceto margens %)
-            var acumuladoTotalizers = totalizersBase.Select(totalizer =>
+            var acumuladoTotalizers = todosTotalizers.Select(totalizer =>
             {
                 bool isMargem = totalizer.Name.Contains("%");
+
+                // === Soma totalizador (ignorando margens %) ===
                 if (isMargem)
+                {
                     return new TotalizerParentRespone
                     {
                         Id = totalizer.Id,
@@ -2170,15 +2178,17 @@ namespace _2___Application._1_Services
                         TotalValue = 0,
                         Classifications = new List<ClassificationRespone>()
                     };
+                }
 
-                // Soma total por totalizador
+                // === Soma o valor total em todos os meses ===
                 var totalValue = months.Sum(m =>
                     m.Totalizer.FirstOrDefault(t => t.Id == totalizer.Id)?.TotalValue ?? 0);
 
-                // Soma as classificações internas
+                // === Junta todas as classificações desse totalizador em qualquer mês ===
                 var classifAcumuladas = months
-                    .SelectMany(m => m.Totalizer.FirstOrDefault(t => t.Id == totalizer.Id)?.Classifications
-                                    ?? new List<ClassificationRespone>())
+                    .SelectMany(m =>
+                        m.Totalizer.FirstOrDefault(t => t.Id == totalizer.Id)?.Classifications
+                        ?? new List<ClassificationRespone>())
                     .GroupBy(c => c.Id)
                     .Select(g => new ClassificationRespone
                     {
@@ -2202,67 +2212,37 @@ namespace _2___Application._1_Services
             .OrderBy(t => t.TypeOrder)
             .ToList();
 
-            // === CAPTURA DOS TOTALIZADORES ACUMULADOS ===
-            decimal receitaLiquida = acumuladoTotalizers.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
-            decimal lucroBruto = acumuladoTotalizers.FirstOrDefault(t => t.Name == "Lucro Bruto")?.TotalValue ?? 0;
-            decimal margemContribuicao = acumuladoTotalizers.FirstOrDefault(t => t.Name == "Margem Contribuição")?.TotalValue ?? 0;
-            decimal lucroOperacional = acumuladoTotalizers.FirstOrDefault(t => t.Name == "Lucro Operacional")?.TotalValue ?? 0;
-            decimal lucroAntes = acumuladoTotalizers.FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro")?.TotalValue ?? 0;
-            decimal resultadoAntes = acumuladoTotalizers.FirstOrDefault(t => t.Name == "Resultado do Exercício Antes do Imposto")?.TotalValue ?? 0;
-            decimal lucroLiquido = acumuladoTotalizers.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
-            decimal ebitda = acumuladoTotalizers.FirstOrDefault(t => t.Name == "EBITDA")?.TotalValue ?? 0;
-            decimal nopat = acumuladoTotalizers.FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
+            // === CAPTURA TOTALIZADORES PARA REAPLICAR MARGENS ===
+            decimal receitaLiquida = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Receita Líquida"))?.TotalValue ?? 0;
+            decimal lucroBruto = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Lucro Bruto"))?.TotalValue ?? 0;
+            decimal margemContribuicao = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Margem Contribuição") && !t.Name.Contains("%"))?.TotalValue ?? 0;
+            decimal lucroOperacional = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Lucro Operacional"))?.TotalValue ?? 0;
+            decimal lucroAntes = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Lucro Antes"))?.TotalValue ?? 0;
+            decimal resultadoAntes = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Resultado do Exercício Antes"))?.TotalValue ?? 0;
+            decimal lucroLiquido = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Lucro Líquido"))?.TotalValue ?? 0;
+            decimal ebitda = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("EBITDA"))?.TotalValue ?? 0;
+            decimal nopat = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("NOPAT"))?.TotalValue ?? 0;
 
-            // === CAPTURA DOS ITENS NÃO OPERACIONAIS E FINANCEIROS ===
-            decimal outrasReceitasNaoOp = acumuladoTotalizers.SelectMany(t => t.Classifications)
-                .FirstOrDefault(c => c.Name == "Outras Receitas não Operacionais")?.Value ?? 0;
-            decimal despesasFin = acumuladoTotalizers.SelectMany(t => t.Classifications)
-                .FirstOrDefault(c => c.Name == "Despesas Financeiras")?.Value ?? 0;
-            decimal receitasFin = acumuladoTotalizers.SelectMany(t => t.Classifications)
-                .FirstOrDefault(c => c.Name == "Receitas Financeiras")?.Value ?? 0;
-            decimal provisaoCsll = acumuladoTotalizers.SelectMany(t => t.Classifications)
-                .FirstOrDefault(c => c.Name == "Provisão para CSLL")?.Value ?? 0;
-            decimal provisaoIrpj = acumuladoTotalizers.SelectMany(t => t.Classifications)
-                .FirstOrDefault(c => c.Name == "Provisão para IRPJ")?.Value ?? 0;
-            decimal despesasDeprec = acumuladoTotalizers.SelectMany(t => t.Classifications)
-                .FirstOrDefault(c => c.Name == "Despesas com Depreciação")?.Value ?? 0;
-
-            // === REAJUSTES DE CÁLCULOS CONTÁBEIS NO ACUMULADO ===
-            if (acumuladoTotalizers.FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro") is { } lucroAntesTotal)
-                lucroAntesTotal.TotalValue = lucroOperacional + outrasReceitasNaoOp;
-
-            if (acumuladoTotalizers.FirstOrDefault(t => t.Name == "Resultado do Exercício Antes do Imposto") is { } resultadoAntesTotal)
-                resultadoAntesTotal.TotalValue = (lucroAntes + receitasFin + despesasFin);
-
-            if (acumuladoTotalizers.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo") is { } lucroLiquidoTotal)
-                lucroLiquidoTotal.TotalValue = resultadoAntes + provisaoCsll + provisaoIrpj;
-
-            if (acumuladoTotalizers.FirstOrDefault(t => t.Name == "EBITDA") is { } ebitdaTotal)
-                ebitdaTotal.TotalValue = lucroAntes - despesasDeprec;
-
-            if (acumuladoTotalizers.FirstOrDefault(t => t.Name == "NOPAT") is { } nopatTotal)
-                nopatTotal.TotalValue = lucroAntes + provisaoCsll + provisaoIrpj;
-
-            // === REAPLICA AS MARGENS SOBRE OS VALORES ACUMULADOS ===
-            void SetMargem(string nome, decimal numerador)
+            // === REAPLICA AS MARGENS ===
+            void SetMargem(string busca, decimal numerador)
             {
-                var margem = acumuladoTotalizers.FirstOrDefault(t => t.Name == nome);
+                var margem = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains(busca));
                 if (margem != null)
                     margem.TotalValue = receitaLiquida != 0
                         ? Math.Round(numerador / receitaLiquida * 100, 2)
                         : 0;
             }
 
-            SetMargem("Margem Bruta %", lucroBruto);
-            SetMargem("Margem Contribuição %", margemContribuicao);
-            SetMargem("Margem Operacional %", lucroOperacional);
-            SetMargem("Margem LAJIR %", lucroAntes);
-            SetMargem("Margem LAIR %", resultadoAntes);
-            SetMargem("Margem Líquida %", lucroLiquido);
-            SetMargem("Margem EBITDA %", ebitda);
-            SetMargem("Margem NOPAT %", nopat);
+            SetMargem("Margem Bruta", lucroBruto);
+            SetMargem("Margem Contribuição", margemContribuicao);
+            SetMargem("Margem Operacional", lucroOperacional);
+            SetMargem("Margem LAJIR", lucroAntes);
+            SetMargem("Margem LAIR", resultadoAntes);
+            SetMargem("Margem Líquida", lucroLiquido);
+            SetMargem("Margem EBITDA", ebitda);
+            SetMargem("Margem NOPAT", nopat);
 
-            // === Retorna mês acumulado completo ===
+            // === Retorna o mês acumulado ===
             return new MonthPainelContabilRespone
             {
                 Id = 0,
@@ -2271,6 +2251,7 @@ namespace _2___Application._1_Services
                 Totalizer = acumuladoTotalizers
             };
         }
+
 
 
 
