@@ -220,7 +220,288 @@ namespace _2___Application._1_Services.CashFlow
                 }
             };
         }
+
+
         public async Task<PainelCashFlowResponseDto> GetCashFlow(int accountPlanId, int year)
+        {
+            var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
+            var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
+            var painelBcPassivo = await BuildPainelByTypePassivo(accountPlanId, year, 2);
+            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
+            var cashFlow = new List<CashFlowResponseDto>();
+
+            CashFlowResponseDto previousMonth = null;
+
+            // Inicializar com base em dezembro do ano anterior
+            var painelAtivoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1);
+            var painelPassivoAnterior = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year - 1, 2);
+            var painelPassivoBcAnterior = await BuildPainelByTypePassivo(accountPlanId, year - 1, 2);
+            var painelDREAnterior = await BuildPainelByTypeDRE(accountPlanId, year - 1, 3);
+
+            var dezembroAtivo = painelAtivoAnterior?.Months?.FirstOrDefault(m => m.DateMonth == 12);
+            var dezembroPassivo = painelPassivoAnterior?.Months?.FirstOrDefault(m => m.DateMonth == 12);
+            var dezembroBcPassivo = painelPassivoBcAnterior?.Months?.FirstOrDefault(m => m.DateMonth == 12);
+            var dezembroDRE = painelDREAnterior?.Months?.FirstOrDefault(m => m.DateMonth == 12);
+
+            decimal investimentoAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Investimentos")?.TotalValue ?? 0;
+            decimal clienteAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Clientes")?.TotalValue ?? 0;
+            decimal estoqueAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Estoques")?.TotalValue ?? 0;
+            decimal outrosAtivosAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
+            decimal depreciacaoAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Depreciação / Amort. Acumulada")?.TotalValue ?? 0;
+            decimal fornecedoresAnterior = dezembroPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Fornecedores")?.TotalValue ?? 0;
+            decimal obrigacoesTributariasETrabalhistasAnterior = dezembroPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Obrigações Tributárias e Trabalhistas")?.TotalValue ?? 0;
+            decimal outrosPassivosOperacionaisAnterior = dezembroPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
+            decimal AtivoNaoCirculanteAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
+            decimal exigivelLongoPrazoAnterior = dezembroPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Passivo Não Circulante Operacional")?.TotalValue ?? 0;
+            decimal passivoNaoCirculanteAnterior = dezembroPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Passivo Não Circulante")?.TotalValue ?? 0;
+            decimal patrimonioLiquidoAnterior = dezembroBcPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+            decimal resultadoAnterior = dezembroBcPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Resultado do Exercício Acumulado")?.TotalValue ?? 0;
+            decimal imobilizadoAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Imobilizado")?.TotalValue ?? 0;
+            decimal intangivelAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Intangível")?.TotalValue ?? 0;
+            decimal EmprestimoEFinanciamentoAnterior = dezembroPassivo?.Totalizer.FirstOrDefault(c => c.Name == "Empréstimos e Financiamentos")?.TotalValue ?? 0;
+            decimal disponibilidadeDezembroAnterior = dezembroAtivo?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
+
+            foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
+            {
+                var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
+                var monthBcPassivo = painelBcPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
+                var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
+
+                // --- DRE / Lucros ---
+                var lucroAntes = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro");
+                if (lucroAntes != null) lucroAntes.TotalValue = 0;
+
+                var receitaFinanceira = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                    .FirstOrDefault(c => c.Name == "Receitas Financeiras")?.Value ?? 0;
+                var despesaFinanceira = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                    .FirstOrDefault(c => c.Name == "Despesas Financeiras")?.Value ?? 0;
+
+                var resultadoAntes = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Resultado do Exercício Antes do Imposto");
+                if (resultadoAntes != null && lucroAntes != null)
+                    resultadoAntes.TotalValue = lucroAntes.TotalValue + receitaFinanceira + despesaFinanceira;
+
+                decimal lucroLiquidoDoPeriodo = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
+
+                var lucroLiquido = monthDRE.Totalizer.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
+                var provisaoCSLL = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                    .FirstOrDefault(c => c.Name == "Provisão para CSLL")?.Value ?? 0;
+                var provisaoIRPJ = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
+                    .FirstOrDefault(c => c.Name == "Provisão para IRPJ")?.Value ?? 0;
+                if (lucroLiquido != null && resultadoAntes != null)
+                    lucroLiquido.TotalValue = resultadoAntes.TotalValue + provisaoCSLL + provisaoIRPJ;
+
+                // --- Balanco / componentes ---
+                var patrimonioLiquido = monthBcPassivo.Totalizer.FirstOrDefault(t => t.Name == "Patrimônio Liquido");
+                var resultadoExercicioAcumulado = patrimonioLiquido?.Classifications.FirstOrDefault(c => c.Name == "Resultado do Exercício Acumulado")?.Value ?? 0;
+                var emprestimoEFinanciamento = monthPassivo.Totalizer.FirstOrDefault(t => t.Name == "Empréstimos e Financiamentos")?.TotalValue ?? 0;
+                var imobilizado = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Imobilizado")?.TotalValue ?? 0;
+                var intangivel = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Intangível")?.TotalValue ?? 0;
+                var depreciacaoAmortAcumulada = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Depreciação / Amort. Acumulada")?.TotalValue ?? 0;
+
+                decimal ativoFinanceiro = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
+                decimal disponibilidade = ativoFinanceiro;
+
+                decimal clientes = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
+                decimal estoque = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
+                decimal outrosAtivosOperacionaisTotal = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
+
+                decimal fornecedores = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
+                decimal obrigacoesTributariasETrabalhistas = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Obrigações Tributárias e Trabalhistas")?.TotalValue ?? 0;
+                decimal outrosPassivosOperacionaisTotal = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
+
+                decimal somaAtivos = disponibilidade + clientes + estoque + outrosAtivosOperacionaisTotal;
+                decimal somaPassivo = fornecedores + obrigacoesTributariasETrabalhistas + outrosPassivosOperacionaisTotal;
+                decimal necessidadeDeCapitalDeGiro = somaAtivos - somaPassivo;
+
+                decimal realizavelLongoPrazo = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
+                decimal exigivelLongoPrazo = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Não Circulante Operacional")?.TotalValue ?? 0;
+                decimal passivoNaoCirculante = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Não Circulante")?.TotalValue ?? 0;
+                decimal ativosFixos = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
+
+                decimal capitalInvestidoLiquido = necessidadeDeCapitalDeGiro + realizavelLongoPrazo + exigivelLongoPrazo + ativosFixos;
+                decimal ncgTotal = necessidadeDeCapitalDeGiro + ativoFinanceiro;
+                decimal investimentosAtivosFixos = capitalInvestidoLiquido - ncgTotal;
+
+                var investimentos = monthAtivo?.Totalizer.FirstOrDefault(c => c.Name == "Investimentos")?.TotalValue ?? 0;
+
+                // --- Variações (Janeiro vs DezembroAnterior) / (mês atual vs mês anterior) ---
+                decimal variacaoClientes, variacaoEstoques, variacaoOutrosAtivosOperacionais,
+                    variacaoDepreciacaoAmortAcumulada, variacaoFornecedores, variacaoObrigacoes,
+                    variacaoOutrosPassivosOperacionais, variacaoAtivoNaoCirculante, variacaoInvestimento,
+                    variacaoPassivoNaoCirculante, variacaoImobilizado, variacaoIntangivel, variacaoEmprestimosFinanciamento;
+                decimal variacaoPatrimonioLiquido = 0;
+
+                if (monthAtivo.DateMonth == 1)
+                {
+                    // Janeiro → compara com dezembro anterior
+                    variacaoClientes = clientes - clienteAnterior;
+                    variacaoEstoques = estoque - estoqueAnterior;
+                    variacaoOutrosAtivosOperacionais = outrosAtivosOperacionaisTotal - outrosAtivosAnterior;
+                    variacaoDepreciacaoAmortAcumulada = depreciacaoAmortAcumulada - depreciacaoAnterior;
+                    variacaoFornecedores = fornecedores - fornecedoresAnterior;
+                    variacaoObrigacoes = obrigacoesTributariasETrabalhistas - obrigacoesTributariasETrabalhistasAnterior;
+                    variacaoOutrosPassivosOperacionais = outrosPassivosOperacionaisTotal - outrosPassivosOperacionaisAnterior;
+                    variacaoAtivoNaoCirculante = realizavelLongoPrazo - AtivoNaoCirculanteAnterior;
+                    variacaoInvestimento = investimentos - investimentoAnterior;
+                    variacaoPassivoNaoCirculante = passivoNaoCirculante - passivoNaoCirculanteAnterior;
+                    variacaoImobilizado = imobilizado - imobilizadoAnterior;
+                    variacaoIntangivel = intangivel - intangivelAnterior;
+                    variacaoEmprestimosFinanciamento = emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior;
+
+                    // PL ajustado = (PL - ResultadoAcumulado)
+                    variacaoPatrimonioLiquido = ((patrimonioLiquido.TotalValue - resultadoExercicioAcumulado) - patrimonioLiquidoAnterior) * -1;
+                }
+                else
+                {
+                    // Fevereiro em diante → compara com o mês anterior
+                    variacaoClientes = clientes - clienteAnterior;
+                    variacaoEstoques = estoque - estoqueAnterior;
+                    variacaoOutrosAtivosOperacionais = outrosAtivosOperacionaisTotal - outrosAtivosAnterior;
+                    variacaoDepreciacaoAmortAcumulada = depreciacaoAmortAcumulada - depreciacaoAnterior;
+                    variacaoFornecedores = fornecedores - fornecedoresAnterior;
+                    variacaoObrigacoes = obrigacoesTributariasETrabalhistas - obrigacoesTributariasETrabalhistasAnterior;
+                    variacaoOutrosPassivosOperacionais = outrosPassivosOperacionaisTotal - outrosPassivosOperacionaisAnterior;
+                    variacaoAtivoNaoCirculante = realizavelLongoPrazo - AtivoNaoCirculanteAnterior;
+                    variacaoInvestimento = investimentos - investimentoAnterior;
+                    variacaoPassivoNaoCirculante = exigivelLongoPrazo - exigivelLongoPrazoAnterior;
+                    variacaoImobilizado = imobilizado - imobilizadoAnterior;
+                    variacaoIntangivel = intangivel - intangivelAnterior;
+                    variacaoEmprestimosFinanciamento = emprestimoEFinanciamento - EmprestimoEFinanciamentoAnterior;
+
+                    // PL ajustado (mês atual) - PL ajustado (mês anterior)
+                    variacaoPatrimonioLiquido = ((patrimonioLiquido.TotalValue - resultadoExercicioAcumulado) - (patrimonioLiquidoAnterior - resultadoAnterior)) * -1;
+                }
+
+                // --- NCG e Fluxos ---
+                var variacaoNCG = variacaoClientes + variacaoEstoques + variacaoOutrosAtivosOperacionais
+                                  - variacaoFornecedores - variacaoObrigacoes - variacaoOutrosPassivosOperacionais;
+
+                // a convenção usada anteriormente: ngcNegativa = variacaoNCG * -1 (para transformar variação em saída/entrada)
+                decimal ngcNegativa = variacaoNCG * -1;
+                decimal depreciacaoNegativa = variacaoDepreciacaoAmortAcumulada * -1;
+
+                // Fluxo operacional: NCG (sinal invertido) + depreciação + lucro líquido do período
+                var fluxoCaixaOperacional = ngcNegativa + depreciacaoNegativa + lucroLiquidoDoPeriodo;
+
+                // Itens de investimento (sinal invertido para compor fluxo)
+                decimal AtivoNaoCirculanteNegativo = variacaoAtivoNaoCirculante * -1;
+                decimal investimentoNegativo = variacaoInvestimento * -1;
+                decimal imobilizadoNegativo = variacaoImobilizado * -1;
+                decimal intangivelNegativo = variacaoIntangivel * -1;
+
+                var fluxoCaixaLivre = fluxoCaixaOperacional + AtivoNaoCirculanteNegativo + investimentoNegativo + imobilizadoNegativo + intangivelNegativo;
+
+                var fluxoDeCaixaEmpresa = fluxoCaixaLivre + variacaoEmprestimosFinanciamento + variacaoPassivoNaoCirculante - variacaoPatrimonioLiquido;
+
+                // --- Atualiza "anteriores" para o próximo mês ---
+                investimentoAnterior = investimentos;
+                clienteAnterior = clientes;
+                estoqueAnterior = estoque;
+                outrosAtivosAnterior = outrosAtivosOperacionaisTotal;
+                depreciacaoAnterior = depreciacaoAmortAcumulada;
+                fornecedoresAnterior = fornecedores;
+                obrigacoesTributariasETrabalhistasAnterior = obrigacoesTributariasETrabalhistas;
+                outrosPassivosOperacionaisAnterior = outrosPassivosOperacionaisTotal;
+                AtivoNaoCirculanteAnterior = realizavelLongoPrazo;
+                exigivelLongoPrazoAnterior = exigivelLongoPrazo;
+                patrimonioLiquidoAnterior = patrimonioLiquido.TotalValue;
+                resultadoAnterior = resultadoExercicioAcumulado;
+                imobilizadoAnterior = imobilizado;
+                intangivelAnterior = intangivel;
+                EmprestimoEFinanciamentoAnterior = emprestimoEFinanciamento;
+
+                // DTO mensal
+                var dto = new CashFlowResponseDto
+                {
+                    Name = monthAtivo.Name,
+                    DateMonth = monthAtivo.DateMonth,
+                    LucroOperacionalLiquido = lucroLiquidoDoPeriodo,
+                    DepreciacaoAmortizacao = variacaoDepreciacaoAmortAcumulada * -1,
+                    VariacaoNCG = variacaoNCG * -1,
+                    Clientes = variacaoClientes * -1,
+                    Estoques = variacaoEstoques * -1,
+                    OutrosAtivosOperacionais = variacaoOutrosAtivosOperacionais * -1,
+                    Fornecedores = variacaoFornecedores,
+                    ObrigacoesTributariasTrabalhistas = variacaoObrigacoes,
+                    OutrosPassivosOperacionais = variacaoOutrosPassivosOperacionais,
+                    FluxoDeCaixaOperacional = fluxoCaixaOperacional,
+                    AtivoNaoCirculante = variacaoAtivoNaoCirculante * -1,
+                    VariacaoInvestimento = variacaoInvestimento * -1,
+                    VariacaoImobilizado = variacaoImobilizado * -1,
+                    VariacaoIntangivel = variacaoIntangivel * -1,
+                    FluxoDeCaixaLivre = fluxoCaixaLivre,
+                    CaptacoesAmortizacoesFinanceira = variacaoEmprestimosFinanciamento,
+                    PassivoNaoCirculante = variacaoPassivoNaoCirculante,
+                    VariacaoPatrimonioLiquido = variacaoPatrimonioLiquido * -1,
+                    FluxoDeCaixaDaEmpresa = fluxoDeCaixaEmpresa,
+                    DisponibilidadeInicioDoPeriodo = monthAtivo.DateMonth == 1
+                        ? disponibilidadeDezembroAnterior
+                        : (previousMonth?.DisponibilidadeFinalDoPeriodo ?? 0),
+                    DisponibilidadeFinalDoPeriodo = disponibilidade,
+                };
+
+                cashFlow.Add(dto);
+                previousMonth = dto;
+
+                // Atualiza valores anteriores
+                investimentoAnterior = investimentos;
+                clienteAnterior = clientes;
+                estoqueAnterior = estoque;
+                outrosAtivosAnterior = outrosAtivosOperacionaisTotal;
+                depreciacaoAnterior = variacaoDepreciacaoAmortAcumulada;
+                fornecedoresAnterior = fornecedores;
+                obrigacoesTributariasETrabalhistasAnterior = obrigacoesTributariasETrabalhistas;
+                outrosPassivosOperacionaisAnterior = outrosPassivosOperacionaisTotal;
+                AtivoNaoCirculanteAnterior = realizavelLongoPrazo;
+                exigivelLongoPrazoAnterior = exigivelLongoPrazo;
+                patrimonioLiquidoAnterior = patrimonioLiquido.TotalValue;
+                resultadoAnterior = resultadoExercicioAcumulado;
+                imobilizadoAnterior = imobilizado;
+                intangivelAnterior = intangivel;
+                EmprestimoEFinanciamentoAnterior = emprestimoEFinanciamento;
+            }
+
+            // ACUMULADO anual
+            var acumulado = new CashFlowResponseDto
+            {
+                Name = "ACUMULADO",
+                DateMonth = 13,
+                LucroOperacionalLiquido = cashFlow.Sum(x => x.LucroOperacionalLiquido),
+                DepreciacaoAmortizacao = cashFlow.Sum(x => x.DepreciacaoAmortizacao),
+                VariacaoNCG = cashFlow.Sum(x => x.VariacaoNCG),
+                Clientes = cashFlow.Sum(x => x.Clientes),
+                Estoques = cashFlow.Sum(x => x.Estoques),
+                OutrosAtivosOperacionais = cashFlow.Sum(x => x.OutrosAtivosOperacionais),
+                Fornecedores = cashFlow.Sum(x => x.Fornecedores),
+                ObrigacoesTributariasTrabalhistas = cashFlow.Sum(x => x.ObrigacoesTributariasTrabalhistas),
+                OutrosPassivosOperacionais = cashFlow.Sum(x => x.OutrosPassivosOperacionais),
+                FluxoDeCaixaOperacional = cashFlow.Sum(x => x.FluxoDeCaixaOperacional),
+                AtivoNaoCirculante = cashFlow.Sum(x => x.AtivoNaoCirculante),
+                VariacaoInvestimento = cashFlow.Sum(x => x.VariacaoInvestimento),
+                VariacaoImobilizado = cashFlow.Sum(x => x.VariacaoImobilizado),
+                VariacaoIntangivel = cashFlow.Sum(x => x.VariacaoIntangivel),
+                FluxoDeCaixaLivre = cashFlow.Sum(x => x.FluxoDeCaixaLivre),
+                CaptacoesAmortizacoesFinanceira = cashFlow.Sum(x => x.CaptacoesAmortizacoesFinanceira),
+                PassivoNaoCirculante = cashFlow.Sum(x => x.PassivoNaoCirculante),
+                VariacaoPatrimonioLiquido = cashFlow.Sum(x => x.VariacaoPatrimonioLiquido),
+                FluxoDeCaixaDaEmpresa = cashFlow.Sum(x => x.FluxoDeCaixaDaEmpresa),
+                DisponibilidadeInicioDoPeriodo = disponibilidadeDezembroAnterior,
+                DisponibilidadeFinalDoPeriodo = cashFlow.LastOrDefault()?.DisponibilidadeFinalDoPeriodo ?? 0
+            };
+
+            cashFlow.Add(acumulado);
+
+            return new PainelCashFlowResponseDto
+            {
+                CashFlow = new CashFlowGroupedDto
+                {
+                    Months = cashFlow
+                }
+            };
+        }
+
+
+        public async Task<PainelCashFlowResponseDto> GetCashFlowe(int accountPlanId, int year)
         {
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
@@ -1348,7 +1629,6 @@ namespace _2___Application._1_Services.CashFlow
 
             foreach (var balancete in balancetes.OrderBy(b => b.DateMonth))
             {
-                // 1. Calcular totalizadores normais
                 var totalizerResponses = totalizersBase.Select(totalizer =>
                 {
                     var relatedClassifications = classifications
@@ -1384,10 +1664,6 @@ namespace _2___Application._1_Services.CashFlow
                         };
                     }).ToList();
 
-                    var custoMercadorias = classificationsResp
-                        .FirstOrDefault(t => t.Name == "(-) Custos das Mercadorias")?.Value ?? 0;
-
-
                     return new TotalizerParentRespone
                     {
                         Id = totalizer.Id,
@@ -1398,127 +1674,72 @@ namespace _2___Application._1_Services.CashFlow
                     };
                 }).ToList();
 
-                // totalizerResponses 
-                var receitaOperacionalBruta = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "Receita Operacional Bruta")?.TotalValue ?? 0;
-
-                var deducoes = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "(-) Deduções da Receita Bruta")?.TotalValue ?? 0;
-
-                var receitaLiquida = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas");
+                // === SEÇÃO DE CÁLCULOS === (mantida igual)
+                var receitaOperacionalBruta = totalizerResponses.FirstOrDefault(t => t.Name == "Receita Operacional Bruta")?.TotalValue ?? 0;
+                var deducoes = totalizerResponses.FirstOrDefault(t => t.Name == "(-) Deduções da Receita Bruta")?.TotalValue ?? 0;
+                var receitaLiquida = totalizerResponses.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas");
                 if (receitaLiquida != null) receitaLiquida.TotalValue = 0;
-
-                var lucroBruto = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "Lucro Bruto");
+                var lucroBruto = totalizerResponses.FirstOrDefault(t => t.Name == "Lucro Bruto");
                 if (lucroBruto != null) lucroBruto.TotalValue = 0;
-
-                var margemContribuicao = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "Margem Contribuição");
-
-                var despesasOperacionais = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "(-) Despesas Operacionais");
-
-                var lucroOperacional = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "Lucro Operacional");
+                var margemContribuicao = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Contribuição");
+                var despesasOperacionais = totalizerResponses.FirstOrDefault(t => t.Name == "(-) Despesas Operacionais");
+                var lucroOperacional = totalizerResponses.FirstOrDefault(t => t.Name == "Lucro Operacional");
                 if (lucroOperacional != null) lucroOperacional.TotalValue = 0;
-
-                var lucroAntes = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro");
+                var lucroAntes = totalizerResponses.FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro");
                 if (lucroAntes != null) lucroAntes.TotalValue = 0;
-
-                var resultadoAntes = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "Resultado do Exercício Antes do Imposto");
+                var resultadoAntes = totalizerResponses.FirstOrDefault(t => t.Name == "Resultado do Exercício Antes do Imposto");
                 if (resultadoAntes != null) resultadoAntes.TotalValue = 0;
-
-                var lucroLiquido = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
+                var lucroLiquido = totalizerResponses.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo");
                 if (lucroLiquido != null) lucroLiquido.TotalValue = 0;
+                var ebitda = totalizerResponses.FirstOrDefault(t => t.Name == "EBITDA");
+                var nopat = totalizerResponses.FirstOrDefault(t => t.Name == "NOPAT");
 
-                var ebitda = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "EBITDA");
-
-                var nopat = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "NOPAT");
-
-                // classificaton
-                var custoMercadorias = totalizerResponses
-                    .SelectMany(t => t.Classifications)
+                var custoMercadorias = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "(-) Custos das Mercadorias")?.Value ?? 0;
-
-
-                // classificaton
-                var custoDosServicosPrestados = totalizerResponses
-                    .SelectMany(t => t.Classifications)
+                var custoServicos = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "(-) Custos dos Serviços Prestados")?.Value ?? 0;
-
-                var despesasV = totalizerResponses
-                    .SelectMany(t => t.Classifications)
+                var despesasV = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Despesas Variáveis")?.Value ?? 0;
-
-                var outrosReceitas = totalizerResponses
-                    .SelectMany(t => t.Classifications)
+                var outrosReceitas = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Outras Receitas não Operacionais")?.Value ?? 0;
-
-                var ganhosEPerdas = totalizerResponses
-                    .SelectMany(t => t.Classifications)
+                var ganhosEPerdas = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Ganhos e Perdas de Capital")?.Value ?? 0;
-
-                var receitasFinanceiras = totalizerResponses
-                    .SelectMany(t => t.Classifications)
+                var receitasFin = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Receitas Financeiras")?.Value ?? 0;
-
-                var despesasFinanceiras = totalizerResponses
-                    .SelectMany(t => t.Classifications)
+                var despesasFin = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Despesas Financeiras")?.Value ?? 0;
-
-                var provisaoCSLL = totalizerResponses
-                    .SelectMany(t => t.Classifications)
+                var csll = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Provisão para CSLL")?.Value ?? 0;
-
-                var provisaoIRPJ = totalizerResponses
-                    .SelectMany(t => t.Classifications)
+                var irpj = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Provisão para IRPJ")?.Value ?? 0;
-
-                var despesasDepreciacao = totalizerResponses
-                    .SelectMany(t => t.Classifications)
+                var despDep = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Despesas com Depreciação");
-
-                var outrosResultadosOperacionais = totalizerResponses
-                    .SelectMany(t => t.Classifications)
+                var outrosResultOp = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
 
                 if (despesasOperacionais != null)
-                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despesasDepreciacao.Value - outrosResultadosOperacionais;
-                //+ despesasDepreciacao.Value
+                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despDep.Value - outrosResultOp;
 
-                // cálculos 
                 var receitaLiquidaValor = receitaOperacionalBruta + deducoes;
                 if (receitaLiquida != null) receitaLiquida.TotalValue = receitaLiquidaValor;
-                if (lucroBruto != null) lucroBruto.TotalValue = receitaLiquidaValor + custoMercadorias + custoDosServicosPrestados;
+                if (lucroBruto != null) lucroBruto.TotalValue = receitaLiquidaValor + custoMercadorias + custoServicos;
                 if (margemContribuicao != null && lucroBruto != null)
                     margemContribuicao.TotalValue = lucroBruto.TotalValue + despesasV;
 
-                decimal margemContri = totalizerResponses
-                    .FirstOrDefault(t => t.Name == "Margem Contribuição")?.TotalValue ?? 0;
+                var margemContriValor = margemContribuicao?.TotalValue ?? 0;
+                if (lucroOperacional != null && despesasOperacionais != null)
+                    lucroOperacional.TotalValue = margemContriValor + despesasOperacionais.TotalValue + outrosResultOp;
+                if (lucroAntes != null)
+                    lucroAntes.TotalValue = lucroOperacional?.TotalValue + outrosReceitas + ganhosEPerdas ?? 0;
+                if (resultadoAntes != null)
+                    resultadoAntes.TotalValue = lucroAntes?.TotalValue + receitasFin + despesasFin ?? 0;
+                if (lucroLiquido != null)
+                    lucroLiquido.TotalValue = resultadoAntes?.TotalValue + csll + irpj ?? 0;
+                if (ebitda != null)
+                    ebitda.TotalValue = lucroAntes?.TotalValue - despDep.Value ?? 0;
+                if (nopat != null)
+                    nopat.TotalValue = lucroAntes?.TotalValue + csll + irpj ?? 0;
 
-                if (lucroOperacional != null && lucroBruto != null && despesasOperacionais != null)
-                    lucroOperacional.TotalValue = (margemContri + despesasOperacionais.TotalValue + outrosResultadosOperacionais);
-
-                if (lucroAntes != null && lucroOperacional != null)
-                    lucroAntes.TotalValue = (lucroOperacional.TotalValue + outrosReceitas + ganhosEPerdas);
-
-                if (resultadoAntes != null && lucroAntes != null)
-                    resultadoAntes.TotalValue = (lucroAntes.TotalValue + receitasFinanceiras + despesasFinanceiras);
-
-                if (lucroLiquido != null && resultadoAntes != null)
-                    lucroLiquido.TotalValue = (resultadoAntes.TotalValue + provisaoCSLL + provisaoIRPJ);
-
-                if (ebitda != null && lucroAntes != null)
-                    ebitda.TotalValue = lucroAntes.TotalValue - despesasDepreciacao.Value;
-
-                if (nopat != null && lucroAntes != null)
-                    nopat.TotalValue = (lucroAntes.TotalValue + provisaoCSLL + provisaoIRPJ);
 
                 // margens
                 var margemBruta = totalizerResponses.FirstOrDefault(t => t.Name == "Margem Bruta %");
@@ -1569,7 +1790,11 @@ namespace _2___Application._1_Services.CashFlow
                         ? Math.Round(nopat.TotalValue / receitaLiquidaValor * 100, 2)
                         : 0;
 
-                despesasDepreciacao.Value = despesasDepreciacao.Value * -1;
+
+
+
+
+                despDep.Value = despDep.Value * -1;
 
                 months.Add(new MonthPainelContabilRespone
                 {
@@ -1580,7 +1805,100 @@ namespace _2___Application._1_Services.CashFlow
                 });
             }
 
+            // === ACUMULADO SEM MARGENS ===
+            var acumulado = CalcularAcumuladoSemMargens(months);
+            months.Add(acumulado);
+
             return new PainelBalancoContabilRespone { Months = months };
+        }
+
+
+        private MonthPainelContabilRespone CalcularAcumuladoSemMargens(List<MonthPainelContabilRespone> months)
+        {
+            // Junta todos os totalizadores que aparecem em qualquer mês
+            var todosTotalizers = months
+                .SelectMany(m => m.Totalizer)
+                .GroupBy(t => t.Id)
+                .Select(g => g.First())
+                .OrderBy(t => t.TypeOrder)
+                .ToList();
+
+            var acumuladoTotalizers = new List<TotalizerParentRespone>();
+
+            foreach (var totalizer in todosTotalizers)
+            {
+                bool isMargem = totalizer.Name.Contains("%");
+
+                // mesmo que o totalizador seja de margem, precisamos somar as classificações internas
+                var classifAcumuladas = months
+                    .SelectMany(m =>
+                        m.Totalizer.FirstOrDefault(t => t.Id == totalizer.Id)?.Classifications
+                        ?? new List<ClassificationRespone>())
+                    .GroupBy(c => c.Id)
+                    .Select(g => new ClassificationRespone
+                    {
+                        Id = g.Key,
+                        Name = g.First().Name,
+                        TypeOrder = g.First().TypeOrder,
+                        Value = g.Sum(x => x.Value)
+                    })
+                    .OrderBy(c => c.TypeOrder)
+                    .ToList();
+
+                // Se for margem, o TotalValue fica zerado, mas as classificações ficam
+                var totalValue = isMargem
+                    ? 0
+                    : months.Sum(m =>
+                        m.Totalizer.FirstOrDefault(t => t.Id == totalizer.Id)?.TotalValue ?? 0);
+
+                acumuladoTotalizers.Add(new TotalizerParentRespone
+                {
+                    Id = totalizer.Id,
+                    Name = totalizer.Name,
+                    TypeOrder = totalizer.TypeOrder,
+                    TotalValue = totalValue,
+                    Classifications = classifAcumuladas
+                });
+            }
+
+            // === CAPTURA TOTALIZADORES BASE ===
+            decimal receitaLiquida = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Receita Líquida"))?.TotalValue ?? 0;
+            decimal lucroBruto = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Lucro Bruto"))?.TotalValue ?? 0;
+            decimal margemContribuicao = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Margem Contribuição") && !t.Name.Contains("%"))?.TotalValue ?? 0;
+            decimal lucroOperacional = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Lucro Operacional"))?.TotalValue ?? 0;
+            decimal lucroAntes = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Lucro Antes"))?.TotalValue ?? 0;
+            decimal resultadoAntes = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Resultado do Exercício Antes"))?.TotalValue ?? 0;
+            decimal lucroLiquido = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("Lucro Líquido"))?.TotalValue ?? 0;
+            decimal ebitda = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("EBITDA"))?.TotalValue ?? 0;
+            decimal nopat = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains("NOPAT"))?.TotalValue ?? 0;
+
+            // === REAPLICA AS MARGENS ===
+            void SetMargem(string busca, decimal numerador)
+            {
+                var margem = acumuladoTotalizers.FirstOrDefault(t => t.Name.Contains(busca));
+                if (margem != null)
+                    margem.TotalValue = receitaLiquida != 0
+                        ? Math.Round(numerador / receitaLiquida * 100, 2)
+                        : 0;
+            }
+
+            SetMargem("Margem Bruta", lucroBruto);
+            SetMargem("Margem Contribuição %", margemContribuicao);
+            SetMargem("Margem Operacional", lucroOperacional);
+            SetMargem("Margem LAJIR", lucroAntes);
+            SetMargem("Margem LAIR", resultadoAntes);
+            SetMargem("Margem Líquida", lucroLiquido);
+            SetMargem("Margem EBITDA", ebitda);
+            SetMargem("Margem NOPAT", nopat);
+
+            // === Retorna o mês acumulado ===
+            return new MonthPainelContabilRespone
+            {
+                Id = 0,
+                Name = "ACUMULADO",
+                DateMonth = 13,
+                Totalizer = acumuladoTotalizers
+            };
         }
         private decimal? ApplyBalancoReclassificadoTotalAtivoValueRules(string name, Dictionary<string, TotalizerParentRespone> totals, Dictionary<string, ClassificationRespone> classes)
         {
