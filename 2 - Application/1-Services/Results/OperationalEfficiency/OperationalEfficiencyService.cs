@@ -63,6 +63,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
 
             var parameter = await _parameterRepository.GetByAccountPlanIdYear(accountPlanId, year);
             decimal wacc = parameter.FirstOrDefault(a => a.Name == "WACC")?.ParameterValue ?? 0;
+            decimal waccTotal = wacc;
             wacc = wacc / 12;
 
             foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
@@ -225,7 +226,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 NCGTotal = operationalEfficiency.Sum(x => x.NCGTotal),
                 InvestimentosAtivosFixos = operationalEfficiency.Sum(x => x.InvestimentosAtivosFixos),
                 CapitalInvestidoLiquido = operationalEfficiency.Sum(x => x.CapitalInvestidoLiquido),
-                WACC = wacc,
+                WACC = waccTotal,
                 // Percentuais calculados a partir dos totalizadores acumulados
                 MargemEBITDA = operationalEfficiency.Sum(x => x.ReceitasLiquidas) != 0
                     ? Math.Round(operationalEfficiency.Sum(x => x.EBITDA) / operationalEfficiency.Sum(x => x.ReceitasLiquidas) * 100, 2)
