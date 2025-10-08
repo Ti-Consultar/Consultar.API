@@ -62,11 +62,8 @@ namespace _2___Application._1_Services.Results
 
             var profitabilities = new List<ProfitabilityResponseDto>();
 
-            decimal? ncgMesAnterior = null; // <- inicializa como nulo
-
             foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
             {
-                var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
                 var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
 
                 decimal margemBruta = monthDRE?.Totalizer
@@ -76,13 +73,13 @@ namespace _2___Application._1_Services.Results
                     .FirstOrDefault(t => t.Name == "Margem EBITDA %")?.TotalValue ?? 0;
 
                 decimal margemOperacional = monthDRE?.Totalizer
-                      .FirstOrDefault(t => t.Name == "Margem Operacional %")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Margem Operacional %")?.TotalValue ?? 0;
 
                 decimal margemNOPAT = monthDRE?.Totalizer
-                     .FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0;
 
                 decimal margemLiquida = monthDRE?.Totalizer
-                     .FirstOrDefault(t => t.Name == "Margem Líquida %")?.TotalValue ?? 0;
+                    .FirstOrDefault(t => t.Name == "Margem Líquida %")?.TotalValue ?? 0;
 
                 profitabilities.Add(new ProfitabilityResponseDto
                 {
@@ -96,6 +93,22 @@ namespace _2___Application._1_Services.Results
                 });
             }
 
+            // 🔢 Acumulado anual das margens (usando o mês ACUMULADO da DRE)
+            var acumuladoDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == 13);
+
+            var acumulado = new ProfitabilityResponseDto
+            {
+                Name = "ACUMULADO",
+                DateMonth = 13,
+                MargemBruta = acumuladoDRE?.Totalizer.FirstOrDefault(t => t.Name == "Margem Bruta %")?.TotalValue ?? 0,
+                MargemEBITDA = acumuladoDRE?.Totalizer.FirstOrDefault(t => t.Name == "Margem EBITDA %")?.TotalValue ?? 0,
+                MargemOperacional = acumuladoDRE?.Totalizer.FirstOrDefault(t => t.Name == "Margem Operacional %")?.TotalValue ?? 0,
+                MargemNOPAT = acumuladoDRE?.Totalizer.FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0,
+                MargemLiquida = acumuladoDRE?.Totalizer.FirstOrDefault(t => t.Name == "Margem Líquida %")?.TotalValue ?? 0
+            };
+
+            profitabilities.Add(acumulado);
+
             return new PainelProfitabilityResponseDto
             {
                 Profitability = new ProfitabilityGroupedDto
@@ -104,6 +117,7 @@ namespace _2___Application._1_Services.Results
                 }
             };
         }
+
 
 
 
