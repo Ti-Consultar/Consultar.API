@@ -54,7 +54,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
         #region
 
 
-        public async Task<PainelOperationalEfficiencyResponseDto> GetOperationalEfficiencyAntigo(int accountPlanId, int year)
+        public async Task<PainelOperationalEfficiencyResponseDto> GetOperationalEfficiency(int accountPlanId, int year)
         {
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
@@ -258,7 +258,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 }
             };
         }
-        public async Task<PainelOperationalEfficiencyResponseDto> GetOperationalEfficiency(int accountPlanId, int year)
+        public async Task<PainelOperationalEfficiencyResponseDto> GetOperationalEfficiencyAntigo(int accountPlanId, int year)
         {
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
