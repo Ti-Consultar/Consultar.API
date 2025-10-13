@@ -2056,10 +2056,11 @@ namespace _2___Application._1_Services
                     .FirstOrDefault(c => c.Name == "Despesas com Depreciação");
                 var outrosResultOp = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
+                var despInvert = despDep;
 
+                despInvert.Value = despInvert.Value * -1;
                 if (despesasOperacionais != null)
-                    despesasOperacionais.Classifications.Add(despDep);
-
+                despesasOperacionais.Classifications.Add(despInvert);
                 despesasOperacionais.TotalValue = despesasOperacionais.TotalValue - outrosResultOp;
 
                 var receitaLiquidaValor = receitaOperacionalBruta + deducoes;
