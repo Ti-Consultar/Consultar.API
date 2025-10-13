@@ -2061,7 +2061,7 @@ namespace _2___Application._1_Services
                 despInvert.Value = despInvert.Value * -1;
                 if (despesasOperacionais != null)
                 despesasOperacionais.Classifications.Add(despInvert);
-                despInvert.TypeOrder = 53;
+                despInvert.TypeOrder = 52;
                 despesasOperacionais.Classifications.OrderBy(a => a.TypeOrder);
                 despesasOperacionais.TotalValue = despesasOperacionais.TotalValue - despInvert.Value - outrosResultOp;
 
