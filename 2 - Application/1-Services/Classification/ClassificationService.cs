@@ -2057,11 +2057,11 @@ namespace _2___Application._1_Services
                 var outrosResultOp = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
                 var despInvert = despDep;
-                despInvert.TypeOrder = 51;
+              
                 despInvert.Value = despInvert.Value * -1;
                 if (despesasOperacionais != null)
                 despesasOperacionais.Classifications.Add(despInvert);
-
+                despInvert.TypeOrder = 53;
                 despesasOperacionais.Classifications.OrderBy(a => a.TypeOrder);
                 despesasOperacionais.TotalValue = despesasOperacionais.TotalValue - despInvert.Value - outrosResultOp;
 
@@ -2147,7 +2147,14 @@ namespace _2___Application._1_Services
                     Id = balancete.Id,
                     Name = balancete.DateMonth.GetDescription(),
                     DateMonth = (int)balancete.DateMonth,
-                    Totalizer = totalizerResponses.OrderBy(t => t.TypeOrder).ToList()
+                    Totalizer = totalizerResponses
+    .OrderBy(t => t.TypeOrder)
+    .Select(t =>
+    {
+        t.Classifications = t.Classifications.OrderBy(c => c.TypeOrder).ToList();
+        return t;
+    })
+    .ToList()
                 });
             }
 
