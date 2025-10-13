@@ -2057,14 +2057,12 @@ namespace _2___Application._1_Services
                 var outrosResultOp = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
                 var despInvert = despDep;
-                despInvert.TypeOrder = 53;
+                despInvert.TypeOrder = 52;
                 //despInvert.Value = despInvert.Value * -1;
                 if (despesasOperacionais != null)
                 despesasOperacionais.Classifications.Add(despInvert);
 
-              
-
-                despesasOperacionais.TotalValue = despesasOperacionais.TotalValue - outrosResultOp;
+                despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despInvert.Value - outrosResultOp;
 
                 var receitaLiquidaValor = receitaOperacionalBruta + deducoes;
                 if (receitaLiquida != null) receitaLiquida.TotalValue = receitaLiquidaValor;
