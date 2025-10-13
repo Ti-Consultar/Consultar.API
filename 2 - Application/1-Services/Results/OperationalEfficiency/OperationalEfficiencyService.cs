@@ -412,12 +412,15 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
             // === ACUMULADO ANUAL ===
             var ultimoMes = operationalEfficiency.OrderByDescending(x => x.DateMonth).FirstOrDefault();
 
+            // Soma do WACC até o mês disponível (acumulado)
+            var mesesDisponiveis = operationalEfficiency.Count;
+            var waccAcumulado = wacc * mesesDisponiveis;
+
             var acumulado = new OperationalEfficiencyResponseDto
             {
                 Name = "ACUMULADO",
                 DateMonth = 13,
 
-                // Soma normal
                 ReceitasLiquidas = operationalEfficiency.Sum(x => x.ReceitasLiquidas),
                 CustosDespesas = operationalEfficiency.Sum(x => x.CustosDespesas),
                 EBITDA = operationalEfficiency.Sum(x => x.EBITDA),
@@ -427,7 +430,6 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 LucroLiquido = operationalEfficiency.Sum(x => x.LucroLiquido),
                 NOPAT = operationalEfficiency.Sum(x => x.NOPAT),
 
-                // Último mês
                 Disponivel = ultimoMes?.Disponivel ?? 0,
                 Clientes = ultimoMes?.Clientes ?? 0,
                 Estoques = ultimoMes?.Estoques ?? 0,
@@ -437,9 +439,8 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 InvestimentosAtivosFixos = ultimoMes?.InvestimentosAtivosFixos ?? 0,
                 CapitalInvestidoLiquido = ultimoMes?.CapitalInvestidoLiquido ?? 0,
 
-                WACC = waccTotal,
+                WACC = waccAcumulado, // ✅ ajuste feito aqui
 
-                // Percentuais
                 MargemEBITDA = operationalEfficiency.Sum(x => x.ReceitasLiquidas) != 0
                     ? Math.Round(operationalEfficiency.Sum(x => x.EBITDA) / operationalEfficiency.Sum(x => x.ReceitasLiquidas) * 100, 2)
                     : 0,
@@ -459,6 +460,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                     ? Math.Round((((operationalEfficiency.Sum(x => x.NOPAT) / (ultimoMes.CapitalInvestidoLiquido)) * 100) - wacc) / 100 * (ultimoMes.CapitalInvestidoLiquido), 2)
                     : 0
             };
+
 
             operationalEfficiency.Add(acumulado);
 
