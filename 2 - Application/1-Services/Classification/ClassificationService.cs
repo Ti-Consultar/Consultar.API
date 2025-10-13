@@ -2062,7 +2062,9 @@ namespace _2___Application._1_Services
                 if (despesasOperacionais != null)
                 despesasOperacionais.Classifications.Add(despInvert);
 
+                despesasOperacionais.Classifications.OrderBy(a => a.TypeOrder);
                 despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despInvert.Value - outrosResultOp;
+
 
                 var receitaLiquidaValor = receitaOperacionalBruta + deducoes;
                 if (receitaLiquida != null) receitaLiquida.TotalValue = receitaLiquidaValor;
