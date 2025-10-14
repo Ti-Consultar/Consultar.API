@@ -344,8 +344,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                     .FirstOrDefault(t => t.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
 
                 // NCG
-                decimal ncg = (disponibilidade + clientes + estoque + outrosAtivosOperacionaisTotal)
-                              - (fornecedores - obrigacoesTributariasETrabalhistas - outrosPassivosOperacionaisTotal);
+                decimal ncg = (clientes + estoque) - (fornecedores);
 
                 var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
                 var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
@@ -361,7 +360,9 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 decimal ativosFixos = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
-                decimal capitalInvestidoLiquido = disponibilidade + ncgTotal + realizavelLongoPrazo - exigivelLongoPrazo + ativosFixos;
+                var investimentosAtivosFixos = realizavelLongoPrazo - exigivelLongoPrazo + ativosFixos;
+
+                decimal capitalInvestidoLiquido =   ncgTotal + investimentosAtivosFixos;
 
                 // NOPAT
                 decimal nOPAT = monthDRE?.Totalizer
@@ -399,7 +400,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                     Fornecedores = fornecedores,
                     NCGCEF = ncg,
                     NCGTotal = ncgTotal,
-                    InvestimentosAtivosFixos = capitalInvestidoLiquido - ncgTotal,
+                    InvestimentosAtivosFixos = investimentosAtivosFixos,
                     CapitalInvestidoLiquido = capitalInvestidoLiquido,
                     CapitalTurnover = turnover,
                     ROIC = roic,
