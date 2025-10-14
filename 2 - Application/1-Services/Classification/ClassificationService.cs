@@ -2140,7 +2140,7 @@ namespace _2___Application._1_Services
 
 
 
-                despDep.Value = despDep.Value * -1;
+                despDep.Value = despDep.Value;
 
                 months.Add(new MonthPainelContabilRespone
                 {
