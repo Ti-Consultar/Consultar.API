@@ -2064,7 +2064,7 @@ namespace _2___Application._1_Services
                 despInvert.TypeOrder = 52;
                 despesasOperacionais.Classifications.OrderBy(a => a.TypeOrder);
                 despesasOperacionais.TotalValue = despesasOperacionais.TotalValue - despInvert.Value - outrosResultOp;
-
+                despInvert.Value = despDep.Value * -1;
 
                 var receitaLiquidaValor = receitaOperacionalBruta + deducoes;
                 if (receitaLiquida != null) receitaLiquida.TotalValue = receitaLiquidaValor;
