@@ -532,7 +532,6 @@ namespace _2___Application._1_Services.ValueTree
 
         #endregion
         #region Dados
-
         public async Task<PainelOperationalEfficiencyResponseDto> GetOperationalEfficiency(int accountPlanId, int year)
         {
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
@@ -542,67 +541,62 @@ namespace _2___Application._1_Services.ValueTree
 
             var parameter = await _parameterRepository.GetByAccountPlanIdYear(accountPlanId, year);
             decimal wacc = parameter.FirstOrDefault(a => a.Name == "WACC")?.ParameterValue ?? 0;
+            decimal waccTotal = wacc;
             wacc = wacc / 12;
 
-            foreach (var monthAtivo in painelAtivo.Months)
+            foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
             {
                 var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
                 var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
 
                 // Receitas
-                var receitaLiquida = monthDRE.Totalizer
+                decimal receitaLiquida = monthDRE.Totalizer
                     .FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
 
-                var receitaFinanceira = monthDRE?.Totalizer
+                decimal receitaFinanceira = monthDRE?.Totalizer
                     .SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Receitas Financeiras")?.Value ?? 0;
 
                 // Custos e Despesas
-                var custoMercadorias = monthDRE?.Totalizer
+                decimal custoMercadorias = monthDRE?.Totalizer
                     .SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "(-) Custos das Mercadorias")?.Value ?? 0;
 
-                var custoServicosPrestados = monthDRE?.Totalizer
+                decimal custoServicosPrestados = monthDRE?.Totalizer
                     .SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "(-) Custos dos Serviços Prestados")?.Value ?? 0;
 
-                var despesasOperacional = monthDRE?.Totalizer
+                decimal despesasOperacional = monthDRE?.Totalizer
                     .FirstOrDefault(c => c.Name == "(-) Despesas Operacionais")?.TotalValue ?? 0;
 
-                var custosEDespesasOperacionais = custoMercadorias + custoServicosPrestados + despesasOperacional;
+                decimal custosEDespesasOperacionais = custoMercadorias + custoServicosPrestados + despesasOperacional;
 
-                // Resultado e Lucros
-                var ebitda = monthDRE?.Totalizer
+                // Lucros
+                decimal ebitda = monthDRE?.Totalizer
                     .FirstOrDefault(c => c.Name == "EBITDA")?.TotalValue ?? 0;
 
-                var margemEbitda = monthDRE?.Totalizer
-                    .FirstOrDefault(c => c.Name == "Margem EBITDA %")?.TotalValue ?? 0;
-
-                var lucroOperacionalAntesJurosImpostos = monthDRE?.Totalizer
+                decimal lucroOperacionalAntesJurosImpostos = monthDRE?.Totalizer
                     .FirstOrDefault(c => c.Name == "Lucro Antes do Resultado Financeiro")?.TotalValue ?? 0;
 
-                var provisaoCSLL = monthDRE?.Totalizer
+                decimal provisaoCSLL = monthDRE?.Totalizer
                     .SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Provisão para CSLL")?.Value ?? 0;
 
-                var provisaoIRPJ = monthDRE?.Totalizer
+                decimal provisaoIRPJ = monthDRE?.Totalizer
                     .SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Provisão para IRPJ")?.Value ?? 0;
 
-                var resultadoFinanceiro = receitaFinanceira + (monthDRE?.Totalizer
+                decimal resultadoFinanceiro = receitaFinanceira + (monthDRE?.Totalizer
                     .SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Despesas Financeiras")?.Value ?? 0);
 
-                var impostos = provisaoCSLL + provisaoIRPJ;
-
-                var lucroLiquido = monthDRE.Totalizer
+                decimal impostos = provisaoCSLL + provisaoIRPJ;
+                decimal lucroLiquido = monthDRE.Totalizer
                     .FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
 
                 // Ativos Circulantes
-                decimal ativoFinanceiro = monthAtivo.Totalizer
+                decimal disponibilidade = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
-
-                decimal disponibilidade = ativoFinanceiro; // mesmo valor
 
                 decimal clientes = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
@@ -623,19 +617,14 @@ namespace _2___Application._1_Services.ValueTree
                 decimal outrosPassivosOperacionaisTotal = monthPassivo?.Totalizer
                     .FirstOrDefault(t => t.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
 
-                // Necessidade de Capital de Giro
-
-                decimal somaAtivos = disponibilidade + clientes + estoque + outrosAtivosOperacionaisTotal;
-
-                decimal somaPassivo = fornecedores - obrigacoesTributariasETrabalhistas - outrosPassivosOperacionaisTotal;
-
-                decimal necessidadeDeCapitalDeGiro = somaAtivos - somaPassivo;
+                // NCG
+                decimal ncg = (clientes + estoque) - (fornecedores);
 
                 var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
                 var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
-                var ncg = valorAtivoOperacional - valorPassivoOperacional;
+                var ncgTotal = valorAtivoOperacional - valorPassivoOperacional + disponibilidade;
 
-                // Ativo e Passivo não circulantes + Ativos Fixos
+                // Ativo e Passivo Não Circulantes + Ativos Fixos
                 decimal realizavelLongoPrazo = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
 
@@ -645,32 +634,26 @@ namespace _2___Application._1_Services.ValueTree
                 decimal ativosFixos = monthAtivo.Totalizer
                     .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
 
-                decimal capitalInvestidoLiquido = disponibilidade + ncg + realizavelLongoPrazo - exigivelLongoPrazo + ativosFixos;
+                var investimentosAtivosFixos = realizavelLongoPrazo - exigivelLongoPrazo + ativosFixos;
 
+                decimal capitalInvestidoLiquido = ncgTotal + investimentosAtivosFixos;
 
-                // Indicadores financeiros
+                // NOPAT
                 decimal nOPAT = monthDRE?.Totalizer
                     .FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
 
                 decimal margemNOPAT = monthDRE?.Totalizer
                     .FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0;
 
+                decimal margemEbitda = monthDRE?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Margem EBITDA %")?.TotalValue ?? 0;
 
-                var ncgTotal = ncg + disponibilidade;
-
-
+                // Indicadores percentuais do mês
                 decimal roic = capitalInvestidoLiquido != 0 ? (nOPAT / capitalInvestidoLiquido) * 100 : 0;
+                decimal turnover = receitaLiquida != 0 ? receitaLiquida / capitalInvestidoLiquido : 0;
                 decimal evaSPREAD = roic - wacc;
-                decimal turnover = receitaLiquida != 0 ? capitalInvestidoLiquido / receitaLiquida : 0;
-                //  decimal ncgTotal = necessidadeDeCapitalDeGiro - ativoFinanceiro;
-                decimal realNCG = clientes + estoque - fornecedores;
-                decimal investimentosAtivosFixos = capitalInvestidoLiquido - ncgTotal;
+                decimal eva = capitalInvestidoLiquido != 0 ? (evaSPREAD / 100) * capitalInvestidoLiquido : 0;
 
-                decimal evaSpreadPorcentagem = Math.Round(roic - wacc, 2);
-
-                decimal eva = capitalInvestidoLiquido != 0 ? (evaSpreadPorcentagem / 100) * capitalInvestidoLiquido : 0;
-
-                // Adiciona ao resultado
                 operationalEfficiency.Add(new OperationalEfficiencyResponseDto
                 {
                     Name = monthAtivo.Name,
@@ -689,7 +672,7 @@ namespace _2___Application._1_Services.ValueTree
                     Clientes = clientes,
                     Estoques = estoque,
                     Fornecedores = fornecedores,
-                    NCGCEF = realNCG,
+                    NCGCEF = ncg,
                     NCGTotal = ncgTotal,
                     InvestimentosAtivosFixos = investimentosAtivosFixos,
                     CapitalInvestidoLiquido = capitalInvestidoLiquido,
@@ -700,6 +683,61 @@ namespace _2___Application._1_Services.ValueTree
                     EVA = eva
                 });
             }
+
+            // === ACUMULADO ANUAL ===
+            var ultimoMes = operationalEfficiency.OrderByDescending(x => x.DateMonth).FirstOrDefault();
+
+            // Soma do WACC até o mês disponível (acumulado)
+            var mesesDisponiveis = operationalEfficiency.Count;
+            var waccAcumulado = wacc * mesesDisponiveis;
+
+            var acumulado = new OperationalEfficiencyResponseDto
+            {
+                Name = "ACUMULADO",
+                DateMonth = 13,
+
+                ReceitasLiquidas = operationalEfficiency.Sum(x => x.ReceitasLiquidas),
+                CustosDespesas = operationalEfficiency.Sum(x => x.CustosDespesas),
+                EBITDA = operationalEfficiency.Sum(x => x.EBITDA),
+                LucroOperacionalAntesJurosImpostos = operationalEfficiency.Sum(x => x.LucroOperacionalAntesJurosImpostos),
+                ResultadoFinanceiro = operationalEfficiency.Sum(x => x.ResultadoFinanceiro),
+                Impostos = operationalEfficiency.Sum(x => x.Impostos),
+                LucroLiquido = operationalEfficiency.Sum(x => x.LucroLiquido),
+                NOPAT = operationalEfficiency.Sum(x => x.NOPAT),
+
+                Disponivel = ultimoMes?.Disponivel ?? 0,
+                Clientes = ultimoMes?.Clientes ?? 0,
+                Estoques = ultimoMes?.Estoques ?? 0,
+                Fornecedores = ultimoMes?.Fornecedores ?? 0,
+                NCGCEF = ultimoMes?.NCGCEF ?? 0,
+                NCGTotal = ultimoMes?.NCGTotal ?? 0,
+                InvestimentosAtivosFixos = ultimoMes?.InvestimentosAtivosFixos ?? 0,
+                CapitalInvestidoLiquido = ultimoMes?.CapitalInvestidoLiquido ?? 0,
+
+                WACC = waccAcumulado, // ✅ ajuste feito aqui
+
+                MargemEBITDA = operationalEfficiency.Sum(x => x.ReceitasLiquidas) != 0
+                    ? Math.Round(operationalEfficiency.Sum(x => x.EBITDA) / operationalEfficiency.Sum(x => x.ReceitasLiquidas) * 100, 2)
+                    : 0,
+                MargemNOPAT = operationalEfficiency.Sum(x => x.ReceitasLiquidas) != 0
+                    ? Math.Round(operationalEfficiency.Sum(x => x.NOPAT) / operationalEfficiency.Sum(x => x.ReceitasLiquidas) * 100, 2)
+                    : 0,
+                ROIC = (ultimoMes?.CapitalInvestidoLiquido ?? 0) != 0
+                    ? Math.Round((operationalEfficiency.Sum(x => x.NOPAT) / (ultimoMes.CapitalInvestidoLiquido)) * 100, 2)
+                    : 0,
+                CapitalTurnover = operationalEfficiency.Sum(x => x.ReceitasLiquidas) != 0
+                    ? Math.Round((ultimoMes?.CapitalInvestidoLiquido ?? 0) / operationalEfficiency.Sum(x => x.ReceitasLiquidas), 2)
+                    : 0,
+                EVASPREAD = (ultimoMes?.CapitalInvestidoLiquido ?? 0) != 0
+                    ? Math.Round(((operationalEfficiency.Sum(x => x.NOPAT) / (ultimoMes.CapitalInvestidoLiquido)) * 100) - wacc, 2)
+                    : 0,
+                EVA = (ultimoMes?.CapitalInvestidoLiquido ?? 0) != 0
+                    ? Math.Round((((operationalEfficiency.Sum(x => x.NOPAT) / (ultimoMes.CapitalInvestidoLiquido)) * 100) - wacc) / 100 * (ultimoMes.CapitalInvestidoLiquido), 2)
+                    : 0
+            };
+
+
+            operationalEfficiency.Add(acumulado);
 
             return new PainelOperationalEfficiencyResponseDto
             {
