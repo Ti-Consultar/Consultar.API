@@ -2073,9 +2073,9 @@ namespace _2___Application._1_Services
                     // Adiciona a inversão à lista sem afetar o original
                     if (despesasOperacionais != null)
                     {
-                        despInvert.Value = despInvert.Value * -1;
+                        
                         despesasOperacionais.Classifications.Add(despInvert);
-                        despesasOperacionais.TotalValue = despesasOperacionais.TotalValue - despInvert.Value - outrosResultOp;
+                        despesasOperacionais.TotalValue = despesasOperacionais.TotalValue - despDep.Value - outrosResultOp;
                         despesasOperacionais.Classifications = despesasOperacionais.Classifications.OrderBy(a => a.TypeOrder).ToList();
                     }
                 }
