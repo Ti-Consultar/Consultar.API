@@ -1215,15 +1215,9 @@ namespace _2___Application._1_Services.Results
                     .FirstOrDefault(c => c.Name == "Despesas com Depreciação");
                 var outrosResultOp = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
-                var despInvert = despDep;
 
-                despInvert.Value = despInvert.Value * -1;
                 if (despesasOperacionais != null)
-                    despesasOperacionais.Classifications.Add(despInvert);
-                despInvert.TypeOrder = 52;
-                despesasOperacionais.Classifications.OrderBy(a => a.TypeOrder);
-                despesasOperacionais.TotalValue = despesasOperacionais.TotalValue - despInvert.Value - outrosResultOp;
-
+                    despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despDep.Value - outrosResultOp;
 
                 var receitaLiquidaValor = receitaOperacionalBruta + deducoes;
                 if (receitaLiquida != null) receitaLiquida.TotalValue = receitaLiquidaValor;
@@ -1241,7 +1235,7 @@ namespace _2___Application._1_Services.Results
                 if (lucroLiquido != null)
                     lucroLiquido.TotalValue = resultadoAntes?.TotalValue + csll + irpj ?? 0;
                 if (ebitda != null)
-                    ebitda.TotalValue = lucroAntes?.TotalValue + despDep.Value ?? 0;
+                    ebitda.TotalValue = lucroAntes?.TotalValue - despDep.Value ?? 0;
                 if (nopat != null)
                     nopat.TotalValue = lucroAntes?.TotalValue + csll + irpj ?? 0;
 
@@ -1299,21 +1293,14 @@ namespace _2___Application._1_Services.Results
 
 
 
-                despDep.Value = despDep.Value;
+                despDep.Value = despDep.Value * -1;
 
                 months.Add(new MonthPainelContabilRespone
                 {
                     Id = balancete.Id,
                     Name = balancete.DateMonth.GetDescription(),
                     DateMonth = (int)balancete.DateMonth,
-                    Totalizer = totalizerResponses
-    .OrderBy(t => t.TypeOrder)
-    .Select(t =>
-    {
-        t.Classifications = t.Classifications.OrderBy(c => c.TypeOrder).ToList();
-        return t;
-    })
-    .ToList()
+                    Totalizer = totalizerResponses.OrderBy(t => t.TypeOrder).ToList()
                 });
             }
 
