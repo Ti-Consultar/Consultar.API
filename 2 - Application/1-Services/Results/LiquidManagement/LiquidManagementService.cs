@@ -356,6 +356,16 @@ namespace _2___Application._1_Services.Results
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
 
+            // Cálculo acumulado da receita líquida (Lucro Líquido do Periodo)
+            var lucroLiquidoAcumuladoPorMes = new Dictionary<int, decimal>();
+            decimal acumulado = 0;
+
+            foreach (var mes in painelDRE.Months.OrderBy(m => m.DateMonth))
+            {
+                var lucroMes = mes.Totalizer.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
+                acumulado += lucroMes;
+                lucroLiquidoAcumuladoPorMes[mes.DateMonth] = acumulado;
+            }
 
             if (painelAtivo is null || painelPassivo is null || painelDRE is null)
             {
@@ -366,27 +376,34 @@ namespace _2___Application._1_Services.Results
 
             foreach (var monthAtivo in painelAtivo.Months)
             {
+                var dateMonth = monthAtivo.DateMonth;
+
                 var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
                 var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == monthAtivo.DateMonth);
 
                 var estoque = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
-                var receitaMensal = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
                 var cliente = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
                 var fornecedor = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
+
+                var receitaLiquidaAcumulada = lucroLiquidoAcumuladoPorMes.ContainsKey(dateMonth)
+                  ? lucroLiquidoAcumuladoPorMes[dateMonth]
+                  : 0;
 
                 var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
                 var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
                 var ncg = valorAtivoOperacional + valorPassivoOperacional;
 
+
+
                 decimal pMR = 0, pME = 0, pMP = 0, cicloNCG = 0;
 
-                if (receitaMensal > 0)
+                if (receitaLiquidaAcumulada > 0)
                 {
                     int multiplicadorDias = monthAtivo.DateMonth * 30;
-                    pMR = (cliente / receitaMensal) * multiplicadorDias;
-                    pME = (estoque / receitaMensal) * multiplicadorDias;
-                    pMP = (fornecedor / receitaMensal) * multiplicadorDias;
-                    cicloNCG = (ncg / receitaMensal) * multiplicadorDias;
+                    pMR = (cliente / receitaLiquidaAcumulada) * multiplicadorDias;
+                    pME = (estoque / receitaLiquidaAcumulada) * multiplicadorDias;
+                    pMP = (fornecedor / receitaLiquidaAcumulada) * multiplicadorDias;
+                    cicloNCG = (ncg / receitaLiquidaAcumulada) * multiplicadorDias;
                 }
 
                 var cicloFinanceiroOperacoesPrincipaisNCG = pME + pMR - pMP;
