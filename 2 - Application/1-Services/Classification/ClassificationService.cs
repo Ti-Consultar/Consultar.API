@@ -2082,7 +2082,7 @@ namespace _2___Application._1_Services
                 if (lucroLiquido != null)
                     lucroLiquido.TotalValue = resultadoAntes?.TotalValue + csll + irpj ?? 0;
                 if (ebitda != null)
-                    ebitda.TotalValue = lucroAntes?.TotalValue - despDep.Value ?? 0;
+                    ebitda.TotalValue = lucroAntes?.TotalValue + despDep.Value ?? 0;
                 if (nopat != null)
                     nopat.TotalValue = lucroAntes?.TotalValue + csll + irpj ?? 0;
 
