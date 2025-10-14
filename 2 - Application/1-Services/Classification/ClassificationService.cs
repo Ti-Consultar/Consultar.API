@@ -2058,7 +2058,7 @@ namespace _2___Application._1_Services
                     .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
                 var despInvert = despDep;
               
-                despInvert.Value = despInvert.Value * -1;
+                despInvert.Value = despDep.Value * -1;
                 if (despesasOperacionais != null)
                 despesasOperacionais.Classifications.Add(despInvert);
                 despInvert.TypeOrder = 52;
