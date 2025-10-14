@@ -292,12 +292,12 @@ namespace _2___Application._1_Services.Results
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
 
             if (painelAtivo is null || painelPassivo is null || painelDRE is null)
-            {
                 return new PainelGrossCashFlowResponseDto();
-            }
 
             var grossCashFlow = new List<GrossCashFlowResponseDto>();
-            decimal? ncgMesAnterior = null;
+
+            // 🔹 Busca o valor da NCG de dezembro do ano anterior
+            decimal? ncgMesAnterior = await GetNCGDoMesAnterior(accountPlanId, year);
 
             foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
             {
@@ -312,17 +312,21 @@ namespace _2___Application._1_Services.Results
 
                 decimal ncg = valorAtivoOperacional - valorPassivoOperacional;
 
-                decimal variacaoNCG = (ncgMesAnterior.HasValue && ncgMesAnterior.Value != 0)
+                // 🔹 Calcula variação da NCG (janeiro usa dezembro do ano anterior)
+                decimal variacaoNCG = (ncgMesAnterior.HasValue)
                     ? ncg - ncgMesAnterior.Value
-                    : ncg;
+                    : 0;
 
                 ncgMesAnterior = ncg;
 
+                // 🔹 Fluxo de Caixa Operacional
                 decimal fluxoDeCaixaOperacional = ebitda - variacaoNCG;
 
+                // 🔹 Receita líquida do mês
                 var receitaMensal = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
 
-                decimal geracaoCaixa = ((receitaMensal != 0 ? fluxoDeCaixaOperacional / receitaMensal : 0) * 100);
+                // 🔹 Geração de caixa e variação da margem
+                decimal geracaoCaixa = receitaMensal != 0 ? (fluxoDeCaixaOperacional / receitaMensal) * 100 : 0;
                 decimal aumentoReducaoFluxoCaixa = margemEbitda != 0 ? geracaoCaixa - margemEbitda : 0;
 
                 grossCashFlow.Add(new GrossCashFlowResponseDto
@@ -346,6 +350,27 @@ namespace _2___Application._1_Services.Results
                 }
             };
         }
+
+        // 🔹 Método auxiliar para pegar a NCG de dezembro do ano anterior
+        private async Task<decimal?> GetNCGDoMesAnterior(int accountPlanId, int year)
+        {
+            int anoAnterior = year - 1;
+
+            var painelAtivoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, anoAnterior, 1);
+            var painelPassivoAnterior = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, anoAnterior, 2);
+
+            var dezembroAtivo = painelAtivoAnterior?.Months.FirstOrDefault(m => m.DateMonth.Month == 12);
+            var dezembroPassivo = painelPassivoAnterior?.Months.FirstOrDefault(m => m.DateMonth.Month == 12);
+
+            if (dezembroAtivo is null || dezembroPassivo is null)
+                return null;
+
+            decimal valorAtivoOperacional = dezembroAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+            decimal valorPassivoOperacional = dezembroPassivo.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
+
+            return valorAtivoOperacional - valorPassivoOperacional;
+        }
+
 
         #endregion
 
