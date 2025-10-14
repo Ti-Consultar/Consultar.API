@@ -376,7 +376,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
 
                 // Indicadores percentuais do mês
                 decimal roic = capitalInvestidoLiquido != 0 ? (nOPAT / capitalInvestidoLiquido) * 100 : 0;
-                decimal turnover = receitaLiquida != 0 ? capitalInvestidoLiquido / receitaLiquida : 0;
+                decimal turnover = receitaLiquida != 0 ? receitaLiquida / capitalInvestidoLiquido : 0;
                 decimal evaSPREAD = roic - wacc;
                 decimal eva = capitalInvestidoLiquido != 0 ? (evaSPREAD / 100) * capitalInvestidoLiquido : 0;
 
