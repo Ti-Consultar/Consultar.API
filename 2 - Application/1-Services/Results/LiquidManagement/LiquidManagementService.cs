@@ -359,8 +359,8 @@ namespace _2___Application._1_Services.Results
             var painelAtivoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, anoAnterior, 1);
             var painelPassivoAnterior = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, anoAnterior, 2);
 
-            var dezembroAtivo = painelAtivoAnterior?.Months.FirstOrDefault(m => m.DateMonth.Month == 12);
-            var dezembroPassivo = painelPassivoAnterior?.Months.FirstOrDefault(m => m.DateMonth.Month == 12);
+            var dezembroAtivo = painelAtivoAnterior?.Months.FirstOrDefault(m => m.DateMonth == 12);
+            var dezembroPassivo = painelPassivoAnterior?.Months.FirstOrDefault(m => m.DateMonth == 12);
 
             if (dezembroAtivo is null || dezembroPassivo is null)
                 return null;
