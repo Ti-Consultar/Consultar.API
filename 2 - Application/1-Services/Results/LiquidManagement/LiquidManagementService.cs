@@ -391,7 +391,7 @@ namespace _2___Application._1_Services.Results
 
                 var cicloFinanceiroOperacoesPrincipaisNCG = pME + pMR - pMP;
 
-                var giroPME = pME != 0 ? 30 / pME : 0;
+                var giroPME = pME != 0 ?   pME / 30 : 0;
                 var giroPMR = pMR != 0 ? 30 / pMR : 0;
                 var giroPMP = pMP != 0 ? 30 / pMP : 0;
                 var giroCaixa = cicloFinanceiroOperacoesPrincipaisNCG != 0 ? 30 / cicloFinanceiroOperacoesPrincipaisNCG : 0;
