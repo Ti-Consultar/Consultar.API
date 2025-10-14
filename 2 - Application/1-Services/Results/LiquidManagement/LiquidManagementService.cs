@@ -98,7 +98,7 @@ namespace _2___Application._1_Services.Results
 
                 var ncg = valorAtivoOperacional  - valorPassivoOperacional;
 
-                decimal? indiceDeLiquidez = ncg != 0 ? saldoTesouraria / ncg : (decimal?)null;
+                decimal? indiceDeLiquidez = ncg != 0 ? (saldoTesouraria / ncg) * 100 : (decimal?)null;
 
 
 
