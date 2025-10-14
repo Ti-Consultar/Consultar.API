@@ -2056,15 +2056,15 @@ namespace _2___Application._1_Services
                     .FirstOrDefault(c => c.Name == "Despesas com Depreciação");
                 var outrosResultOp = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
-              
 
+                despDep.Value = despDep.Value * -1;
                 if (despDep != null)
                 {
                     // Cria uma NOVA instância com os mesmos dados
                     var despInvert = new ClassificationRespone
                     {
                         Id = despDep.Id,
-                        Name = despDep.Name + " (Inversão)",
+                        Name = despDep.Name,
                         TypeOrder = 52,
                         Value = despDep.Value * -1,
                         Datas = despDep.Datas?.ToList()
@@ -2153,7 +2153,6 @@ namespace _2___Application._1_Services
 
 
 
-                despDep.Value = despDep.Value;
 
                 months.Add(new MonthPainelContabilRespone
                 {
