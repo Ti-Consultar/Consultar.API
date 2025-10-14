@@ -417,19 +417,32 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
             var mesesDisponiveis = operationalEfficiency.Count;
             var waccAcumulado = wacc * mesesDisponiveis;
 
+            // ROIC acumulado
+            decimal capitalInvestidoFinal = ultimoMes?.CapitalInvestidoLiquido ?? 0;
+            decimal totalNOPAT = operationalEfficiency.Sum(x => x.NOPAT);
+            decimal totalReceitaLiquida = operationalEfficiency.Sum(x => x.ReceitasLiquidas);
+
+            decimal roicAcumulado = capitalInvestidoFinal != 0 ? (totalNOPAT / capitalInvestidoFinal) * 100 : 0;
+
+            // EVA Spread acumulado = ROIC acumulado - WACC acumulado
+            decimal evaSpreadAcumulado = roicAcumulado - waccAcumulado;
+
+            // EVA acumulado = EVA Spread acumulado (%) * Capital investido final
+            decimal evaAcumulado = (evaSpreadAcumulado / 100) * capitalInvestidoFinal;
+
             var acumulado = new OperationalEfficiencyResponseDto
             {
                 Name = "ACUMULADO",
                 DateMonth = 13,
 
-                ReceitasLiquidas = operationalEfficiency.Sum(x => x.ReceitasLiquidas),
+                ReceitasLiquidas = totalReceitaLiquida,
                 CustosDespesas = operationalEfficiency.Sum(x => x.CustosDespesas),
                 EBITDA = operationalEfficiency.Sum(x => x.EBITDA),
                 LucroOperacionalAntesJurosImpostos = operationalEfficiency.Sum(x => x.LucroOperacionalAntesJurosImpostos),
                 ResultadoFinanceiro = operationalEfficiency.Sum(x => x.ResultadoFinanceiro),
                 Impostos = operationalEfficiency.Sum(x => x.Impostos),
                 LucroLiquido = operationalEfficiency.Sum(x => x.LucroLiquido),
-                NOPAT = operationalEfficiency.Sum(x => x.NOPAT),
+                NOPAT = totalNOPAT,
 
                 Disponivel = ultimoMes?.Disponivel ?? 0,
                 Clientes = ultimoMes?.Clientes ?? 0,
@@ -438,29 +451,24 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                 NCGCEF = ultimoMes?.NCGCEF ?? 0,
                 NCGTotal = ultimoMes?.NCGTotal ?? 0,
                 InvestimentosAtivosFixos = ultimoMes?.InvestimentosAtivosFixos ?? 0,
-                CapitalInvestidoLiquido = ultimoMes?.CapitalInvestidoLiquido ?? 0,
+                CapitalInvestidoLiquido = capitalInvestidoFinal,
 
-                WACC = waccAcumulado, // ✅ ajuste feito aqui
+                WACC = waccAcumulado, // ✅ acumulado até o mês
+                ROIC = Math.Round(roicAcumulado, 2), // ✅ acumulado anual
+                EVASPREAD = Math.Round(evaSpreadAcumulado, 2), // ✅ ROIC acumulado - WACC acumulado
+                EVA = Math.Round(evaAcumulado, 2), // ✅ valor em dinheiro do EVA acumulado
 
-                MargemEBITDA = operationalEfficiency.Sum(x => x.ReceitasLiquidas) != 0
-                    ? Math.Round(operationalEfficiency.Sum(x => x.EBITDA) / operationalEfficiency.Sum(x => x.ReceitasLiquidas) * 100, 2)
+                MargemEBITDA = totalReceitaLiquida != 0
+                    ? Math.Round(operationalEfficiency.Sum(x => x.EBITDA) / totalReceitaLiquida * 100, 2)
                     : 0,
-                MargemNOPAT = operationalEfficiency.Sum(x => x.ReceitasLiquidas) != 0
-                    ? Math.Round(operationalEfficiency.Sum(x => x.NOPAT) / operationalEfficiency.Sum(x => x.ReceitasLiquidas) * 100, 2)
+                MargemNOPAT = totalReceitaLiquida != 0
+                    ? Math.Round(totalNOPAT / totalReceitaLiquida * 100, 2)
                     : 0,
-                ROIC = (ultimoMes?.CapitalInvestidoLiquido ?? 0) != 0
-                    ? Math.Round((operationalEfficiency.Sum(x => x.NOPAT) / (ultimoMes.CapitalInvestidoLiquido)) * 100, 2)
-                    : 0,
-                CapitalTurnover = operationalEfficiency.Sum(x => x.ReceitasLiquidas) != 0
-                    ? Math.Round((ultimoMes?.CapitalInvestidoLiquido ?? 0) / operationalEfficiency.Sum(x => x.ReceitasLiquidas), 2)
-                    : 0,
-                EVASPREAD = (ultimoMes?.CapitalInvestidoLiquido ?? 0) != 0
-                    ? Math.Round(((operationalEfficiency.Sum(x => x.NOPAT) / (ultimoMes.CapitalInvestidoLiquido)) * 100) - wacc, 2)
-                    : 0,
-                EVA = (ultimoMes?.CapitalInvestidoLiquido ?? 0) != 0
-                    ? Math.Round((((operationalEfficiency.Sum(x => x.NOPAT) / (ultimoMes.CapitalInvestidoLiquido)) * 100) - wacc) / 100 * (ultimoMes.CapitalInvestidoLiquido), 2)
+                CapitalTurnover = capitalInvestidoFinal != 0
+                    ? Math.Round(totalReceitaLiquida / capitalInvestidoFinal, 2)
                     : 0
             };
+
 
 
             operationalEfficiency.Add(acumulado);
