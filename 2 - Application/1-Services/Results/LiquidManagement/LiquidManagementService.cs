@@ -94,7 +94,7 @@ namespace _2___Application._1_Services.Results
 
                 var cdg = (passivoNaoCirculante + patrimonioLiquido) - (ativoNaoCirculante + ativoFixo);
 
-                var saldoTesouraria = valorAtivoFinanceiro + valorPassivoFinanceiro;
+                var saldoTesouraria = valorAtivoFinanceiro - valorPassivoFinanceiro;
 
                 var ncg = valorAtivoOperacional  - valorPassivoOperacional;
 
