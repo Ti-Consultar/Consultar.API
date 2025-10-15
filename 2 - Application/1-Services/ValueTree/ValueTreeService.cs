@@ -244,11 +244,6 @@ namespace _2___Application._1_Services.ValueTree
                 var allMonths = new List<int>();
 
                 allMonths.AddRange(painelAtivo.Months.Select(m => m.DateMonth));
-                allMonths.AddRange(painelPassivo.Months.Select(m => m.DateMonth));
-                allMonths.AddRange(painelDRE.Months.Select(m => m.DateMonth));
-                allMonths.AddRange(painelOperationalEfficiency.OperationalEfficiency.Months.Select(m => m.DateMonth));
-
-                // Pega o maior mês que realmente existe
                 month = allMonths
                     .Where(m => m > 0 && m <= 12)
                     .DefaultIfEmpty(DateTime.Now.Month)
@@ -545,6 +540,7 @@ namespace _2___Application._1_Services.ValueTree
 
             return new ValueTreeResultDto
             {
+                ValueTreeYearMonth = date,
                 EconomicView = economic,
                 FinancialView = financial,
                 Indicators = indicators
