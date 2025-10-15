@@ -4,9 +4,16 @@ namespace _2___Application._2_Dto_s.ValueTree
 {
     public class ValueTreeResultDto
     {
+        public ValueTreeYearMonthDto ValueTreeYearMonth { get; set; }
         public EconomicViewDto EconomicView { get; set; }
         public FinancialViewDto FinancialView { get; set; }
         public ReturnIndicatorsDto Indicators { get; set; }
+    }
+
+    public class ValueTreeYearMonthDto
+    {
+        public int Year { get; set; }
+        public int Month { get; set; }
     }
 
     public class EconomicViewDto

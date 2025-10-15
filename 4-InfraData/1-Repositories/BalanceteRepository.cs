@@ -55,7 +55,7 @@ namespace _4_InfraData._1_Repositories
                 .ThenBy(b => b.DateMonth)
                 .ToListAsync();
         }
-
+       
         public async Task<List<BalanceteModel>> GetByDate(int accountPlanId, int year, int month)
         {
             return await _context.Balancete

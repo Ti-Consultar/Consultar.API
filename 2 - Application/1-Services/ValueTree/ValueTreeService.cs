@@ -231,11 +231,29 @@ namespace _2___Application._1_Services.ValueTree
 
         public async Task<ValueTreeResultDto> GettAll(int accountPlanId, int month, int year)
         {
+
+
             // === Painéis completos do ano ===
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
             var painelOperationalEfficiency = await GetOperationalEfficiency(accountPlanId, year);
+
+            if (month == 0)
+            {
+                var allMonths = new List<int>();
+
+                allMonths.AddRange(painelAtivo.Months.Select(m => m.DateMonth));
+                allMonths.AddRange(painelPassivo.Months.Select(m => m.DateMonth));
+                allMonths.AddRange(painelDRE.Months.Select(m => m.DateMonth));
+                allMonths.AddRange(painelOperationalEfficiency.OperationalEfficiency.Months.Select(m => m.DateMonth));
+
+                // Pega o maior mês que realmente existe
+                month = allMonths
+                    .Where(m => m > 0 && m <= 12)
+                    .DefaultIfEmpty(DateTime.Now.Month)
+                    .Max();
+            }
 
             // === Valores do mês selecionado ===
             var monthAtivo = painelAtivo.Months.FirstOrDefault(m => m.DateMonth == month);
@@ -457,6 +475,11 @@ namespace _2___Application._1_Services.ValueTree
             decimal evaAcumulado = capitalInvestidoMes != 0 ? (spreadAcumulado / 100) * capitalInvestidoMes : 0;
 
 
+            var date = new ValueTreeYearMonthDto
+            {
+                Year = year,
+                Month = month
+            };
             // === DTOs ===
             var economic = new EconomicViewDto
             {
