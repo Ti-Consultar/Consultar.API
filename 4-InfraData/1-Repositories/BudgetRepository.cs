@@ -115,34 +115,34 @@ namespace _4_InfraData._1_Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<BudgetModel>> GetAccountPlanWithBalancetesAsync(int accountPlanId)
-        {
-            return await _context.Budget
-                .Include(x => x.AccountPlans)
-                .Include(x => x.BalancetesData)
-                .Where(ap => ap.AccountPlansId == accountPlanId)
-                .OrderBy(ap => ap.DateYear)
-                .ThenBy(ap => ap.DateMonth)
-                .ToListAsync();
-        }
-        public async Task<List<BudgetModel>> GetAccountPlanWithBalancetesMonthAsync(int accountPlanId)
-        {
-            return await _context.Budget
-                .Include(x => x.AccountPlans)
-                .Where(ap => ap.AccountPlansId == accountPlanId)
-                .OrderBy(ap => ap.DateYear)
-                .ThenBy(ap => ap.DateMonth)
-                .ToListAsync();
-        }
-        public async Task<BudgetModel> GetWithBalancetesSearchAsync(int accountplanId, int year, int month)
-        {
-            return await _context.Budget
-                .Include(x => x.AccountPlans)
-                .Include(x => x.BalancetesData)
-                .Where(ap => ap.DateYear == year && (int)ap.DateMonth == month && ap.AccountPlansId == accountplanId)
-                .OrderBy(ap => ap.DateYear)
-                .ThenBy(ap => ap.DateMonth)
-                .FirstOrDefaultAsync();
-        }
+        //public async Task<List<BudgetModel>> GetAccountPlanWithBalancetesAsync(int accountPlanId)
+        //{
+        //    return await _context.Budget
+        //        .Include(x => x.AccountPlans)
+        //        .Include(x => x.BalancetesData)
+        //        .Where(ap => ap.AccountPlansId == accountPlanId)
+        //        .OrderBy(ap => ap.DateYear)
+        //        .ThenBy(ap => ap.DateMonth)
+        //        .ToListAsync();
+        //}
+        //public async Task<List<BudgetModel>> GetAccountPlanWithBalancetesMonthAsync(int accountPlanId)
+        //{
+        //    return await _context.Budget
+        //        .Include(x => x.AccountPlans)
+        //        .Where(ap => ap.AccountPlansId == accountPlanId)
+        //        .OrderBy(ap => ap.DateYear)
+        //        .ThenBy(ap => ap.DateMonth)
+        //        .ToListAsync();
+        //}
+        //public async Task<BudgetModel> GetWithBalancetesSearchAsync(int accountplanId, int year, int month)
+        //{
+        //    return await _context.Budget
+        //        .Include(x => x.AccountPlans)
+        //        .Include(x => x.BalancetesData)
+        //        .Where(ap => ap.DateYear == year && (int)ap.DateMonth == month && ap.AccountPlansId == accountplanId)
+        //        .OrderBy(ap => ap.DateYear)
+        //        .ThenBy(ap => ap.DateMonth)
+        //        .FirstOrDefaultAsync();
+        //}
     }
 }

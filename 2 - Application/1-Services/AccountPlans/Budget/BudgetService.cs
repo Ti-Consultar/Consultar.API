@@ -184,33 +184,33 @@ namespace _2___Application._1_Services.Budget
             }
         }
 
-        public async Task<ResultValue> GetAccountPlanWithBalancetesMonth(int accountPlanId)
-        {
+        //public async Task<ResultValue> GetAccountPlanWithBalancetesMonth(int accountPlanId)
+        //{
 
-            var balancetes = await _repository.GetAccountPlanWithBalancetesMonthAsync(accountPlanId);
+        //    var balancetes = await _repository.GetAccountPlanWithBalancetesMonthAsync(accountPlanId);
 
-            if (balancetes == null || !balancetes.Any())
-                return SuccessResponse(new List<AccountPlanWithBalancetesDto>());
+        //    if (balancetes == null || !balancetes.Any())
+        //        return SuccessResponse(new List<AccountPlanWithBalancetesDto>());
 
-            var response = new AccountPlanWithBalancetesDto
-            {
-                Id = accountPlanId,
-                Balancetes = balancetes
-                    .OrderByDescending(b => b.DateYear)
-                    .ThenByDescending(b => b.DateMonth)
-                    .Select(b => new BalanceteSimpleDto
-                    {
-                        Id = b.Id,
-                        DateMonth = b.DateMonth.GetDescription(),
-                        DateYear = b.DateYear,
-                        DateCreate = b.DateCreate
+        //    var response = new AccountPlanWithBalancetesDto
+        //    {
+        //        Id = accountPlanId,
+        //        Balancetes = balancetes
+        //            .OrderByDescending(b => b.DateYear)
+        //            .ThenByDescending(b => b.DateMonth)
+        //            .Select(b => new BalanceteSimpleDto
+        //            {
+        //                Id = b.Id,
+        //                DateMonth = b.DateMonth.GetDescription(),
+        //                DateYear = b.DateYear,
+        //                DateCreate = b.DateCreate
 
-                    })
-                    .ToList()
-            };
+        //            })
+        //            .ToList()
+        //    };
 
-            return SuccessResponse(response);
-        }
+        //    return SuccessResponse(response);
+        //}
 
 
 

@@ -55,20 +55,20 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-        /// <summary>
-        /// Lista o planos de contas de acordo com os Parametros passados
-        /// </summary>
-        [HttpGet("accountplan/{accountPlanId}")]
-        [Authorize()]
-        public async Task<IActionResult> GetAccountPlanWithBalancetesMonth(int accountPlanId )
-        {
-            var result = await _service.GetAccountPlanWithBalancetesMonth(accountPlanId);
+        ///// <summary>
+        ///// Lista o planos de contas de acordo com os Parametros passados
+        ///// </summary>
+        //[HttpGet("accountplan/{accountPlanId}")]
+        //[Authorize()]
+        //public async Task<IActionResult> GetAccountPlanWithBalancetesMonth(int accountPlanId )
+        //{
+        //    var result = await _service.GetAccountPlanWithBalancetesMonth(accountPlanId);
 
-            if (!result.Success)
-                return NotFound(result);
+        //    if (!result.Success)
+        //        return NotFound(result);
 
-            return Ok(result);
-        }
+        //    return Ok(result);
+        //}
 
 
         /// <summary>
