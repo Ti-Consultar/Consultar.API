@@ -229,7 +229,443 @@ namespace _2___Application._1_Services.Budget
         #endregion
         #endregion
 
+        #region Balancete Data
 
+        public async Task<ResultValue> ImportBalanceteData(IFormFile file, int balanceteId)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                    return ErrorResponse("Arquivo inválido.");
+
+                var balancete = await _repository.GetBalanceteById(balanceteId);
+                if (balancete == null)
+                    return ErrorResponse(Message.NotFound);
+
+                var list = new List<BalanceteDataModel>();
+                var extension = Path.GetExtension(file.FileName).ToLower();
+
+                using var stream = new MemoryStream();
+                await file.CopyToAsync(stream);
+
+                if (extension == ".csv")
+                {
+                    list = ReadFromCsv(stream, balanceteId);
+                }
+                else if (extension == ".xlsx")
+                {
+                    list = ReadFromXlsx(stream, balanceteId);
+                }
+                else
+                {
+                    return ErrorResponse("Formato de arquivo não suportado. Envie um CSV ou XLSX.");
+                }
+
+                // Remover duplicados na lista importada (CostCenter único)
+                list = list
+                    .GroupBy(x => x.CostCenter)
+                    .Select(g => g.First())
+                    .ToList();
+
+
+                await _balanceteDataRepository.AddRangeAsync(list);
+
+                return SuccessResponse("Dados importados com sucesso.");
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+
+        public async Task<ResultValue> GetByBalanceteIdDate(int accountplanId, int year, int month)
+        {
+            try
+            {
+                var balancete = await _balanceteDataRepository.GetByBalanceteIdDate(accountplanId, year, month);
+
+                if (balancete == null || !balancete.Any())
+                    return SuccessResponse(new BalanceteDataDto());
+
+                var result = MapToBalanceteDataDto(balancete);
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+
+        public async Task<ResultValue> GetByBalanceteId(int balanceteId)
+        {
+            try
+            {
+                var balancete = await _balanceteDataRepository.GetByBalanceteId(balanceteId);
+
+                if (balancete == null || !balancete.Any())
+                    return ErrorResponse(Message.NotFound);
+
+                var result = MapToBalanceteDataDto(balancete);
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+        public async Task<ResultValue> GetAgrupadoPorCostCenter(int balanceteId)
+        {
+            try
+            {
+                var data = await _balanceteDataRepository.GetAgrupadoPorCostCenter(balanceteId);
+
+                if (data == null || !data.Any())
+                    return SuccessResponse(Message.NotFound);
+
+                var result = data.Select(x => new DataDto
+                {
+                    Id = x.Id,
+                    CostCenter = x.CostCenter,
+                    Name = x.Name,
+                    InitialValue = x.InitialValue,
+                    Credit = x.Credit,
+                    Debit = x.Debit,
+                    FinalValue = x.FinalValue,
+                    BudgetedAmount = x.BudgetedAmount,
+                }).ToList();
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+        public async Task<ResultValue> GetAgrupadoByCostCenter(int balanceteId, string? search)
+        {
+            try
+            {
+
+
+                var data = await _balanceteDataRepository.GetByBalanceteDataByCostCenter(balanceteId, search);
+
+                if (data == null || !data.Any())
+                    return SuccessResponse(Message.NotFound);
+
+                var result = data.Select(x => new DataDto
+                {
+                    Id = x.Id,
+                    CostCenter = x.CostCenter,
+                    Name = x.Name,
+                    InitialValue = x.InitialValue,
+                    Credit = x.Credit,
+                    Debit = x.Debit,
+                    FinalValue = x.FinalValue,
+                    BudgetedAmount = x.BudgetedAmount,
+                }).ToList();
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+        public async Task<ResultValue> GetAgrupadoSomenteAtivos(int balanceteId)
+        {
+            try
+            {
+                var data = await _balanceteDataRepository.GetByBalanceteId(balanceteId);
+
+                if (data == null || !data.Any())
+                    return SuccessResponse(Message.NotFound);
+
+                var lookup = data.ToDictionary(x => x.CostCenter, x => new DataDto
+                {
+                    Id = x.Id,
+                    CostCenter = x.CostCenter,
+                    Name = x.Name,
+                    InitialValue = x.InitialValue,
+                    Credit = x.Credit,
+                    Debit = x.Debit,
+                    FinalValue = x.FinalValue,
+                    BudgetedAmount = x.BudgetedAmount
+                });
+
+                foreach (var item in data)
+                {
+                    var parts = item.CostCenter.Split('.');
+                    if (parts.Length <= 1) continue;
+
+                    var parentCostCenter = string.Join('.', parts.Take(parts.Length - 1));
+
+                    if (lookup.TryGetValue(parentCostCenter, out var parent))
+                    {
+                        parent.InitialValue += item.InitialValue;
+                        parent.Credit += item.Credit;
+                        parent.Debit += item.Debit;
+                        parent.FinalValue += item.FinalValue;
+                    }
+                }
+
+                var pais = lookup.Values
+                    .Where(x => x.CostCenter.StartsWith("1")) // Apenas ativos
+                    .Where(x => data.Any(d => d.CostCenter.StartsWith(x.CostCenter + "."))) // tem filhos
+                    .OrderBy(x => x.CostCenter)
+                    .ToList();
+
+                return SuccessResponse(pais);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+
+        public async Task<ResultValue> GetAgrupadoPorTipo(int balanceteId, char tipoInicial)
+        {
+            try
+            {
+                var data = await _balanceteDataRepository.GetByBalanceteId(balanceteId);
+
+                if (data == null || !data.Any())
+                    return SuccessResponse(Message.NotFound);
+
+                var lookup = data.ToDictionary(x => x.CostCenter, x => new DataDto
+                {
+                    Id = x.Id,
+                    CostCenter = x.CostCenter,
+                    Name = x.Name,
+                    InitialValue = x.InitialValue,
+                    Credit = x.Credit,
+                    Debit = x.Debit,
+                    FinalValue = x.FinalValue,
+                    BudgetedAmount = x.BudgetedAmount
+                });
+
+                foreach (var item in data)
+                {
+                    var parts = item.CostCenter.Split('.');
+                    if (parts.Length <= 1) continue;
+
+                    var parentCostCenter = string.Join('.', parts.Take(parts.Length - 1));
+
+                    if (lookup.TryGetValue(parentCostCenter, out var parent))
+                    {
+                        parent.InitialValue += item.InitialValue;
+                        parent.Credit += item.Credit;
+                        parent.Debit += item.Debit;
+                        parent.FinalValue += item.FinalValue;
+                    }
+                }
+
+                var tipo = tipoInicial.ToString();
+
+                var filtrados = lookup.Values
+                    .Where(x => x.CostCenter.StartsWith(tipo)) // Começa com tipo + ponto (ex: 1.1, 1.2)
+                    .OrderBy(x => x.CostCenter)
+                    .ToList();
+
+                return SuccessResponse(filtrados);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+
+
+
+
+        public async Task<ResultValue> DeleteBalanceteData(int balanceteId)
+        {
+            try
+            {
+                var balancete = await _repository.GetByIdDelete(balanceteId);
+
+                if (balancete == null)
+                    return ErrorResponse(Message.NotFound);
+
+                await _repository.DeleteBalanceteData(balanceteId);
+
+                return SuccessResponse(Message.DeletedSuccess);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+        #region Private
+        private List<BalanceteDataModel> ReadFromXlsx(Stream stream, int balanceteId)
+        {
+            var list = new List<BalanceteDataModel>();
+            stream.Position = 0;
+
+            using var workbook = new XLWorkbook(stream);
+            var worksheet = workbook.Worksheet(1);
+            var firstRowUsed = worksheet.FirstRowUsed();
+            var row = firstRowUsed.RowUsed().RowBelow();
+
+            int emptyRowCount = 0; // contador de linhas vazias consecutivas
+
+            while (true)
+            {
+                // Se chegou ao fim da planilha, para
+                if (row == null)
+                    break;
+
+                if (row.IsEmpty())
+                {
+                    emptyRowCount++;
+
+                    // se encontrou 3 linhas vazias seguidas, considera fim do arquivo
+                    if (emptyRowCount >= 3)
+                        break;
+
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                emptyRowCount = 0; // reset se linha válida
+
+                var costCenter = row.Cell(1).GetFormattedString().Trim(); // Coluna A
+                var name = row.Cell(2).GetFormattedString().Trim();       // Coluna B
+
+                // Ignorar cabeçalhos no meio
+                if (string.IsNullOrWhiteSpace(costCenter) && string.IsNullOrWhiteSpace(name))
+                {
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(name) && name.ToUpper().Contains("DESCRIÇÃO"))
+                {
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                var model = new BalanceteDataModel
+                {
+                    BalanceteId = balanceteId,
+                    CostCenter = costCenter,
+                    Name = name,
+                    InitialValue = ParseDecimal(row.Cell(3).GetFormattedString()), // Coluna C
+                    Debit = ParseDecimal(row.Cell(4).GetFormattedString()),        // Coluna D
+                    Credit = ParseDecimal(row.Cell(5).GetFormattedString()),       // Coluna E
+                    FinalValue = ParseDecimal(row.Cell(6).GetFormattedString()),   // Coluna F
+                    BudgetedAmount = true
+                };
+
+                list.Add(model);
+                row = row.RowBelow();
+            }
+
+            return list;
+        }
+
+
+        private List<BalanceteDataModel> ReadFromCsv(Stream stream, int balanceteId)
+        {
+            var list = new List<BalanceteDataModel>();
+            stream.Position = 0;
+
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+            var csv = new CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                HasHeaderRecord = true,
+                Delimiter = ";",
+                BadDataFound = null,
+                MissingFieldFound = null,
+                IgnoreBlankLines = false // ⚠️ vamos controlar manualmente
+            });
+
+            csv.Read();
+            csv.ReadHeader();
+
+            int emptyRowCount = 0;
+
+            while (csv.Read())
+            {
+                var costCenter = csv.GetField(0)?.Trim();
+                var name = csv.GetField(1)?.Trim();
+
+                // Se linha for totalmente vazia
+                if (string.IsNullOrWhiteSpace(costCenter) && string.IsNullOrWhiteSpace(name))
+                {
+                    emptyRowCount++;
+
+                    if (emptyRowCount >= 3) // 3 linhas vazias seguidas → fim
+                        break;
+
+                    continue;
+                }
+
+                emptyRowCount = 0; // reseta contador se linha válida
+
+                // Ignorar cabeçalho no meio do arquivo
+                if (!string.IsNullOrWhiteSpace(name) && name.ToUpper().Contains("DESCRIÇÃO"))
+                    continue;
+
+                var model = new BalanceteDataModel
+                {
+                    BalanceteId = balanceteId,
+                    CostCenter = costCenter,
+                    Name = name,
+                    InitialValue = ParseDecimal(csv.GetField(2)),
+                    Debit = ParseDecimal(csv.GetField(3)),
+                    Credit = ParseDecimal(csv.GetField(4)),
+                    FinalValue = ParseDecimal(csv.GetField(5)),
+                    BudgetedAmount = true
+                };
+
+                list.Add(model);
+            }
+
+            return list;
+        }
+
+
+        private static BalanceteDataDto MapToBalanceteDataDto(List<BalanceteDataModel> data)
+
+        {
+            var first = data.First();
+
+            return new BalanceteDataDto
+            {
+                Balancete = new BalanceteDto
+                {
+                    Id = first.Balancete.Id,
+                    DateMonth = first.Balancete.DateMonth,
+                    DateYear = first.Balancete.DateYear,
+                },
+                DataDto = data.Select(x => new DataDto
+                {
+                    Id = x.Id,
+                    CostCenter = x.CostCenter,
+                    Name = x.Name,
+                    InitialValue = x.InitialValue,
+                    Credit = x.Credit,
+                    Debit = x.Debit,
+                    FinalValue = x.FinalValue,
+                    BudgetedAmount = x.BudgetedAmount
+                }).ToList()
+            };
+        }
+
+
+        #endregion
+
+        #endregion
         #endregion
 
 

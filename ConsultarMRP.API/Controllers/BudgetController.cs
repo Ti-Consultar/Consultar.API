@@ -101,6 +101,88 @@ namespace _5_API.Controllers
 
             return Ok(result);
         }
-  
+
+        #region Balancete Data
+
+        // [Authorize]
+        [HttpPost("import")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> ImportBalanceteData(IFormFile file, [FromQuery] int balanceteId)
+        {
+            var result = await _service.ImportBalanceteData(file, balanceteId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+        // [Authorize]
+        [HttpGet("{balanceteId}/data")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
+        public async Task<IActionResult> GetByBalanceteId(int balanceteId)
+        {
+            var result = await _service.GetByBalanceteId(balanceteId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        [HttpGet("{balanceteId}/cost-center")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
+        public async Task<IActionResult> GetAgrupadoPorCostCenter(int balanceteId)
+        {
+            var result = await _service.GetAgrupadoPorCostCenter(balanceteId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        [HttpGet("{balanceteId}/cost-center/search")]
+        //[Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
+        public async Task<IActionResult> GetAgrupadoByCostCenter(int balanceteId, string? search)
+        {
+            var result = await _service.GetAgrupadoByCostCenter(balanceteId, search);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        [HttpGet("{balanceteId}/filter")]
+        //[Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
+        public async Task<IActionResult> GetAgrupadoPorTipo(int balanceteId, [FromQuery] char tipo)
+        {
+            var result = await _service.GetAgrupadoPorTipo(balanceteId, tipo);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+
+
+        /// <summary>
+        /// Deleta
+        /// </summary>
+        [HttpDelete("{id}/balancete-data")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> DeleteBalanceteData(int balanceteId)
+        {
+            var result = await _service.DeleteBalanceteData(balanceteId);
+
+            if (!result.Success)
+                return NotFound(result);
+
+            return Ok(result);
+        }
+        #endregion
+
+
     }
 }
