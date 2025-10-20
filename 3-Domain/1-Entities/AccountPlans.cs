@@ -19,5 +19,6 @@ namespace _3_Domain._1_Entities
         public SubCompanyModel? SubCompany { get; set; }
 
         public List<BalanceteModel> Balancetes { get; set; }
+        public List<BudgetModel> Budgets { get; set; } // adicionado pois esta dando erro para subir o arquivo vamos verificar se é isto 
     }
 }
