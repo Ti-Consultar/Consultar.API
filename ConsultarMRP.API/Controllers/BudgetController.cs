@@ -25,7 +25,7 @@ namespace _5_API.Controllers
         /// Cria um novo grupo.
         /// </summary>
         /// <param name="Create">Dados para criação de um plano de contas.</param>
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+      //  [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpPost]
         [Route("")]
         public async Task<IActionResult> Create([FromBody] InsertBalanceteDto dto)
@@ -40,7 +40,7 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+       // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpPut]
         [Route("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateBalanceteDto dto)
@@ -59,7 +59,7 @@ namespace _5_API.Controllers
         /// Lista o planos de contas de acordo com os Parametros passados
         /// </summary>
         [HttpGet("accountplan/{accountPlanId}")]
-        [Authorize()]
+       // [Authorize()]
         public async Task<IActionResult> GetAccountPlanWithBalancetesMonth(int accountPlanId )
         {
             var result = await _service.GetAccountPlanWithBalancetesMonth(accountPlanId);
@@ -75,7 +75,7 @@ namespace _5_API.Controllers
         /// Lista o plano de contas por Id
         /// </summary>
         [HttpGet("{id}")]
-        [Authorize()]
+       // [Authorize()]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _service.GetById(id);
@@ -91,7 +91,7 @@ namespace _5_API.Controllers
         /// Deleta
         /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        //[Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _service.Delete(id);

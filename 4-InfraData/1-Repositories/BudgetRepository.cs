@@ -67,7 +67,6 @@ namespace _4_InfraData._1_Repositories
         {
             return await _context.Budget
                 .Include(x => x.AccountPlans)
-                .Include(x => x.BalancetesData)
                 .Where(x => x.Id == id)
                 .ToListAsync();
         }
@@ -119,7 +118,6 @@ namespace _4_InfraData._1_Repositories
         {
             return await _context.Budget
                 .Include(x => x.AccountPlans)
-                .Include(x => x.BalancetesData)
                 .Where(ap => ap.AccountPlansId == accountPlanId)
                 .OrderBy(ap => ap.DateYear)
                 .ThenBy(ap => ap.DateMonth)
@@ -138,7 +136,6 @@ namespace _4_InfraData._1_Repositories
         {
             return await _context.Budget
                 .Include(x => x.AccountPlans)
-                .Include(x => x.BalancetesData)
                 .Where(ap => ap.DateYear == year && (int)ap.DateMonth == month && ap.AccountPlansId == accountplanId)
                 .OrderBy(ap => ap.DateYear)
                 .ThenBy(ap => ap.DateMonth)

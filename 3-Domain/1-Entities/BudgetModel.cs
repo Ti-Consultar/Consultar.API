@@ -22,6 +22,6 @@ namespace _3_Domain._1_Entities
         public int DateYear { get; set; }
         public DateTime DateCreate { get; set; } = DateTime.UtcNow;
 
-        public List<BalanceteDataModel> BalancetesData { get; set; }
+       // public List<BalanceteDataModel> BalancetesData { get; set; }
     }
 }
