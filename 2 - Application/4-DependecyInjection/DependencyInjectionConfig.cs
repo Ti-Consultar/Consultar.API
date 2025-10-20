@@ -1,9 +1,21 @@
 ﻿
+using _2___Application._1_Services;
+using _2___Application._1_Services.AccountPlans;
+using _2___Application._1_Services.AccountPlans.Balancete;
+using _2___Application._1_Services.Budget;
+using _2___Application._1_Services.CashFlow;
+using _2___Application._1_Services.Parameter;
+using _2___Application._1_Services.Results;
+using _2___Application._1_Services.Results.CIL_e_EC;
+using _2___Application._1_Services.Results.OperationalEfficiency;
+using _2___Application._1_Services.TotalizerClassification;
+using _2___Application._1_Services.ValueTree;
+using _2___Application.Base;
+using _4_Application._1_Services;
 using _4_InfraData._1_Context;
 using _4_InfraData._1_Repositories;
 using _4_InfraData._2_AppSettings;
 using _4_InfraData._2_JWT;
-using _2___Application.Base;
 using _4_InfraData._3_Utils.Email;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
@@ -11,17 +23,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using _2___Application._1_Services.AccountPlans;
-using _4_Application._1_Services;
-using _2___Application._1_Services.AccountPlans.Balancete;
-using _2___Application._1_Services;
-using _2___Application._1_Services.TotalizerClassification;
-using _2___Application._1_Services.Results.CIL_e_EC;
-using _2___Application._1_Services.Results;
-using _2___Application._1_Services.Results.OperationalEfficiency;
-using _2___Application._1_Services.Parameter;
-using _2___Application._1_Services.CashFlow;
-using _2___Application._1_Services.ValueTree;
 
 
 
@@ -97,6 +98,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<ParameterService>();
             services.AddScoped<CashFlowService>();
             services.AddScoped<ValueTreeService>();
+            services.AddScoped<BudgetService>();
 
 
 
@@ -123,6 +125,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<BalancoReclassificadoRepository>();
             services.AddScoped<BalancoReclassificadoTemplateRepository>();
             services.AddScoped<ParameterRepository>();
+            services.AddScoped<BudgetRepository>();
      
             #endregion
 
