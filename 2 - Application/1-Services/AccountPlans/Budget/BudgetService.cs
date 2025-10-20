@@ -214,11 +214,6 @@ namespace _2___Application._1_Services.Budget
 
 
 
-       
-
-
-
-
         #region Private Balancete
         private static BalanceteDto MapToBalanceteDto(BudgetModel x) => new()
         {
