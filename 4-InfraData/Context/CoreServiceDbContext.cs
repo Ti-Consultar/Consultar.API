@@ -33,6 +33,7 @@ namespace _4_InfraData._1_Context
         public DbSet<BalancoReclassificadoModel> BalancoReclassificado { get; set; }
         public DbSet<ParameterModel> Parameter { get; set; }
         public DbSet<BudgetModel> Budget { get; set; }
+        public DbSet<BudgetDataModel> BudgetData { get; set; }
     
 
 

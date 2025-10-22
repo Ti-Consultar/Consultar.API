@@ -70,7 +70,7 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.Id == id)
                 .ToListAsync();
         }
-        public async Task<BudgetModel> GetBalanceteById(int id)
+        public async Task<BudgetModel> GetBudgetById(int id)
         {
             return await _context.Budget
                 .Include(x => x.AccountPlans)

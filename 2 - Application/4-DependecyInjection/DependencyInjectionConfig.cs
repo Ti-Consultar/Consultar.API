@@ -126,9 +126,10 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<BalancoReclassificadoTemplateRepository>();
             services.AddScoped<ParameterRepository>();
             services.AddScoped<BudgetRepository>();
+            services.AddScoped<BudgetDataRepository>();
      
             #endregion
-
+             
             #endregion
         }
     }

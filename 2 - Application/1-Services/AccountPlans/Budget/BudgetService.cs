@@ -22,13 +22,13 @@ namespace _2___Application._1_Services.Budget
     {
         private readonly AccountPlansRepository _accountPlansRepository;
         private readonly BudgetRepository _repository;
-        private readonly BalanceteDataRepository _balanceteDataRepository;
+        private readonly BudgetDataRepository _budgetDataRepository;
 
 
         public BudgetService(
             AccountPlansRepository accountPlansRepository,
             BudgetRepository repository,
-            BalanceteDataRepository balanceteDataRepository,
+            BudgetDataRepository budgetDataRepository,
 
 
 
@@ -36,7 +36,7 @@ namespace _2___Application._1_Services.Budget
         {
             _accountPlansRepository = accountPlansRepository;
             _repository = repository;
-            _balanceteDataRepository = balanceteDataRepository;
+            _budgetDataRepository = budgetDataRepository;
 
 
             _currentUserId = GetCurrentUserId();
@@ -88,7 +88,7 @@ namespace _2___Application._1_Services.Budget
                 var user = GetCurrentUserId();
 
                 // Verifica se o plano de contas já existe
-                var model = await _repository.GetBalanceteById(id);
+                var model = await _repository.GetBudgetById(id);
 
                 if (model is null)
                 {
@@ -231,18 +231,18 @@ namespace _2___Application._1_Services.Budget
 
         #region Balancete Data
 
-        public async Task<ResultValue> ImportBalanceteData(IFormFile file, int balanceteId)
+        public async Task<ResultValue> ImportBalanceteData(IFormFile file, int budgetId)
         {
             try
             {
                 if (file == null || file.Length == 0)
                     return ErrorResponse("Arquivo inválido.");
 
-                var balancete = await _repository.GetBalanceteById(balanceteId);
-                if (balancete == null)
+                var budget = await _repository.GetBudgetById(budgetId);
+                if (budget == null)
                     return ErrorResponse(Message.NotFound);
 
-                var list = new List<BalanceteDataModel>();
+                var list = new List<BudgetDataModel>();
                 var extension = Path.GetExtension(file.FileName).ToLower();
 
                 using var stream = new MemoryStream();
@@ -250,11 +250,11 @@ namespace _2___Application._1_Services.Budget
 
                 if (extension == ".csv")
                 {
-                    list = ReadFromCsv(stream, balanceteId);
+                    list = ReadFromCsv(stream, budgetId);
                 }
                 else if (extension == ".xlsx")
                 {
-                    list = ReadFromXlsx(stream, balanceteId);
+                    list = ReadFromXlsx(stream, budgetId);
                 }
                 else
                 {
@@ -268,7 +268,7 @@ namespace _2___Application._1_Services.Budget
                     .ToList();
 
 
-                await _balanceteDataRepository.AddRangeAsync(list);
+                await _budgetDataRepository.AddRangeAsync(list);
 
                 return SuccessResponse("Dados importados com sucesso.");
             }
@@ -279,16 +279,16 @@ namespace _2___Application._1_Services.Budget
         }
 
 
-        public async Task<ResultValue> GetByBalanceteIdDate(int accountplanId, int year, int month)
+        public async Task<ResultValue> GetByBudgetIdDate(int accountplanId, int year, int month)
         {
             try
             {
-                var balancete = await _balanceteDataRepository.GetByBalanceteIdDate(accountplanId, year, month);
+                var budget = await _budgetDataRepository.GetByBalanceteIdDate(accountplanId, year, month);
 
-                if (balancete == null || !balancete.Any())
-                    return SuccessResponse(new BalanceteDataDto());
+                if (budget == null || !budget.Any())
+                    return SuccessResponse(new BudgetDataDto());
 
-                var result = MapToBalanceteDataDto(balancete);
+                var result = MapToBudgetDataDto(budget);
 
                 return SuccessResponse(result);
             }
@@ -303,12 +303,12 @@ namespace _2___Application._1_Services.Budget
         {
             try
             {
-                var balancete = await _balanceteDataRepository.GetByBalanceteId(balanceteId);
+                var balancete = await _budgetDataRepository.GetByBalanceteId(balanceteId);
 
                 if (balancete == null || !balancete.Any())
                     return ErrorResponse(Message.NotFound);
 
-                var result = MapToBalanceteDataDto(balancete);
+                var result = MapToBudgetDataDto(balancete);
 
                 return SuccessResponse(result);
             }
@@ -322,7 +322,7 @@ namespace _2___Application._1_Services.Budget
         {
             try
             {
-                var data = await _balanceteDataRepository.GetAgrupadoPorCostCenter(balanceteId);
+                var data = await _budgetDataRepository.GetAgrupadoPorCostCenter(balanceteId);
 
                 if (data == null || !data.Any())
                     return SuccessResponse(Message.NotFound);
@@ -353,7 +353,7 @@ namespace _2___Application._1_Services.Budget
             {
 
 
-                var data = await _balanceteDataRepository.GetByBalanceteDataByCostCenter(balanceteId, search);
+                var data = await _budgetDataRepository.GetByBalanceteDataByCostCenter(balanceteId, search);
 
                 if (data == null || !data.Any())
                     return SuccessResponse(Message.NotFound);
@@ -382,7 +382,7 @@ namespace _2___Application._1_Services.Budget
         {
             try
             {
-                var data = await _balanceteDataRepository.GetByBalanceteId(balanceteId);
+                var data = await _budgetDataRepository.GetByBalanceteId(balanceteId);
 
                 if (data == null || !data.Any())
                     return SuccessResponse(Message.NotFound);
@@ -434,7 +434,7 @@ namespace _2___Application._1_Services.Budget
         {
             try
             {
-                var data = await _balanceteDataRepository.GetByBalanceteId(balanceteId);
+                var data = await _budgetDataRepository.GetByBalanceteId(balanceteId);
 
                 if (data == null || !data.Any())
                     return SuccessResponse(Message.NotFound);
@@ -506,9 +506,9 @@ namespace _2___Application._1_Services.Budget
         }
 
         #region Private
-        private List<BalanceteDataModel> ReadFromXlsx(Stream stream, int balanceteId)
+        private List<BudgetDataModel> ReadFromXlsx(Stream stream, int budgetId)
         {
-            var list = new List<BalanceteDataModel>();
+            var list = new List<BudgetDataModel>();
             stream.Position = 0;
 
             using var workbook = new XLWorkbook(stream);
@@ -554,9 +554,9 @@ namespace _2___Application._1_Services.Budget
                     continue;
                 }
 
-                var model = new BalanceteDataModel
+                var model = new BudgetDataModel
                 {
-                    BalanceteId = balanceteId,
+                    Id = budgetId,
                     CostCenter = costCenter,
                     Name = name,
                     InitialValue = ParseDecimal(row.Cell(3).GetFormattedString()), // Coluna C
@@ -574,9 +574,9 @@ namespace _2___Application._1_Services.Budget
         }
 
 
-        private List<BalanceteDataModel> ReadFromCsv(Stream stream, int balanceteId)
+        private List<BudgetDataModel> ReadFromCsv(Stream stream, int budgetId)
         {
-            var list = new List<BalanceteDataModel>();
+            var list = new List<BudgetDataModel>();
             stream.Position = 0;
 
             using var reader = new StreamReader(stream, Encoding.UTF8);
@@ -616,9 +616,9 @@ namespace _2___Application._1_Services.Budget
                 if (!string.IsNullOrWhiteSpace(name) && name.ToUpper().Contains("DESCRIÇÃO"))
                     continue;
 
-                var model = new BalanceteDataModel
+                var model = new BudgetDataModel
                 {
-                    BalanceteId = balanceteId,
+                    BudgetId = budgetId,
                     CostCenter = costCenter,
                     Name = name,
                     InitialValue = ParseDecimal(csv.GetField(2)),
@@ -635,18 +635,18 @@ namespace _2___Application._1_Services.Budget
         }
 
 
-        private static BalanceteDataDto MapToBalanceteDataDto(List<BalanceteDataModel> data)
+        private static BudgetDataDto MapToBudgetDataDto(List<BudgetDataModel> data)
 
         {
             var first = data.First();
 
-            return new BalanceteDataDto
+            return new BudgetDataDto
             {
-                Balancete = new BalanceteDto
+                Budget = new BudgetDto
                 {
-                    Id = first.Balancete.Id,
-                    DateMonth = first.Balancete.DateMonth,
-                    DateYear = first.Balancete.DateYear,
+                    Id = first.Budget.Id,
+                    DateMonth = first.Budget.DateMonth,
+                    DateYear = first.Budget.DateYear,
                 },
                 DataDto = data.Select(x => new DataDto
                 {

@@ -24,4 +24,15 @@ namespace _2___Application._2_Dto_s.AccountPlan.Balancete
         public decimal FinalValue { get; set; }
         public bool BudgetedAmount { get; set; }
     }
+
+    // Orçamento
+
+    public class BudgetDataDto
+    {
+        public BudgetDto Budget { get; set; }
+        public List<DataDto> DataDto { get; set; }
+
+    }
+
+   
 }

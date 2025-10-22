@@ -106,7 +106,7 @@ namespace _5_API.Controllers
 
         // [Authorize]
         [HttpPost("import")]
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+      //  [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> ImportBalanceteData(IFormFile file, [FromQuery] int balanceteId)
         {
             var result = await _service.ImportBalanceteData(file, balanceteId);
