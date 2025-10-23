@@ -124,6 +124,106 @@ namespace _2___Application._1_Services.Results
             };
         }
 
+        public async Task<PainelProfitabilityComparativoResponseDto> GetProfitabilityComparativo(int accountPlanId, int year)
+        {
+            var painelDRERealizado = await BuildPainelByTypeDRE(accountPlanId, year, 3);
+            var painelDREOrcado = await BuildPainelByTypeDREOrcado(accountPlanId, year, 3);
+
+            var meses = Enumerable.Range(1, 12).ToList();
+            var lista = new List<ProfitabilityComparativoMesDto>();
+
+            foreach (var mes in meses)
+            {
+                var monthRealizado = painelDRERealizado.Months.FirstOrDefault(m => m.DateMonth == mes);
+                var monthOrcado = painelDREOrcado.Months.FirstOrDefault(m => m.DateMonth == mes);
+
+                // 🔹 Realizado
+                var realizado = new ProfitabilityItemDto
+                {
+                    MargemBruta = monthRealizado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Bruta %")?.TotalValue ?? 0,
+                    MargemEBITDA = monthRealizado?.Totalizer.FirstOrDefault(t => t.Name == "Margem EBITDA %")?.TotalValue ?? 0,
+                    MargemOperacional = monthRealizado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Operacional %")?.TotalValue ?? 0,
+                    MargemNOPAT = monthRealizado?.Totalizer.FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0,
+                    MargemLiquida = monthRealizado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Líquida %")?.TotalValue ?? 0
+                };
+
+                // 🔹 Orçado
+                var orcado = new ProfitabilityItemDto
+                {
+                    MargemBruta = monthOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Bruta %")?.TotalValue ?? 0,
+                    MargemEBITDA = monthOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Margem EBITDA %")?.TotalValue ?? 0,
+                    MargemOperacional = monthOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Operacional %")?.TotalValue ?? 0,
+                    MargemNOPAT = monthOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0,
+                    MargemLiquida = monthOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Líquida %")?.TotalValue ?? 0
+                };
+
+                // 🔹 Variação
+                var variacao = new ProfitabilityItemDto
+                {
+                    MargemBruta = realizado.MargemBruta - orcado.MargemBruta,
+                    MargemEBITDA = realizado.MargemEBITDA - orcado.MargemEBITDA,
+                    MargemOperacional = realizado.MargemOperacional - orcado.MargemOperacional,
+                    MargemNOPAT = realizado.MargemNOPAT - orcado.MargemNOPAT,
+                    MargemLiquida = realizado.MargemLiquida - orcado.MargemLiquida
+                };
+
+                lista.Add(new ProfitabilityComparativoMesDto
+                {
+                    Name = new DateTime(year, mes, 1).ToString("MMMM").ToUpper(),
+                    DateMonth = mes,
+                    Realizado = realizado,
+                    Orcado = orcado,
+                    Variacao = variacao
+                });
+            }
+
+            // 🔹 ACUMULADO
+            var acumuladoRealizado = painelDRERealizado.Months.FirstOrDefault(m => m.DateMonth == 13);
+            var acumuladoOrcado = painelDREOrcado.Months.FirstOrDefault(m => m.DateMonth == 13);
+
+            lista.Add(new ProfitabilityComparativoMesDto
+            {
+                Name = "ACUMULADO",
+                DateMonth = 13,
+                Realizado = new ProfitabilityItemDto
+                {
+                    MargemBruta = acumuladoRealizado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Bruta %")?.TotalValue ?? 0,
+                    MargemEBITDA = acumuladoRealizado?.Totalizer.FirstOrDefault(t => t.Name == "Margem EBITDA %")?.TotalValue ?? 0,
+                    MargemOperacional = acumuladoRealizado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Operacional %")?.TotalValue ?? 0,
+                    MargemNOPAT = acumuladoRealizado?.Totalizer.FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0,
+                    MargemLiquida = acumuladoRealizado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Líquida %")?.TotalValue ?? 0
+                },
+                Orcado = new ProfitabilityItemDto
+                {
+                    MargemBruta = acumuladoOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Bruta %")?.TotalValue ?? 0,
+                    MargemEBITDA = acumuladoOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Margem EBITDA %")?.TotalValue ?? 0,
+                    MargemOperacional = acumuladoOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Operacional %")?.TotalValue ?? 0,
+                    MargemNOPAT = acumuladoOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0,
+                    MargemLiquida = acumuladoOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Líquida %")?.TotalValue ?? 0
+                },
+                Variacao = new ProfitabilityItemDto
+                {
+                    MargemBruta = (acumuladoRealizado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Bruta %")?.TotalValue ?? 0) -
+                                  (acumuladoOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Bruta %")?.TotalValue ?? 0),
+                    MargemEBITDA = (acumuladoRealizado?.Totalizer.FirstOrDefault(t => t.Name == "Margem EBITDA %")?.TotalValue ?? 0) -
+                                   (acumuladoOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Margem EBITDA %")?.TotalValue ?? 0),
+                    MargemOperacional = (acumuladoRealizado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Operacional %")?.TotalValue ?? 0) -
+                                        (acumuladoOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Operacional %")?.TotalValue ?? 0),
+                    MargemNOPAT = (acumuladoRealizado?.Totalizer.FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0) -
+                                  (acumuladoOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0),
+                    MargemLiquida = (acumuladoRealizado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Líquida %")?.TotalValue ?? 0) -
+                                    (acumuladoOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Margem Líquida %")?.TotalValue ?? 0)
+                }
+            });
+
+            return new PainelProfitabilityComparativoResponseDto
+            {
+                Profitability = new ProfitabilityComparativoGroupedDto
+                {
+                    Months = lista
+                }
+            };
+        }
 
 
 

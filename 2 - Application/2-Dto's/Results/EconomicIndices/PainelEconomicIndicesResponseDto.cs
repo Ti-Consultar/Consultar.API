@@ -30,6 +30,37 @@ namespace _2___Application._2_Dto_s.Results.EconomicIndices
 
     }
 
+    public class PainelProfitabilityComparativoResponseDto
+    {
+        public ProfitabilityComparativoGroupedDto Profitability { get; set; } = new();
+    }
+
+    public class ProfitabilityComparativoGroupedDto
+    {
+        public List<ProfitabilityComparativoMesDto> Months { get; set; } = new();
+    }
+
+    public class ProfitabilityComparativoMesDto
+    {
+        public string Name { get; set; } = string.Empty;
+        public int DateMonth { get; set; }
+
+        public ProfitabilityItemDto Realizado { get; set; } = new();
+        public ProfitabilityItemDto Orcado { get; set; } = new();
+        public ProfitabilityItemDto Variacao { get; set; } = new();
+    }
+
+    public class ProfitabilityItemDto
+    {
+        public decimal MargemBruta { get; set; }
+        public decimal MargemEBITDA { get; set; }
+        public decimal MargemOperacional { get; set; }
+        public decimal MargemNOPAT { get; set; }
+        public decimal MargemLiquida { get; set; }
+    }
+
+
+
     public class PainelRentabilityResponseDto
     {
         public RentabilityGroupedDto Rentability { get; set; }
