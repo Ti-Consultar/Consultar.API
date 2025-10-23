@@ -755,7 +755,145 @@ namespace _2___Application._1_Services.Results
                 }
             };
         }
+        public async Task<PainelNOPATComparativoResponseDto> GetNOPATComparativo(int accountPlanId, int year)
+        {
+            // Painel Realizado e Orçado (meses 1..12 e acumulado em 13)
+            var painelDRERealizado = await BuildPainelByTypeDRE(accountPlanId, year, 3);
+            var painelDREOrcado = await BuildPainelByTypeDREOrcado(accountPlanId, year, 3);
 
+            var meses = Enumerable.Range(1, 12).ToList();
+            var lista = new List<NOPATComparativoMesDto>();
+
+            foreach (var mes in meses)
+            {
+                var monthRealizado = painelDRERealizado.Months.FirstOrDefault(m => m.DateMonth == mes);
+                var monthOrcado = painelDREOrcado.Months.FirstOrDefault(m => m.DateMonth == mes);
+
+                // --- REALIZADO ---
+                decimal lucroAntesReal = monthRealizado?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro")?.TotalValue ?? 0;
+
+                decimal provisaoIRPJReal = monthRealizado?.Totalizer
+                    .SelectMany(t => t.Classifications)
+                    .Where(c => c.Name == "Provisão para IRPJ")
+                    .Sum(c => c.Value) ?? 0;
+
+                decimal provisaoCSLLReal = monthRealizado?.Totalizer
+                    .SelectMany(t => t.Classifications)
+                    .Where(c => c.Name == "Provisão para CSLL")
+                    .Sum(c => c.Value) ?? 0;
+
+                decimal provisaoTotalReal = provisaoIRPJReal + provisaoCSLLReal;
+
+                decimal margemOperacionalReal = monthRealizado?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Margem Operacional %")?.TotalValue ?? 0;
+
+                decimal margemNOPATReal = monthRealizado?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0;
+
+                decimal nopatReal = monthRealizado?.Totalizer
+                    .FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? (lucroAntesReal - provisaoTotalReal);
+
+                // --- ORÇADO ---
+                decimal lucroAntesOrc = monthOrcado?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro")?.TotalValue ?? 0;
+
+                decimal provisaoIRPJOrc = monthOrcado?.Totalizer
+                    .SelectMany(t => t.Classifications)
+                    .Where(c => c.Name == "Provisão para IRPJ")
+                    .Sum(c => c.Value) ?? 0;
+
+                decimal provisaoCSLLOrc = monthOrcado?.Totalizer
+                    .SelectMany(t => t.Classifications)
+                    .Where(c => c.Name == "Provisão para CSLL")
+                    .Sum(c => c.Value) ?? 0;
+
+                decimal provisaoTotalOrc = provisaoIRPJOrc + provisaoCSLLOrc;
+
+                decimal margemOperacionalOrc = monthOrcado?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Margem Operacional %")?.TotalValue ?? 0;
+
+                decimal margemNOPATOrc = monthOrcado?.Totalizer
+                    .FirstOrDefault(t => t.Name == "Margem NOPAT %")?.TotalValue ?? 0;
+
+                decimal nopatOrc = monthOrcado?.Totalizer
+                    .FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? (lucroAntesOrc - provisaoTotalOrc);
+
+                // --- VARIAÇÃO ---
+                decimal variacaoLucro = lucroAntesReal - lucroAntesOrc;
+                decimal variacaoProvisao = provisaoTotalReal - provisaoTotalOrc;
+                decimal variacaoNOPAT = nopatReal - nopatOrc;
+                decimal variacaoPercentualNOPAT = nopatOrc != 0 ? (variacaoNOPAT / nopatOrc) * 100 : 0;
+
+                // --- ADICIONA À LISTA ---
+                lista.Add(new NOPATComparativoMesDto
+                {
+                    Name = new DateTime(year, mes, 1).ToString("MMMM").ToUpper(),
+                    DateMonth = mes,
+                    Realizado = new NOPATItemDto
+                    {
+                        LucroOperacionalAntes = lucroAntesReal,
+                        MargemOperacionalDRE = margemOperacionalReal,
+                        ProvisaoIRPJCSLL = provisaoTotalReal,
+                        MargemNOPAT = margemNOPATReal,
+                        NOPAT = nopatReal
+                    },
+                    Orcado = new NOPATItemDto
+                    {
+                        LucroOperacionalAntes = lucroAntesOrc,
+                        MargemOperacionalDRE = margemOperacionalOrc,
+                        ProvisaoIRPJCSLL = provisaoTotalOrc,
+                        MargemNOPAT = margemNOPATOrc,
+                        NOPAT = nopatOrc
+                    },
+                    Variacao = new NOPATItemDto
+                    {
+                        LucroOperacionalAntes = variacaoLucro,
+                        MargemOperacionalDRE = margemOperacionalReal - margemOperacionalOrc,
+                        ProvisaoIRPJCSLL = variacaoProvisao,
+                        MargemNOPAT = margemNOPATReal - margemNOPATOrc,
+                        NOPAT = variacaoNOPAT,
+                        VariacaoPercentual = variacaoPercentualNOPAT
+                    }
+                });
+            }
+
+            // --- TOTAL ACUMULADO ---
+            lista.Add(new NOPATComparativoMesDto
+            {
+                Name = "ACUMULADO",
+                DateMonth = 13,
+                Realizado = new NOPATItemDto
+                {
+                    LucroOperacionalAntes = lista.Sum(x => x.Realizado.LucroOperacionalAntes),
+                    MargemOperacionalDRE = lista.Sum(x => x.Realizado.MargemOperacionalDRE), // soma de % pode não fazer sentido estatístico, mas segue padrão do EBITDA
+                    ProvisaoIRPJCSLL = lista.Sum(x => x.Realizado.ProvisaoIRPJCSLL),
+                    MargemNOPAT = lista.Sum(x => x.Realizado.MargemNOPAT),
+                    NOPAT = lista.Sum(x => x.Realizado.NOPAT)
+                },
+                Orcado = new NOPATItemDto
+                {
+                    LucroOperacionalAntes = lista.Sum(x => x.Orcado.LucroOperacionalAntes),
+                    MargemOperacionalDRE = lista.Sum(x => x.Orcado.MargemOperacionalDRE),
+                    ProvisaoIRPJCSLL = lista.Sum(x => x.Orcado.ProvisaoIRPJCSLL),
+                    MargemNOPAT = lista.Sum(x => x.Orcado.MargemNOPAT),
+                    NOPAT = lista.Sum(x => x.Orcado.NOPAT)
+                },
+                Variacao = new NOPATItemDto
+                {
+                    LucroOperacionalAntes = lista.Sum(x => x.Variacao.LucroOperacionalAntes),
+                    MargemOperacionalDRE = lista.Sum(x => x.Variacao.MargemOperacionalDRE),
+                    ProvisaoIRPJCSLL = lista.Sum(x => x.Variacao.ProvisaoIRPJCSLL),
+                    MargemNOPAT = lista.Sum(x => x.Variacao.MargemNOPAT),
+                    NOPAT = lista.Sum(x => x.Variacao.NOPAT),
+                    VariacaoPercentual = lista.Sum(x => x.Orcado.NOPAT) != 0
+                        ? (lista.Sum(x => x.Variacao.NOPAT) / lista.Sum(x => x.Orcado.NOPAT)) * 100
+                        : 0
+                }
+            });
+
+            return new PainelNOPATComparativoResponseDto { Months = lista };
+        }
 
 
         #endregion

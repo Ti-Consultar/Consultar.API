@@ -138,7 +138,36 @@ namespace _2___Application._2_Dto_s.Results.EconomicIndices
         public decimal ProvisaoIRPJCSLL { get; set; }
         public decimal MargemNOPAT { get; set; }
         public decimal NOPAT { get; set; }
- 
 
     }
+
+    public class PainelNOPATComparativoResponseDto
+    {
+        public List<NOPATComparativoMesDto> Months { get; set; } = new();
+    }
+
+    public class NOPATComparativoMesDto
+    {
+        public string Name { get; set; }
+        public int DateMonth { get; set; }
+
+        public NOPATItemDto Realizado { get; set; } = new();
+        public NOPATItemDto Orcado { get; set; } = new();
+        public NOPATItemDto Variacao { get; set; } = new();
+    }
+
+    public class NOPATItemDto
+    {
+        // Mantém mesmos campos do JSON que você mostrou
+        public decimal LucroOperacionalAntes { get; set; }          // lucro antes do resultado financeiro
+        public decimal MargemOperacionalDRE { get; set; }           // margem operacional do DRE (em %)
+        public decimal ProvisaoIRPJCSLL { get; set; }               // provisões (IRPJ + CSLL)
+        public decimal MargemNOPAT { get; set; }                    // margem NOPAT (em %)
+        public decimal NOPAT { get; set; }                          // valor do NOPAT
+
+        // campo útil para variação percentual (aplica-se normalmente à seção Variacao)
+        public decimal VariacaoPercentual { get; set; }
+    }
+
+
 }
