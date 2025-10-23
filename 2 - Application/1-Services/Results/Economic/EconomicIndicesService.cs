@@ -351,6 +351,152 @@ namespace _2___Application._1_Services.Results
                 }
             };
         }
+        public async Task<PainelRentabilityComparativoResponseDto> GetRentabilityComparativo(int accountPlanId, int year)
+        {
+            // 🔹 Painel Realizado
+            var painelAtivoR = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
+            var painelPassivoR = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
+            var painelDRE_R = await BuildPainelByTypeDRE(accountPlanId, year, 3);
+
+            // 🔹 Painel Orçado
+            var painelAtivoO = await BuildPainelBalancoReclassificadoByTypeAtivoOrcado(accountPlanId, year, 1);
+            var painelPassivoO = await BuildPainelBalancoReclassificadoByTypePassivoOrcado(accountPlanId, year, 2);
+            var painelDRE_O = await BuildPainelByTypeDREOrcado(accountPlanId, year, 3);
+
+            // 🔹 Passivo do ano anterior para ROE inicial
+            var painelPassivoAnoAnterior = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year - 1, 2);
+            var dezembroAnoAnterior = painelPassivoAnoAnterior.Months.FirstOrDefault(m => m.DateMonth == 12);
+            decimal patrimonioLiquidoAnoAnterior = dezembroAnoAnterior?.Totalizer.FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+
+            var lista = new List<RentabilityComparativoMesDto>();
+
+            for (int mes = 1; mes <= 12; mes++)
+            {
+                // 🔹 REALIZADO
+                var monthAtivoR_M = painelAtivoR.Months.FirstOrDefault(m => m.DateMonth == mes);
+                var monthPassivoR_M = painelPassivoR.Months.FirstOrDefault(m => m.DateMonth == mes);
+                var monthDRE_R_M = painelDRE_R.Months.FirstOrDefault(m => m.DateMonth == mes);
+
+                decimal lucroLiquidoR = monthDRE_R_M?.Totalizer.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
+                decimal nopatR = monthDRE_R_M?.Totalizer.FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
+
+                decimal disponibilidadeR = monthAtivoR_M?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
+                decimal clientesR = monthAtivoR_M?.Totalizer.FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
+                decimal estoqueR = monthAtivoR_M?.Totalizer.FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
+                decimal outrosAtivosR = monthAtivoR_M?.Totalizer.FirstOrDefault(t => t.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
+
+                decimal fornecedoresR = monthPassivoR_M?.Totalizer.FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
+                decimal obrigacoesR = monthPassivoR_M?.Totalizer.FirstOrDefault(t => t.Name == "Obrigações Tributárias e Trabalhistas")?.TotalValue ?? 0;
+                decimal outrosPassivosR = monthPassivoR_M?.Totalizer.FirstOrDefault(t => t.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
+
+                decimal ativoOperacionalR = monthAtivoR_M?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+                decimal passivoOperacionalR = monthPassivoR_M?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
+
+                decimal ncgR = ativoOperacionalR - passivoOperacionalR;
+                decimal realizavelLP_R = monthAtivoR_M?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
+                decimal exigivelLP_R = monthPassivoR_M?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Não Circulante Operacional")?.TotalValue ?? 0;
+                decimal ativosFixosR = monthAtivoR_M?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
+
+                decimal capitalInvestidoR = disponibilidadeR + ncgR + realizavelLP_R - exigivelLP_R + ativosFixosR;
+                decimal patrimonioLiquidoR = monthPassivoR_M?.Totalizer.FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+
+                decimal roiR = capitalInvestidoR != 0 ? (nopatR / capitalInvestidoR) * 100 : 0;
+                decimal roeR = patrimonioLiquidoR != 0 ? (lucroLiquidoR / patrimonioLiquidoR) * 100 : 0;
+                decimal roeInicialR = patrimonioLiquidoAnoAnterior != 0 ? (lucroLiquidoR / patrimonioLiquidoAnoAnterior) * 100 : 0;
+
+                // 🔹 ORÇADO
+                var monthAtivoO_M = painelAtivoO.Months.FirstOrDefault(m => m.DateMonth == mes);
+                var monthPassivoO_M = painelPassivoO.Months.FirstOrDefault(m => m.DateMonth == mes);
+                var monthDRE_O_M = painelDRE_O.Months.FirstOrDefault(m => m.DateMonth == mes);
+
+                decimal lucroLiquidoO = monthDRE_O_M?.Totalizer.FirstOrDefault(t => t.Name == "Lucro Líquido do Periodo")?.TotalValue ?? 0;
+                decimal nopatO = monthDRE_O_M?.Totalizer.FirstOrDefault(t => t.Name == "NOPAT")?.TotalValue ?? 0;
+
+                decimal disponibilidadeO = monthAtivoO_M?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Financeiro")?.TotalValue ?? 0;
+                decimal clientesO = monthAtivoO_M?.Totalizer.FirstOrDefault(t => t.Name == "Clientes")?.TotalValue ?? 0;
+                decimal estoqueO = monthAtivoO_M?.Totalizer.FirstOrDefault(t => t.Name == "Estoques")?.TotalValue ?? 0;
+                decimal outrosAtivosO = monthAtivoO_M?.Totalizer.FirstOrDefault(t => t.Name == "Outros Ativos Operacionais Total")?.TotalValue ?? 0;
+
+                decimal fornecedoresO = monthPassivoO_M?.Totalizer.FirstOrDefault(t => t.Name == "Fornecedores")?.TotalValue ?? 0;
+                decimal obrigacoesO = monthPassivoO_M?.Totalizer.FirstOrDefault(t => t.Name == "Obrigações Tributárias e Trabalhistas")?.TotalValue ?? 0;
+                decimal outrosPassivosO = monthPassivoO_M?.Totalizer.FirstOrDefault(t => t.Name == "Outros Passivos Operacionais Total")?.TotalValue ?? 0;
+
+                decimal ativoOperacionalO = monthAtivoO_M?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+                decimal passivoOperacionalO = monthPassivoO_M?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
+
+                decimal ncgO = ativoOperacionalO - passivoOperacionalO;
+                decimal realizavelLP_O = monthAtivoO_M?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
+                decimal exigivelLP_O = monthPassivoO_M?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Não Circulante Operacional")?.TotalValue ?? 0;
+                decimal ativosFixosO = monthAtivoO_M?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
+
+                decimal capitalInvestidoO = disponibilidadeO + ncgO + realizavelLP_O - exigivelLP_O + ativosFixosO;
+                decimal patrimonioLiquidoO = monthPassivoO_M?.Totalizer.FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
+
+                decimal roiO = capitalInvestidoO != 0 ? (nopatO / capitalInvestidoO) * 100 : 0;
+                decimal roeO = patrimonioLiquidoO != 0 ? (lucroLiquidoO / patrimonioLiquidoO) * 100 : 0;
+                decimal roeInicialO = patrimonioLiquidoAnoAnterior != 0 ? (lucroLiquidoO / patrimonioLiquidoAnoAnterior) * 100 : 0;
+
+                // 🔹 VARIAÇÃO
+                decimal variacaoROI = roiR - roiO;
+                decimal variacaoROE = roeR - roeO;
+                decimal variacaoROEInicial = roeInicialR - roeInicialO;
+
+                // 🔹 ADICIONA AO RESULTADO
+                lista.Add(new RentabilityComparativoMesDto
+                {
+                    Name = new DateTime(year, mes, 1).ToString("MMMM").ToUpper(),
+                    DateMonth = mes,
+                    Realizado = new RentabilityItemDto
+                    {
+                        ROI = Math.Round(roiR, 2),
+                        LiquidoMensalROE = Math.Round(roeR, 2),
+                        LiquidoInicioROE = Math.Round(roeInicialR, 2)
+                    },
+                    Orcado = new RentabilityItemDto
+                    {
+                        ROI = Math.Round(roiO, 2),
+                        LiquidoMensalROE = Math.Round(roeO, 2),
+                        LiquidoInicioROE = Math.Round(roeInicialO, 2)
+                    },
+                    Variacao = new RentabilityVariacaoDto
+                    {
+                        ROI = Math.Round(variacaoROI, 2),
+                        LiquidoMensalROE = Math.Round(variacaoROE, 2),
+                        LiquidoInicioROE = Math.Round(variacaoROEInicial, 2)
+                    }
+                });
+            }
+
+            // 🔹 TOTAL ACUMULADO
+            lista.Add(new RentabilityComparativoMesDto
+            {
+                Name = "ACUMULADO",
+                DateMonth = 13,
+                Realizado = new RentabilityItemDto
+                {
+                    ROI = lista.Sum(x => x.Realizado.ROI),
+                    LiquidoMensalROE = lista.Sum(x => x.Realizado.LiquidoMensalROE),
+                    LiquidoInicioROE = lista.Sum(x => x.Realizado.LiquidoInicioROE)
+                },
+                Orcado = new RentabilityItemDto
+                {
+                    ROI = lista.Sum(x => x.Orcado.ROI),
+                    LiquidoMensalROE = lista.Sum(x => x.Orcado.LiquidoMensalROE),
+                    LiquidoInicioROE = lista.Sum(x => x.Orcado.LiquidoInicioROE)
+                },
+                Variacao = new RentabilityVariacaoDto
+                {
+                    ROI = lista.Sum(x => x.Variacao.ROI),
+                    LiquidoMensalROE = lista.Sum(x => x.Variacao.LiquidoMensalROE),
+                    LiquidoInicioROE = lista.Sum(x => x.Variacao.LiquidoInicioROE)
+                }
+            });
+
+            return new PainelRentabilityComparativoResponseDto
+            {
+                Months = lista
+            };
+        }
 
         #endregion
 

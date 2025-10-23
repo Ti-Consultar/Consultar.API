@@ -51,6 +51,42 @@ namespace _2___Application._2_Dto_s.Results.EconomicIndices
 
     }
 
+    // 📦 DTO principal do painel
+    public class PainelRentabilityComparativoResponseDto
+    {
+        public List<RentabilityComparativoMesDto> Months { get; set; } = new();
+    }
+
+    // 📦 DTO de cada mês
+    public class RentabilityComparativoMesDto
+    {
+        public string Name { get; set; } = string.Empty;
+        public int DateMonth { get; set; }
+
+        public RentabilityItemDto Realizado { get; set; } = new();
+        public RentabilityItemDto Orcado { get; set; } = new();
+        public RentabilityVariacaoDto Variacao { get; set; } = new();
+    }
+
+    // 📦 DTO dos valores realizados ou orçados
+    public class RentabilityItemDto
+    {
+        public decimal ROI { get; set; }
+        public decimal LiquidoMensalROE { get; set; }
+        public decimal LiquidoInicioROE { get; set; }
+    }
+
+    // 📦 DTO das variações entre realizado e orçado
+    public class RentabilityVariacaoDto
+    {
+        public decimal ROI { get; set; }
+        public decimal LiquidoMensalROE { get; set; }
+        public decimal LiquidoInicioROE { get; set; }
+    }
+
+
+
+
     public class PainelReturnExpectationResponseDto
     {
         public ReturnExpectationGroupedDto ReturnExpectation { get; set; }
