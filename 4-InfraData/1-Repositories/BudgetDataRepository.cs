@@ -56,10 +56,10 @@ namespace _4_InfraData._1_Repositories
 
             return AgruparPorCostCenterPai(data);
         }
-        public async Task<List<BalanceteDataModel>> GetAgrupadoPorCostCenterListMultiBalancete(List<string> costCenters, List<int> balanceteIds)
+        public async Task<List<BudgetDataModel>> GetAgrupadoPorCostCenterListMultiBalancete(List<string> costCenters, List<int> budgetIds)
         {
-            return await _context.BalanceteData
-                .Where(bd => balanceteIds.Contains(bd.BalanceteId) && costCenters.Contains(bd.CostCenter))
+            return await _context.BudgetData
+                .Where(bd => budgetIds.Contains(bd.BudgetId) && costCenters.Contains(bd.CostCenter))
                 .ToListAsync();
         }
         public async Task<List<BalanceteDataModel>> GetAgrupadoPorCostCenterListMonthAsync(List<string> costCenters, int balanceteId)

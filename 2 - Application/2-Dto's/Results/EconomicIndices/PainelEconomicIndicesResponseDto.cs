@@ -88,6 +88,38 @@ namespace _2___Application._2_Dto_s.Results.EconomicIndices
         public decimal DespesasDepreciacao { get; set; }
         public decimal EBITDA { get; set; }
     }
+
+
+    public class PainelEBITDAComparativoResponseDto
+    {
+        public List<EBITDAComparativoMesDto> Months { get; set; } = new();
+    }
+
+    public class EBITDAComparativoMesDto
+    {
+        public string Name { get; set; }
+        public int DateMonth { get; set; }
+
+        public EBITDAItemDto Realizado { get; set; } = new();
+        public EBITDAItemDto Orcado { get; set; } = new();
+        public EBITDAItemDto Variacao { get; set; } = new();
+    }
+
+    public class EBITDAItemDto
+    {
+        public decimal LucroAntesFinanceiro { get; set; }
+        public decimal Depreciacao { get; set; }
+        public decimal EBITDA { get; set; }
+    }
+
+
+
+
+
+
+
+
+
     public class PainelNOPATResponseDto
     {
         public NOPATGroupedDto NOPAT { get; set; }

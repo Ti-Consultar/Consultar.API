@@ -84,6 +84,40 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpGet]
+        [Route("ebitda/orcado")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetEBITDAOrcado([FromQuery] int accountPlanId, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GetEBITDAOrcado(accountPlanId, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        [Route("ebitda/variacao")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetEBITDAOrcados([FromQuery] int accountPlanId, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GetEBITDAComparativo(accountPlanId, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
         [Route("nopat")]
         // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetNOPAT([FromQuery] int accountPlanId, [FromQuery] int year)
