@@ -67,6 +67,24 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpGet]
+        [Route("return-expectation/orcado")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetReturnExpectationComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GetReturnExpectationComparativo(accountPlanId, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
+        [HttpGet]
         [Route("ebitda")]
         // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetEBITDA([FromQuery] int accountPlanId, [FromQuery] int year)

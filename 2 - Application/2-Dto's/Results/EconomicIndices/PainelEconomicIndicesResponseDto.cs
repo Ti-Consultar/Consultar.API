@@ -71,8 +71,40 @@ namespace _2___Application._2_Dto_s.Results.EconomicIndices
         public decimal CriacaoValor { get; set; }
 
     }
+    // DTO do item Realizado ou Orçado
+    public class ReturnExpectationItemDto
+    {
+        public decimal ROIC { get; set; }
+        public decimal KE { get; set; }
+        public decimal CriacaoValor { get; set; }
+    }
 
- 
+    // DTO da variação
+    public class ReturnExpectationVariacaoDto
+    {
+        public decimal ROIC { get; set; }
+        public decimal CriacaoValor { get; set; }
+        public decimal VariacaoPercentualCriacaoValor { get; set; }
+    }
+
+    // DTO por mês
+    public class ReturnExpectationComparativoMesDto
+    {
+        public string Name { get; set; } = string.Empty;
+        public int DateMonth { get; set; }
+
+        public ReturnExpectationItemDto Realizado { get; set; } = new ReturnExpectationItemDto();
+        public ReturnExpectationItemDto Orcado { get; set; } = new ReturnExpectationItemDto();
+        public ReturnExpectationVariacaoDto Variacao { get; set; } = new ReturnExpectationVariacaoDto();
+    }
+
+    // DTO do painel completo
+    public class PainelReturnExpectationComparativoResponseDto
+    {
+        public List<ReturnExpectationComparativoMesDto> Months { get; set; } = new List<ReturnExpectationComparativoMesDto>();
+    }
+
+
 
     public class PainelEBITDAResponseDto
     {
