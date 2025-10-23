@@ -251,6 +251,24 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpGet]
+        [Route("/painel-reclassificado/orcado")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetPainelBalancoReclassificadoOrcadoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
+        {
+            try
+            {
+
+                var response = await _Service.GetPainelBalancoReclassificadoOrcadoAsync(accountPlanId, year, typeClassification);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
+        [HttpGet]
         [Route("exists")]
         // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetAccountPlanClassification([FromQuery] int accountPlanId)
