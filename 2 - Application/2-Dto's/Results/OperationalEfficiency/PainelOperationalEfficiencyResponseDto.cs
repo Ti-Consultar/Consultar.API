@@ -48,4 +48,27 @@ namespace _2___Application._2_Dto_s.Results.OperationalEfficiency
         public decimal EVA { get; set; }
 
     }
+
+    public class OperationalEfficiencyComparativoMesDto
+    {
+        public string Name { get; set; }
+        public int DateMonth { get; set; }
+        public OperationalEfficiencyResponseDto Realizado { get; set; }
+        public OperationalEfficiencyResponseDto Orcado { get; set; }
+        public OperationalEfficiencyResponseDto Variacao { get; set; }
+    }
+
+    public class PainelOperationalEfficiencyComparativoResponseDto
+    {
+        public List<OperationalEfficiencyComparativoMesDto> Months { get; set; }
+    }
+
+
+
+
+
+
+
+
+
 }
