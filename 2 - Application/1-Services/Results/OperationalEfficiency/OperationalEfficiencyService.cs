@@ -2074,30 +2074,3 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
         #endregion
     }
 }
-//{
-//    "name": "January",
-//        "dateMonth": 1,
-//        "receitasLiquidas": 7662779.53,
-//        "custosDespesas": -7213473.3,
-//        "ebitda": 507002.85,
-//        "margemEBITDA": 6.62,
-//        "lucroOperacionalAntesJurosImpostos": 433904.62,
-//        "resultadoFinanceiro": -195342.76,
-//        "impostos": -79383.61,
-//        "lucroLiquido": 159178.25,
-//        "nopat": 354521.01,
-//        "margemNOPAT": 4.63,
-//        "disponivel": 3972995.18,
-//        "clientes": 8651191.83,
-//        "estoques": 9564219.28,
-//        "fornecedores": 16332151.62,
-//        "ncgcef": 1883259.49,
-//        "ncgTotal": 2854139.89,
-//        "investimentosAtivosFixos": 12975284.06,
-//        "capitalInvestidoLiquido": 15829423.95,
-//        "capitalTurnover": 0.48408454749864727,
-//        "roic": 2.23963304741737,
-//        "wacc": 1.6308333333333334,
-//        "evaspread": 0.6087997140840365,
-//        "eva": 96369.48774875
-//      },
