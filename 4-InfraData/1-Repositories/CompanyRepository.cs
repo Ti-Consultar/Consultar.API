@@ -622,7 +622,7 @@ namespace _4_InfraData._1_Repositories
         public async Task<int?> GetAccountPlanIdByCompanyId(int companyId)
         {
             return await _context.AccountPlans
-                .Where(c => c.Id == companyId)
+                .Where(c => c.CompanyId == companyId)
                 .Select(c => c.CompanyId)
                 .FirstOrDefaultAsync();
 
