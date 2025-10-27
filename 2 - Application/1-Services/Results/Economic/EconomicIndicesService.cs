@@ -23,6 +23,7 @@ namespace _2___Application._1_Services.Results
         private readonly BalanceteRepository _balanceteRepository;
         private readonly BudgetRepository _budgetRepository;
         private readonly BudgetDataRepository _budgetDataRepository;
+        private readonly CompanyRepository _companyRepository;
         private readonly TotalizerClassificationRepository _totalizerClassificationRepository;
         private readonly TotalizerClassificationTemplateRepository _totalizerClassificationTemplateRepository;
         private readonly BalancoReclassificadoTemplateRepository _balancoReclassificadoTemplateRepository;
@@ -37,6 +38,7 @@ namespace _2___Application._1_Services.Results
             BalanceteRepository balanceteRepository,
             BudgetRepository budgetRepository,
             BudgetDataRepository budgetDataRepository,
+            CompanyRepository companyRepository,
             TotalizerClassificationRepository _talizerClassificationRepository,
             TotalizerClassificationTemplateRepository totalizerClassificationTemplateRepository,
             BalancoReclassificadoTemplateRepository balancoReclassificadoTemplateRepository,
@@ -51,6 +53,7 @@ namespace _2___Application._1_Services.Results
             _balanceteRepository = balanceteRepository;
             _budgetRepository = budgetRepository;
             _budgetDataRepository = budgetDataRepository;
+            _companyRepository = companyRepository;
             _totalizerClassificationRepository = _talizerClassificationRepository;
             _totalizerClassificationTemplateRepository = totalizerClassificationTemplateRepository;
             _balancoReclassificadoTemplateRepository = balancoReclassificadoTemplateRepository;
@@ -225,6 +228,78 @@ namespace _2___Application._1_Services.Results
             };
         }
 
+        public async Task<List<DashBoardDto>> GetGroupDashboard(int groupId, int year)
+        {
+            // 1. Pega todas as empresas do grupo
+            var companyIds = await _companyRepository.GetCompanyIdsByGroupId(groupId);
+
+            if (!companyIds.Any())
+                return new List<DashBoardDto>();
+
+            // 2. Cria um dicionário para somar os dados por mês
+            var dashboardDictionary = new Dictionary<int, DashBoardDto>();
+
+            foreach (var companyId in companyIds)
+            {
+                // Pega o accountPlanId de cada empresa (supondo que você tenha esse método)
+                var accountPlanId = await _companyRepository.GetAccountPlanIdByCompanyId(companyId.Value);
+
+                var companyDashboard = await GetDashboard(accountPlanId.Value, year);
+
+                foreach (var monthData in companyDashboard)
+                {
+                    if (!dashboardDictionary.ContainsKey(monthData.DateMonth))
+                    {
+                        // Cria novo registro no dicionário
+                        dashboardDictionary[monthData.DateMonth] = new DashBoardDto
+                        {
+                            Name = monthData.Name,
+                            DateMonth = monthData.DateMonth,
+                            ReceitaLiquida = monthData.ReceitaLiquida,
+                            MargemBruta = monthData.MargemBruta,
+                            MargemLiquida = monthData.MargemLiquida,
+                            VariacaoReceitaLiquida = 0,  // ainda vamos calcular
+                            VariacaoMargemBruta = 0,
+                            VariacaoMargemLiquida = 0
+                        };
+                    }
+                    else
+                    {
+                        // Soma os valores das filiais
+                        dashboardDictionary[monthData.DateMonth].ReceitaLiquida += monthData.ReceitaLiquida;
+                        dashboardDictionary[monthData.DateMonth].MargemBruta += monthData.MargemBruta;
+                        dashboardDictionary[monthData.DateMonth].MargemLiquida += monthData.MargemLiquida;
+                    }
+                }
+            }
+
+            // 3. Calcula a variação mês a mês
+            DashBoardDto? anterior = null;
+            var result = dashboardDictionary.OrderBy(d => d.Key).Select(kvp =>
+            {
+                var current = kvp.Value;
+
+                if (anterior != null)
+                {
+                    current.VariacaoReceitaLiquida = anterior.ReceitaLiquida != 0
+                        ? (current.ReceitaLiquida - anterior.ReceitaLiquida) / anterior.ReceitaLiquida * 100
+                        : 0;
+
+                    current.VariacaoMargemBruta = anterior.MargemBruta != 0
+                        ? (current.MargemBruta - anterior.MargemBruta) / anterior.MargemBruta * 100
+                        : 0;
+
+                    current.VariacaoMargemLiquida = anterior.MargemLiquida != 0
+                        ? (current.MargemLiquida - anterior.MargemLiquida) / anterior.MargemLiquida * 100
+                        : 0;
+                }
+
+                anterior = current;
+                return current;
+            }).ToList();
+
+            return result;
+        }
 
 
         public async Task<List<DashBoardDto>> GetDashboard(int accountPlanId, int year)

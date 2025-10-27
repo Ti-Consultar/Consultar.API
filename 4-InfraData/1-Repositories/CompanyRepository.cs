@@ -244,9 +244,9 @@ namespace _4_InfraData._1_Repositories
         #endregion
 
         #region Company Users
-        public async Task<CompanyUserModel> GetCompanyUser(int userId,int groupId, int? companyId, int? subCompanyId)
+        public async Task<CompanyUserModel> GetCompanyUser(int userId, int groupId, int? companyId, int? subCompanyId)
         {
-            if(companyId is null  && subCompanyId is null)
+            if (companyId is null && subCompanyId is null)
             {
                 var group = await _context.CompanyUsers
                 .Where(cu => cu.GroupId == groupId && cu.UserId == userId)
@@ -254,7 +254,7 @@ namespace _4_InfraData._1_Repositories
 
                 return group;
             }
-            if(companyId != null && subCompanyId is null)
+            if (companyId != null && subCompanyId is null)
             {
                 var model = await _context.CompanyUsers
                .Where(cu => cu.GroupId == groupId && cu.CompanyId == companyId && cu.UserId == userId)
@@ -262,7 +262,7 @@ namespace _4_InfraData._1_Repositories
 
                 return model;
             }
-            if(subCompanyId != null)
+            if (subCompanyId != null)
             {
                 var model = await _context.CompanyUsers
               .Where(cu => cu.GroupId == groupId && cu.CompanyId == companyId && cu.SubCompanyId == subCompanyId && cu.UserId == userId)
@@ -270,7 +270,7 @@ namespace _4_InfraData._1_Repositories
                 return model;
             }
             return null;
-            
+
         }
         public async Task DeleteCompanyUser(int userId, int groupId, int? companyId, int? subCompanyId)
         {
@@ -341,7 +341,7 @@ namespace _4_InfraData._1_Repositories
                 throw new ArgumentException("Grupo não encontrado", nameof(groupId));
             }
         }
-        public async Task AddUserToCompany(int userId, int companyId,int groupId, int permissionId)
+        public async Task AddUserToCompany(int userId, int companyId, int groupId, int permissionId)
         {
             var companyUser = new CompanyUserModel
             {
@@ -355,7 +355,7 @@ namespace _4_InfraData._1_Repositories
             await _context.SaveChangesAsync();
 
         }
-        public async Task AddUserToCompanyOrSubCompany(int userId,int groupId ,int? companyId, int? subCompanyId, int permissionId)
+        public async Task AddUserToCompanyOrSubCompany(int userId, int groupId, int? companyId, int? subCompanyId, int permissionId)
         {
             try
             {
@@ -609,6 +609,29 @@ namespace _4_InfraData._1_Repositories
             _context.SubCompanies.Update(subCompany);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<List<int?>> GetCompanyIdsByGroupId(int groupId)
+        {
+            return await _context.CompanyUsers
+                .Where(cu => cu.GroupId == groupId)
+                .Select(cu => cu.CompanyId)
+                .Distinct()
+                .ToListAsync();
+        }
+
+        public async Task<int?> GetAccountPlanIdByCompanyId(int companyId)
+        {
+            return await _context.AccountPlans
+                .Where(c => c.Id == companyId)
+                .Select(c => c.CompanyId)
+                .FirstOrDefaultAsync();
+
+        }
+
+
         #endregion
+
+
+
     }
 }

@@ -15,6 +15,24 @@ namespace ConsultarMRP.API.Controllers
         {
             _Service = service;
         }
+
+        [HttpGet]
+        [Route("/group")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetGroupDashboard([FromQuery] int groupId, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GetGroupDashboard(groupId, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet]
         [Route("")]
         // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
