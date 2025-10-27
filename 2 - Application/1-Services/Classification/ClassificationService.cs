@@ -376,6 +376,10 @@ namespace _2___Application._1_Services
                     case "Consórcio":
                     case "Empréstimos a Coligadas e Controlada":
                     case "Depósitos Judiciais":
+                    case "Causas Trabalhistas":
+                    case "Bloqueios Judiciais Conta Movimento":
+                    case "Outros Direitos":
+                    case "Impostos Diferidos":
                     case "Outros Créditos LP":
                     case "Contas Transitórias":
                         classification.TotalizerClassificationId = totalizerClassifications
@@ -422,6 +426,7 @@ namespace _2___Application._1_Services
                     case "Empréstimos de Coligadas e Controladas":
                     case "Impostos Parcelados":
                     case "Passivos Contingentes":
+                    case "Passivos de Arrendamento":
                     case "Contas Transitórias":
                         classification.TotalizerClassificationId = totalizerClassifications
                             .Where(r => r.Name == "Total Passivo Não Circulante")
