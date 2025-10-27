@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace _2___Application._2_Dto_s.Results.LiquidManagement
 {
-# region PainelLiquidityManagementResponseDto
+    #region PainelLiquidityManagementResponseDto
 
     public class PainelLiquidityManagementResponseDto
     {
@@ -29,6 +29,20 @@ namespace _2___Application._2_Dto_s.Results.LiquidManagement
         public decimal CDG { get; set; }
         public decimal? IndiceDeLiquidez { get; set; }
     }
+    public class PainelLiquidityManagementComparativoResponseDto
+    {
+        public List<LiquidityMonthlyComparativoDto> Months { get; set; } = new();
+    }
+
+    public class LiquidityMonthlyComparativoDto
+    {
+        public string Name { get; set; } = string.Empty;
+        public int DateMonth { get; set; }
+        public LiquidityMonthlyDto Realizado { get; set; } = new();
+        public LiquidityMonthlyDto Orcado { get; set; } = new();
+        public LiquidityMonthlyDto Variacao { get; set; } = new();
+    }
+
     #endregion
 
     public class PainelCapitalDynamicsResponseDto
@@ -75,7 +89,19 @@ namespace _2___Application._2_Dto_s.Results.LiquidManagement
         public decimal AumentoReducaoFluxoCaixa { get; set; }
 
     }
+    public class PainelCapitalDynamicsComparativoResponseDto
+    {
+        public List<CapitalDynamicsComparativoMesDto> Months { get; set; }
+    }
 
+    public class CapitalDynamicsComparativoMesDto
+    {
+        public string Name { get; set; }
+        public int DateMonth { get; set; }
+        public CapitalDynamicsResponseDto Realizado { get; set; }
+        public CapitalDynamicsResponseDto Orcado { get; set; }
+        public CapitalDynamicsResponseDto Variacao { get; set; }
+    }
 
     public class PainelTurnoverResponseDto
     {
@@ -96,7 +122,19 @@ namespace _2___Application._2_Dto_s.Results.LiquidManagement
         public decimal GiroCaixa { get; set; }
 
     }
+    public class PainelTurnoverComparativoResponseDto
+    {
+        public List<TurnoverComparativoMesDto> Months { get; set; }
+    }
 
+    public class TurnoverComparativoMesDto
+    {
+        public string Name { get; set; }
+        public int DateMonth { get; set; }
+        public TurnoverResponseDto Realizado { get; set; }
+        public TurnoverResponseDto Orcado { get; set; }
+        public TurnoverResponseDto Variacao { get; set; }
+    }
     public class PainelLiquidityResponseDto
     {
         public LiquidityGroupedDto Liquiditys { get; set; }
@@ -116,6 +154,21 @@ namespace _2___Application._2_Dto_s.Results.LiquidManagement
         public decimal LiquidezImediata { get; set; }
 
     }
+    // Comparativo
+    public class LiquidityComparativoMesDto
+    {
+        public string Name { get; set; }
+        public int DateMonth { get; set; }
+        public LiquidityResponseDto Realizado { get; set; }
+        public LiquidityResponseDto Orcado { get; set; }
+        public LiquidityResponseDto Variacao { get; set; }
+    }
+
+    public class PainelLiquidityComparativoResponseDto
+    {
+        public List<LiquidityComparativoMesDto> Months { get; set; }
+    }
+
 
     public class PainelCapitalStructureResponseDto
     {
@@ -138,4 +191,23 @@ namespace _2___Application._2_Dto_s.Results.LiquidManagement
         public decimal? ParticipacaoCapitalProprio { get; set; }
 
     }
+
+    // --- COMPARATIVO (Orçado, Realizado e Variação) ---
+
+    public class CapitalStructureComparativoMesDto
+    {
+        public string Name { get; set; }
+        public int DateMonth { get; set; }
+
+        public CapitalStructureResponseDto Orcado { get; set; }
+        public CapitalStructureResponseDto Realizado { get; set; }
+        public CapitalStructureResponseDto Variacao { get; set; }
+    }
+
+    public class PainelCapitalStructureComparativoResponseDto
+    {
+        public List<CapitalStructureComparativoMesDto> Months { get; set; }
+    }
 }
+
+

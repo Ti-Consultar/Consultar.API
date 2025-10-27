@@ -32,6 +32,23 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpGet]
+        [Route("liquidity-management/variacao")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetLiquidityManagementComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GetLiquidityManagementComparativo(accountPlanId, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
         [Route("liquidity-management/month")]
         // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetLiquidityManagementMonth([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int month)
@@ -66,6 +83,23 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpGet]
+        [Route("capital-dynamics/variacao")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetCapitalDynamicsComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GetCapitalDynamicsComparativo(accountPlanId, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
         [Route("turnover")]
         // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetTurnover([FromQuery] int accountPlanId, [FromQuery] int year)
@@ -83,6 +117,23 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpGet]
+        [Route("turnover/variacao")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetTurnoverComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GetTurnoverComparativo(accountPlanId, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
         [Route("liquidity")]
         // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetLiquidity([FromQuery] int accountPlanId, [FromQuery] int year)
@@ -91,6 +142,23 @@ namespace ConsultarMRP.API.Controllers
             {
 
                 var response = await _Service.GetLiquidity(accountPlanId, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        [Route("liquidity/variacao")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetLiquidityComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GetLiquidityComparativo(accountPlanId, year);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -125,6 +193,23 @@ namespace ConsultarMRP.API.Controllers
             {
 
                 var response = await _Service.GetCapitalStructure(accountPlanId, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        [Route("capital-structure/variacao")]
+        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetCapitalStructureComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GetCapitalStructureComparativo(accountPlanId, year);
                 return Ok(response);
             }
             catch (Exception ex)
