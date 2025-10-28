@@ -1149,7 +1149,7 @@ namespace _2___Application._1_Services
                     "Despesas Variáveis"
                         => totalizerClassifications.FirstOrDefault(r => r.Name == "Margem Bruta %")?.Id,
 
-                    "Despesas com Vendas" or "Despesas com Pessoal e Encargos" or "Despesas Administrativas e Gerais" or "Outros  Resultados Operacionais"
+                    "Despesas com Vendas" or "Despesas com Pessoal e Encargos" or "Despesas Administrativas e Gerais" or "Outros Resultados Operacionais"
                         => totalizerClassifications.FirstOrDefault(r => r.Name == "(-) Despesas Operacionais")?.Id,
 
                     "Ganhos e Perdas de Capital" or "Outras Receitas não Operacionais"
