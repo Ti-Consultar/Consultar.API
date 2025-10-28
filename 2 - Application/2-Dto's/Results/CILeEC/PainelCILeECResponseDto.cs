@@ -60,5 +60,26 @@ namespace _2___Application._2_Dto_s.Results.CILeEC
         public decimal EstruturaDeCapital { get; set; }
 
     }
+    public class PainelCILeECComparativoResponseDto
+    {
+        public List<CILeECResponseComparativoDto> Months { get; set; } = new();
+    }
+
+    public class CILeECResponseComparativoDto
+    {
+        public string Name { get; set; }
+        public int DateMonth { get; set; }
+
+        public CILResponseDto RealizadoCIL { get; set; } = new();
+        public CILResponseDto OrcadoCIL { get; set; } = new();
+        public CILResponseDto VariacaoCIL { get; set; } = new();
+
+        public ECResponseDto RealizadoEC { get; set; } = new();
+        public ECResponseDto OrcadoEC { get; set; } = new();
+        public ECResponseDto VariacaoEC { get; set; } = new();
+    }
+
+
+
 
 }
