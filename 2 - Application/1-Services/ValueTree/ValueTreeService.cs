@@ -92,7 +92,7 @@ namespace _2___Application._1_Services.ValueTree
                 .FirstOrDefault(c => c.Name == "Despesas Administrativas e Gerais")?.Value ?? 0;
 
             var outrosResultadosOperacionais = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
-                .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
+                .FirstOrDefault(c => c.Name == "Outros Resultados Operacionais")?.Value ?? 0;
 
             var despesasOperacionaisTotalSomaDRE = monthDRE?.Totalizer
                 .FirstOrDefault(c => c.Name == "(-) Despesas Operacionais")?.TotalValue ?? 0;
@@ -349,9 +349,9 @@ namespace _2___Application._1_Services.ValueTree
                 ? acumuladoDRE["(-) Despesas Operacionais"] : 0;
 
             decimal outrosResOpMes = monthDRE?.Totalizer.SelectMany(t => t.Classifications)
-                .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
-            decimal outrosResOpAcum = acumuladoClassDRE.ContainsKey("Outros  Resultados Operacionais")
-                ? acumuladoClassDRE["Outros  Resultados Operacionais"] : 0;
+                .FirstOrDefault(c => c.Name == "Outros Resultados Operacionais")?.Value ?? 0;
+            decimal outrosResOpAcum = acumuladoClassDRE.ContainsKey("Outros Resultados Operacionais")
+                ? acumuladoClassDRE["Outros Resultados Operacionais"] : 0;
 
             // === Impostos ===
             decimal impostosMes = (monthDRE?.Totalizer.SelectMany(t => t.Classifications)
@@ -1338,7 +1338,7 @@ namespace _2___Application._1_Services.ValueTree
 
                 var outrosResultadosOperacionais = totalizerResponses
                     .SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
+                    .FirstOrDefault(c => c.Name == "Outros Resultados Operacionais")?.Value ?? 0;
 
                 if (despesasOperacionais != null)
                     despesasOperacionais.TotalValue = despesasOperacionais.TotalValue + despesasDepreciacao.Value - outrosResultadosOperacionais;
