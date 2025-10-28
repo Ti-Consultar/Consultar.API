@@ -2479,7 +2479,7 @@ namespace _2___Application._1_Services
                 var despDep = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Despesas com Depreciação");
                 var outrosResultOp = totalizerResponses.SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
+                    .FirstOrDefault(c => c.Name == "Outros Resultados Operacionais")?.Value ?? 0;
 
                 despDep.Value = despDep.Value * -1;
                 if (despDep != null)
@@ -3287,7 +3287,7 @@ namespace _2___Application._1_Services
                 var despDep = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Despesas com Depreciação");
                 var outrosResultOp = totalizerResponses.SelectMany(t => t.Classifications)
-                    .FirstOrDefault(c => c.Name == "Outros  Resultados Operacionais")?.Value ?? 0;
+                    .FirstOrDefault(c => c.Name == "Outros Resultados Operacionais")?.Value ?? 0;
 
                 despDep.Value = despDep.Value * -1;
                 if (despDep != null)
