@@ -1,6 +1,7 @@
 ﻿using _2___Application._1_Services.Results;
 using _2___Application._1_Services.Results.OperationalEfficiency;
 using _2___Application._1_Services.TotalizerClassification;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConsultarMRP.API.Controllers
@@ -17,7 +18,7 @@ namespace ConsultarMRP.API.Controllers
         }
         [HttpGet]
         [Route("")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetOperationalEfficiency([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -34,7 +35,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("/orcado")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetOperationalEfficiencyComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try

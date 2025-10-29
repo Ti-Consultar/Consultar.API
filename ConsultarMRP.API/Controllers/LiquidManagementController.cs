@@ -1,5 +1,6 @@
 ﻿using _2___Application._1_Services.Results;
 using _2___Application._1_Services.TotalizerClassification;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConsultarMRP.API.Controllers
@@ -16,7 +17,7 @@ namespace ConsultarMRP.API.Controllers
         }
         [HttpGet]
         [Route("liquidity-management")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetLiquidityManagement([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -33,7 +34,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("liquidity-management/variacao")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetLiquidityManagementComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -50,7 +51,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("liquidity-management/month")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetLiquidityManagementMonth([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int month)
         {
             try
@@ -67,7 +68,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("capital-dynamics")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetCapitalDynamics([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -84,7 +85,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("capital-dynamics/variacao")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetCapitalDynamicsComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -101,7 +102,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("turnover")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetTurnover([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -118,7 +119,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("turnover/variacao")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetTurnoverComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -135,7 +136,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("liquidity")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetLiquidity([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -152,7 +153,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("liquidity/variacao")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetLiquidityComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -169,7 +170,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("gross-cash-flow")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetGrossCashFlow([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -186,7 +187,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("capital-structure")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetCapitalStructure([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -203,7 +204,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("capital-structure/variacao")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetCapitalStructureComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try

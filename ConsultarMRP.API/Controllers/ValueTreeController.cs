@@ -3,6 +3,7 @@ using _2___Application._1_Services.Results;
 using _2___Application._1_Services.Results.OperationalEfficiency;
 using _2___Application._1_Services.TotalizerClassification;
 using _2___Application._1_Services.ValueTree;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConsultarMRP.API.Controllers
@@ -19,7 +20,7 @@ namespace ConsultarMRP.API.Controllers
         }
         [HttpGet]
         [Route("")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetAll([FromQuery] int accountPlanId, [FromQuery] int month,[FromQuery] int year)
         {
             try

@@ -1,6 +1,7 @@
 ﻿using _2___Application._1_Services.Results;
 using _2___Application._1_Services.Results.OperationalEfficiency;
 using _2___Application._1_Services.TotalizerClassification;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConsultarMRP.API.Controllers
@@ -18,7 +19,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("/group")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetGroupDashboard([FromQuery] int groupId, [FromQuery] int year)
         {
             try
@@ -35,7 +36,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetDashboard([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -51,7 +52,7 @@ namespace ConsultarMRP.API.Controllers
         }
         [HttpGet]
         [Route("gestao-prazo-medio")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetDashboardGestaoPrazoMedio([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
