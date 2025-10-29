@@ -123,8 +123,8 @@ namespace _4_InfraData._3_Utils.Email
         }
         private string BuildUserWelcomeEmailHtml(string name, string email, string password)
         {
-            // 🔗 URL do sistema (ajuste conforme seu ambiente)
-            var systemUrl = "https://app.mrp.com.br/login";
+            // 🔗 URL do sistema em produção
+            var systemUrl = "https://dev.consultarmrp.com.br/login";
 
             return $@"
             <html>
