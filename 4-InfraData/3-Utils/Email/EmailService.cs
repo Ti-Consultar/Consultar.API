@@ -135,7 +135,7 @@ namespace _4_InfraData._3_Utils.Email
                     <p>Use as credenciais abaixo para fazer login:</p>
 
                     <div class='password-box'>
-                        <div><strong>Usuário:</strong> {email}</div>
+                        <div><strong>E-mail:</strong> {email}</div>
                         <div><strong>Senha:</strong> {password}</div>
                     </div>
 
