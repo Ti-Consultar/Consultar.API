@@ -36,6 +36,7 @@ namespace ConsultarAuth.API.Controllers
         /// Registra um novo usuário no sistema.
         /// </summary>
         [HttpPost("/register")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> InsertUser([FromBody] InsertDto request)
         {
             if (request == null)
