@@ -94,6 +94,63 @@ namespace _4_InfraData._3_Utils.Email
             }
         }
 
+
+        public async Task SendUserWelcomeAsync(string emailAddress, string name, string password)
+        {
+            try
+            {
+                var email = _configuration["EmailSettings:Email"];
+                var passwordEmail = _configuration["EmailSettings:Password"];
+
+                var smtpClient = CreateSmtpClient(email, passwordEmail);
+
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(email),
+                    Subject = "👋 Bem-vindo ao MRP!",
+                    IsBodyHtml = true,
+                    Body = BuildUserWelcomeEmailHtml(name, emailAddress, password)
+                };
+
+                mailMessage.To.Add(emailAddress);
+                await smtpClient.SendMailAsync(mailMessage);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao enviar e-mail de boas-vindas ao usuário: {ex.Message}");
+                throw;
+            }
+        }
+        private string BuildUserWelcomeEmailHtml(string name, string email, string password) => $@"
+        <html>
+        <head>
+            {GetEmailStyles()}
+        </head>
+        <body>
+            <div class='container'>
+                <div class='card'>
+                    <div class='title'>Bem-vindo ao MRP, {name}!</div>
+                    <div class='subtitle'>Sua conta foi criada com sucesso 🎉</div>
+                    <p>Agora você já pode acessar o sistema e explorar todos os recursos disponíveis.</p>
+                    <p>Use as credenciais abaixo para fazer login:</p>
+
+                    <div class='password-box'>
+                        <div><strong>Usuário:</strong> {email}</div>
+                        <div><strong>Senha:</strong> {password}</div>
+                    </div>
+
+                    <p>Recomendamos que altere sua senha após o primeiro acesso por segurança.</p>
+
+                    <div class='footer'>
+                        {DateTime.Now.Year} MRP © - Todos os direitos reservados.
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>";
+
+
+
         private SmtpClient CreateSmtpClient(string email, string password)
         {
             return new SmtpClient("smtp.outlook.com")
