@@ -19,8 +19,25 @@ namespace _2___Application._2_Dto_s.CashFlow
     {
         public List<CashFlowResponseDto> Months { get; set; }
     }
+    public class PainelCashFlowComparativoResponseDto
+    {
+        public CashFlowComparativoGroupedDto CashFlow { get; set; }
+    }
 
+    public class CashFlowComparativoGroupedDto
+    {
+        public List<CashFlowComparativoResponseDto> Months { get; set; } = new();
+    }
 
+    public class CashFlowComparativoResponseDto
+    {
+        public int DateMonth { get; set; }
+        public string Name { get; set; }
+
+        public CashFlowResponseDto Realizado { get; set; } = new();
+        public CashFlowResponseDto Orcado { get; set; } = new();
+        public CashFlowResponseDto Variacao { get; set; } = new();
+    }
     public class CashFlowResponseDto
     {
         public string Name { get; set; }
