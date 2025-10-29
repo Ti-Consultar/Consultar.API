@@ -59,7 +59,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpPost]
         [Route("")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> Create( CreateAccountPlanClassification dto)
         {
             try
@@ -75,7 +75,7 @@ namespace ConsultarMRP.API.Controllers
         }
         [HttpPut]
         [Route("{accountPlanId}/create-item")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> CreateItemClassification(int accountPlanId, [FromBody]CreateItemClassification dto)
         {
             try
@@ -92,7 +92,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpPut]
         [Route("{accountPlanId}/update-item")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> Update(int accountPlanId,[FromQuery]int id ,[FromBody] UpdateItemClassification dto)
         {
             try
@@ -109,7 +109,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("accountPlan/{accountPlanId}/typeClassification")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetByTypeClassificationReal(int accountPlanId, ETypeClassification typeClassification)
         {
             try
@@ -126,7 +126,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpPut]
         [Route("/create-bond")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> CreateBond([FromQuery]int accountPlanClassificationId, [FromBody] BalanceteDataAccountPlanClassificationCreate dto)
         {
             try
@@ -142,7 +142,7 @@ namespace ConsultarMRP.API.Controllers
         }
         [HttpPut]
         [Route("/create-bond-list")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> CreateBondList( [FromBody] BalanceteDataAccountPlanClassificationCreateList dto)
         {
             try
@@ -159,7 +159,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpPut]
         [Route("accountplan/{accountPlanId}/update-bond-list")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> CreateBondList(int accountPlanId,[FromBody] BalanceteDataAccountPlanClassificationCreateList dto)
         {
             try
@@ -176,7 +176,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("/bond")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetPainelBalancoAsync([FromQuery] int accountPlanId, [FromQuery] int typeClassification)
         {
             try
@@ -200,7 +200,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("/painel")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetPainelBalancoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
         {
             try
@@ -218,7 +218,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("/painel/orcado")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetPainelBalancoOrcadoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
         {
             try
@@ -235,7 +235,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("/painel-reclassificado")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetPainelBalancoReclassificadoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
         {
             try
@@ -252,7 +252,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("/painel-reclassificado/orcado")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetPainelBalancoReclassificadoOrcadoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
         {
             try
@@ -270,7 +270,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("exists")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetAccountPlanClassification([FromQuery] int accountPlanId)
         {
             try

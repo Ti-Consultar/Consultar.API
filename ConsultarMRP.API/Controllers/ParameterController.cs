@@ -23,7 +23,7 @@ namespace _5_API.Controllers
 
         [HttpPost]
         [Route("")]
-         //[Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> Create([FromBody] InsertParameterDto dto)
         {
             try
@@ -40,7 +40,7 @@ namespace _5_API.Controllers
 
         [HttpGet]
         [Route("")]
-        //[Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetAll(int accountPlanId)
         {
             try
@@ -57,7 +57,7 @@ namespace _5_API.Controllers
 
         [HttpGet]
         [Route("/{id}")]
-        //[Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetById(int id)
         {
             try
@@ -75,7 +75,7 @@ namespace _5_API.Controllers
 
         [HttpGet]
         [Route("wacc")]
-        //[Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetWACCById([FromQuery] int accountPlanId, [FromQuery]int year)
         {
             try
@@ -92,7 +92,7 @@ namespace _5_API.Controllers
 
         [HttpPut]
         [Route("")]
-       // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+       [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> Update(UpdateParameterDto dto)
         {
             try
@@ -108,7 +108,7 @@ namespace _5_API.Controllers
         }
         [HttpDelete]
         [Route("")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> Update([FromQuery]int id)
         {
             try

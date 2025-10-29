@@ -43,6 +43,7 @@ namespace _5_API.Controllers
         /// Lista o planos de contas de acordo com os Parametros passados
         /// </summary>
         [HttpGet("list")]
+        [Authorize()]
         public async Task<IActionResult> GetByFilters( [FromQuery] int groupId,[FromQuery] int? companyId,[FromQuery] int? subCompanyId)
         {
             var result = await _service.GetAccountPlans(groupId, companyId, subCompanyId);
@@ -57,6 +58,7 @@ namespace _5_API.Controllers
         /// Lista o plano de contas por Id
         /// </summary>
         [HttpGet("{id}")]
+        [Authorize()]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _service.GetById(id);

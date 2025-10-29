@@ -1,5 +1,6 @@
 ﻿using _2___Application._1_Services;
 using _2___Application._1_Services.TotalizerClassification;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConsultarMRP.API.Controllers
@@ -16,7 +17,7 @@ namespace ConsultarMRP.API.Controllers
         }
         [HttpGet]
         [Route("template")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> GetAll()
         {
             try

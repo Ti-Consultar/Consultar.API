@@ -1,6 +1,7 @@
 ﻿using _2___Application._1_Services.Results;
 using _2___Application._1_Services.Results.OperationalEfficiency;
 using _2___Application._1_Services.TotalizerClassification;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConsultarMRP.API.Controllers
@@ -17,7 +18,7 @@ namespace ConsultarMRP.API.Controllers
         }
         [HttpGet]
         [Route("profitability")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetProfitability([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -34,7 +35,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("profitability/orcado")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetProfitabilityComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -51,7 +52,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("rentability")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetRentabilibty([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -68,7 +69,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("rentability/orcado")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetRentabilityComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -85,7 +86,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("return-expectation")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetReturnExpectation([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -102,7 +103,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("return-expectation/orcado")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetReturnExpectationComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -120,7 +121,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("ebitda")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetEBITDA([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -137,7 +138,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("ebitda/orcado")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetEBITDAOrcado([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -154,7 +155,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("ebitda/variacao")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetEBITDAOrcados([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -171,7 +172,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("nopat")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetNOPAT([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -188,7 +189,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("nopat/variacao")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetNOPATComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
