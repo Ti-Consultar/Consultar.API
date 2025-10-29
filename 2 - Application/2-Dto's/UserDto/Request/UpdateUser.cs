@@ -14,6 +14,15 @@ namespace _2___Application._2_Dto_s.UserDto.Request
     }
     public class UpdateUserByGestor
     {
+        public int UserId { get; set; }
         public string? Role { get; set; }
+
+    }
+
+    public class UserEmailEContact
+    {
+        public string Email { get; set; }
+        public string Contact { get; set; }
+
     }
 }

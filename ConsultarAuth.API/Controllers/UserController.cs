@@ -83,6 +83,23 @@ namespace ConsultarAuth.API.Controllers
         }
 
         /// <summary>
+        /// Atualiza a permissão do usuário desde que um Gestor altere.
+        /// </summary>
+        [HttpPut("/permission")]
+        [Authorize()]
+        public async Task<IActionResult> UpdateRoleUser([FromBody] UpdateUserByGestor request)
+        {
+            if (request == null)
+            {
+                return NotFound(new { message = "Dados inválidos" });
+            }
+
+            var user = await _userService.UpdateRoleUser(request);
+
+            return Ok(user);
+        }
+
+        /// <summary>
         /// Atualiza os dados do usuário autenticado.
         /// </summary>
         [HttpPut()]
@@ -97,6 +114,31 @@ namespace ConsultarAuth.API.Controllers
             var user = await _userService.UpdateUser(request);
 
             return Ok(user);
+        }
+
+
+        /// <summary>
+        /// lista Usuário por Email.
+        /// </summary>
+        [HttpGet("/find/{find}")]
+        [Authorize()]
+        public async Task<IActionResult> GetUserByEmailOrContact(string find)
+        {
+            try
+            {
+                var user = await _userService.GetUserByEmailOrContact(find);
+
+                if (user == null)
+                {
+                    return NotFound(new { message = "Usuário não encontrado" });
+                }
+
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao buscar usuário", details = ex.Message });
+            }
         }
 
         /// <summary>

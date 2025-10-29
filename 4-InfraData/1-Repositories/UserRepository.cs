@@ -68,6 +68,22 @@ namespace _4_InfraData._1_Repositories
                 .ToListAsync();
         }
 
+        public async Task<UserModel> GetUserByEmailOrContactAsync(string find)
+        {
+            if (string.IsNullOrWhiteSpace(find))
+                return null;
+
+            bool isEmail = find.Contains("@");
+
+            if (isEmail)
+                return await _context.Users.FirstOrDefaultAsync(a => a.Email == find);
+
+            return await _context.Users.FirstOrDefaultAsync(a => a.Contact == find);
+        }
+
+
+
+
 
 
     }

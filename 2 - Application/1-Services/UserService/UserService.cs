@@ -101,6 +101,52 @@ namespace _2___Application._1_Services.User
             }
         }
 
+
+        public async Task<object> UpdateRoleUser(UpdateUserByGestor request)
+        {
+            try
+            {
+                var user = await GetCurrentUserAsync();
+
+
+                if (user.Role != ERole.Gestor.ToString())
+                    return Message.NotFound;
+
+               
+
+                var userToUpdate = await _repository.GetById(request.UserId);
+
+                // Atualiza os campos
+                userToUpdate.Role = request.Role;
+
+                await _repository.UpdateUser(userToUpdate);
+                return Message.Success;
+            }
+            catch (Exception ex)
+            {
+                return UserLoginMessage.Error + ex;
+            }
+        }
+
+        public async Task<object> GetUserByEmailOrContact(string find)
+        {
+            var user = await _repository.GetUserByEmailOrContactAsync(find);
+
+
+            var response =  new UserSimpleResponse
+            {
+                Id = user.Id,
+                Email = user.Email.ToLower(),
+                Name = user.Name,
+                Contact = user.Contact,
+                Role = user.Role
+                
+            };
+
+            return response;
+        }
+
+
         public async Task<object> GetUser()
         {
             try
