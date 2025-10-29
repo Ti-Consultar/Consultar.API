@@ -15,4 +15,14 @@ namespace _2___Application._2_Dto_s.UserDto.Request
 
     }
 
+    public class InsertSimpleDto
+    {
+        public string Name { get; set; }
+        public string? Contact { get; set; }
+        public string? Role { get; set; }
+        public string Email { get; set; }
+        public string Senha { get; set; }
+
+    }
+
 }

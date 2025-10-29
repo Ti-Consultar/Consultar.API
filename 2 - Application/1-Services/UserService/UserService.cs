@@ -46,8 +46,6 @@ namespace _2___Application._1_Services.User
 
             return CreateUserResponseAuthorized(user);
         }
-
-       
         public async Task<object> InsertUser(InsertDto request)
         {
             try
@@ -66,10 +64,39 @@ namespace _2___Application._1_Services.User
                     newPassword.EncryptPassword()
                 );
 
-      
+
                 await _repository.AddUser(user);
 
                 await _emailService.SendUserWelcomeAsync(request.Email, request.Name, newPassword);
+
+                return Message.Success;
+            }
+            catch (Exception ex)
+            {
+                return UserLoginMessage.Error + ex;
+            }
+        }
+
+        public async Task<object> InsertSimpleUser(InsertSimpleDto request)
+        {
+            try
+            {
+                var userExists = await _repository.GetByEmail(request.Email.ToLower());
+                if (userExists != null)
+                    return UserLoginMessage.EmailExists;
+
+                var newPassword = GenerateNewPassword();
+
+                var user = new UserModel(
+                    request.Name,
+                    request.Email.ToLower(),
+                    request?.Contact,
+                    request?.Role,
+                    request.Senha.EncryptPassword()
+                );
+
+      
+                await _repository.AddUser(user);
 
                 return Message.Success;
             }

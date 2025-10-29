@@ -50,6 +50,23 @@ namespace ConsultarAuth.API.Controllers
         }
 
         /// <summary>
+        /// Registra um novo usuário no sistema.
+        /// </summary>
+        [HttpPost("/register-fake")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> InsertUser([FromBody] InsertSimpleDto request)
+        {
+            if (request == null)
+            {
+                return NotFound(new { message = "Dados inválidos" });
+            }
+
+            var user = await _userService.InsertSimpleUser(request);
+
+            return Ok(user);
+        }
+
+        /// <summary>
         /// Redefine a senha do usuário com base no e-mail informado e envia uma nova senha por e-mail.
         /// </summary>
         [HttpPut("redefine-password")]
