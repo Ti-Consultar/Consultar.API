@@ -18,7 +18,7 @@ namespace ConsultarMRP.API.Controllers
         }
         [HttpGet]
         [Route("cil-ec")]
-         [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetCileEC([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -35,7 +35,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("cil-ec/variacao")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetCileECComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try

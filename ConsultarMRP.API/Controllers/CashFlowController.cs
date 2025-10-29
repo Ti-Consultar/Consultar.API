@@ -19,7 +19,7 @@ namespace ConsultarMRP.API.Controllers
         }
         [HttpGet]
         [Route("")]
-         [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetCashFlow([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -36,7 +36,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("/variacao")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetCashFlowComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try

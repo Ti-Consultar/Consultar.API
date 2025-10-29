@@ -109,7 +109,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("accountPlan/{accountPlanId}/typeClassification")]
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetByTypeClassificationReal(int accountPlanId, ETypeClassification typeClassification)
         {
             try
@@ -142,7 +142,7 @@ namespace ConsultarMRP.API.Controllers
         }
         [HttpPut]
         [Route("/create-bond-list")]
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> CreateBondList( [FromBody] BalanceteDataAccountPlanClassificationCreateList dto)
         {
             try
@@ -176,7 +176,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("/bond")]
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetPainelBalancoAsync([FromQuery] int accountPlanId, [FromQuery] int typeClassification)
         {
             try
@@ -200,7 +200,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("/painel")]
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetPainelBalancoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
         {
             try
@@ -218,7 +218,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("/painel/orcado")]
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetPainelBalancoOrcadoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
         {
             try
@@ -232,10 +232,10 @@ namespace ConsultarMRP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-
+        [Authorize()]
         [HttpGet]
         [Route("/painel-reclassificado")]
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+     
         public async Task<IActionResult> GetPainelBalancoReclassificadoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
         {
             try
@@ -252,7 +252,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("/painel-reclassificado/orcado")]
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetPainelBalancoReclassificadoOrcadoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
         {
             try
@@ -270,7 +270,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("exists")]
-        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetAccountPlanClassification([FromQuery] int accountPlanId)
         {
             try
