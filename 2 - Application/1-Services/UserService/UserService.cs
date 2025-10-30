@@ -172,7 +172,7 @@ namespace _2___Application._1_Services.User
 
             if (user == null)
             {
-                return new UserSimpleResponse();
+                return  UserLoginMessage.NenhumUsuarioEncontrado; ;
             }
 
             var response =  new UserSimpleResponse
