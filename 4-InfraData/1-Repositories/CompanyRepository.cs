@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
@@ -241,6 +242,18 @@ namespace _4_InfraData._1_Repositories
                     c.CompanyUsers.Any(cu => cu.UserId == userId && cu.GroupId == groupId))
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<List<CompanyModel>> GetCompaniesByGroupId(int userId, int groupId)
+        {
+            return await _context.Companies
+                .Include(c => c.BusinessEntity)
+                .Include(c => c.CompanyUsers)
+                    .ThenInclude(cu => cu.Permission)
+                .Where(c =>
+                    c.GroupId == groupId &&
+                    c.CompanyUsers.Any(cu => cu.UserId == userId && cu.GroupId == groupId))
+                .ToListAsync();
+        }
         #endregion
 
         #region Company Users
@@ -341,6 +354,18 @@ namespace _4_InfraData._1_Repositories
                 throw new ArgumentException("Grupo não encontrado", nameof(groupId));
             }
         }
+        public async Task<PermissionModel> GetUserPermissionAsync(int userId, int groupId, int? companyId, int? subCompanyId)
+        {
+            return await _context.CompanyUsers
+                .Where(cu =>
+                    cu.UserId == userId &&
+                    cu.GroupId == groupId &&
+                    cu.CompanyId == companyId &&
+                    cu.SubCompanyId == subCompanyId)
+                .Select(cu => cu.Permission)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task AddUserToCompany(int userId, int companyId, int groupId, int permissionId)
         {
             var companyUser = new CompanyUserModel

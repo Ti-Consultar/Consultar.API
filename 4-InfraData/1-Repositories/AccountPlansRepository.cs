@@ -25,7 +25,26 @@ namespace _4_InfraData._1_Repositories
                     )
                 );
         }
+        public async Task<AccountPlansModel> GetByCompanyOrGroupId(int companyId, int groupId)
+        {
+            return await _context.AccountPlans
+                .FirstOrDefaultAsync(x => x.CompanyId == companyId ||
+                                         (x.CompanyId == null && x.GroupId == groupId));
+        }
+        public async Task<AccountPlansModel> GetBySubCompanyOrCompanyOrGroupId(int subCompanyId, int companyId, int groupId)
+        {
+            return await _context.AccountPlans
+                .FirstOrDefaultAsync(x =>
+                    x.SubCompanyId == subCompanyId ||
+                    x.CompanyId == companyId ||
+                    x.GroupId == groupId);
+        }
 
+        public async Task<AccountPlansModel> GetByGroupId(int groupId)
+        {
+            return await _context.AccountPlans
+                .FirstOrDefaultAsync(x => x.GroupId == groupId && x.CompanyId == null);
+        }
         public async Task<bool> ExistsAccountPlanByIdAsync(int id)
         {
             return await _context.AccountPlans
@@ -63,7 +82,7 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.Id == id)
                 .ToListAsync();
         }
-
+       
         public async Task<AccountPlansModel> GetByaccountPlanId(int id)
         {
             return await _context.AccountPlans

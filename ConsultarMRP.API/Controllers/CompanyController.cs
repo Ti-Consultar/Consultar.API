@@ -189,6 +189,26 @@ namespace _5_API.Controllers
         }
 
         /// <summary>
+        /// Obtém os usuários vinculados a uma empresa específica.
+        /// </summary>
+        [Authorize]
+        [HttpGet]
+        [Route("/group/{groupId}/filiais")]
+        public async Task<IActionResult> GetSimpleCompaniesByGroupId(int groupId)
+        {
+            try
+            {
+                var companies = await _companyService.GetSimpleCompaniesByGroupId(groupId);
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
+        /// <summary>
         /// Obtém as empresas de um grupo de forma paginada.
         /// </summary>
         [Authorize]
