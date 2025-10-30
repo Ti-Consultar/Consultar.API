@@ -170,6 +170,10 @@ namespace _2___Application._1_Services.User
         {
             var user = await _repository.GetUserByEmailOrContactAsync(find);
 
+            if (user == null)
+            {
+                return new UserSimpleResponse();
+            }
 
             var response =  new UserSimpleResponse
             {
