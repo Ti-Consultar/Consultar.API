@@ -3444,7 +3444,7 @@ namespace _2___Application._1_Services
 
         private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoAtivoComparativo(int accountPlanId, int year)
         {
-            return await BuildPainelBalancoReclassificadoAtivoComparativo(accountPlanId, year);
+            return await BuildPainelBalancoReclassificadoComparativo(accountPlanId, year);
         }
 
         private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoPassivoComparativo(int accountPlanId, int year)
@@ -3728,7 +3728,7 @@ namespace _2___Application._1_Services
 
 
 
-        private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoComparativo(int accountPlanId,int year,int typeClassification)
+        private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoComparativo(int accountPlanId,int year)
         {
             // 1️⃣ Chama os dois métodos originais (realizado e orçado)
             var realizado = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
