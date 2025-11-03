@@ -3423,7 +3423,7 @@ namespace _2___Application._1_Services
         //{
         //    return await BuildPainelDREComparativo(accountPlanId, year);
         //}
-        public async Task<PainelBalancoComparativoResponse> BuildPainelDREComparativoCompleto(int accountPlanId, int year)
+        private async Task<PainelBalancoComparativoResponse> BuildPainelDREComparativoCompleto(int accountPlanId, int year)
         {
             // 1️⃣ Chama os métodos existentes
             var realizado = await BuildPainelByTypeDRE(accountPlanId, year, 3);
@@ -3579,6 +3579,7 @@ namespace _2___Application._1_Services
             {
                 1 => await BuildPainelBalancoReclassificadoAtivoComparativo(accountPlanId, year),
                 2 => await BuildPainelBalancoReclassificadoPassivoComparativo(accountPlanId, year),
+                3 => await BuildPainelDREComparativoCompleto(accountPlanId, year),
                 _ => throw new ArgumentException("Tipo de classificação inválido.")
             };
 
