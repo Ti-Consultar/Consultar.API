@@ -270,12 +270,12 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("/painel-reclassificado/orcado/comparativo")]
         [Authorize()]
-        public async Task<IActionResult> BuildPainelBalancoReclassificadoComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetPainelBalancoReclassificadoComparativoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromBody] int typeClassification)
         {
             try
             {
 
-                var response = await _Service.BuildPainelBalancoReclassificadoComparativo(accountPlanId, year);
+                var response = await _Service.GetPainelBalancoReclassificadoComparativoAsync(accountPlanId, year, typeClassification);
                 return Ok(response);
             }
             catch (Exception ex)

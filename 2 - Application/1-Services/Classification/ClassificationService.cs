@@ -3430,6 +3430,27 @@ namespace _2___Application._1_Services
             return SuccessResponse(result); // Aqui retorna a estrutura padronizada
         }
 
+        public async Task<ResultValue> GetPainelBalancoReclassificadoComparativoAsync(int accountPlanId, int year, int typeClassification)
+        {
+            var result = typeClassification switch
+            {
+                1 => await BuildPainelBalancoReclassificadoAtivoComparativo(accountPlanId, year),
+                2 => await BuildPainelBalancoReclassificadoPassivoComparativo(accountPlanId, year),
+                _ => throw new ArgumentException("Tipo de classificação inválido.")
+            };
+
+            return SuccessResponse(result); // Aqui retorna a estrutura padronizada
+        }
+
+        private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoAtivoComparativo(int accountPlanId, int year)
+        {
+            return await BuildPainelBalancoReclassificadoAtivoComparativo(accountPlanId, year);
+        }
+
+        private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoPassivoComparativo(int accountPlanId, int year)
+        {
+            return await BuildPainelBalancoReclassificadoComparativoPassivo(accountPlanId, year);
+        }
 
         private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypeAtivoOrcado(int accountPlanId, int year, int typeClassification)
         {
@@ -3707,9 +3728,7 @@ namespace _2___Application._1_Services
 
 
 
-        public async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoComparativo(
-    int accountPlanId,
-    int year)
+        private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoComparativo(int accountPlanId,int year,int typeClassification)
         {
             // 1️⃣ Chama os dois métodos originais (realizado e orçado)
             var realizado = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
@@ -3765,6 +3784,69 @@ namespace _2___Application._1_Services
             };
 
             // 3️⃣ Retorna os três painéis (realizado, orçado e variação)
+            return new PainelBalancoComparativoResponse
+            {
+                Realizado = realizado,
+                Orcado = orcado,
+                Variacao = variacao
+            };
+        }
+        private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoComparativoPassivo(int accountPlanId,int year)
+        {
+            // 1️⃣ Chama os métodos existentes
+            var realizado = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
+            var orcado = await BuildPainelBalancoReclassificadoByTypePassivoOrcado(accountPlanId, year, 2);
+
+            // 2️⃣ Calcula variação
+            var variacao = new PainelBalancoContabilRespone
+            {
+                Months = realizado.Months.Select(r =>
+                {
+                    var o = orcado.Months.FirstOrDefault(x => x.DateMonth == r.DateMonth);
+
+                    var totalizerVar = r.Totalizer.Select(totalR =>
+                    {
+                        var totalO = o?.Totalizer?.FirstOrDefault(x => x.Name == totalR.Name);
+
+                        var classificacoesVar = totalR.Classifications.Select(cR =>
+                        {
+                            var cO = totalO?.Classifications?.FirstOrDefault(x => x.Name == cR.Name);
+                            return new ClassificationRespone
+                            {
+                                Id = cR.Id,
+                                Name = cR.Name,
+                                TypeOrder = cR.TypeOrder,
+                                Value = cR.Value - (cO?.Value ?? 0),
+                                Datas = new List<BalanceteDataResponse>()
+                            };
+                        }).ToList();
+
+                        return new TotalizerParentRespone
+                        {
+                            Id = totalR.Id,
+                            Name = totalR.Name,
+                            TypeOrder = totalR.TypeOrder,
+                            Classifications = classificacoesVar,
+                            TotalValue = totalR.TotalValue - (totalO?.TotalValue ?? 0)
+                        };
+                    }).ToList();
+
+                    return new MonthPainelContabilRespone
+                    {
+                        Id = r.Id,
+                        Name = r.Name,
+                        DateMonth = r.DateMonth,
+                        Totalizer = totalizerVar,
+                        MonthPainelContabilTotalizer = new MonthPainelContabilTotalizerRespone
+                        {
+                            Name = "TOTAL DO PASSIVO",
+                            TotalValue = r.MonthPainelContabilTotalizer.TotalValue - (o?.MonthPainelContabilTotalizer?.TotalValue ?? 0)
+                        }
+                    };
+                }).ToList()
+            };
+
+            // 3️⃣ Retorna os 3 painéis
             return new PainelBalancoComparativoResponse
             {
                 Realizado = realizado,
