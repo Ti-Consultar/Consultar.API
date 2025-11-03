@@ -724,10 +724,20 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
 
             // ------------ ACUMULADO para Realizado & Orcado & Variacao ------------
             // Realizado acumulado
-            var realizados = lista.Select(x => x.Realizado).Where(x => x != null).ToList();
-            var orcados = lista.Select(x => x.Orcado).Where(x => x != null).ToList();
-            var variacoes = lista.Select(x => x.Variacao).Where(x => x != null).ToList();
+            var realizados = lista
+            .Select(x => x.Realizado)
+            .Where(x => x != null && x.CapitalInvestidoLiquido != 0)
+            .ToList();
 
+            var orcados = lista
+                .Select(x => x.Orcado)
+                .Where(x => x != null && x.CapitalInvestidoLiquido != 0)
+                .ToList();
+
+            var variacoes = lista
+                .Select(x => x.Variacao)
+                .Where(x => x != null && x.CapitalInvestidoLiquido != 0)
+                .ToList();
             // Realizado acumulado: soma valores financeiros; margens e índices recalculados quando aplicável
             var ultimoRealizado = realizados.OrderByDescending(x => x.DateMonth).FirstOrDefault();
             var mesesDisponiveisR = realizados.Count;
@@ -850,6 +860,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
 
             return new PainelOperationalEfficiencyComparativoResponseDto { Months = lista };
         }
+
 
 
 
