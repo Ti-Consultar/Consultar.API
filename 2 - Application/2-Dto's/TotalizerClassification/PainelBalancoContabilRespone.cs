@@ -68,5 +68,43 @@ namespace _2___Application._2_Dto_s.TotalizerClassification
         public decimal Value { get; set; }
     }
 
+    public class PainelBalancoContabilComparativoResponse
+    {
+        public List<MonthPainelContabilComparativoRespone> Months { get; set; } = new();
+    }
+
+    public class MonthPainelContabilComparativoRespone
+    {
+        public string Name { get; set; }
+        public int DateMonth { get; set; }
+        public List<TotalizerParentRespone> Realizado { get; set; }
+        public List<TotalizerParentRespone> Orcado { get; set; }
+        public List<TotalizerParentRespone> Variacao { get; set; }
+    }
+
+    public class TotalizerComparativoResponse
+    {
+        public string Name { get; set; }
+        public decimal Realizado { get; set; }
+        public decimal Orcado { get; set; }
+        public decimal Variacao { get; set; }
+        public decimal Percentual { get; set; }
+        public List<ClassificationComparativoResponse> Classifications { get; set; } = new();
+    }
+
+    public class ClassificationComparativoResponse
+    {
+        public string Name { get; set; }
+        public decimal Realizado { get; set; }
+        public decimal Orcado { get; set; }
+        public decimal Variacao { get; set; }
+        public decimal Percentual { get; set; }
+    }
+    public class PainelBalancoComparativoResponse
+    {
+        public PainelBalancoContabilRespone Realizado { get; set; }
+        public PainelBalancoContabilRespone Orcado { get; set; }
+        public PainelBalancoContabilRespone Variacao { get; set; }
+    }
 
 }

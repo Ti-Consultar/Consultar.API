@@ -4,6 +4,7 @@ using _2___Application._2_Dto_s.Classification;
 using _2___Application._2_Dto_s.Classification.AccountPlanClassification;
 using _2___Application._2_Dto_s.Painel;
 using _2___Application._2_Dto_s.Permissions;
+using _2___Application._2_Dto_s.Results.LiquidManagement;
 using _2___Application._2_Dto_s.TotalizerClassification;
 using _2___Application.Base;
 using _3_Domain._1_Entities;
@@ -15,6 +16,7 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -3703,6 +3705,199 @@ namespace _2___Application._1_Services
         }
 
 
+
+        //public async Task<PainelBalancoContabilComparativoResponse> BuildPainelBalancoReclassificadoByTypeAtivoComparativo( int accountPlanId,int year, int typeClassification = 1)
+        //{
+        //    // Realizado (Balancete)
+        //    var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+
+        //    var budgets = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+
+        //    var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
+        //    var balancos = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
+
+        //    var balancoReclassificadoIds = balancos
+        //        .Where(c => c.TypeOrder >= 1 && c.TypeOrder <= 17)
+        //        .Distinct()
+        //        .ToList();
+
+        //    var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
+        //    var costCenters = model.Select(a => a.CostCenter).ToList();
+
+        //    // Dados base para cálculo
+        //    var balanceteIds = balancetes.Select(b => b.Id).ToList();
+        //    var budgetIds = budgets.Select(b => b.Id).ToList();
+
+        //    var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
+        //    var budgetData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, budgetIds);
+
+        //    var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
+
+        //    var months = Enumerable.Range(1, 12)
+        //        .Select(mes =>
+        //        {
+        //            // Dados de balancete e orçamento do mês
+        //            var balanceteMes = balancetes.FirstOrDefault(b => (int)b.DateMonth == mes);
+        //            var budgetMes = budgets.FirstOrDefault(b => (int)b.DateMonth == mes);
+
+        //            // Realizado
+        //            var totalizerRealizado = CalcularTotalizers(balanceteMes, classifications, balancoReclassificadoIds, balanceteData, balanceteDataClassifications, typeClassification);
+
+        //            // Orçado
+        //            var totalizerOrcado = CalcularTotalizers(budgetMes, classifications, balancoReclassificadoIds, budgetData, balanceteDataClassifications, typeClassification);
+
+        //            // Variação
+        //            var totalizerVariacao = totalizerRealizado.Zip(totalizerOrcado, (r, o) => new TotalizerParentRespone
+        //            {
+        //                Id = r.Id,
+        //                Name = r.Name,
+        //                TypeOrder = r.TypeOrder,
+        //                TotalValue = r.TotalValue - o.TotalValue,
+        //                Classifications = r.Classifications
+        //            }).ToList();
+
+        //            return new MonthPainelContabilComparativoRespone
+        //            {
+        //                DateMonth = mes,
+        //                Name = ((EMonth)mes).GetDescription(),
+        //                Realizado = totalizerRealizado,
+        //                Orcado = totalizerOrcado,
+        //                Variacao = totalizerVariacao
+        //            };
+        //        })
+        //        .OrderBy(x => x.DateMonth)
+        //        .ToList();
+
+        //    return new PainelBalancoContabilComparativoResponse
+        //    {
+        //        Months = months
+        //    };
+        //}
+
+        //private List<TotalizerParentRespone> CalcularTotalizers(
+        //    object mesData,
+        //    List<AccountPlanClassification> classifications,
+        //    List<BalancoReclassificadoModel> balancoReclassificadoIds,
+        //    List<BalanceteDataModel> balanceteData,
+        //    List<BalanceteDataAccountPlanClassification> balanceteDataClassifications,
+        //    int typeClassification)
+        //{
+        //    if (mesData == null)
+        //        return new List<TotalizerParentRespone>();
+
+        //    var totalizerResponses = balancoReclassificadoIds
+        //        .Select(totalizer =>
+        //        {
+        //            var relatedClassifications = classifications
+        //                .Where(c => c.BalancoReclassificadoId == totalizer.Id)
+        //                .ToList();
+
+        //            var classificationsResp = relatedClassifications
+        //                .Select(classification =>
+        //                {
+        //                    var datas = balanceteDataClassifications
+        //                        .Where(x => x.AccountPlanClassificationId == classification.Id)
+        //                        .SelectMany(x =>
+        //                            balanceteData
+        //                                .Where(bd => bd.CostCenter == x.CostCenter)
+        //                                .Select(bd => new BalanceteDataResponse
+        //                                {
+        //                                    Id = bd.Id,
+        //                                    CostCenter = bd.CostCenter,
+        //                                    Name = bd.Name,
+        //                                    Value = bd.FinalValue
+        //                                })
+        //                        ).ToList();
+
+        //                    return new ClassificationRespone
+        //                    {
+        //                        Id = classification.Id,
+        //                        Name = classification.Name,
+        //                        TypeOrder = classification.TypeOrder,
+        //                        Value = datas.Sum(d => d.Value),
+        //                        Datas = datas
+        //                    };
+        //                }).ToList();
+
+        //            return new TotalizerParentRespone
+        //            {
+        //                Id = totalizer.Id,
+        //                Name = totalizer.Name,
+        //                TypeOrder = totalizer.TypeOrder,
+        //                Classifications = classificationsResp,
+        //                TotalValue = classificationsResp.Sum(c => c.Value)
+        //            };
+        //        }).ToList();
+
+        //    return totalizerResponses;
+        //}
+
+
+        public async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoComparativo(
+    int accountPlanId,
+    int year)
+        {
+            // 1️⃣ Chama os dois métodos originais (realizado e orçado)
+            var realizado = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
+            var orcado = await BuildPainelBalancoReclassificadoByTypeAtivoOrcado(accountPlanId, year, 1);
+
+            // 2️⃣ Calcula a variação (diferença)
+            var variacao = new PainelBalancoContabilRespone
+            {
+                Months = realizado.Months.Select(r =>
+                {
+                    var o = orcado.Months.FirstOrDefault(x => x.DateMonth == r.DateMonth);
+
+                    var totalizerVar = r.Totalizer.Select(totalR =>
+                    {
+                        var totalO = o?.Totalizer?.FirstOrDefault(x => x.Name == totalR.Name);
+
+                        var classificacoesVar = totalR.Classifications.Select(cR =>
+                        {
+                            var cO = totalO?.Classifications?.FirstOrDefault(x => x.Name == cR.Name);
+                            return new ClassificationRespone
+                            {
+                                Id = cR.Id,
+                                Name = cR.Name,
+                                TypeOrder = cR.TypeOrder,
+                                Value = cR.Value - (cO?.Value ?? 0),
+                                Datas = new List<BalanceteDataResponse>()
+                            };
+                        }).ToList();
+
+                        return new TotalizerParentRespone
+                        {
+                            Id = totalR.Id,
+                            Name = totalR.Name,
+                            TypeOrder = totalR.TypeOrder,
+                            Classifications = classificacoesVar,
+                            TotalValue = totalR.TotalValue - (totalO?.TotalValue ?? 0)
+                        };
+                    }).ToList();
+
+                    return new MonthPainelContabilRespone
+                    {
+                        Id = r.Id,
+                        Name = r.Name,
+                        DateMonth = r.DateMonth,
+                        Totalizer = totalizerVar,
+                        MonthPainelContabilTotalizer = new MonthPainelContabilTotalizerRespone
+                        {
+                            Name = "TOTAL DO ATIVO",
+                            TotalValue = r.MonthPainelContabilTotalizer.TotalValue - (o?.MonthPainelContabilTotalizer?.TotalValue ?? 0)
+                        }
+                    };
+                }).ToList()
+            };
+
+            // 3️⃣ Retorna os três painéis (realizado, orçado e variação)
+            return new PainelBalancoComparativoResponse
+            {
+                Realizado = realizado,
+                Orcado = orcado,
+                Variacao = variacao
+            };
+        }
 
         #endregion
         #endregion

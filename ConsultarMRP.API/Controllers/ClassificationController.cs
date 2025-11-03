@@ -267,6 +267,22 @@ namespace ConsultarMRP.API.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("/painel-reclassificado/orcado/comparativo")]
+        [Authorize()]
+        public async Task<IActionResult> BuildPainelBalancoReclassificadoComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.BuildPainelBalancoReclassificadoComparativo(accountPlanId, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
         [HttpGet]
         [Route("exists")]
