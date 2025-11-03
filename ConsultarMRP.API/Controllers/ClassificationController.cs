@@ -232,6 +232,23 @@ namespace ConsultarMRP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet]
+        [Route("/painel/comparativo")]
+        [Authorize()]
+        public async Task<IActionResult> GetPainelBalancoComparativoAsync([FromQuery] int accountPlanId, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.BuildPainelDREComparativoCompleto(accountPlanId, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
         [Authorize()]
         [HttpGet]
         [Route("/painel-reclassificado")]

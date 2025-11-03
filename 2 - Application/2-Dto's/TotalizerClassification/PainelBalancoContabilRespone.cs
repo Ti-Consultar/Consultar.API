@@ -67,4 +67,13 @@ namespace _2___Application._2_Dto_s.TotalizerClassification
         public PainelBalancoContabilRespone Variacao { get; set; }
     }
 
+  
+   
+    
+
+   
+
+
+
+
 }
