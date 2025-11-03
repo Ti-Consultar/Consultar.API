@@ -7,6 +7,7 @@ using _4_InfraData._2_AppSettings;
 using _4_InfraData._5_ConfigEnum;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -574,7 +575,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
 
                 var realizado = new OperationalEfficiencyResponseDto
                 {
-                    Name = dreR?.Name ?? new DateTime(year, mes, 1).ToString("MMMM").ToUpper(),
+                    Name = dreR?.Name ?? new DateTime(year, mes, 1).ToString("MMMM", CultureInfo.InvariantCulture),
                     DateMonth = mes,
                     ReceitasLiquidas = receitaLiquidaR,
                     CustosDespesas = custosEDespesasOperacionaisR,
@@ -655,7 +656,7 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
 
                 var orcado = new OperationalEfficiencyResponseDto
                 {
-                    Name = dreO?.Name ?? new DateTime(year, mes, 1).ToString("MMMM").ToUpper(),
+                    Name = dreO?.Name ?? new DateTime(year, mes, 1).ToString("MMMM", CultureInfo.InvariantCulture),
                     DateMonth = mes,
                     ReceitasLiquidas = receitaLiquidaO,
                     CustosDespesas = custosEDespesasOperacionaisO,

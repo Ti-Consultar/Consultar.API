@@ -9,6 +9,7 @@ using _4_InfraData._2_AppSettings;
 using _4_InfraData._5_ConfigEnum;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -167,7 +168,7 @@ namespace _2___Application._1_Services.Results
 
                 var realizado = new LiquidityMonthlyDto
                 {
-                    Name = ativoR?.Name ?? new DateTime(year, mes, 1).ToString("MMMM").ToUpper(),
+                    Name = ativoR?.Name ?? new DateTime(year, mes, 1).ToString("MMMM", CultureInfo.InvariantCulture),
                     DateMonth = mes,
                     SaldoTesouraria = saldoTesourariaR,
                     NCG = ncgR,
@@ -191,7 +192,7 @@ namespace _2___Application._1_Services.Results
 
                 var orcado = new LiquidityMonthlyDto
                 {
-                    Name = ativoO?.Name ?? new DateTime(year, mes, 1).ToString("MMMM").ToUpper(),
+                    Name = ativoO?.Name ?? new DateTime(year, mes, 1).ToString("MMMM", CultureInfo.InvariantCulture),
                     DateMonth = mes,
                     SaldoTesouraria = saldoTesourariaO,
                     NCG = ncgO,
@@ -219,7 +220,7 @@ namespace _2___Application._1_Services.Results
                     Variacao = variacao
                 });
             }
-
+                # region Comentado metodo para acumulado
             //// ------------ ACUMULADO ------------
             //var acumuladoRealizado = new LiquidityMonthlyDto
             //{
@@ -259,6 +260,7 @@ namespace _2___Application._1_Services.Results
             //    Orcado = acumuladoOrcado,
             //    Variacao = acumuladoVariacao
             //});
+            #endregion
 
             return new PainelLiquidityManagementComparativoResponseDto
             {
