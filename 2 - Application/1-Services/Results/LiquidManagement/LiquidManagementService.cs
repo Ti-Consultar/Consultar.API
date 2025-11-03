@@ -644,6 +644,131 @@ namespace _2___Application._1_Services.Results
             };
         }
 
+        public async Task<PainelGrossCashFlowComparativoResponseDto> GetGrossCashFlowComparativo(int accountPlanId, int year)
+        {
+            // 🔹 Painéis realizados
+            var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
+            var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
+            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
+
+            // 🔹 Painéis orçados
+            var painelAtivoOrcado = await BuildPainelBalancoReclassificadoByTypeAtivoOrcado(accountPlanId, year, 1);
+            var painelPassivoOrcado = await BuildPainelBalancoReclassificadoByTypePassivoOrcado(accountPlanId, year, 2);
+            var painelDREOrcado = await BuildPainelByTypeDREOrcado(accountPlanId, year, 3);
+
+            if (painelAtivo is null || painelPassivo is null || painelDRE is null ||
+                painelAtivoOrcado is null || painelPassivoOrcado is null || painelDREOrcado is null)
+            {
+                return new PainelGrossCashFlowComparativoResponseDto();
+            }
+
+            // 🔹 NCG do mês anterior (para ambos)
+            decimal? ncgMesAnterior = await GetNCGDoMesAnterior(accountPlanId, year);
+            decimal? ncgMesAnteriorOrcado = await GetNCGDoMesAnterior(accountPlanId, year); // pode ser ajustado conforme o fluxo orçado
+
+            var comparativo = new List<GrossCashFlowComparativoMesDto>();
+
+            foreach (var monthAtivo in painelAtivo.Months.OrderBy(m => m.DateMonth))
+            {
+                var dateMonth = monthAtivo.DateMonth;
+
+                // =============================
+                // 🔸 REALIZADO
+                // =============================
+                var monthPassivo = painelPassivo.Months.FirstOrDefault(m => m.DateMonth == dateMonth);
+                var monthDRE = painelDRE.Months.FirstOrDefault(m => m.DateMonth == dateMonth);
+
+                decimal ebitda = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "EBITDA")?.TotalValue ?? 0;
+                decimal margemEbitda = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "Margem EBITDA %")?.TotalValue ?? 0;
+                decimal valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+                decimal valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
+                decimal ncg = valorAtivoOperacional - valorPassivoOperacional;
+
+                decimal variacaoNCG = (ncgMesAnterior.HasValue) ? ncg - ncgMesAnterior.Value : 0;
+                ncgMesAnterior = ncg;
+
+                decimal fluxoCaixaOperacional = ebitda - variacaoNCG;
+                var receitaMensal = monthDRE?.Totalizer.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
+                decimal geracaoCaixa = receitaMensal != 0 ? (fluxoCaixaOperacional / receitaMensal) * 100 : 0;
+                decimal aumentoReducaoFluxoCaixa = margemEbitda != 0 ? geracaoCaixa - margemEbitda : 0;
+
+                var realizado = new GrossCashFlowResponseDto
+                {
+                    Name = monthAtivo.Name,
+                    DateMonth = dateMonth,
+                    EBITIDA = ebitda,
+                    MargemEBITIDA = margemEbitda,
+                    VariacaoNCG = variacaoNCG,
+                    FluxoCaixaOperacional = fluxoCaixaOperacional,
+                    GeracaoCaixa = geracaoCaixa,
+                    AumentoReducaoFluxoCaixa = aumentoReducaoFluxoCaixa
+                };
+
+                // =============================
+                // 🔸 ORÇADO
+                // =============================
+                var monthAtivoOrcado = painelAtivoOrcado.Months.FirstOrDefault(m => m.DateMonth == dateMonth);
+                var monthPassivoOrcado = painelPassivoOrcado.Months.FirstOrDefault(m => m.DateMonth == dateMonth);
+                var monthDREOrcado = painelDREOrcado.Months.FirstOrDefault(m => m.DateMonth == dateMonth);
+
+                decimal ebitdaOrcado = monthDREOrcado?.Totalizer.FirstOrDefault(t => t.Name == "EBITDA")?.TotalValue ?? 0;
+                decimal margemEbitdaOrcado = monthDREOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Margem EBITDA %")?.TotalValue ?? 0;
+                decimal valorAtivoOperacionalOrcado = monthAtivoOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+                decimal valorPassivoOperacionalOrcado = monthPassivoOrcado?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
+                decimal ncgOrcado = valorAtivoOperacionalOrcado - valorPassivoOperacionalOrcado;
+
+                decimal variacaoNCGOrcado = (ncgMesAnteriorOrcado.HasValue) ? ncgOrcado - ncgMesAnteriorOrcado.Value : 0;
+                ncgMesAnteriorOrcado = ncgOrcado;
+
+                decimal fluxoCaixaOperacionalOrcado = ebitdaOrcado - variacaoNCGOrcado;
+                var receitaMensalOrcada = monthDREOrcado?.Totalizer.FirstOrDefault(t => t.Name == "(=) Receita Líquida de Vendas")?.TotalValue ?? 0;
+                decimal geracaoCaixaOrcada = receitaMensalOrcada != 0 ? (fluxoCaixaOperacionalOrcado / receitaMensalOrcada) * 100 : 0;
+                decimal aumentoReducaoFluxoCaixaOrcado = margemEbitdaOrcado != 0 ? geracaoCaixaOrcada - margemEbitdaOrcado : 0;
+
+                var orcado = new GrossCashFlowResponseDto
+                {
+                    Name = monthAtivoOrcado?.Name ?? monthAtivo.Name,
+                    DateMonth = dateMonth,
+                    EBITIDA = ebitdaOrcado,
+                    MargemEBITIDA = margemEbitdaOrcado,
+                    VariacaoNCG = variacaoNCGOrcado,
+                    FluxoCaixaOperacional = fluxoCaixaOperacionalOrcado,
+                    GeracaoCaixa = geracaoCaixaOrcada,
+                    AumentoReducaoFluxoCaixa = aumentoReducaoFluxoCaixaOrcado
+                };
+
+                // =============================
+                // 🔸 VARIAÇÃO (Realizado - Orçado)
+                // =============================
+                var variacao = new GrossCashFlowResponseDto
+                {
+                    Name = monthAtivo.Name,
+                    DateMonth = dateMonth,
+                    EBITIDA = realizado.EBITIDA - orcado.EBITIDA,
+                    MargemEBITIDA = realizado.MargemEBITIDA - orcado.MargemEBITIDA,
+                    VariacaoNCG = realizado.VariacaoNCG - orcado.VariacaoNCG,
+                    FluxoCaixaOperacional = realizado.FluxoCaixaOperacional - orcado.FluxoCaixaOperacional,
+                    GeracaoCaixa = realizado.GeracaoCaixa - orcado.GeracaoCaixa,
+                    AumentoReducaoFluxoCaixa = realizado.AumentoReducaoFluxoCaixa - orcado.AumentoReducaoFluxoCaixa
+                };
+
+                comparativo.Add(new GrossCashFlowComparativoMesDto
+                {
+                    Name = monthAtivo.Name,
+                    DateMonth = dateMonth,
+                    Realizado = realizado,
+                    Orcado = orcado,
+                    Variacao = variacao
+                });
+            }
+
+            return new PainelGrossCashFlowComparativoResponseDto
+            {
+                Months = comparativo
+            };
+        }
+
+
         // 🔹 Método auxiliar para pegar a NCG de dezembro do ano anterior
         private async Task<decimal?> GetNCGDoMesAnterior(int accountPlanId, int year)
         {

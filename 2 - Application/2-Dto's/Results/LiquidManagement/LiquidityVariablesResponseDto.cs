@@ -89,6 +89,21 @@ namespace _2___Application._2_Dto_s.Results.LiquidManagement
         public decimal AumentoReducaoFluxoCaixa { get; set; }
 
     }
+
+    public class PainelGrossCashFlowComparativoResponseDto
+    {
+        public List<GrossCashFlowComparativoMesDto> Months { get; set; } = new();
+    }
+
+    public class GrossCashFlowComparativoMesDto
+    {
+        public string Name { get; set; }
+        public int DateMonth { get; set; }
+        public GrossCashFlowResponseDto Realizado { get; set; }
+        public GrossCashFlowResponseDto Orcado { get; set; }
+        public GrossCashFlowResponseDto Variacao { get; set; }
+    }
+
     public class PainelCapitalDynamicsComparativoResponseDto
     {
         public List<CapitalDynamicsComparativoMesDto> Months { get; set; }

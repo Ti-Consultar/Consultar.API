@@ -184,6 +184,22 @@ namespace ConsultarMRP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        [HttpGet]
+        [Route("gross-cash-flow/variacao")]
+        [Authorize()]
+        public async Task<IActionResult> GetGrossCashFlowComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GetGrossCashFlowComparativo(accountPlanId, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
         [HttpGet]
         [Route("capital-structure")]
