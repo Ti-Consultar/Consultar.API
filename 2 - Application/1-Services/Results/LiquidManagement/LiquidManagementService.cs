@@ -220,45 +220,45 @@ namespace _2___Application._1_Services.Results
                 });
             }
 
-            // ------------ ACUMULADO ------------
-            var acumuladoRealizado = new LiquidityMonthlyDto
-            {
-                Name = "ACUMULADO",
-                DateMonth = 13,
-                SaldoTesouraria = lista.Sum(x => x.Realizado.SaldoTesouraria),
-                NCG = lista.Sum(x => x.Realizado.NCG),
-                CDG = lista.Sum(x => x.Realizado.CDG),
-                IndiceDeLiquidez = lista.Average(x => x.Realizado.IndiceDeLiquidez ?? 0)
-            };
+            //// ------------ ACUMULADO ------------
+            //var acumuladoRealizado = new LiquidityMonthlyDto
+            //{
+            //    Name = "ACUMULADO",
+            //    DateMonth = 13,
+            //    SaldoTesouraria = lista.Sum(x => x.Realizado.SaldoTesouraria),
+            //    NCG = lista.Sum(x => x.Realizado.NCG),
+            //    CDG = lista.Sum(x => x.Realizado.CDG),
+            //    IndiceDeLiquidez = lista.Average(x => x.Realizado.IndiceDeLiquidez ?? 0)
+            //};
 
-            var acumuladoOrcado = new LiquidityMonthlyDto
-            {
-                Name = "ACUMULADO",
-                DateMonth = 13,
-                SaldoTesouraria = lista.Sum(x => x.Orcado.SaldoTesouraria),
-                NCG = lista.Sum(x => x.Orcado.NCG),
-                CDG = lista.Sum(x => x.Orcado.CDG),
-                IndiceDeLiquidez = lista.Average(x => x.Orcado.IndiceDeLiquidez ?? 0)
-            };
+            //var acumuladoOrcado = new LiquidityMonthlyDto
+            //{
+            //    Name = "ACUMULADO",
+            //    DateMonth = 13,
+            //    SaldoTesouraria = lista.Sum(x => x.Orcado.SaldoTesouraria),
+            //    NCG = lista.Sum(x => x.Orcado.NCG),
+            //    CDG = lista.Sum(x => x.Orcado.CDG),
+            //    IndiceDeLiquidez = lista.Average(x => x.Orcado.IndiceDeLiquidez ?? 0)
+            //};
 
-            var acumuladoVariacao = new LiquidityMonthlyDto
-            {
-                Name = "ACUMULADO",
-                DateMonth = 13,
-                SaldoTesouraria = acumuladoRealizado.SaldoTesouraria - acumuladoOrcado.SaldoTesouraria,
-                NCG = acumuladoRealizado.NCG - acumuladoOrcado.NCG,
-                CDG = acumuladoRealizado.CDG - acumuladoOrcado.CDG,
-                IndiceDeLiquidez = acumuladoRealizado.IndiceDeLiquidez - acumuladoOrcado.IndiceDeLiquidez
-            };
+            //var acumuladoVariacao = new LiquidityMonthlyDto
+            //{
+            //    Name = "ACUMULADO",
+            //    DateMonth = 13,
+            //    SaldoTesouraria = acumuladoRealizado.SaldoTesouraria - acumuladoOrcado.SaldoTesouraria,
+            //    NCG = acumuladoRealizado.NCG - acumuladoOrcado.NCG,
+            //    CDG = acumuladoRealizado.CDG - acumuladoOrcado.CDG,
+            //    IndiceDeLiquidez = acumuladoRealizado.IndiceDeLiquidez - acumuladoOrcado.IndiceDeLiquidez
+            //};
 
-            lista.Add(new LiquidityMonthlyComparativoDto
-            {
-                Name = "ACUMULADO",
-                DateMonth = 13,
-                Realizado = acumuladoRealizado,
-                Orcado = acumuladoOrcado,
-                Variacao = acumuladoVariacao
-            });
+            //lista.Add(new LiquidityMonthlyComparativoDto
+            //{
+            //    Name = "ACUMULADO",
+            //    DateMonth = 13,
+            //    Realizado = acumuladoRealizado,
+            //    Orcado = acumuladoOrcado,
+            //    Variacao = acumuladoVariacao
+            //});
 
             return new PainelLiquidityManagementComparativoResponseDto
             {
