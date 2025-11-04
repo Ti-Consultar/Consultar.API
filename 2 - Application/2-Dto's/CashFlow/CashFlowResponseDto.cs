@@ -19,15 +19,7 @@ namespace _2___Application._2_Dto_s.CashFlow
     {
         public List<CashFlowResponseDto> Months { get; set; }
     }
-    public class PainelCashFlowComparativoResponseDto
-    {
-        public CashFlowComparativoGroupedDto CashFlow { get; set; }
-    }
 
-    public class CashFlowComparativoGroupedDto
-    {
-        public List<CashFlowComparativoResponseDto> Months { get; set; } = new();
-    }
 
     public class CashFlowComparativoResponseDto
     {
@@ -71,4 +63,12 @@ namespace _2___Application._2_Dto_s.CashFlow
         public decimal  DisponibilidadeInicioDoPeriodo { get; set; }
         public decimal  DisponibilidadeFinalDoPeriodo { get; set; }
     }
+
+    public class PainelCashFlowComparativoResponseDto
+    {
+        public PainelCashFlowResponseDto Realizado { get; set; }
+        public PainelCashFlowResponseDto Orcado { get; set; }
+        public PainelCashFlowResponseDto Variacao { get; set; }
+    }
+
 }
