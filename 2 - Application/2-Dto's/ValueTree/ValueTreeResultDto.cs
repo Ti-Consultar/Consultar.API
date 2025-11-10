@@ -9,6 +9,11 @@ namespace _2___Application._2_Dto_s.ValueTree
         public FinancialViewDto FinancialView { get; set; }
         public ReturnIndicatorsDto Indicators { get; set; }
     }
+    public class ValueTreeComparativoResponse
+    {
+        public ValueTreeResultDto Realizado { get; set; }
+        public ValueTreeResultDto Orcado { get; set; }
+    }
 
     public class ValueTreeYearMonthDto
     {

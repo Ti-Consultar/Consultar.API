@@ -34,5 +34,39 @@ namespace ConsultarMRP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet]
+        [Route("Orcado")]
+        [Authorize()]
+        public async Task<IActionResult> GettAllOrcado([FromQuery] int accountPlanId, [FromQuery] int month, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GettAllOrcado(accountPlanId, month, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+
+        }
+        [HttpGet]
+        [Route("variacao")]
+        [Authorize()]
+        public async Task<IActionResult> BuildValueTreeComparativo([FromQuery] int accountPlanId, [FromQuery] int month, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.BuildValueTreeComparativo(accountPlanId, month, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

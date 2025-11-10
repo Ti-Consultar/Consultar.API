@@ -50,5 +50,22 @@ namespace ConsultarMRP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet]
+        [Route("/rolling")]
+        [Authorize()]
+        public async Task<IActionResult> GetCashFlowComparativoRolling([FromQuery] int accountPlanId, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GetCashFlowComparativoRolling(accountPlanId, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
