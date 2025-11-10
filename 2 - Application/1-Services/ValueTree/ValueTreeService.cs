@@ -553,6 +553,8 @@ namespace _2___Application._1_Services.ValueTree
             };
         }
 
+   
+
         public async Task<ValueTreeResultDto> GettAllOrcado(int accountPlanId, int month, int year)
         {
 
@@ -748,9 +750,8 @@ namespace _2___Application._1_Services.ValueTree
 
             decimal roicMes = 0, roicAcum = 0;
 
-
-            decimal capitalInvestidoMes = monthOperationalEfficiency.CapitalInvestidoLiquido;
-            roicMes = monthOperationalEfficiency.ROIC;
+            decimal capitalInvestidoMes = monthOperationalEfficiency?.CapitalInvestidoLiquido ?? 0;
+           roicMes = monthOperationalEfficiency?.ROIC ?? 0;
             // fazer para todos os que dependem de eficiencia operacional obtendo ele;
             // fazer para o acumulado esse operational Eficiency
 
@@ -759,16 +760,15 @@ namespace _2___Application._1_Services.ValueTree
 
             var patrimonioLiquidoGestaoLiquidez = monthPassivo?.Totalizer
                 .FirstOrDefault(t => t.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
-
-            var ativoNaoCirculante = monthAtivo.Totalizer
+            var ativoNaoCirculante = monthAtivo?.Totalizer?
                 .FirstOrDefault(t => t.Name == "Ativo Não Circulante")?.TotalValue ?? 0;
 
-            var ativoFixo = monthAtivo.Totalizer
+            var ativoFixo = monthAtivo?.Totalizer?
                 .FirstOrDefault(t => t.Name == "Ativo Fixo")?.TotalValue ?? 0;
             var cdg = ((passivoNaoCirculante + patrimonioLiquidoGestaoLiquidez) - (ativoNaoCirculante + ativoFixo));
 
 
-            var valorAtivoOperacional = monthAtivo.Totalizer.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
+            var valorAtivoOperacional = monthAtivo?.Totalizer?.FirstOrDefault(t => t.Name == "Ativo Operacional")?.TotalValue ?? 0;
             var valorPassivoOperacional = monthPassivo?.Totalizer.FirstOrDefault(t => t.Name == "Passivo Operacional")?.TotalValue ?? 0;
 
             var ncg = valorAtivoOperacional - valorPassivoOperacional;
@@ -785,12 +785,11 @@ namespace _2___Application._1_Services.ValueTree
 
             roicAcum = monthOperationalEfficiencyAcum.ROIC;
 
-            decimal spread = Math.Round(monthOperationalEfficiency.EVASPREAD, 2);
+            decimal spread = Math.Round(monthOperationalEfficiency?.EVASPREAD ?? 0, 2);
             //decimal spreadAcumulado = Math.Round(monthOperationalEfficiencyAcum.EVASPREAD, 2);
             decimal spreadAcumulado = roicAcumuladoFinal - waccAcumulado;
 
-            decimal eva = Math.Round(monthOperationalEfficiency.EVA, 2);
-
+            decimal eva = Math.Round(monthOperationalEfficiency?.EVA ?? 0, 2);
             decimal evaAcumulado = capitalInvestidoMes != 0 ? (spreadAcumulado / 100) * capitalInvestidoMes : 0;
 
 
@@ -870,6 +869,7 @@ namespace _2___Application._1_Services.ValueTree
                 Indicators = indicators
             };
         }
+
 
         public async Task<ValueTreeComparativoResponse> BuildValueTreeComparativo(int accountPlanId, int month, int year)
         {
