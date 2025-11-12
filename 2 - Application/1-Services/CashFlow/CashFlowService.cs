@@ -754,7 +754,7 @@ namespace _2___Application._1_Services.CashFlow
                 }
             };
         }
-        public async Task<PainelCashFlowComparativoResponseDto> GetCashFlowComparativo(int accountPlanId, int year)
+        public async Task<PainelCashFlowComparativoResponseDto> GetCashFlowComparativo2(int accountPlanId, int year)
         {
             // 1️⃣ Monta o painel realizado e orçado
             var realizado = await GetCashFlow(accountPlanId, year);
@@ -800,6 +800,90 @@ namespace _2___Application._1_Services.CashFlow
             };
 
             // 3️⃣ Retorna os três painéis
+            return new PainelCashFlowComparativoResponseDto
+            {
+                Realizado = realizado,
+                Orcado = orcado,
+                Variacao = variacao
+            };
+        }
+        public async Task<PainelCashFlowComparativoResponseDto> GetCashFlowComparativo(int accountPlanId, int year)
+        {
+            // 1️⃣ Monta o painel realizado e orçado com segurança
+            var realizado = await GetCashFlow(accountPlanId, year)
+                ?? new PainelCashFlowResponseDto { CashFlow = new CashFlowGroupedDto { Months = new List<CashFlowResponseDto>() } };
+
+            var orcado = await GetCashFlowOrcado(accountPlanId, year)
+                ?? new PainelCashFlowResponseDto { CashFlow = new CashFlowGroupedDto { Months = new List<CashFlowResponseDto>() } };
+
+            // 1.5️⃣ Garante listas não nulas
+            var mesesRealizado = realizado.CashFlow?.Months ?? new List<CashFlowResponseDto>();
+            var mesesOrcado = orcado.CashFlow?.Months ?? new List<CashFlowResponseDto>();
+
+            // 2️⃣ Cria um dicionário de orçado por mês (sem duplicar, sem repetir último)
+            var orcadoByMonth = mesesOrcado
+                .Where(m => m != null && m.DateMonth > 0)
+                .GroupBy(m => m.DateMonth)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            // 3️⃣ Inicializa acumuladores (pra controlar o acumulado apenas onde há realizado)
+            decimal acumuladoLucroOperacionalLiquido = 0;
+            decimal acumuladoFluxoCaixaOperacional = 0;
+            decimal acumuladoFluxoCaixaLivre = 0;
+            // (adicione aqui outros acumulados se quiser controlar mais campos)
+
+            // 4️⃣ Monta variação considerando apenas meses que têm Realizado
+            var variacaoMonths = new List<CashFlowResponseDto>();
+
+            foreach (var r in mesesRealizado.OrderBy(m => m.DateMonth))
+            {
+                if (r == null) continue;
+
+                // Busca o orçado do mesmo mês (ou null se não houver)
+                orcadoByMonth.TryGetValue(r.DateMonth, out var o);
+
+                // Somente acumula orçado se existir realizado
+                acumuladoLucroOperacionalLiquido += (o?.LucroOperacionalLiquido ?? 0);
+                acumuladoFluxoCaixaOperacional += (o?.FluxoDeCaixaOperacional ?? 0);
+                acumuladoFluxoCaixaLivre += (o?.FluxoDeCaixaLivre ?? 0);
+
+                variacaoMonths.Add(new CashFlowResponseDto
+                {
+                    Name = r.Name,
+                    DateMonth = r.DateMonth,
+                    LucroOperacionalLiquido = (r.LucroOperacionalLiquido) - (o?.LucroOperacionalLiquido ?? 0),
+                    DepreciacaoAmortizacao = (r.DepreciacaoAmortizacao) - (o?.DepreciacaoAmortizacao ?? 0),
+                    VariacaoNCG = (r.VariacaoNCG) - (o?.VariacaoNCG ?? 0),
+                    Clientes = (r.Clientes) - (o?.Clientes ?? 0),
+                    Estoques = (r.Estoques) - (o?.Estoques ?? 0),
+                    OutrosAtivosOperacionais = (r.OutrosAtivosOperacionais) - (o?.OutrosAtivosOperacionais ?? 0),
+                    Fornecedores = (r.Fornecedores) - (o?.Fornecedores ?? 0),
+                    ObrigacoesTributariasTrabalhistas = (r.ObrigacoesTributariasTrabalhistas) - (o?.ObrigacoesTributariasTrabalhistas ?? 0),
+                    OutrosPassivosOperacionais = (r.OutrosPassivosOperacionais) - (o?.OutrosPassivosOperacionais ?? 0),
+                    FluxoDeCaixaOperacional = (r.FluxoDeCaixaOperacional) - (o?.FluxoDeCaixaOperacional ?? 0),
+                    AtivoNaoCirculante = (r.AtivoNaoCirculante) - (o?.AtivoNaoCirculante ?? 0),
+                    VariacaoInvestimento = (r.VariacaoInvestimento) - (o?.VariacaoInvestimento ?? 0),
+                    VariacaoImobilizado = (r.VariacaoImobilizado) - (o?.VariacaoImobilizado ?? 0),
+                    VariacaoIntangivel = (r.VariacaoIntangivel) - (o?.VariacaoIntangivel ?? 0),
+                    FluxoDeCaixaLivre = (r.FluxoDeCaixaLivre) - (o?.FluxoDeCaixaLivre ?? 0),
+                    CaptacoesAmortizacoesFinanceira = (r.CaptacoesAmortizacoesFinanceira) - (o?.CaptacoesAmortizacoesFinanceira ?? 0),
+                    PassivoNaoCirculante = (r.PassivoNaoCirculante) - (o?.PassivoNaoCirculante ?? 0),
+                    VariacaoPatrimonioLiquido = (r.VariacaoPatrimonioLiquido) - (o?.VariacaoPatrimonioLiquido ?? 0),
+                    FluxoDeCaixaDaEmpresa = (r.FluxoDeCaixaDaEmpresa) - (o?.FluxoDeCaixaDaEmpresa ?? 0),
+                    DisponibilidadeInicioDoPeriodo = (r.DisponibilidadeInicioDoPeriodo) - (o?.DisponibilidadeInicioDoPeriodo ?? 0),
+                    DisponibilidadeFinalDoPeriodo = (r.DisponibilidadeFinalDoPeriodo) - (o?.DisponibilidadeFinalDoPeriodo ?? 0)
+                });
+            }
+
+            // 5️⃣ Monta resposta completa
+            var variacao = new PainelCashFlowResponseDto
+            {
+                CashFlow = new CashFlowGroupedDto
+                {
+                    Months = variacaoMonths
+                }
+            };
+
             return new PainelCashFlowComparativoResponseDto
             {
                 Realizado = realizado,
