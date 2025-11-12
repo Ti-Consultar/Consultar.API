@@ -892,7 +892,7 @@ namespace _2___Application._1_Services.CashFlow
             };
         }
 
-        public async Task<PainelCashFlowComparativoResponseDto> GetCashFlowComparativoRolling(int accountPlanId, int year)
+        public async Task<PainelCashFlowComparativoRollingResponseDto> GetCashFlowComparativoRolling(int accountPlanId, int year)
         {
             // 1️⃣ Monta o painel realizado e orçado
             var realizado = await GetCashFlow(accountPlanId, year);
@@ -1023,7 +1023,7 @@ namespace _2___Application._1_Services.CashFlow
             }
 
             // 4️⃣ Retorna os quatro painéis (Realizado, Orçado, Variação e Rolling)
-            return new PainelCashFlowComparativoResponseDto
+            return new PainelCashFlowComparativoRollingResponseDto
             {
                 Realizado = realizado,
                 Orcado = orcado,

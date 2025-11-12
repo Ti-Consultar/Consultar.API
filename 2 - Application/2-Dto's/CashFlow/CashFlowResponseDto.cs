@@ -69,7 +69,12 @@ namespace _2___Application._2_Dto_s.CashFlow
         public PainelCashFlowResponseDto Realizado { get; set; }
         public PainelCashFlowResponseDto Orcado { get; set; }
         public PainelCashFlowResponseDto Variacao { get; set; }
+    }
+    public class PainelCashFlowComparativoRollingResponseDto
+    {
+        public PainelCashFlowResponseDto Realizado { get; set; }
+        public PainelCashFlowResponseDto Orcado { get; set; }
+        public PainelCashFlowResponseDto Variacao { get; set; }
         public PainelCashFlowResponseDto Rolling { get; set; }
     }
-
 }
