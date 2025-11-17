@@ -342,103 +342,127 @@ public class CompanyService : BaseService
         }
     }
 
- public async Task<ResultValue> GetSimpleCompaniesByGroupId(int groupId)
-{
-    try
+    public async Task<ResultValue> GetSimpleCompaniesByGroupId(int groupId)
     {
-        // 🔹 Busca o grupo
-        var group = await _groupRepository.GetById(groupId);
-        if (group == null)
-            return ErrorResponse(Message.NotFound);
-
-        // 🔹 Busca o plano de contas do grupo
-        var groupAccountPlan = await _accountPlansRepository.GetByGroupId(groupId);
-
-        // 🔹 Busca a permissão do usuário no grupo
-        var groupPermission = await _companyRepository.GetUserPermissionAsync(_currentUserId, groupId, null, null);
-
-        // 🔹 Busca todas as empresas (Companies) do grupo que o usuário tem acesso
-        var companies = await _companyRepository.GetCompaniesByGroupId(_currentUserId, groupId);
-        if (companies == null || !companies.Any())
-            return ErrorResponse(Message.NotFound);
-
-        // 🔹 Monta o objeto de resposta
-        var response = new _2___Application._2_Dto_s.Company.GroupCompanySimpleDto
+        try
         {
-            Id = group.Id,
-            Name = group.Name,
-            AccountPlanId = groupAccountPlan?.Id,
-            Permission = groupPermission != null
-                ? new PermissionResponse
-                {
-                    Id = groupPermission.Id,
-                    Name = groupPermission.Name
-                }
-                : null,
-            Filiais = new List<CompanySimpleAccountPlanDto>()
-        };
+            // 🔹 Busca o grupo
+            var group = await _groupRepository.GetById(groupId);
+            if (group == null)
+                return ErrorResponse(Message.NotFound);
 
-        foreach (var company in companies)
-        {
-            // 🔹 Permissão do usuário nesta empresa
-            var companyPermission = await _companyRepository.GetUserPermissionAsync(_currentUserId, groupId, company.Id, null);
+            // 🔹 Busca o plano de contas do grupo
+            var groupAccountPlan = await _accountPlansRepository.GetByGroupId(groupId);
 
-            // 🔹 Plano de contas da empresa (ou do grupo)
-            var accountPlan = await _accountPlansRepository.GetByCompanyOrGroupId(company.Id, groupId);
+            // 🔹 Busca a permissão do usuário no grupo
+            var groupPermission = await _companyRepository.GetUserPermissionAsync(_currentUserId, groupId, null, null);
 
-            // 🔹 DTO da empresa
-            var companyDto = new CompanySimpleAccountPlanDto
+            // 🔹 Busca todas as empresas (Companies) do grupo que o usuário tem acesso
+            var companies = await _companyRepository.GetCompaniesByGroupId(_currentUserId, groupId);
+
+            // ===================================================================
+            // 🔥 SE NÃO TIVER FILIAIS / EMPRESAS → RETORNAR APENAS O GRUPO
+            // ===================================================================
+            if (companies == null || !companies.Any())
             {
-                Id = company.Id,
-                Name = company.Name,
-                Permission = companyPermission != null
+                var responseGroupOnly = new _2___Application._2_Dto_s.Company.GroupCompanySimpleDto
+                {
+                    Id = group.Id,
+                    Name = group.Name,
+                    AccountPlanId = groupAccountPlan?.Id,
+                    Permission = groupPermission != null
+                        ? new PermissionResponse
+                        {
+                            Id = groupPermission.Id,
+                            Name = groupPermission.Name
+                        }
+                        : null,
+                    Filiais = new List<CompanySimpleAccountPlanDto>() // lista vazia
+                };
+
+                return SuccessResponse(responseGroupOnly);
+            }
+            // ===================================================================
+
+
+            // 🔹 Monta o objeto de resposta completo (com empresas)
+            var response = new _2___Application._2_Dto_s.Company.GroupCompanySimpleDto
+            {
+                Id = group.Id,
+                Name = group.Name,
+                AccountPlanId = groupAccountPlan?.Id,
+                Permission = groupPermission != null
                     ? new PermissionResponse
                     {
-                        Id = companyPermission.Id,
-                        Name = companyPermission.Name
+                        Id = groupPermission.Id,
+                        Name = groupPermission.Name
                     }
                     : null,
-                AccountPlanId = accountPlan?.Id,
-                SubCompanies = new List<SubCompanySimpleAccountPlanDto>()
+                Filiais = new List<CompanySimpleAccountPlanDto>()
             };
 
-            // 🔹 Busca as subempresas (filhas)
-            if (company.SubCompanies != null && company.SubCompanies.Any())
+            foreach (var company in companies)
             {
-                foreach (var sub in company.SubCompanies)
+                // 🔹 Permissão do usuário nesta empresa
+                var companyPermission = await _companyRepository.GetUserPermissionAsync(_currentUserId, groupId, company.Id, null);
+
+                // 🔹 Plano de contas da empresa (ou do grupo)
+                var accountPlan = await _accountPlansRepository.GetByCompanyOrGroupId(company.Id, groupId);
+
+                // 🔹 DTO da empresa
+                var companyDto = new CompanySimpleAccountPlanDto
                 {
-                    // 🔹 Permissão do usuário na subempresa
-                    var subPermission = await _companyRepository.GetUserPermissionAsync(_currentUserId, groupId, company.Id, sub.Id);
+                    Id = company.Id,
+                    Name = company.Name,
+                    Permission = companyPermission != null
+                        ? new PermissionResponse
+                        {
+                            Id = companyPermission.Id,
+                            Name = companyPermission.Name
+                        }
+                        : null,
+                    AccountPlanId = accountPlan?.Id,
+                    SubCompanies = new List<SubCompanySimpleAccountPlanDto>()
+                };
 
-                    // 🔹 Plano de contas da subempresa
-                    var subAccountPlan = await _accountPlansRepository.GetBySubCompanyOrCompanyOrGroupId(sub.Id, company.Id, groupId);
-
-                    companyDto.SubCompanies.Add(new SubCompanySimpleAccountPlanDto
+                // 🔹 Busca as subempresas (filhas)
+                if (company.SubCompanies != null && company.SubCompanies.Any())
+                {
+                    foreach (var sub in company.SubCompanies)
                     {
-                        Id = sub.Id,
-                        Name = sub.Name,
-                        AccountPlanId = subAccountPlan?.Id,
-                        Permission = subPermission != null
-                            ? new PermissionResponse
-                            {
-                                Id = subPermission.Id,
-                                Name = subPermission.Name
-                            }
-                            : null
-                    });
+                        // 🔹 Permissão do usuário na subempresa
+                        var subPermission = await _companyRepository.GetUserPermissionAsync(_currentUserId, groupId, company.Id, sub.Id);
+
+                        // 🔹 Plano de contas da subempresa
+                        var subAccountPlan = await _accountPlansRepository.GetBySubCompanyOrCompanyOrGroupId(sub.Id, company.Id, groupId);
+
+                        companyDto.SubCompanies.Add(new SubCompanySimpleAccountPlanDto
+                        {
+                            Id = sub.Id,
+                            Name = sub.Name,
+                            AccountPlanId = subAccountPlan?.Id,
+                            Permission = subPermission != null
+                                ? new PermissionResponse
+                                {
+                                    Id = subPermission.Id,
+                                    Name = subPermission.Name
+                                }
+                                : null
+                        });
+                    }
                 }
+
+                response.Filiais.Add(companyDto);
             }
 
-            response.Filiais.Add(companyDto);
+            return SuccessResponse(response);
         }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
 
-        return SuccessResponse(response);
-    }
-    catch (Exception ex)
-    {
-        return ErrorResponse(ex);
-    }
-}
 
 
 
