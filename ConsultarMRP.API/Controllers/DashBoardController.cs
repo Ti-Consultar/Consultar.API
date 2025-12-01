@@ -33,7 +33,22 @@ namespace ConsultarMRP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        [HttpGet]
+        [Route("/group/consolidado")]
+        [Authorize()]
+        public async Task<IActionResult> GetGroupDashboardConsolidado([FromQuery] int groupId, [FromQuery] int year)
+        {
+            try
+            {
 
+                var response = await _Service.GetGroupDashboardConsolidado(groupId, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
         [HttpGet]
         [Route("")]
         [Authorize()]

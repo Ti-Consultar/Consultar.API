@@ -302,6 +302,100 @@ namespace _2___Application._1_Services.Results
             return result;
         }
 
+        public async Task<List<DashBoardDto>> GetGroupDashboardConsolidado(int groupId, int year)
+        {
+            // 1. Busca todas as empresas do grupo
+            var companyIds = (await _companyRepository.GetCompanyIdsByGroupId(groupId))
+                .Where(id => id.HasValue)
+                .Select(id => id.Value)
+                .ToList();
+
+            if (!companyIds.Any())
+                return new List<DashBoardDto>();
+
+            var dashboardDictionary = new Dictionary<int, DashBoardDto>();
+
+            foreach (var companyId in companyIds)
+            {
+                var accountPlanId = await _companyRepository.GetAccountPlanIdByCompanyId(companyId);
+                if (!accountPlanId.HasValue)
+                    continue;
+
+                var companyDashboard = await GetDashboard(accountPlanId.Value, year);
+
+                foreach (var m in companyDashboard)
+                {
+                    if (!dashboardDictionary.ContainsKey(m.DateMonth))
+                    {
+                        dashboardDictionary[m.DateMonth] = new DashBoardDto
+                        {
+                            Name = $"Consolidado Grupo {groupId}",
+                            DateMonth = m.DateMonth,
+
+                            ReceitaLiquida = m.ReceitaLiquida,
+
+                            // Margens por enquanto zeradas (serão recalculadas)
+                            MargemBruta = 0,
+                            MargemLiquida = 0,
+
+                            VariacaoReceitaLiquida = 0,
+                            VariacaoMargemBruta = 0,
+                            VariacaoMargemLiquida = 0
+                        };
+                    }
+                    else
+                    {
+                        dashboardDictionary[m.DateMonth].ReceitaLiquida += m.ReceitaLiquida;
+                    }
+
+                    // Armazenar valores temporários para ponderação
+                    dashboardDictionary[m.DateMonth].MargemBruta += m.MargemBruta * m.ReceitaLiquida;
+                    dashboardDictionary[m.DateMonth].MargemLiquida += m.MargemLiquida * m.ReceitaLiquida;
+                }
+            }
+
+            // 2. Recalcula margens consolidadas (PONDERADAS)
+            foreach (var item in dashboardDictionary.Values)
+            {
+                var receita = item.ReceitaLiquida;
+
+                if (receita != 0)
+                {
+                    item.MargemBruta = item.MargemBruta / receita;
+                    item.MargemLiquida = item.MargemLiquida / receita;
+                }
+                else
+                {
+                    item.MargemBruta = 0;
+                    item.MargemLiquida = 0;
+                }
+            }
+
+            // 3. Calcula variações mês a mês
+            DashBoardDto? anterior = null;
+            var resultado = dashboardDictionary
+                .OrderBy(x => x.Key)
+                .Select(kvp =>
+                {
+                    var atual = kvp.Value;
+
+                    if (anterior != null)
+                    {
+                        atual.VariacaoReceitaLiquida = anterior.ReceitaLiquida != 0
+                            ? (atual.ReceitaLiquida - anterior.ReceitaLiquida) / anterior.ReceitaLiquida * 100
+                            : 0;
+
+                        atual.VariacaoMargemBruta = atual.MargemBruta - anterior.MargemBruta;
+                        atual.VariacaoMargemLiquida = atual.MargemLiquida - anterior.MargemLiquida;
+                    }
+
+                    anterior = atual;
+                    return atual;
+                })
+                .ToList();
+
+            return resultado;
+        }
 
 
         public async Task<List<DashBoardDto>> GetDashboard(int accountPlanId, int year)

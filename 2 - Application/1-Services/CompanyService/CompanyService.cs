@@ -155,6 +155,7 @@ public class CompanyService : BaseService
         if (!string.IsNullOrWhiteSpace(dto.Telefone)) entity.Telefone = dto.Telefone;
         if (!string.IsNullOrWhiteSpace(dto.Email)) entity.Email = dto.Email;
     }
+
     public async Task<ResultValue> DeleteCompany(int id, int groupId)
     {
         try
