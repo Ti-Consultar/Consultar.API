@@ -127,6 +127,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<ParameterRepository>();
             services.AddScoped<BudgetRepository>();
             services.AddScoped<BudgetDataRepository>();
+            services.AddScoped<BalanceteImportConfigRepository>();
      
             #endregion
              
