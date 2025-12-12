@@ -318,8 +318,24 @@ namespace ConsultarMRP.API.Controllers
             }
         }
 
-         
-   
+        [HttpGet]
+        [Route("/demonstracao-consolidado")]
+    
+        public async Task<IActionResult> BuildDemonstracaoResultadoSimplificado([FromQuery] int accountPlanId, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.BuildDemonstracaoResultadoSimplificado(accountPlanId, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            { 
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
         #endregion
     }
 }

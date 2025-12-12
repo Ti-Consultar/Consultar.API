@@ -67,12 +67,44 @@ namespace _2___Application._2_Dto_s.TotalizerClassification
         public PainelBalancoContabilRespone Variacao { get; set; }
     }
 
-  
-   
-    
+    public class DreComparativoAnualResponse
+    {
+        public int Ano { get; set; }
+        public List<DreComparativoMesResponse> Meses { get; set; }
+    }
 
-   
+    public class DreComparativoMesResponse
+    {
+        public int Month { get; set; }
+        public string MonthName { get; set; }
 
+        public decimal ReceitaLiquidaRealizado { get; set; }
+        public decimal ReceitaLiquidaOrcado { get; set; }
+
+        public decimal CustosRealizado { get; set; }
+        public decimal CustosOrcado { get; set; }
+
+        public decimal DespesasOperacionaisRealizado { get; set; }
+        public decimal DespesasOperacionaisOrcado { get; set; }
+
+        public decimal LucroLiquidoRealizado { get; set; }
+        public decimal LucroLiquidoOrcado { get; set; }
+    }
+
+
+    public class DREComparativoItemDto
+    {
+        public string Name { get; set; }
+        public decimal Realizado { get; set; }
+        public decimal Orcado { get; set; }
+    }
+
+    public class DREComparativosItemDto
+    {
+        public string Name { get; set; }
+        public List<decimal> ValoresRealizados { get; set; }
+        public List<decimal> ValoresOrcados { get; set; }
+    }
 
 
 

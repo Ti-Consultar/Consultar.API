@@ -361,6 +361,49 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 return ErrorResponse(ex);
             }
         }
+        public async Task<ResultValue> ImportBalanceteDataDinamic(int balanceteId, BalanceteColumnMap dto)
+        {
+            try
+            {
+                if (dto.File == null || dto.File.Length == 0)
+                    return ErrorResponse("Arquivo inválido.");
+
+                var balancete = await _repository.GetBalanceteById(balanceteId);
+                if (balancete == null)
+                    return ErrorResponse(Message.NotFound);
+
+                var extension = Path.GetExtension(dto.File.FileName).ToLower();
+                var list = new List<BalanceteDataModel>();
+
+                using var stream = new MemoryStream();
+                await dto.File.CopyToAsync(stream);
+
+                if (extension == ".csv")
+                    list = ReadFromCsvDinamic(stream, balanceteId, dto);
+
+                else if (extension == ".xlsx")
+                    list = ReadFromXlsxDinamic(stream, balanceteId, dto);
+
+                else
+                    return ErrorResponse("Formato de arquivo não suportado. Envie um CSV ou XLSX.");
+
+                // remove duplicados por CostCenter
+                list = list
+                    .GroupBy(x => x.CostCenter)
+                    .Select(g => g.First())
+                    .ToList();
+
+                await _balanceteDataRepository.AddRangeAsync(list);
+
+                return SuccessResponse("Dados importados com sucesso.");
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+
 
 
         public async Task<ResultValue> GetByBalanceteIdDate(int accountplanId, int year, int month)
@@ -745,13 +788,174 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 }).ToList()
             };
         }
-        
+
 
         #endregion
 
         #endregion
 
         #endregion
+
+        private List<BalanceteDataModel> ReadFromXlsxDinamic(Stream stream, int balanceteId, BalanceteColumnMap map)
+        {
+            var list = new List<BalanceteDataModel>();
+            stream.Position = 0;
+
+            using var workbook = new XLWorkbook(stream);
+            var worksheet = workbook.Worksheet(1);
+
+            int rowNumber = map.StartRow;
+            var row = worksheet.Row(rowNumber);
+
+            int emptyRowCount = 0; // contador de linhas vazias seguidas
+
+            while (true)
+            {
+                // 🔹 Se linha inteira está vazia
+                if (row.IsEmpty())
+                {
+                    emptyRowCount++;
+
+                    // 🔥 se encontrou 3 linhas vazias seguidas, é o fim real do arquivo
+                    if (emptyRowCount >= 3)
+                        break;
+
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                // reset porque achou linha com dados
+                emptyRowCount = 0;
+
+                var costCenter = row.Cell(map.CostCenter).GetFormattedString().Trim();
+                var name = row.Cell(map.Name).GetFormattedString().Trim();
+
+                // 🔹 Se as colunas principais estão vazias, ignora linha
+                if (string.IsNullOrWhiteSpace(costCenter) && string.IsNullOrWhiteSpace(name))
+                {
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                var model = new BalanceteDataModel
+                {
+                    BalanceteId = balanceteId,
+                    CostCenter = costCenter,
+                    Name = name,
+                    InitialValue = ParseDecimalWithDC(row.Cell(map.InitialValue).GetFormattedString()),
+                    Debit = ParseDecimalWithDC(row.Cell(map.Debit).GetFormattedString()),
+                    Credit = ParseDecimalWithDC(row.Cell(map.Credit).GetFormattedString()),
+                    FinalValue = ParseDecimalWithDC(row.Cell(map.FinalValue).GetFormattedString()),
+                    BudgetedAmount = false
+                };
+
+                list.Add(model);
+
+                row = row.RowBelow();
+            }
+
+            return list;
+        }
+
+
+
+
+        private List<BalanceteDataModel> ReadFromCsvDinamic(Stream stream, int balanceteId, BalanceteColumnMap map)
+        {
+            var list = new List<BalanceteDataModel>();
+            stream.Position = 0;
+
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+            using var csv = new CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                HasHeaderRecord = false,
+                Delimiter = ";"
+            });
+
+            int currentRow = 0;
+            int emptyRowCount = 0; // contador de linhas vazias seguidas
+
+            while (csv.Read())
+            {
+                currentRow++;
+
+                // só começa a partir da linha selecionada
+                if (currentRow < map.StartRow)
+                    continue;
+
+                var costCenter = csv.GetField(map.CostCenter - 1)?.Trim();
+                var name = csv.GetField(map.Name - 1)?.Trim();
+
+                bool emptyLine = string.IsNullOrWhiteSpace(costCenter) && string.IsNullOrWhiteSpace(name);
+
+                // 🔹 Linha vazia
+                if (emptyLine)
+                {
+                    emptyRowCount++;
+
+                    // 🔥 Para após 3 vazias seguidas
+                    if (emptyRowCount >= 3)
+                        break;
+
+                    continue;
+                }
+
+                // 🔹 Achou linha com conteúdo → reseta
+                emptyRowCount = 0;
+
+                var model = new BalanceteDataModel
+                {
+                    BalanceteId = balanceteId,
+                    CostCenter = costCenter,
+                    Name = name,
+                    InitialValue = ParseDecimalWithDC(csv.GetField(map.InitialValue - 1)),
+                    Debit = ParseDecimalWithDC(csv.GetField(map.Debit - 1)),
+                    Credit = ParseDecimalWithDC(csv.GetField(map.Credit - 1)),
+                    FinalValue = ParseDecimalWithDC(csv.GetField(map.FinalValue - 1)),
+                    BudgetedAmount = false
+                };
+
+                list.Add(model);
+            }
+
+            return list;
+        }
+
+
+
+        private decimal ParseDecimalWithDC(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return 0m;
+
+            input = input.Trim();
+
+            // Detecta D ou C no final
+            char last = input[^1];
+            bool hasDC = last == 'D' || last == 'd' || last == 'C' || last == 'c';
+
+            string numeric = hasDC ? input[..^1].Trim() : input;
+
+            // Remove pontos de milhar
+            numeric = numeric.Replace(".", "");
+
+            // Troca vírgula decimal por ponto
+            numeric = numeric.Replace(",", ".");
+
+            if (!decimal.TryParse(numeric, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal value))
+                return 0m;
+
+            // Se tiver D/C, aplica regra
+            if (hasDC)
+            {
+                if (last == 'C' || last == 'c')
+                    value *= -1;
+            }
+
+            return value;
+        }
+
+
 
 
 

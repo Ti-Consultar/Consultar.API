@@ -145,6 +145,21 @@ namespace _5_API.Controllers
 
             return Ok(result);
         }
+
+        // [Authorize]
+        [HttpPost("import/dinamic")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> ImportBalanceteDataDinamic([FromQuery] int balanceteId, BalanceteColumnMap dto)
+        {
+            var result = await _service.ImportBalanceteDataDinamic( balanceteId,dto);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+      
         // [Authorize]
         [HttpGet("{balanceteId}/data")]
         [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
