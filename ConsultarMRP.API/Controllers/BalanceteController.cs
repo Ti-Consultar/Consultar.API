@@ -159,7 +159,57 @@ namespace _5_API.Controllers
             return Ok(result);
         }
 
-      
+        // [Authorize]
+        [HttpPost("insert-config/balancete")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> CreateConfigBalanceteImport( InsertBalanceteImportConfig dto)
+        {
+            var result = await _service.CreateConfigBalanceteImport(dto);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+        // [Authorize]
+        [HttpPut("update-config/balancete")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> UpdateConfigBalanceteImport( UpdateBalanceteImportConfig dto)
+        {
+            var result = await _service.UpdateConfigBalanceteImport( dto);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        // [Authorize]
+        [HttpGet("accountplan/{accountplanId}/config/balancete")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetConfigBalanceteImportByAccountPlanId(int accountplanId)
+        {
+            var result = await _service.GetConfigBalanceteImportByAccountPlanId(accountplanId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        // [Authorize]
+        [HttpGet("accountplan/{accountplanId}/config/exists")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> ExistsConfigBalanceteImport(int accountplanId)
+        {
+            var result = await _service.ExistsConfigBalanceteImport(accountplanId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
         // [Authorize]
         [HttpGet("{balanceteId}/data")]
         [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]

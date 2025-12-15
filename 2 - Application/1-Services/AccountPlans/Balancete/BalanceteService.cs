@@ -23,12 +23,14 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
         private readonly AccountPlansRepository _accountPlansRepository;
         private readonly BalanceteRepository _repository;
         private readonly BalanceteDataRepository _balanceteDataRepository;
+        private readonly BalanceteImportConfigRepository _importConfigRepo;
 
 
         public BalanceteService(
             AccountPlansRepository accountPlansRepository,
             BalanceteRepository repository,
             BalanceteDataRepository balanceteDataRepository,
+            BalanceteImportConfigRepository importConfigRepo,
 
 
 
@@ -37,6 +39,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             _accountPlansRepository = accountPlansRepository;
             _repository = repository;
             _balanceteDataRepository = balanceteDataRepository;
+            _importConfigRepo = importConfigRepo;
 
 
             _currentUserId = GetCurrentUserId();
@@ -75,7 +78,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
                 await _repository.AddAsync(model);
 
-                return SuccessResponse( model);
+                return SuccessResponse(model);
             }
             catch (Exception ex)
             {
@@ -172,7 +175,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             {
                 var balancete = await _repository.GetByIdDelete(id);
 
-                if (balancete == null )
+                if (balancete == null)
                     return ErrorResponse(Message.NotFound);
 
                 await _repository.DeletePermanently(id);
@@ -187,7 +190,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
         public async Task<ResultValue> GetAccountPlanWithBalancetesMonth(int accountPlanId)
         {
-           
+
             var balancetes = await _repository.GetAccountPlanWithBalancetesMonthAsync(accountPlanId);
 
             if (balancetes == null || !balancetes.Any())
@@ -206,7 +209,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                         DateYear = b.DateYear,
                         Status = b.Status.GetDescription(),
                         DateCreate = b.DateCreate
-                      
+
                     })
                     .ToList()
             };
@@ -214,7 +217,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             return SuccessResponse(response);
         }
 
-      
+
 
         public async Task<ResultValue> GetAccountPlanWithBalancetes(int accountPlanId, char tipo)
         {
@@ -303,11 +306,11 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             Id = x.Id,
             DateCreate = x.DateCreate,
             DateMonth = x.DateMonth,
-            DateYear = x.DateYear, 
+            DateYear = x.DateYear,
             Status = x.Status,
             AccountPlans = new AccountPlanResponse
             {
-                Id = x.AccountPlans.Id, 
+                Id = x.AccountPlans.Id,
             }
         };
         #endregion
@@ -351,7 +354,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                     .Select(g => g.First())
                     .ToList();
 
-               
+
                 await _balanceteDataRepository.AddRangeAsync(list);
 
                 return SuccessResponse("Dados importados com sucesso.");
@@ -372,6 +375,50 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 if (balancete == null)
                     return ErrorResponse(Message.NotFound);
 
+                // 🔥 1. Ver se já existe configuração salva
+                var savedConfig = await _importConfigRepo.GetByAccountPlanIdAsync(balancete.AccountPlansId);
+
+                BalanceteColumnMap mapToUse = dto;
+
+                if (savedConfig != null)
+                {
+                   
+
+                    // Monta map a partir do salvo
+                    mapToUse = new BalanceteColumnMap
+                    {
+                        StartRow = savedConfig.StartRow,
+                        CostCenter = savedConfig.CostCenterCol,
+                        Name = savedConfig.NameCol,
+                        InitialValue = savedConfig.InitialValueCol,
+                        Debit = savedConfig.DebitCol,
+                        Credit = savedConfig.CreditCol,
+                        FinalValue = savedConfig.FinalValueCol,
+                        File = dto.File
+                    };
+                }
+                else
+                {
+                    // 🔥 1ª vez → salvar configuração
+                    if (savedConfig == null)
+                    {
+                        await _importConfigRepo.AddAsync(new BalanceteImportConfig
+                        {
+                            AccountPlanId = balancete.AccountPlansId,
+
+                            StartRow = dto.StartRow,
+                            CostCenterCol = dto.CostCenter,
+                            NameCol = dto.Name,
+                            InitialValueCol = dto.InitialValue,
+                            DebitCol = dto.Debit,
+                            CreditCol = dto.Credit,
+                            FinalValueCol = dto.FinalValue,
+                            CreatedAt = DateTime.Now
+                        });
+                    }
+                }
+
+                // 🔥 2. Processa igual antes
                 var extension = Path.GetExtension(dto.File.FileName).ToLower();
                 var list = new List<BalanceteDataModel>();
 
@@ -379,15 +426,12 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 await dto.File.CopyToAsync(stream);
 
                 if (extension == ".csv")
-                    list = ReadFromCsvDinamic(stream, balanceteId, dto);
-
+                    list = ReadFromCsvDinamic(stream, balanceteId, mapToUse);
                 else if (extension == ".xlsx")
-                    list = ReadFromXlsxDinamic(stream, balanceteId, dto);
-
+                    list = ReadFromXlsxDinamic(stream, balanceteId, mapToUse);
                 else
-                    return ErrorResponse("Formato de arquivo não suportado. Envie um CSV ou XLSX.");
+                    return ErrorResponse("Formato inválido.");
 
-                // remove duplicados por CostCenter
                 list = list
                     .GroupBy(x => x.CostCenter)
                     .Select(g => g.First())
@@ -404,7 +448,135 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
         }
 
 
+        public async Task<ResultValue> CreateConfigBalanceteImport(InsertBalanceteImportConfig dto)
+        {
+            try
+            {
+                var user = GetCurrentUserId();
 
+                // Verifica se o plano de contas já existe
+                var exists = await _importConfigRepo.ExistsAccountPlanAsync(dto.AccountPlanId);
+
+                if (exists)
+                {
+                    return ErrorResponse(Message.ExistsAccountPlans);
+                }
+
+
+                var model = new BalanceteImportConfig
+                {
+                    AccountPlanId = dto.AccountPlanId,
+                    StartRow = dto.StartRow,
+                    CostCenterCol = dto.CostCenterCol,
+                    NameCol = dto.NameCol,
+                    InitialValueCol = dto.InitialValueCol,
+                    DebitCol = dto.DebitCol,
+                    CreditCol = dto.CreditCol,
+                    FinalValueCol = dto.FinalValueCol,
+                    CreatedAt = DateTime.Now
+                };
+
+                await _importConfigRepo.AddAsync(model);
+
+                return SuccessResponse(Message.Success);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+        public async Task<ResultValue> UpdateConfigBalanceteImport(UpdateBalanceteImportConfig dto)
+        {
+            try
+            {
+                var user = GetCurrentUserId();
+
+                // 1. Busca configuração existente
+                var existingConfig = await _importConfigRepo
+                    .GetByAccountPlanIdAsync(dto.AccountPlanId);
+
+                if (existingConfig == null)
+                {
+                    return ErrorResponse(Message.NotFound);
+                }
+
+                // 2. Remove configuração atual
+                await _importConfigRepo.DeletePermanently(existingConfig.Id);
+
+                // 3. Cria novo modelo
+                var model = new BalanceteImportConfig
+                {
+                    AccountPlanId = dto.AccountPlanId,
+                    StartRow = dto.StartRow,
+                    CostCenterCol = dto.CostCenterCol,
+                    NameCol = dto.NameCol,
+                    InitialValueCol = dto.InitialValueCol,
+                    DebitCol = dto.DebitCol,
+                    CreditCol = dto.CreditCol,
+                    FinalValueCol = dto.FinalValueCol,
+                    CreatedAt = DateTime.Now
+                };
+
+                await _importConfigRepo.AddAsync(model);
+
+                return SuccessResponse(Message.Success);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+        public async Task<ResultValue> GetConfigBalanceteImportByAccountPlanId(int accountPlanId)
+        {
+            try
+            {
+                var user = GetCurrentUserId();
+
+                var config = await _importConfigRepo
+                    .GetByAccountPlanIdAsync(accountPlanId);
+
+                if (config == null)
+                {
+                    return ErrorResponse(Message.NotFound);
+                }
+
+                var result = new
+                {
+                    config.Id,
+                    config.AccountPlanId,
+                    config.StartRow,
+                    config.CostCenterCol,
+                    config.NameCol,
+                    config.InitialValueCol,
+                    config.DebitCol,
+                    config.CreditCol,
+                    config.FinalValueCol
+                };
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+        public async Task<ResultValue> ExistsConfigBalanceteImport(int accountPlanId)
+        {
+            try
+            {
+                var user = GetCurrentUserId();
+
+                var exists = await _importConfigRepo
+                    .ExistsAccountPlanAsync(accountPlanId);
+
+                return SuccessResponse(exists);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
 
         public async Task<ResultValue> GetByBalanceteIdDate(int accountplanId, int year, int month)
         {
@@ -435,7 +607,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 if (balancete == null || !balancete.Any())
                     return ErrorResponse(Message.NotFound);
 
-                var result = MapToBalanceteDataDto(balancete); 
+                var result = MapToBalanceteDataDto(balancete);
 
                 return SuccessResponse(result);
             }
@@ -478,7 +650,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
         {
             try
             {
-               
+
 
                 var data = await _balanceteDataRepository.GetByBalanceteDataByCostCenter(balanceteId, search);
 
