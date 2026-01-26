@@ -275,6 +275,57 @@ namespace _5_API.Controllers
 
             return Ok(result);
         }
-        #endregion
+        public class ExtractBranchesRequest
+        {
+            public IFormFile File { get; set; }
+
+            public int  StartRow { get; set; }
+
+            public int CostCenter { get; set; }
+            public int Name { get; set; }
+            public int InitialValue { get; set; }
+            public int Debit { get; set; }
+            public int Credit { get; set; }
+            public int FinalValue { get; set; }
+
+            public BalanceteColumnMap ToMap()
+            {
+                return new BalanceteColumnMap
+                {
+                    StartRow = StartRow,
+                    CostCenter = CostCenter,
+                    Name = Name,
+                    InitialValue = InitialValue,
+                    Debit = Debit,
+                    Credit = Credit,
+                    FinalValue = FinalValue
+                };
+            }
+        }
+
+
+        [HttpPost("extrair/filiais")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ExtractBranchesFromFile(
+     [FromForm] ExtractBranchesRequest request)
+        {
+            if (request?.File == null || request.File.Length == 0)
+                return BadRequest("Arquivo não informado.");
+
+            var map = request.ToMap();
+
+            using var stream = request.File.OpenReadStream();
+
+            var branches = await _service.ExtractBranchesAsync(
+                stream,
+                request.File.FileName,
+                map);
+
+            return Ok(branches);
+        }
+
+
+
     }
 }
+    #endregion

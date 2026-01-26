@@ -44,11 +44,11 @@ public class CompanyService : BaseService
             var user = await GetCurrentUserAsync();
 
             // Verifica se o CNPJ já existe
-            var cnpjExists = await _businessEntityRepository.CnpjExists(createCompanyDto.BusinessEntity.Cnpj);
-            if (cnpjExists)
-            {
-                return SuccessResponse(Message.CNPJAlreadyRegistered);
-            }
+            //var cnpjExists = await _businessEntityRepository.CnpjExists(createCompanyDto.BusinessEntity.Cnpj);
+            //if (cnpjExists)
+            //{
+            //    return SuccessResponse(Message.CNPJAlreadyRegistered);
+            //}
 
             // Cria a entidade empresarial
             var businessEntity = new BusinessEntity
@@ -595,10 +595,10 @@ public class CompanyService : BaseService
             if (company == null)
                 return SuccessResponse(Message.NotFound);
 
-            // Verifica se o CNPJ já está cadastrado
-            var cnpjExists = await _businessEntityRepository.CnpjExists(createSubCompanyDto.BusinessEntity.Cnpj);
-            if (cnpjExists)
-                return SuccessResponse(Message.CNPJAlreadyRegistered);
+            //// Verifica se o CNPJ já está cadastrado
+            //var cnpjExists = await _businessEntityRepository.CnpjExists(createSubCompanyDto.BusinessEntity.Cnpj);
+            //if (cnpjExists)
+            //    return SuccessResponse(Message.CNPJAlreadyRegistered);
 
             // Cria a entidade empresarial
             var businessEntity = new BusinessEntity

@@ -1614,10 +1614,6 @@ namespace _2___Application._1_Services
                         : 0;
 
 
-
-
-
-
                 months.Add(new MonthPainelContabilRespone
                 {
                     Id = balancete.Id,

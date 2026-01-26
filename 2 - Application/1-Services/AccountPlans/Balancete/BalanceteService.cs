@@ -1,20 +1,24 @@
 ﻿using _2___Application._2_Dto_s.AccountPlan;
 using _2___Application._2_Dto_s.AccountPlan.Balancete;
+using _2___Application._2_Dto_s.Company;
+using _2___Application._2_Dto_s.Company.SubCompany;
+using _2___Application._2_Dto_s.Group;
 using _2___Application.Base;
 using _3_Domain._1_Entities;
 using _3_Domain._2_Enum_s;
 using _4_InfraData._1_Repositories;
 using _4_InfraData._2_AppSettings;
-using System.Text;
-using Microsoft.AspNetCore.Http;
-using System.Globalization;
-using CsvHelper;
-using ClosedXML.Excel;
-using _2___Application._2_Dto_s.Company.SubCompany;
-using _2___Application._2_Dto_s.Company;
-using _2___Application._2_Dto_s.Group;
 using _4_InfraData._5_ConfigEnum;
+using ClosedXML.Excel;
+using CsvHelper;
+using DocumentFormat.OpenXml.Office.Word;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.WebEncoders.Testing;
 using Microsoft.IdentityModel.Tokens;
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
+using static _2___Application._1_Services.AccountPlans.Balancete.BalanceteService;
 
 namespace _2___Application._1_Services.AccountPlans.Balancete
 {
@@ -382,7 +386,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
                 if (savedConfig != null)
                 {
-                   
+
 
                     // Monta map a partir do salvo
                     mapToUse = new BalanceteColumnMap
@@ -1126,6 +1130,224 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
             return value;
         }
+
+        public class ExternalBranchDto
+        {
+            public int ExternalCode { get; set; }
+            public string Name { get; set; }
+        }
+
+
+        public IEnumerable<ExternalBranchDto> ExtractBranchesFromBalancete(
+    IEnumerable<string> linhas)
+        {
+            var branches = new Dictionary<int, ExternalBranchDto>();
+
+            foreach (var linha in linhas)
+            {
+                if (!linha.Contains("FILIAL:", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                // Exemplo: FILIAL: 9 - FIAT - UNAI
+                var match = Regex.Match(
+                    linha,
+                    @"FILIAL:\s*(\d+)\s*-\s*.*?\s*-\s*(.+)$",
+                    RegexOptions.IgnoreCase);
+
+                if (!match.Success)
+                    continue;
+
+                var externalCode = int.Parse(match.Groups[1].Value);
+                var name = match.Groups[2].Value.Trim();
+
+                if (!branches.ContainsKey(externalCode))
+                {
+                    branches.Add(externalCode, new ExternalBranchDto
+                    {
+                        ExternalCode = externalCode,
+                        Name = name
+                    });
+                }
+            }
+
+            return branches.Values;
+        }
+
+
+
+        public async Task<IEnumerable<ExternalBranchDto>> ExtractBranchesAsync(
+    Stream stream,
+    string fileName,
+    BalanceteColumnMap map)
+        {
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
+
+            if (string.IsNullOrWhiteSpace(fileName))
+                throw new ArgumentNullException(nameof(fileName));
+
+            var extension = Path.GetExtension(fileName).ToLowerInvariant();
+
+            return extension switch
+            {
+                ".csv" => await ExtractBranchesFromCsvAsync(stream, map),
+                ".xlsx" => await Task.Run(() => ExtractBranchesFromXlsxDinamic(stream, map)),
+
+                _ => throw new NotSupportedException(
+                    $"Formato de arquivo não suportado: {extension}")
+            };
+        }
+
+        public async Task<IEnumerable<ExternalBranchDto>> ExtractBranchesFromCsvAsync(
+    Stream stream,
+    BalanceteColumnMap map)
+        {
+            return await Task.Run(() =>
+            {
+                var branches = new Dictionary<int, ExternalBranchDto>();
+
+                stream.Position = 0;
+
+                using var reader = new StreamReader(stream, Encoding.UTF8);
+                using var csv = new CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    HasHeaderRecord = false,
+                    Delimiter = ";"
+                });
+
+                int currentRow = 0;
+                int emptyRowCount = 0;
+
+                while (csv.Read())
+                {
+                    currentRow++;
+
+                    if (currentRow < map.StartRow)
+                        continue;
+
+                    var descricao = csv.GetField(map.Name - 1)?.Trim();
+
+                    if (string.IsNullOrWhiteSpace(descricao))
+                    {
+                        emptyRowCount++;
+
+                        if (emptyRowCount >= 3)
+                            break;
+
+                        continue;
+                    }
+
+                    emptyRowCount = 0;
+
+                    if (!descricao.Contains("FILIAL", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var match = Regex.Match(
+                        descricao,
+                        @"FILIAL\s*[:\-]\s*(\d+)\s*-\s*(.+)$",
+                        RegexOptions.IgnoreCase);
+
+                    if (!match.Success)
+                        continue;
+
+                    var externalCode = int.Parse(match.Groups[1].Value);
+                    var branchName = match.Groups[2].Value.Trim();
+
+                    if (!branches.ContainsKey(externalCode))
+                    {
+                        branches.Add(externalCode, new ExternalBranchDto
+                        {
+                            ExternalCode = externalCode,
+                            Name = branchName
+                        });
+                    }
+                }
+
+                return branches.Values;
+            });
+        }
+
+
+
+        private IEnumerable<ExternalBranchDto> ExtractBranchesFromXlsxDinamic(
+            Stream stream,
+            BalanceteColumnMap map)
+        {
+            var branches = new Dictionary<int, ExternalBranchDto>();
+
+            stream.Position = 0;
+
+            using var workbook = new XLWorkbook(stream);
+            var worksheet = workbook.Worksheet(1);
+
+            int emptyRowCount = 0;
+
+            var row = worksheet.Row(map.StartRow);
+
+            while (true)
+            {
+                // 🔹 Linha completamente vazia
+                if (row.IsEmpty())
+                {
+                    emptyRowCount++;
+
+                    if (emptyRowCount >= 3)
+                        break;
+
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                // achou conteúdo → reseta
+                emptyRowCount = 0;
+
+                // 🔹 Lê apenas a coluna da descrição
+                var descricao = row.Cell(map.Name)
+                                   .GetFormattedString()
+                                   ?.Trim();
+
+                if (string.IsNullOrWhiteSpace(descricao))
+                {
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                // 🔍 Procura FILIAL
+                if (!descricao.Contains("FILIAL", StringComparison.OrdinalIgnoreCase))
+                {
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                var match = Regex.Match(
+                    descricao,
+                    @"FILIAL\s*[:\-]\s*(\d+)\s*-\s*(.+)$",
+                    RegexOptions.IgnoreCase);
+
+                if (!match.Success)
+                {
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                var externalCode = int.Parse(match.Groups[1].Value);
+                var branchName = match.Groups[2].Value.Trim();
+
+                if (!branches.ContainsKey(externalCode))
+                {
+                    branches.Add(externalCode, new ExternalBranchDto
+                    {
+                        ExternalCode = externalCode,
+                        Name = branchName
+                    });
+                }
+
+                row = row.RowBelow();
+            }
+
+            return branches.Values;
+        }
+
 
 
 
