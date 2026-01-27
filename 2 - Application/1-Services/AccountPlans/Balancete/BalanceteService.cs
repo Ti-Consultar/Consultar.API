@@ -1109,19 +1109,19 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             char last = input[^1];
             bool hasDC = last is 'D' or 'd' or 'C' or 'c';
 
-            string numeric = hasDC ? input[..^1].Trim() : input;
+            string numeric = hasDC ? input[..^1] : input;
 
-            // Remove separador de milhar
-            numeric = numeric.Replace(".", "");
+            // 🔥 Remove QUALQUER coisa que não seja número, vírgula ou sinal
+            numeric = Regex.Replace(numeric, @"[^\d,\-]", "");
 
-            // Troca vírgula por ponto
+            // Converte padrão BR → Invariant
             numeric = numeric.Replace(",", ".");
 
             if (!decimal.TryParse(
-                    numeric,
-                    NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign,
-                    CultureInfo.InvariantCulture,
-                    out decimal value))
+                numeric,
+                NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign,
+                CultureInfo.InvariantCulture,
+                out decimal value))
             {
                 return 0m;
             }
@@ -1132,6 +1132,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
             return value;
         }
+
 
 
         public class ExternalBranchDto
