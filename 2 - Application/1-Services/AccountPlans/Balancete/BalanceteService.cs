@@ -972,65 +972,96 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
         #endregion
 
-        private List<BalanceteDataModel> ReadFromXlsxDinamic(Stream stream, int balanceteId, BalanceteColumnMap map)
+private List<BalanceteDataModel> ReadFromXlsxDinamic(
+    Stream stream,
+    int balanceteId,
+    BalanceteColumnMap map)
+    {
+        var list = new List<BalanceteDataModel>();
+        stream.Position = 0;
+
+        using var workbook = new XLWorkbook(stream);
+        var worksheet = workbook.Worksheet(1);
+
+        int rowNumber = map.StartRow;
+        var row = worksheet.Row(rowNumber);
+
+        int emptyRowCount = 0;
+
+        while (true)
         {
-            var list = new List<BalanceteDataModel>();
-            stream.Position = 0;
-
-            using var workbook = new XLWorkbook(stream);
-            var worksheet = workbook.Worksheet(1);
-
-            int rowNumber = map.StartRow;
-            var row = worksheet.Row(rowNumber);
-
-            int emptyRowCount = 0; // contador de linhas vazias seguidas
-
-            while (true)
+            // encerra após 3 linhas vazias seguidas
+            if (row.IsEmpty())
             {
-                // 🔹 Se linha inteira está vazia
-                if (row.IsEmpty())
-                {
-                    emptyRowCount++;
-
-                    // 🔥 se encontrou 3 linhas vazias seguidas, é o fim real do arquivo
-                    if (emptyRowCount >= 3)
-                        break;
-
-                    row = row.RowBelow();
-                    continue;
-                }
-
-                // reset porque achou linha com dados
-                emptyRowCount = 0;
-
-                var costCenter = row.Cell(map.CostCenter).GetFormattedString().Trim();
-                var name = row.Cell(map.Name).GetFormattedString().Trim();
-
-                // 🔹 Se as colunas principais estão vazias, ignora linha
-                if (string.IsNullOrWhiteSpace(costCenter) && string.IsNullOrWhiteSpace(name))
-                {
-                    row = row.RowBelow();
-                    continue;
-                }
-
-                var model = new BalanceteDataModel
-                {
-                    BalanceteId = balanceteId,
-                    CostCenter = costCenter,
-                    Name = name,
-                    InitialValue = row.Cell(map.InitialValue).GetValue<decimal>(),
-                    Debit = row.Cell(map.Debit).GetValue<decimal>(),
-                    Credit = row.Cell(map.Credit).GetValue<decimal>(),
-                    FinalValue = row.Cell(map.FinalValue).GetValue<decimal>(),
-                    BudgetedAmount = false
-                };
-
-                list.Add(model);
+                emptyRowCount++;
+                if (emptyRowCount >= 3)
+                    break;
 
                 row = row.RowBelow();
+                continue;
             }
 
-            return list;
+            emptyRowCount = 0;
+
+            var costCenter = row.Cell(map.CostCenter).GetString().Trim();
+            var name = row.Cell(map.Name).GetString().Trim();
+
+            if (string.IsNullOrWhiteSpace(costCenter) &&
+                string.IsNullOrWhiteSpace(name))
+            {
+                row = row.RowBelow();
+                continue;
+            }
+
+            var model = new BalanceteDataModel
+            {
+                BalanceteId = balanceteId,
+                CostCenter = costCenter,
+                Name = name,
+                InitialValue = GetDecimalFromCellRaw(row.Cell(map.InitialValue)),
+                Debit = GetDecimalFromCellRaw(row.Cell(map.Debit)),
+                Credit = GetDecimalFromCellRaw(row.Cell(map.Credit)),
+                FinalValue = GetDecimalFromCellRaw(row.Cell(map.FinalValue)),
+                BudgetedAmount = false
+            };
+
+            list.Add(model);
+            row = row.RowBelow();
+        }
+
+        return list;
+    }
+        private decimal GetDecimalFromCellRaw(IXLCell cell)
+        {
+            if (cell == null || cell.IsEmpty())
+                return 0m;
+
+            try
+            {
+                // 1️⃣ Se o Excel entende como número → pega direto
+                if (cell.DataType == XLDataType.Number)
+                    return cell.GetValue<decimal>();
+
+                // 2️⃣ Se vier como texto → força leitura do texto bruto
+                var raw = cell.GetString();
+
+                if (string.IsNullOrWhiteSpace(raw))
+                    return 0m;
+
+                // remove tudo que não é número, vírgula, ponto ou sinal
+                raw = raw.Trim();
+                raw = raw.Replace(".", "");
+                raw = raw.Replace(",", ".");
+
+                if (decimal.TryParse(raw, CultureInfo.InvariantCulture, out var value))
+                    return value;
+
+                return 0m;
+            }
+            catch
+            {
+                return 0m;
+            }
         }
 
 
