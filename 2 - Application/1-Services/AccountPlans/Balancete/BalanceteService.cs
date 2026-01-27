@@ -1106,30 +1106,33 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
             input = input.Trim();
 
-            // Detecta D ou C no final
             char last = input[^1];
-            bool hasDC = last == 'D' || last == 'd' || last == 'C' || last == 'c';
+            bool hasDC = last is 'D' or 'd' or 'C' or 'c';
 
             string numeric = hasDC ? input[..^1].Trim() : input;
 
-            // Remove pontos de milhar
+            // Remove separador de milhar
             numeric = numeric.Replace(".", "");
 
-            // Troca vírgula decimal por ponto
+            // Troca vírgula por ponto
             numeric = numeric.Replace(",", ".");
 
-            if (!decimal.TryParse(numeric, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal value))
-                return 0m;
-
-            // Se tiver D/C, aplica regra
-            if (hasDC)
+            if (!decimal.TryParse(
+                    numeric,
+                    NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign,
+                    CultureInfo.InvariantCulture,
+                    out decimal value))
             {
-                if (last == 'C' || last == 'c')
-                    value *= -1;
+                return 0m;
             }
+
+            // Crédito vira negativo
+            if (hasDC && (last == 'C' || last == 'c'))
+                value *= -1;
 
             return value;
         }
+
 
         public class ExternalBranchDto
         {
