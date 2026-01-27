@@ -1018,10 +1018,10 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                     BalanceteId = balanceteId,
                     CostCenter = costCenter,
                     Name = name,
-                    InitialValue = ParseDecimalWithDC(row.Cell(map.InitialValue).GetFormattedString()),
-                    Debit = ParseDecimalWithDC(row.Cell(map.Debit).GetFormattedString()),
-                    Credit = ParseDecimalWithDC(row.Cell(map.Credit).GetFormattedString()),
-                    FinalValue = ParseDecimalWithDC(row.Cell(map.FinalValue).GetFormattedString()),
+                    InitialValue = row.Cell(map.InitialValue).GetValue<decimal>(),
+                    Debit = row.Cell(map.Debit).GetValue<decimal>(),
+                    Credit = row.Cell(map.Credit).GetValue<decimal>(),
+                    FinalValue = row.Cell(map.FinalValue).GetValue<decimal>(),
                     BudgetedAmount = false
                 };
 
