@@ -20,6 +20,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static _4_InfraData._1_Repositories.AccountPlansRepository;
 
 namespace _2___Application._1_Services
 {
@@ -27,6 +28,7 @@ namespace _2___Application._1_Services
     {
         private readonly ClassificationRepository _repository;
         private readonly AccountPlanClassificationRepository _accountClassificationRepository;
+        private readonly CompanyRepository _companyRepository;
         private readonly BalanceteDataRepository _balanceteDataRepository;
         private readonly BalanceteRepository _balanceteRepository;
         private readonly TotalizerClassificationRepository _totalizerClassificationRepository;
@@ -40,6 +42,7 @@ namespace _2___Application._1_Services
         public ClassificationService(
             ClassificationRepository repository,
             AccountPlanClassificationRepository accountClassificationRepository,
+            CompanyRepository companyRepository,
             BalanceteDataRepository balanceteDataRepository,
             BalanceteRepository balanceteRepository,
             TotalizerClassificationRepository _talizerClassificationRepository,
@@ -53,6 +56,7 @@ namespace _2___Application._1_Services
         {
             _repository = repository;
             _accountClassificationRepository = accountClassificationRepository;
+            _companyRepository = companyRepository;
             _balanceteDataRepository = balanceteDataRepository;
             _balanceteRepository = balanceteRepository;
             _totalizerClassificationRepository = _talizerClassificationRepository;
@@ -1636,6 +1640,128 @@ namespace _2___Application._1_Services
 
             return new PainelBalancoContabilRespone { Months = months };
         }
+
+
+       
+
+        public class PainelDRECompanyResponse
+        {
+            public int CompanyId { get; set; }
+            public string CompanyName { get; set; }
+            public int AccountPlanId { get; set; }
+            public PainelBalancoContabilRespone Painel { get; set; }
+        }
+        public class PainelDREAccountPlanResponse
+        {
+            public int AccountPlanId { get; set; }
+            public int GroupId { get; set; }
+            public int? CompanyId { get; set; }
+            public int? SubCompanyId { get; set; }
+
+            public PainelBalancoContabilRespone Painel { get; set; }
+        }
+
+        public async Task<List<PainelDREAccountPlanResponse>> BuildPainelDRE(
+      DreFilterRequest filter,
+      int typeClassification)
+        {
+            var accountPlans = await _accountPlansRepository
+                .GetAccountPlansByFilter(filter);
+
+            var result = new List<PainelDREAccountPlanResponse>();
+
+            foreach (var accountPlan in accountPlans.OrderBy(a => a.Id))
+            {
+                var painel = await BuildPainelByTypeDRE(
+                    accountPlan.Id,
+                    filter.Year,
+                    typeClassification
+                );
+
+                // filtro de meses
+                if (filter.Months.Any())
+                {
+                    painel.Months = painel.Months
+                        .Where(m =>
+                            filter.Months.Contains(m.DateMonth) ||
+                            m.Name == "Acumulado")
+                        .ToList();
+                }
+
+                result.Add(new PainelDREAccountPlanResponse
+                {
+                    AccountPlanId = accountPlan.Id,
+                    GroupId = accountPlan.GroupId,
+                    CompanyId = accountPlan.CompanyId,
+                    SubCompanyId = accountPlan.SubCompanyId,
+                    Painel = painel
+                });
+            }
+
+            return result;
+        }
+
+        public class PainelDREHierarquiaResponse
+        {
+            public string Nivel { get; set; } // "Grupo" | "Empresa"
+            public int AccountPlanId { get; set; }
+            public int GroupId { get; set; }
+            public int? CompanyId { get; set; }
+            public string Nome { get; set; }
+
+            public PainelBalancoContabilRespone Painel { get; set; }
+        }
+        public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(
+    int groupId,
+    List<int> companyIds,
+    int year
+    )
+        {
+            var response = new List<PainelDREHierarquiaResponse>();
+
+            // 1️⃣ Grupo (consolidado)
+            var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
+
+            if (groupPlan != null)
+            {
+                response.Add(new PainelDREHierarquiaResponse
+                {
+                    Nivel = "Grupo",
+                    Nome = "Consolidado do Grupo",
+                    AccountPlanId = groupPlan.Id,
+                    GroupId = groupId,
+                    Painel = await BuildPainelByTypeDRE(
+                        groupPlan.Id,
+                        year,
+                        3)
+                });
+            }
+
+            // 2️⃣ Empresas
+            var companyPlans = await _accountPlansRepository
+                .GetCompanyAccountPlans(groupId, companyIds);
+
+            foreach (var plan in companyPlans.OrderBy(p => p.CompanyId))
+            {
+                var company = await _companyRepository.GetById(plan.CompanyId.Value);
+
+                response.Add(new PainelDREHierarquiaResponse
+                {
+                    Nivel = "Empresa",
+                    Nome = company?.Name,
+                    AccountPlanId = plan.Id,
+                    GroupId = groupId,
+                    CompanyId = plan.CompanyId,
+                    Painel = await BuildPainelByTypeDRE(
+                        plan.Id,
+                        year,
+                        3)
+                });
+            }
+
+            return response;
+        }
+
         private MonthPainelContabilRespone CalcularAcumuladoSemMargens(List<MonthPainelContabilRespone> months)
         {
             // Junta todos os totalizadores que aparecem em qualquer mês

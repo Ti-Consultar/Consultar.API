@@ -254,6 +254,18 @@ namespace _4_InfraData._1_Repositories
                     c.CompanyUsers.Any(cu => cu.UserId == userId && cu.GroupId == groupId))
                 .ToListAsync();
         }
+
+        public async Task<List<CompanyModel>> GetCompaniesByGroupId(int groupId)
+        {
+            return await _context.Companies
+                .Include(c => c.BusinessEntity)
+                .Include(c => c.CompanyUsers)
+                    .ThenInclude(cu => cu.Permission)
+                .Where(c =>
+                    c.GroupId == groupId &&
+                    c.CompanyUsers.Any(cu => cu.GroupId == groupId))
+                .ToListAsync();
+        }
         #endregion
 
         #region Company Users

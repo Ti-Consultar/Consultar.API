@@ -321,12 +321,12 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("/demonstracao-consolidado")]
     
-        public async Task<IActionResult> BuildDemonstracaoResultadoSimplificado([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetDREGrupoEmpresasAno([FromQuery]int groupId, [FromQuery] List<int> companyIds, [FromQuery] int year)
         {
             try
             {
 
-                var response = await _Service.BuildDemonstracaoResultadoSimplificado(accountPlanId, year);
+                var response = await _Service.GetDREGrupoEmpresasAno(groupId,companyIds, year);
                 return Ok(response);
             }
             catch (Exception ex)
