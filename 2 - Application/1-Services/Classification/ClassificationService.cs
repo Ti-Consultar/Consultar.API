@@ -1711,10 +1711,7 @@ namespace _2___Application._1_Services
 
             public PainelBalancoContabilRespone Painel { get; set; }
         }
-        public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(
-    int groupId,
-    List<int> companyIds,
-    int year
+        public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(int groupId,List<int> companyIds,int year
     )
         {
             var response = new List<PainelDREHierarquiaResponse>();
@@ -1727,7 +1724,7 @@ namespace _2___Application._1_Services
                 response.Add(new PainelDREHierarquiaResponse
                 {
                     Nivel = "Grupo",
-                    Nome = "Consolidado do Grupo",
+                    Nome = groupPlan.Group.Name,
                     AccountPlanId = groupPlan.Id,
                     GroupId = groupId,
                     Painel = await BuildPainelByTypeDRE(
@@ -1761,6 +1758,7 @@ namespace _2___Application._1_Services
 
             return response;
         }
+        
 
         private MonthPainelContabilRespone CalcularAcumuladoSemMargens(List<MonthPainelContabilRespone> months)
         {
