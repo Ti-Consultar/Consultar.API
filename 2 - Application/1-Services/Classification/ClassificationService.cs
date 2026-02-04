@@ -27,6 +27,7 @@ namespace _2___Application._1_Services
     public class ClassificationService : BaseService
     {
         private readonly ClassificationRepository _repository;
+        private readonly GroupRepository _groupRepository;
         private readonly AccountPlanClassificationRepository _accountClassificationRepository;
         private readonly CompanyRepository _companyRepository;
         private readonly BalanceteDataRepository _balanceteDataRepository;
@@ -41,6 +42,7 @@ namespace _2___Application._1_Services
 
         public ClassificationService(
             ClassificationRepository repository,
+            GroupRepository groupRepository,
             AccountPlanClassificationRepository accountClassificationRepository,
             CompanyRepository companyRepository,
             BalanceteDataRepository balanceteDataRepository,
@@ -55,6 +57,7 @@ namespace _2___Application._1_Services
             IAppSettings appSettings) : base(appSettings)
         {
             _repository = repository;
+            _groupRepository = groupRepository;
             _accountClassificationRepository = accountClassificationRepository;
             _companyRepository = companyRepository;
             _balanceteDataRepository = balanceteDataRepository;
@@ -1719,12 +1722,13 @@ namespace _2___Application._1_Services
             // 1️⃣ Grupo (consolidado)
             var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
 
+            var group = await _groupRepository.GetById(groupId);
             if (groupPlan != null)
             {
                 response.Add(new PainelDREHierarquiaResponse
                 {
                     Nivel = "Grupo",
-                    Nome = groupPlan.Group.Name,
+                    Nome = group.Name,
                     AccountPlanId = groupPlan.Id,
                     GroupId = groupId,
                     Painel = await BuildPainelByTypeDRE(
