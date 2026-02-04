@@ -1714,37 +1714,78 @@ namespace _2___Application._1_Services
 
             public PainelBalancoContabilRespone Painel { get; set; }
         }
-        public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(int groupId,List<int> companyIds,int year
-    )
+    //    public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(int groupId,List<int> companyIds,int year
+    //)
+    //    {
+    //        var response = new List<PainelDREHierarquiaResponse>();
+
+    //        // 1️⃣ Grupo (consolidado)
+    //        var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
+
+    //        var group = await _groupRepository.GetById(groupId);
+    //        if (groupPlan != null)
+    //        {
+    //            response.Add(new PainelDREHierarquiaResponse
+    //            {
+    //                Nivel = "Grupo",
+    //                Nome = group.Name,
+    //                AccountPlanId = groupPlan.Id,
+    //                GroupId = groupId,
+    //                Painel = await BuildPainelByTypeDRE(
+    //                    groupPlan.Id,
+    //                    year,
+    //                    3)
+    //            });
+    //        }
+
+    //        // 2️⃣ Empresas
+    //        var companyPlans = await _accountPlansRepository
+    //            .GetCompanyAccountPlans(groupId, companyIds);
+
+    //        foreach (var plan in companyPlans.OrderBy(p => p.CompanyId))
+    //        {
+    //            var company = await _companyRepository.GetById(plan.CompanyId.Value);
+
+    //            response.Add(new PainelDREHierarquiaResponse
+    //            {
+    //                Nivel = "Empresa",
+    //                Nome = company?.Name,
+    //                AccountPlanId = plan.Id,
+    //                GroupId = groupId,
+    //                CompanyId = plan.CompanyId,
+    //                Painel = await BuildPainelByTypeDRE(
+    //                    plan.Id,
+    //                    year,
+    //                    3)
+    //            });
+    //        }
+
+    //        return response;
+    //    }
+        public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(
+    int groupId,
+    List<int> companyIds,
+    int year)
         {
             var response = new List<PainelDREHierarquiaResponse>();
 
-            // 1️⃣ Grupo (consolidado)
-            var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
-
             var group = await _groupRepository.GetById(groupId);
-            if (groupPlan != null)
-            {
-                response.Add(new PainelDREHierarquiaResponse
-                {
-                    Nivel = "Grupo",
-                    Nome = group.Name,
-                    AccountPlanId = groupPlan.Id,
-                    GroupId = groupId,
-                    Painel = await BuildPainelByTypeDRE(
-                        groupPlan.Id,
-                        year,
-                        3)
-                });
-            }
 
-            // 2️⃣ Empresas
             var companyPlans = await _accountPlansRepository
                 .GetCompanyAccountPlans(groupId, companyIds);
 
-            foreach (var plan in companyPlans.OrderBy(p => p.CompanyId))
+            var paineisEmpresas = new List<PainelBalancoContabilRespone>();
+
+            foreach (var plan in companyPlans)
             {
-                var company = await _companyRepository.GetById(plan.CompanyId.Value);
+                var company = await _companyRepository.GetById(plan.CompanyId!.Value);
+
+                var painelEmpresa = await BuildPainelByTypeDRE(
+                    plan.Id,
+                    year,
+                    3);
+
+                paineisEmpresas.Add(painelEmpresa);
 
                 response.Add(new PainelDREHierarquiaResponse
                 {
@@ -1753,16 +1794,91 @@ namespace _2___Application._1_Services
                     AccountPlanId = plan.Id,
                     GroupId = groupId,
                     CompanyId = plan.CompanyId,
-                    Painel = await BuildPainelByTypeDRE(
-                        plan.Id,
-                        year,
-                        3)
+                    Painel = painelEmpresa
                 });
             }
 
+            // 🔥 CONSOLIDADO DO GRUPO (SEM DRE PRÓPRIA)
+            var painelGrupo = ConsolidarDREsEmpresas(paineisEmpresas);
+
+            response.Insert(0, new PainelDREHierarquiaResponse
+            {
+                Nivel = "Grupo",
+                Nome = group.Name,
+                GroupId = groupId,
+                Painel = painelGrupo
+            });
+
             return response;
         }
-        
+
+        private PainelBalancoContabilRespone ConsolidarDREsEmpresas(
+    List<PainelBalancoContabilRespone> paineisEmpresas)
+        {
+            var resultado = new PainelBalancoContabilRespone
+            {
+                Months = new List<MonthPainelContabilRespone>()
+            };
+
+            if (!paineisEmpresas.Any())
+                return resultado;
+
+            // Usa o primeiro painel como base estrutural
+            var mesesBase = paineisEmpresas.First().Months;
+
+            foreach (var mesBase in mesesBase)
+            {
+                var mesConsolidado = new MonthPainelContabilRespone
+                {
+                    Id = mesBase.Id,
+                    Name = mesBase.Name,
+                    DateMonth = mesBase.DateMonth,
+                    Totalizer = new List<TotalizerParentRespone>()
+                };
+
+                foreach (var totalizerBase in mesBase.Totalizer)
+                {
+                    var totalizerConsolidado = new TotalizerParentRespone
+                    {
+                        Id = totalizerBase.Id,
+                        Name = totalizerBase.Name,
+                        TypeOrder = totalizerBase.TypeOrder,
+                        Classifications = new List<ClassificationRespone>(),
+                        TotalValue = 0
+                    };
+
+                    foreach (var classBase in totalizerBase.Classifications)
+                    {
+                        var valorSomado = paineisEmpresas.Sum(p =>
+                            p.Months
+                                .First(m => m.DateMonth == mesBase.DateMonth)
+                                .Totalizer
+                                .First(t => t.Name == totalizerBase.Name)
+                                .Classifications
+                                .First(c => c.Name == classBase.Name)
+                                .Value
+                        );
+
+                        totalizerConsolidado.Classifications.Add(new ClassificationRespone
+                        {
+                            Id = classBase.Id,
+                            Name = classBase.Name,
+                            TypeOrder = classBase.TypeOrder,
+                            Value = valorSomado,
+                            Datas = new List<BalanceteDataResponse>() // consolidado não precisa datas
+                        });
+
+                        totalizerConsolidado.TotalValue += valorSomado;
+                    }
+
+                    mesConsolidado.Totalizer.Add(totalizerConsolidado);
+                }
+
+                resultado.Months.Add(mesConsolidado);
+            }
+
+            return resultado;
+        }
 
         private MonthPainelContabilRespone CalcularAcumuladoSemMargens(List<MonthPainelContabilRespone> months)
         {
