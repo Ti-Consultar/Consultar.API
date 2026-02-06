@@ -1847,7 +1847,12 @@ namespace _2___Application._1_Services
             if (painel.Totalizador == null || !painel.Totalizador.Any())
                 return false;
 
-            return painel.Totalizador.Any(t => t != null && t.TotalValue != 0);
+            // existe qualquer conta classificada com valor em qualquer data
+            return painel.Totalizador
+                .Where(t => t.Classifications != null)
+                .SelectMany(t => t.Classifications)
+                .Where(c => c != null && c.Datas != null)
+                .Any(c => c.Datas.Any(d => d.Value != 0));
         }
 
         private async Task<PainelBalancoContabilRespone> CriarPainelVazio(int year)
