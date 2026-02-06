@@ -1807,7 +1807,7 @@ namespace _2___Application._1_Services
             PainelBalancoContabilRespone painelGrupo = null;
 
             // tenta buscar plano contábil do grupo
-            var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
+            var groupPlan = await _accountPlansRepository.GetByGroupId(groupId);
 
             if (groupPlan != null)
             {
