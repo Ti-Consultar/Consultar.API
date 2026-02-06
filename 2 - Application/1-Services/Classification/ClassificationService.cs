@@ -1714,54 +1714,54 @@ namespace _2___Application._1_Services
 
             public PainelBalancoContabilRespone Painel { get; set; }
         }
-        //    public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(int groupId,List<int> companyIds,int year
-        //)
-        //    {
-        //        var response = new List<PainelDREHierarquiaResponse>();
+        public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAnoo(int groupId, List<int> companyIds, int year
+    )
+        {
+            var response = new List<PainelDREHierarquiaResponse>();
 
-        //        // 1️⃣ Grupo (consolidado)
-        //        var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
+            // 1️⃣ Grupo (consolidado)
+            var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
 
-        //        var group = await _groupRepository.GetById(groupId);
-        //        if (groupPlan != null)
-        //        {
-        //            response.Add(new PainelDREHierarquiaResponse
-        //            {
-        //                Nivel = "Grupo",
-        //                Nome = group.Name,
-        //                AccountPlanId = groupPlan.Id,
-        //                GroupId = groupId,
-        //                Painel = await BuildPainelByTypeDRE(
-        //                    groupPlan.Id,
-        //                    year,
-        //                    3)
-        //            });
-        //        }
+            var group = await _groupRepository.GetById(groupId);
+            if (groupPlan != null)
+            {
+                response.Add(new PainelDREHierarquiaResponse
+                {
+                    Nivel = "Grupo",
+                    Nome = group.Name,
+                    AccountPlanId = groupPlan.Id,
+                    GroupId = groupId,
+                    Painel = await BuildPainelByTypeDRE(
+                        groupPlan.Id,
+                        year,
+                        3)
+                });
+            }
 
-        //        // 2️⃣ Empresas
-        //        var companyPlans = await _accountPlansRepository
-        //            .GetCompanyAccountPlans(groupId, companyIds);
+            // 2️⃣ Empresas
+            var companyPlans = await _accountPlansRepository
+                .GetCompanyAccountPlans(groupId, companyIds);
 
-        //        foreach (var plan in companyPlans.OrderBy(p => p.CompanyId))
-        //        {
-        //            var company = await _companyRepository.GetById(plan.CompanyId.Value);
+            foreach (var plan in companyPlans.OrderBy(p => p.CompanyId))
+            {
+                var company = await _companyRepository.GetById(plan.CompanyId.Value);
 
-        //            response.Add(new PainelDREHierarquiaResponse
-        //            {
-        //                Nivel = "Empresa",
-        //                Nome = company?.Name,
-        //                AccountPlanId = plan.Id,
-        //                GroupId = groupId,
-        //                CompanyId = plan.CompanyId,
-        //                Painel = await BuildPainelByTypeDRE(
-        //                    plan.Id,
-        //                    year,
-        //                    3)
-        //            });
-        //        }
+                response.Add(new PainelDREHierarquiaResponse
+                {
+                    Nivel = "Empresa",
+                    Nome = company?.Name,
+                    AccountPlanId = plan.Id,
+                    GroupId = groupId,
+                    CompanyId = plan.CompanyId,
+                    Painel = await BuildPainelByTypeDRE(
+                        plan.Id,
+                        year,
+                        3)
+                });
+            }
 
-        //        return response;
-        //    }
+            return response;
+        }
         public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(
     int groupId,
     List<int> companyIds,
@@ -1807,7 +1807,7 @@ namespace _2___Application._1_Services
             PainelBalancoContabilRespone painelGrupo = null;
 
             // tenta buscar plano contábil do grupo
-            var groupPlan = await _accountPlansRepository.GetByGroupId(groupId);
+            var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
 
             if (groupPlan != null)
             {
