@@ -1714,54 +1714,54 @@ namespace _2___Application._1_Services
 
             public PainelBalancoContabilRespone Painel { get; set; }
         }
-    //    public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(int groupId,List<int> companyIds,int year
-    //)
-    //    {
-    //        var response = new List<PainelDREHierarquiaResponse>();
+        //    public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(int groupId,List<int> companyIds,int year
+        //)
+        //    {
+        //        var response = new List<PainelDREHierarquiaResponse>();
 
-    //        // 1️⃣ Grupo (consolidado)
-    //        var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
+        //        // 1️⃣ Grupo (consolidado)
+        //        var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
 
-    //        var group = await _groupRepository.GetById(groupId);
-    //        if (groupPlan != null)
-    //        {
-    //            response.Add(new PainelDREHierarquiaResponse
-    //            {
-    //                Nivel = "Grupo",
-    //                Nome = group.Name,
-    //                AccountPlanId = groupPlan.Id,
-    //                GroupId = groupId,
-    //                Painel = await BuildPainelByTypeDRE(
-    //                    groupPlan.Id,
-    //                    year,
-    //                    3)
-    //            });
-    //        }
+        //        var group = await _groupRepository.GetById(groupId);
+        //        if (groupPlan != null)
+        //        {
+        //            response.Add(new PainelDREHierarquiaResponse
+        //            {
+        //                Nivel = "Grupo",
+        //                Nome = group.Name,
+        //                AccountPlanId = groupPlan.Id,
+        //                GroupId = groupId,
+        //                Painel = await BuildPainelByTypeDRE(
+        //                    groupPlan.Id,
+        //                    year,
+        //                    3)
+        //            });
+        //        }
 
-    //        // 2️⃣ Empresas
-    //        var companyPlans = await _accountPlansRepository
-    //            .GetCompanyAccountPlans(groupId, companyIds);
+        //        // 2️⃣ Empresas
+        //        var companyPlans = await _accountPlansRepository
+        //            .GetCompanyAccountPlans(groupId, companyIds);
 
-    //        foreach (var plan in companyPlans.OrderBy(p => p.CompanyId))
-    //        {
-    //            var company = await _companyRepository.GetById(plan.CompanyId.Value);
+        //        foreach (var plan in companyPlans.OrderBy(p => p.CompanyId))
+        //        {
+        //            var company = await _companyRepository.GetById(plan.CompanyId.Value);
 
-    //            response.Add(new PainelDREHierarquiaResponse
-    //            {
-    //                Nivel = "Empresa",
-    //                Nome = company?.Name,
-    //                AccountPlanId = plan.Id,
-    //                GroupId = groupId,
-    //                CompanyId = plan.CompanyId,
-    //                Painel = await BuildPainelByTypeDRE(
-    //                    plan.Id,
-    //                    year,
-    //                    3)
-    //            });
-    //        }
+        //            response.Add(new PainelDREHierarquiaResponse
+        //            {
+        //                Nivel = "Empresa",
+        //                Nome = company?.Name,
+        //                AccountPlanId = plan.Id,
+        //                GroupId = groupId,
+        //                CompanyId = plan.CompanyId,
+        //                Painel = await BuildPainelByTypeDRE(
+        //                    plan.Id,
+        //                    year,
+        //                    3)
+        //            });
+        //        }
 
-    //        return response;
-    //    }
+        //        return response;
+        //    }
         public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(
     int groupId,
     List<int> companyIds,
@@ -1776,6 +1776,9 @@ namespace _2___Application._1_Services
 
             var paineisEmpresas = new List<PainelBalancoContabilRespone>();
 
+            // =========================
+            // EMPRESAS
+            // =========================
             foreach (var plan in companyPlans)
             {
                 var company = await _companyRepository.GetById(plan.CompanyId!.Value);
@@ -1798,8 +1801,33 @@ namespace _2___Application._1_Services
                 });
             }
 
-            // 🔥 CONSOLIDADO DO GRUPO (SEM DRE PRÓPRIA)
-            var painelGrupo = ConsolidarDREsEmpresas(paineisEmpresas);
+            // =========================
+            // GRUPO (NUNCA CONSOLIDA)
+            // =========================
+            PainelBalancoContabilRespone painelGrupo = null;
+
+            // tenta buscar plano contábil do grupo
+            var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
+
+            if (groupPlan != null)
+            {
+                var dreGrupo = await BuildPainelByTypeDRE(
+                    groupPlan.Id,
+                    year,
+                    3);
+
+                // só usa se realmente possuir classificação
+                if (PainelPossuiValores(dreGrupo))
+                {
+                    painelGrupo = dreGrupo;
+                }
+            }
+
+            // se não tiver classificação -> retorna vazio
+            if (painelGrupo == null)
+            {
+                painelGrupo = await CriarPainelVazio(year);
+            }
 
             response.Insert(0, new PainelDREHierarquiaResponse
             {
@@ -1811,7 +1839,22 @@ namespace _2___Application._1_Services
 
             return response;
         }
+        private bool PainelPossuiValores(PainelBalancoContabilRespone painel)
+        {
+            if (painel == null)
+                return false;
 
+            if (painel.Totalizador == null || !painel.Totalizador.Any())
+                return false;
+
+            return painel.Totalizador.Any(t => t != null && t.TotalValue != 0);
+        }
+
+        private async Task<PainelBalancoContabilRespone> CriarPainelVazio(int year)
+        {
+            // cria um plano inexistente só para obter estrutura vazia padrão
+            return await BuildPainelByTypeDRE(0, year, 3);
+        }
         private PainelBalancoContabilRespone ConsolidarDREsEmpresas(
     List<PainelBalancoContabilRespone> paineisEmpresas)
         {
@@ -1879,6 +1922,7 @@ namespace _2___Application._1_Services
 
             return resultado;
         }
+
 
         private MonthPainelContabilRespone CalcularAcumuladoSemMargens(List<MonthPainelContabilRespone> months)
         {
