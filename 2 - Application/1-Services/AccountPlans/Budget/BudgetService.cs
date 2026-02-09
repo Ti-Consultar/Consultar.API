@@ -506,7 +506,7 @@ namespace _2___Application._1_Services.Budget
         }
 
         #region Private
-        private List<BudgetDataModel> ReadFromXlsx(Stream stream, int budgetId)
+        private List<BudgetDataModel> ReadFromXlsxVersaoAntiga(Stream stream, int budgetId)
         {
             var list = new List<BudgetDataModel>();
             stream.Position = 0;
@@ -634,7 +634,94 @@ namespace _2___Application._1_Services.Budget
             return list;
         }
 
+        private List<BudgetDataModel> ReadFromXlsx(Stream stream,int budgetId)
+        {
+            var list = new List<BudgetDataModel>();
+            stream.Position = 0;
 
+            using var workbook = new XLWorkbook(stream);
+            var worksheet = workbook.Worksheet(1);
+
+            int rowNumber = 2;
+            var row = worksheet.Row(rowNumber);
+
+            int emptyRowCount = 0;
+
+            while (true)
+            {
+                // encerra após 3 linhas vazias seguidas
+                if (row.IsEmpty())
+                {
+                    emptyRowCount++;
+                    if (emptyRowCount >= 3)
+                        break;
+
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                emptyRowCount = 0;
+
+                var costCenter = row.Cell(1).GetString().Trim();
+                var name = row.Cell(2).GetString().Trim();
+
+                if (string.IsNullOrWhiteSpace(costCenter) &&
+                    string.IsNullOrWhiteSpace(name))
+                {
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                var model = new BudgetDataModel
+                {
+                    BudgetId = budgetId,
+                    CostCenter = costCenter,
+                    Name = name,
+                    InitialValue = GetDecimalFromCellRaw(row.Cell(3)),
+                    Debit = GetDecimalFromCellRaw(row.Cell(4)),
+                    Credit = GetDecimalFromCellRaw(row.Cell(5)),
+                    FinalValue = GetDecimalFromCellRaw(row.Cell(6)),
+                    BudgetedAmount = false
+                };
+
+                list.Add(model);
+                row = row.RowBelow();
+            }
+
+            return list;
+        }
+        private decimal GetDecimalFromCellRaw(IXLCell cell)
+        {
+            if (cell == null || cell.IsEmpty())
+                return 0m;
+
+            try
+            {
+                // 1️⃣ Se o Excel entende como número → pega direto
+                if (cell.DataType == XLDataType.Number)
+                    return cell.GetValue<decimal>();
+
+                // 2️⃣ Se vier como texto → força leitura do texto bruto
+                var raw = cell.GetString();
+
+                if (string.IsNullOrWhiteSpace(raw))
+                    return 0m;
+
+                // remove tudo que não é número, vírgula, ponto ou sinal
+                raw = raw.Trim();
+                raw = raw.Replace(".", "");
+                raw = raw.Replace(",", ".");
+
+                if (decimal.TryParse(raw, CultureInfo.InvariantCulture, out var value))
+                    return value;
+
+                return 0m;
+            }
+            catch
+            {
+                return 0m;
+            }
+        }
         private static BudgetDataDto MapToBudgetDataDto(List<BudgetDataModel> data)
 
         {
