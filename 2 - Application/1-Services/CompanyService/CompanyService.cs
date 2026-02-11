@@ -653,6 +653,9 @@ public class CompanyService : BaseService
                 SubCompanyId = companyUser.SubCompanyId,
             };
 
+
+
+
             await _accountPlansRepository.AddAsync(accountPlan);
 
             await _emailService.SendWelcomeSubCompanyAsync(user.Email, company.Name, subCompany.Name, user.Name);
