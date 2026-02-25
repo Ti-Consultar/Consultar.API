@@ -89,6 +89,64 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 return ErrorResponse(ex);
             }
         }
+
+        public class InsertBalanceteListDto
+        {
+            public int AccountPlansId { get; set; }
+            public int DateYear { get; set; }
+            public List<int> Months { get; set; } = new();
+        }
+
+        public async Task<ResultValue> CreateList(InsertBalanceteListDto dto)
+        {
+            try
+            {
+                var user = GetCurrentUserId();
+
+                var exists = await _accountPlansRepository
+                    .ExistsAccountPlanByIdAsync(dto.AccountPlansId);
+
+                if (!exists)
+                    return ErrorResponse(Message.NotFound);
+
+                var createdBalancetes = new List<BalanceteModel>();
+
+                foreach (var month in dto.Months)
+                {
+                    var balanceteExists = await _repository
+                        .GetExistsParams(dto.AccountPlansId, month, dto.DateYear);
+
+                    if (balanceteExists)
+                        continue; // pula se já existir
+
+                    var model = new BalanceteModel
+                    {
+                        DateMonth = (EMonth)month,
+                        DateYear = dto.DateYear,
+                        AccountPlansId = dto.AccountPlansId,
+                        Status = ESituationBalancete.Pending
+                    };
+
+                    await _repository.AddAsync(model);
+                    createdBalancetes.Add(model);
+                }
+
+                // Retorna apenas os IDs
+                var response = createdBalancetes.Select(x => new
+                {
+                    x.Id,
+                    x.DateMonth,
+                    x.DateYear
+                });
+
+                return SuccessResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
         public async Task<ResultValue> Update(int id, UpdateBalanceteDto dto)
         {
             try
@@ -451,6 +509,239 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             }
         }
 
+        private async Task<BalanceteColumnMap> ResolveImportConfig(
+    BalanceteModel balancete,
+    BalanceteColumnMap dto)
+        {
+            var savedConfig = await _importConfigRepo
+                .GetByAccountPlanIdAsync(balancete.AccountPlansId);
+
+            // 🔥 Se já existe configuração salva → usa ela
+            if (savedConfig != null)
+            {
+                return new BalanceteColumnMap
+                {
+                    StartRow = savedConfig.StartRow,
+                    CostCenter = savedConfig.CostCenterCol,
+                    Name = savedConfig.NameCol,
+                    InitialValue = savedConfig.InitialValueCol,
+                    Debit = savedConfig.DebitCol,
+                    Credit = savedConfig.CreditCol,
+                    FinalValue = savedConfig.FinalValueCol
+                };
+            }
+
+            // 🔥 Primeira vez → salva configuração
+            await _importConfigRepo.AddAsync(new BalanceteImportConfig
+            {
+                AccountPlanId = balancete.AccountPlansId,
+                StartRow = dto.StartRow,
+                CostCenterCol = dto.CostCenter,
+                NameCol = dto.Name,
+                InitialValueCol = dto.InitialValue,
+                DebitCol = dto.Debit,
+                CreditCol = dto.Credit,
+                FinalValueCol = dto.FinalValue,
+                CreatedAt = DateTime.Now
+            });
+
+            return new BalanceteColumnMap
+            {
+                StartRow = dto.StartRow,
+                CostCenter = dto.CostCenter,
+                Name = dto.Name,
+                InitialValue = dto.InitialValue,
+                Debit = dto.Debit,
+                Credit = dto.Credit,
+                FinalValue = dto.FinalValue
+            };
+        }
+        public class ImportMultiploBalanceteRequest
+        {
+            public List<BalanceteArquivoDto> Arquivos { get; set; }
+        }
+
+        public class BalanceteArquivoDto
+        {
+            public int BalanceteId { get; set; }
+            public IFormFile File { get; set; }
+
+            public int StartRow { get; set; }
+            public int CostCenter { get; set; }
+            public int Name { get; set; }
+            public int InitialValue { get; set; }
+            public int Debit { get; set; }
+            public int Credit { get; set; }
+            public int FinalValue { get; set; }
+        }
+        public async Task<ResultValue> ImportarMultiplosBalancetes(
+    ImportMultiploBalanceteRequest request)
+        {
+            foreach (var item in request.Arquivos)
+            {
+                var map = new BalanceteColumnMap
+                {
+                    StartRow = item.StartRow,
+                    CostCenter = item.CostCenter,
+                    Name = item.Name,
+                    InitialValue = item.InitialValue,
+                    Debit = item.Debit,
+                    Credit = item.Credit,
+                    FinalValue = item.FinalValue,
+                    File = item.File
+                };
+                   
+                await ImportBalanceteDataDinamicBulk(item.BalanceteId, map); 
+            }
+
+            return SuccessResponse("Todos os balancetes importados.");
+        }
+        public async Task<ResultValue> ImportBalanceteDataDinamicBulk(
+    int balanceteId,
+    BalanceteColumnMap dto)
+        {
+            try
+            {
+                if (dto.File == null || dto.File.Length == 0)
+                    return ErrorResponse("Arquivo inválido.");
+
+                var balancete = await _repository.GetBalanceteById(balanceteId);
+                if (balancete == null)
+                    return ErrorResponse(Message.NotFound);
+
+                var mapToUse = await ResolveImportConfig(balancete, dto);
+
+                using var stream = new MemoryStream();
+                await dto.File.CopyToAsync(stream);
+
+                var extension = Path.GetExtension(dto.File.FileName).ToLower();
+
+                List<BalanceteDataModel> list;
+
+                if (extension == ".csv")
+                    list = ReadFromCsvDinamic(stream, balanceteId, mapToUse);
+                else if (extension == ".xlsx")
+                    list = ReadFromXlsxDinamic(stream, balanceteId, mapToUse);
+                else
+                    return ErrorResponse("Formato inválido.");
+
+                list = list
+                    .GroupBy(x => x.CostCenter)
+                    .Select(g => g.First())
+                    .ToList();
+
+                // 🔥 AQUI É A DIFERENÇA
+                await _balanceteDataRepository.BulkInsertAsync(list);
+
+                return SuccessResponse("Importação concluída com sucesso.");
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+        public class BalanceteColumnMapList
+        {
+            public int StartRow { get; set; }
+            public int CostCenter { get; set; }
+            public int Name { get; set; }
+            public int InitialValue { get; set; }
+            public int Debit { get; set; }
+            public int Credit { get; set; }
+            public int FinalValue { get; set; }
+
+            public List<IFormFile> Files { get; set; } = new();
+        }
+
+    //    public async Task<ResultValue> ImportBalanceteDataDinamic(
+    //List<int> balanceteIds,
+    //BalanceteColumnMapList dto)
+    //    {
+    //        try
+    //        {
+    //            if (dto.Files == null || !dto.Files.Any())
+    //                return ErrorResponse("Arquivos inválidos.");
+
+    //            if (balanceteIds == null || !balanceteIds.Any())
+    //                return ErrorResponse("Nenhum balancete informado.");
+
+    //            var allData = new List<BalanceteDataModel>();
+
+    //            foreach (var balanceteId in balanceteIds)
+    //            {
+    //                var balancete = await _repository.GetBalanceteById(balanceteId);
+    //                if (balancete == null)
+    //                    continue;
+
+    //                // 🔥 Configuração
+    //                var savedConfig =
+    //                    await _importConfigRepo.GetByAccountPlanIdAsync(balancete.AccountPlansId);
+
+    //                var mapToUse = savedConfig != null
+    //                    ? new BalanceteDataModel
+    //                    {
+    //                        StartRow = savedConfig.StartRow,
+    //                        CostCenter = savedConfig.CostCenterCol,
+    //                        Name = savedConfig.NameCol,
+    //                        InitialValue = savedConfig.InitialValueCol,
+    //                        Debit = savedConfig.DebitCol,
+    //                        Credit = savedConfig.CreditCol,
+    //                        FinalValue = savedConfig.FinalValueCol
+    //                    }
+    //                    : dto;
+
+    //                if (savedConfig == null)
+    //                {
+    //                    await _importConfigRepo.AddAsync(new BalanceteImportConfig
+    //                    {
+    //                        AccountPlanId = balancete.AccountPlansId,
+    //                        StartRow = dto.StartRow,
+    //                        CostCenterCol = dto.CostCenter,
+    //                        NameCol = dto.Name,
+    //                        InitialValueCol = dto.InitialValue,
+    //                        DebitCol = dto.Debit,
+    //                        CreditCol = dto.Credit,
+    //                        FinalValueCol = dto.FinalValue,
+    //                        CreatedAt = DateTime.Now
+    //                    });
+    //                }
+
+    //                foreach (var file in dto.Files)
+    //                {
+    //                    using var stream = new MemoryStream();
+    //                    await file.CopyToAsync(stream);
+
+    //                    var extension = Path.GetExtension(file.FileName).ToLower();
+    //                    List<BalanceteDataModel> list;
+
+    //                    if (extension == ".csv")
+    //                        list = ReadFromCsvDinamic(stream, balanceteId, mapToUse);
+    //                    else if (extension == ".xlsx")
+    //                        list = ReadFromXlsxDinamic(stream, balanceteId, mapToUse);
+    //                    else
+    //                        continue;
+
+    //                    list = list
+    //                        .GroupBy(x => x.CostCenter)
+    //                        .Select(g => g.First())
+    //                        .ToList();
+
+    //                    allData.AddRange(list);
+    //                }
+    //            }
+
+    //            if (allData.Any())
+    //                await _balanceteDataRepository.AddRangeAsync(allData);
+
+    //            return SuccessResponse("Dados importados com sucesso.");
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            return ErrorResponse(ex);
+    //        }
+    //    }
+
 
         public async Task<ResultValue> CreateConfigBalanceteImport(InsertBalanceteImportConfig dto)
         {
@@ -489,6 +780,11 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 return ErrorResponse(ex);
             }
         }
+
+
+
+
+
         public async Task<ResultValue> UpdateConfigBalanceteImport(UpdateBalanceteImportConfig dto)
         {
             try

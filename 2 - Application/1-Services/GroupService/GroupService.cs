@@ -46,8 +46,8 @@ public class GroupService : BaseService
         {
             var user = await GetCurrentUserAsync();
 
-            if (await _businessEntityRepository.CnpjExists(dto.BusinessEntity.Cnpj))
-                return SuccessResponse(Message.CNPJAlreadyRegistered);
+            //if (await _businessEntityRepository.CnpjExists(dto.BusinessEntity.Cnpj))
+            //    return SuccessResponse(Message.CNPJAlreadyRegistered);
 
             var businessEntity = MapToBusinessEntity(dto.BusinessEntity);
             await _businessEntityRepository.AddAsync(businessEntity);
