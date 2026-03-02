@@ -424,6 +424,7 @@ namespace _2___Application._1_Services
                     case "Obrigações Sociais a Pagar":
                     case "Obrigações Fiscais a Pagar":
                     case "Outras Exigibilidades":
+                    case "Empréstimos de Coligadas CP":
                         classification.TotalizerClassificationId = totalizerClassifications
                             .Where(r => r.Name == "Total Passivo Circulante")
                             .Select(r => r.Id)
@@ -464,6 +465,7 @@ namespace _2___Application._1_Services
                 {
 
                     case "Empréstimos e Financiamentos":
+                    case "Empréstimos de Coligadas CP":
                         classification.BalancoReclassificadoId = reclassifications
                             .Where(r => r.Name == "Empréstimos e Financiamentos")
                             .Select(r => (int?)r.Id)

@@ -635,6 +635,7 @@ public class CompanyService : BaseService
                 UserId = user.Id,
                 CompanyId = company.Id,
                 GroupId = company.GroupId,
+                SubCompanyId = subCompany.Id,
                 PermissionId = 1 // gestor
             };
 
