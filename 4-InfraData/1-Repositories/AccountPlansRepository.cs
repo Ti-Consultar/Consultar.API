@@ -19,17 +19,23 @@ namespace _4_InfraData._1_Repositories
                     ap.GroupId == groupId &&
                     ap.CompanyId == null);
         }
-    //    public async Task<List<AccountPlansModel>> GetCompanyAccountPlans(
-    //int groupId,
-    //List<int> companyIds)
-    //    {
-    //        return await _context.AccountPlans
-    //            .Where(ap =>
-    //                ap.GroupId == groupId &&
-    //                ap.CompanyId != null &&
-    //                companyIds.Contains(ap.CompanyId.Value))
-    //            .ToListAsync();
-    //    }
+        //    public async Task<List<AccountPlansModel>> GetCompanyAccountPlans(
+        //int groupId,
+        //List<int> companyIds)
+        //    {
+        //        return await _context.AccountPlans
+        //            .Where(ap =>
+        //                ap.GroupId == groupId &&
+        //                ap.CompanyId != null &&
+        //                companyIds.Contains(ap.CompanyId.Value))
+        //            .ToListAsync();
+        //    }
+
+        public async Task<AccountPlansModel> GetCompanyAccountPlanByCompanyId(int companyId)
+        {
+            return await _context.AccountPlans
+                .FirstOrDefaultAsync(a => a.CompanyId == companyId);
+        }
         public async Task<List<AccountPlansModel>> GetCompanyAccountPlans(
     int groupId,
     List<int> companyIds)
@@ -57,6 +63,11 @@ namespace _4_InfraData._1_Repositories
                         (subCompanyId != null && x.SubCompanyId == subCompanyId)
                     )
                 );
+        }
+        public async Task<AccountPlansModel> GetSubCompanyAccountPlan(int subCompanyId)
+        {
+            return await _context.AccountPlans
+                .FirstOrDefaultAsync(a => a.SubCompanyId == subCompanyId);
         }
         public async Task<AccountPlansModel> GetByCompanyOrGroupId(int companyId, int groupId)
         {

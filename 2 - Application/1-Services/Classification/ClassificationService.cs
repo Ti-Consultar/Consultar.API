@@ -1716,8 +1716,136 @@ namespace _2___Application._1_Services
 
             public PainelBalancoContabilRespone Painel { get; set; }
         }
-        public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(int groupId, List<int> companyIds, int year
-    )
+        public class PainelDREEmpresaFilialResponse
+        {
+            public string Nivel { get; set; }
+            // "Empresa" | "SubEmpresa"
+
+            public int AccountPlanId { get; set; }
+
+            public int CompanyId { get; set; }
+            public int? SubCompanyId { get; set; }
+
+            public string Nome { get; set; }
+
+            public PainelBalancoContabilRespone Painel { get; set; }
+        }
+        public class PainelDREHierarquiaCompletaResponse
+        {
+            public string Nivel { get; set; }
+            // "Grupo" | "Empresa" | "SubEmpresa"
+
+            public int AccountPlanId { get; set; }
+
+            public int GroupId { get; set; }
+            public int? CompanyId { get; set; }
+            public int? SubCompanyId { get; set; } // 🔥 NOVO
+
+            public string Nome { get; set; }
+
+            public PainelBalancoContabilRespone Painel { get; set; }
+        }
+        public async Task<List<PainelDREHierarquiaCompletaResponse>> GetDREGrupoEmpresasFiliaisAno(int groupId, List<int> companyIds, int year)
+        {
+            var response = new List<PainelDREHierarquiaCompletaResponse>();
+
+            // ==============================
+            // 1️⃣ GRUPO
+            // ==============================
+
+            var group = await _groupRepository.GetById(groupId);
+            var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
+
+            if (group != null && groupPlan != null)
+            {
+                var painelGrupo = await BuildPainelByTypeDRE(
+                    groupPlan.Id,
+                    year,
+                    3);
+
+                response.Add(new PainelDREHierarquiaCompletaResponse
+                {
+                    Nivel = "Grupo",
+                    Nome = group.Name,
+                    AccountPlanId = groupPlan.Id,
+                    GroupId = groupId,
+                    CompanyId = null,
+                    SubCompanyId = null,
+                    Painel = painelGrupo
+                });
+            }
+
+            // ==============================
+            // 2️⃣ EMPRESAS
+            // ==============================
+
+            var companyPlans = await _accountPlansRepository
+                .GetCompanyAccountPlans(groupId, companyIds);
+
+            foreach (var plan in companyPlans.OrderBy(p => p.CompanyId))
+            {
+                if (!plan.CompanyId.HasValue)
+                    continue;
+
+                var company = await _companyRepository
+                    .GetCompanyWithSubCompanies(plan.CompanyId.Value);
+
+                if (company == null)
+                    continue;
+
+                // 🔹 Empresa
+                var painelEmpresa = await BuildPainelByTypeDRE(
+                    plan.Id,
+                    year,
+                    3);
+
+                response.Add(new PainelDREHierarquiaCompletaResponse
+                {
+                    Nivel = "Empresa",
+                    Nome = company.Name,
+                    AccountPlanId = plan.Id,
+                    GroupId = groupId,
+                    CompanyId = company.Id,
+                    SubCompanyId = null,
+                    Painel = painelEmpresa
+                });
+
+                // ==============================
+                // 3️⃣ SUBEMPRESAS
+                // ==============================
+
+                if (company.SubCompanies != null && company.SubCompanies.Any())
+                {
+                    foreach (var sub in company.SubCompanies.OrderBy(s => s.Name))
+                    {
+                        var subPlan = await _accountPlansRepository
+                            .GetSubCompanyAccountPlan(sub.Id);
+
+                        if (subPlan == null)
+                            continue;
+
+                        var painelSub = await BuildPainelByTypeDRE(
+                            subPlan.Id,
+                            year,
+                            3);
+
+                        response.Add(new PainelDREHierarquiaCompletaResponse
+                        {
+                            Nivel = "SubEmpresa",
+                            Nome = sub.Name,
+                            AccountPlanId = subPlan.Id,
+                            GroupId = groupId,
+                            CompanyId = company.Id,
+                            SubCompanyId = sub.Id,
+                            Painel = painelSub
+                        });
+                    }
+                }
+            }
+
+            return response;
+        }
+        public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(int groupId, List<int> companyIds, int year)
         {
             var response = new List<PainelDREHierarquiaResponse>();
 
@@ -1757,6 +1885,68 @@ namespace _2___Application._1_Services
                     CompanyId = plan.CompanyId,
                     Painel = await BuildPainelByTypeDRE(
                         plan.Id,
+                        year,
+                        3)
+                });
+            }
+
+            return response;
+        }
+
+        public async Task<List<PainelDREEmpresaFilialResponse>>GetDREEmpresaFiliaisAno(int companyId,List<int> subCompanyIds,int year)
+        {
+            var response = new List<PainelDREEmpresaFilialResponse>();
+
+            var company = await _companyRepository
+                .GetCompanyWithSubCompanies(companyId);
+
+            if (company == null)
+                return response;
+
+            var companyPlan = await _accountPlansRepository
+                .GetCompanyAccountPlanByCompanyId(companyId);
+
+            // 🔹 EMPRESA (raiz)
+            if (companyPlan != null)
+            {
+                response.Add(new PainelDREEmpresaFilialResponse
+                {
+                    Nivel = "Empresa",
+                    Nome = company.Name,
+                    AccountPlanId = companyPlan.Id,
+                    CompanyId = companyId,
+                    SubCompanyId = null,
+                    Painel = await BuildPainelByTypeDRE(
+                        companyPlan.Id,
+                        year,
+                        3)
+                });
+            }
+
+            // 🔥 REGRA INTELIGENTE AQUI
+            var filiais = (subCompanyIds == null || !subCompanyIds.Any())
+                ? company.SubCompanies // traz todas
+                : company.SubCompanies
+                    .Where(s => subCompanyIds.Contains(s.Id))
+                    .ToList();
+
+            foreach (var sub in filiais.OrderBy(s => s.Name))
+            {
+                var subPlan = await _accountPlansRepository
+                    .GetSubCompanyAccountPlan(sub.Id);
+
+                if (subPlan == null)
+                    continue;
+
+                response.Add(new PainelDREEmpresaFilialResponse
+                {
+                    Nivel = "SubEmpresa",
+                    Nome = sub.Name,
+                    AccountPlanId = subPlan.Id,
+                    CompanyId = companyId,
+                    SubCompanyId = sub.Id,
+                    Painel = await BuildPainelByTypeDRE(
+                        subPlan.Id,
                         year,
                         3)
                 });
@@ -1841,6 +2031,119 @@ namespace _2___Application._1_Services
 
             return response;
         }
+        private PainelBalancoContabilRespone FiltrarPainelPorMes(PainelBalancoContabilRespone painel,int mes)
+        {
+            if (painel == null)
+                return null;
+
+            var mesSelecionado = painel.Months?
+                .FirstOrDefault(m => m.DateMonth == mes);
+
+            return new PainelBalancoContabilRespone
+            {
+                Months = mesSelecionado != null
+                    ? new List<MonthPainelContabilRespone> { mesSelecionado }
+                    : new List<MonthPainelContabilRespone>(),
+
+                // Se quiser manter o total anual, troque para:
+                // Totalizador = painel.Totalizador
+                Totalizador = null
+            };
+        }
+        public async Task<List<PainelDREEmpresaFilialResponse>>GetDREEmpresaFiliaisMes(int companyId,List<int> subCompanyIds,int year,int mes)
+        {
+            var response = new List<PainelDREEmpresaFilialResponse>();
+
+            var company = await _companyRepository
+                .GetCompanyWithSubCompanies(companyId);
+
+            if (company == null)
+                return response;
+
+            var companyPlan = await _accountPlansRepository
+                .GetCompanyAccountPlanByCompanyId(companyId);
+
+            // 🔹 ========================
+            // 🔹 EMPRESA
+            // 🔹 ========================
+            if (companyPlan != null)
+            {
+                var painelCompleto = await BuildPainelByTypeDRE(
+                    companyPlan.Id,
+                    year,
+                    3);
+
+                var painelFiltrado = FiltrarPainelPorMes(
+                    painelCompleto,
+                    mes);
+
+                response.Add(new PainelDREEmpresaFilialResponse
+                {
+                    Nivel = "Empresa",
+                    Nome = company.Name,
+                    AccountPlanId = companyPlan.Id,
+                    CompanyId = companyId,
+                    SubCompanyId = null,
+                    Painel = painelFiltrado
+                });
+            }
+
+            // 🔹 ========================
+            // 🔹 FILIAIS (REGRA INTELIGENTE)
+            // 🔹 ========================
+
+            var todasFiliais = company.SubCompanies ?? new List<SubCompanyModel>();
+
+            List<SubCompanyModel> filiais;
+
+            if (subCompanyIds == null || !subCompanyIds.Any())
+            {
+                // 👉 Não passou nada? Traz todas
+                filiais = todasFiliais;
+            }
+            else
+            {
+                // 👉 Passou IDs? Filtra
+                filiais = todasFiliais
+                    .Where(s => subCompanyIds.Contains(s.Id))
+                    .ToList();
+            }
+
+            filiais = filiais
+                .OrderBy(s => s.Name)
+                .ToList();
+
+            foreach (var sub in filiais)
+            {
+                var subPlan = await _accountPlansRepository
+                    .GetSubCompanyAccountPlan(sub.Id);
+
+                if (subPlan == null)
+                    continue;
+
+                var painelCompleto = await BuildPainelByTypeDRE(
+                    subPlan.Id,
+                    year,
+                    3);
+
+                var painelFiltrado = FiltrarPainelPorMes(
+                    painelCompleto,
+                    mes);
+
+                response.Add(new PainelDREEmpresaFilialResponse
+                {
+                    Nivel = "SubEmpresa",
+                    Nome = sub.Name,
+                    AccountPlanId = subPlan.Id,
+                    CompanyId = companyId,
+                    SubCompanyId = sub.Id,
+                    Painel = painelFiltrado
+                });
+            }
+
+            return response;
+        }
+
         private bool PainelPossuiValores(PainelBalancoContabilRespone painel)
         {
             if (painel == null)

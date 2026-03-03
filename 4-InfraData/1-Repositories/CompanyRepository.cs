@@ -487,6 +487,12 @@ namespace _4_InfraData._1_Repositories
             _context.SubCompanies.Update(subCompany);
             await _context.SaveChangesAsync();
         }
+        public async Task<CompanyModel> GetCompanyWithSubCompanies(int companyId)
+        {
+            return await _context.Companies
+                .Include(c => c.SubCompanies)
+                .FirstOrDefaultAsync(c => c.Id == companyId);
+        }
         public async Task<List<SubCompanyModel>> GetSubCompaniesByUserId(int userId)
         {
             var subCompanies = await _context.CompanyUsers

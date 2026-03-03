@@ -334,8 +334,68 @@ namespace ConsultarMRP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        [HttpGet]
+        [Route("/demonstracao-consolidados/completo")]
 
+        public async Task<IActionResult> GetDREGrupoEmpresasFiliaisAno([FromQuery] int groupId, [FromQuery] List<int> companyIds, [FromQuery] int year)
+        {
+            try
+            {
 
-        #endregion
+                var response = await _Service.GetDREGrupoEmpresasFiliaisAno(groupId, companyIds, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        [Route("/demonstracao-consolidados/filiais")]
+
+        public async Task<IActionResult> GetDREEmpresasFiliaisAno([FromQuery] int companyId, [FromQuery] List<int> subCompanyIds, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GetDREEmpresaFiliaisAno(companyId, subCompanyIds, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        /// <summary>
+        /// Retorna DRE mensal da empresa e filiais selecionadas
+        /// </summary>
+        [HttpGet("empresa-filiais-mes")]
+        public async Task<IActionResult> GetDREEmpresaFiliaisMes(
+            [FromQuery] int companyId,
+            [FromQuery] List<int> subCompanyIds,
+            [FromQuery] int year,
+            [FromQuery] int mes)
+        {
+            // 🔹 Validações básicas
+            if (companyId <= 0)
+                return BadRequest("CompanyId inválido.");
+
+            if (year <= 0)
+                return BadRequest("Ano inválido.");
+
+            if (mes < 1 || mes > 12)
+                return BadRequest("Mês deve estar entre 1 e 12.");
+
+            var result = await _Service
+                .GetDREEmpresaFiliaisMes(
+                    companyId,
+                    subCompanyIds ?? new List<int>(),
+                    year,
+                    mes);
+
+            return Ok(result);
+        }
     }
+        #endregion
 }
