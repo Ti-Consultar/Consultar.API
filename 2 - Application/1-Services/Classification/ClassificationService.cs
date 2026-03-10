@@ -1893,7 +1893,10 @@ namespace _2___Application._1_Services
             return response;
         }
 
-        public async Task<List<PainelDREEmpresaFilialResponse>>GetDREEmpresaFiliaisAno(int companyId,List<int> subCompanyIds,int year)
+        public async Task<List<PainelDREEmpresaFilialResponse>> GetDREEmpresaFiliaisAno(
+    int companyId,
+    List<int> subCompanyIds,
+    int year)
         {
             var response = new List<PainelDREEmpresaFilialResponse>();
 
@@ -1906,7 +1909,7 @@ namespace _2___Application._1_Services
             var companyPlan = await _accountPlansRepository
                 .GetCompanyAccountPlanByCompanyId(companyId);
 
-            // 🔹 EMPRESA (raiz)
+            // EMPRESA
             if (companyPlan != null)
             {
                 response.Add(new PainelDREEmpresaFilialResponse
@@ -1923,17 +1926,27 @@ namespace _2___Application._1_Services
                 });
             }
 
-            // 🔥 REGRA INTELIGENTE AQUI
-            var filiais = (subCompanyIds == null || !subCompanyIds.Any())
-                ? company.SubCompanies // traz todas
-                : company.SubCompanies
-                    .Where(s => subCompanyIds.Contains(s.Id))
-                    .ToList();
+            // 🔹 filiais válidas
+            var filiaisQuery = company.SubCompanies
+                .Where(s => !s.Deleted);
 
-            foreach (var sub in filiais.OrderBy(s => s.Name))
+            if (subCompanyIds != null && subCompanyIds.Any())
+                filiaisQuery = filiaisQuery.Where(s => subCompanyIds.Contains(s.Id));
+
+            var filiais = filiaisQuery
+                .OrderBy(s => s.Name)
+                .ToList();
+
+            // 🔹 busca todos os planos de conta de uma vez
+            var subIds = filiais.Select(f => f.Id).ToList();
+
+            var subPlans = await _accountPlansRepository
+                .GetSubCompaniesAccountPlans(subIds);
+
+            foreach (var sub in filiais)
             {
-                var subPlan = await _accountPlansRepository
-                    .GetSubCompanyAccountPlan(sub.Id);
+                var subPlan = subPlans
+                    .FirstOrDefault(p => p.SubCompanyId == sub.Id);
 
                 if (subPlan == null)
                     continue;

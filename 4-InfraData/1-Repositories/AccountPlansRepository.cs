@@ -30,20 +30,29 @@ namespace _4_InfraData._1_Repositories
         //                companyIds.Contains(ap.CompanyId.Value))
         //            .ToListAsync();
         //    }
-
+        public async Task<List<AccountPlansModel>> GetSubCompaniesAccountPlans(List<int> subCompanyIds)
+        {
+            return await _context.AccountPlans
+                .Where(ap =>
+                    ap.SubCompanyId != null &&
+                    subCompanyIds.Contains(ap.SubCompanyId.Value) &&
+                    !ap.SubCompany.Deleted)
+                .ToListAsync();
+        }
         public async Task<AccountPlansModel> GetCompanyAccountPlanByCompanyId(int companyId)
         {
             return await _context.AccountPlans
                 .FirstOrDefaultAsync(a => a.CompanyId == companyId);
         }
         public async Task<List<AccountPlansModel>> GetCompanyAccountPlans(
-    int groupId,
-    List<int> companyIds)
+     int groupId,
+     List<int> companyIds)
         {
             var query = _context.AccountPlans
                 .Where(ap =>
                     ap.GroupId == groupId &&
-                    ap.CompanyId != null);
+                    ap.CompanyId != null &&
+                    !ap.Company.Deleted);
 
             if (companyIds != null && companyIds.Any())
             {
