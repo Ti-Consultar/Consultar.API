@@ -2913,7 +2913,9 @@ namespace _2___Application._1_Services
                     };
                 }).ToList()
             };
-
+            //AdicionarMesCagr(realizado);
+            //AdicionarMesCagr(orcado);
+            //AdicionarMesCagr(variacao);
             // 3️⃣ Retorna os 3 painéis
             return new PainelBalancoComparativoResponse
             {
@@ -2921,6 +2923,139 @@ namespace _2___Application._1_Services
                 Orcado = orcado,
                 Variacao = variacao
             };
+        }
+
+        private void AdicionarMesCagr(PainelBalancoContabilRespone painel)
+        {
+            if (painel?.Months == null || painel.Months.Count < 2)
+                return;
+
+            var mesesValidos = painel.Months
+                .Where(m => m.Name != "ACUMULADO")
+                .OrderBy(m => m.DateMonth)
+                .ToList();
+
+            if (mesesValidos.Count < 2)
+                return;
+
+            var primeiroMes = mesesValidos.First();
+            var ultimoMes = mesesValidos.Last();
+            var periodos = mesesValidos.Count - 1;
+
+            var totalizersCagr = primeiroMes.Totalizer.Select(t =>
+            {
+                var totalUltimo = ultimoMes.Totalizer
+                    .FirstOrDefault(x => x.Id == t.Id);
+
+                if (totalUltimo == null || t.TotalValue == 0)
+                {
+                    return new TotalizerParentRespone
+                    {
+                        Id = t.Id,
+                        Name = t.Name,
+                        TypeOrder = t.TypeOrder,
+                        Classifications = new List<ClassificationRespone>(),
+                        TotalValue = 0
+                    };
+                }
+
+                // Ignorar margens %
+                if (t.Name.Contains("%"))
+                {
+                    return new TotalizerParentRespone
+                    {
+                        Id = t.Id,
+                        Name = t.Name,
+                        TypeOrder = t.TypeOrder,
+                        Classifications = new List<ClassificationRespone>(),
+                        TotalValue = 0
+                    };
+                }
+
+                var cagr = Math.Pow(
+                    (double)(totalUltimo.TotalValue / t.TotalValue),
+                    1.0 / periodos
+                ) - 1;
+
+                return new TotalizerParentRespone
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    TypeOrder = t.TypeOrder,
+                    Classifications = new List<ClassificationRespone>(),
+                    TotalValue = Math.Round((decimal)cagr * 100, 2)
+                };
+            }).OrderBy(x => x.TypeOrder).ToList();
+
+            var mesCagr = new MonthPainelContabilRespone
+            {
+                Id = 14,
+                Name = "CAGR %",
+                DateMonth = 999, // só para ir para o final
+                Totalizer = totalizersCagr,
+                MonthPainelContabilTotalizer = new MonthPainelContabilTotalizerRespone
+                {
+                    Name = "TOTAL CAGR",
+                    TotalValue = totalizersCagr.Sum(t => t.TotalValue)
+                }
+            };
+
+            painel.Months.Add(mesCagr);
+        }
+        private void AplicarCagrNoPainel(PainelBalancoContabilRespone painel)
+        {
+            if (painel?.Months == null || painel.Months.Count < 2)
+                return;
+
+            var mesesValidos = painel.Months
+                .Where(m => m.Name != "Acumulado")
+                .OrderBy(m => m.DateMonth)
+                .ToList();
+
+            if (mesesValidos.Count < 2)
+                return;
+
+            var primeiroMes = mesesValidos.First();
+            var ultimoMes = mesesValidos.Last();
+            var periodos = mesesValidos.Count - 1;
+
+            var acumulado = painel.Months
+                .FirstOrDefault(m => m.Name == "Acumulado");
+
+            if (acumulado == null)
+                return;
+
+            foreach (var totalizer in acumulado.Totalizer)
+            {
+                // Ignorar margens %
+                if (totalizer.Name.Contains("%"))
+                    continue;
+
+                var totalPrimeiro = primeiroMes.Totalizer
+                    .FirstOrDefault(t => t.Id == totalizer.Id);
+
+                var totalUltimo = ultimoMes.Totalizer
+                    .FirstOrDefault(t => t.Id == totalizer.Id);
+
+                if (totalPrimeiro == null || totalUltimo == null)
+                    continue;
+
+                var valorInicial = totalPrimeiro.TotalValue;
+                var valorFinal = totalUltimo.TotalValue;
+
+                if (valorInicial == 0)
+                    continue;
+
+                var cagr = Math.Pow(
+                    (double)(valorFinal / valorInicial),
+                    1.0 / periodos
+                ) - 1;
+
+                totalizer.TotalValue =
+                    Math.Round((decimal)cagr * 100, 2);
+
+                totalizer.Name += " CAGR %";
+            }
         }
         private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoAtivoOrcado(int accountPlanId, int year)
         {

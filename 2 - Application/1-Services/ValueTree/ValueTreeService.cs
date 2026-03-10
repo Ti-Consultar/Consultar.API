@@ -873,11 +873,27 @@ namespace _2___Application._1_Services.ValueTree
 
         public async Task<ValueTreeComparativoResponse> BuildValueTreeComparativo(int accountPlanId, int month, int year)
         {
-            // 1️⃣ Chama os dois métodos originais
-            var realizado = await GettAll(accountPlanId, month, year);
-            var orcado = await GettAllOrcado(accountPlanId, month, year);
+            ValueTreeResultDto realizado = null;
+            ValueTreeResultDto orcado = null;
 
-            // 2️⃣ Se algum deles veio nulo, cria instância vazia
+            try
+            {
+                realizado = await GettAll(accountPlanId, month, year);
+            }
+            catch
+            {
+              realizado =  new ValueTreeResultDto(); 
+            }
+
+            try
+            {
+                orcado = await GettAllOrcado(accountPlanId, month, year);
+            }
+            catch
+            {
+                orcado = new ValueTreeResultDto();
+            }
+
             realizado ??= new ValueTreeResultDto
             {
                 ValueTreeYearMonth = new ValueTreeYearMonthDto { Year = year, Month = month },
@@ -894,14 +910,12 @@ namespace _2___Application._1_Services.ValueTree
                 Indicators = new ReturnIndicatorsDto()
             };
 
-            // 3️⃣ Retorna o comparativo
             return new ValueTreeComparativoResponse
             {
                 Realizado = realizado,
                 Orcado = orcado
             };
         }
-
 
 
         #endregion
