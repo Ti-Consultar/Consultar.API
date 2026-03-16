@@ -99,6 +99,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<CashFlowService>();
             services.AddScoped<ValueTreeService>();
             services.AddScoped<BudgetService>();
+            services.AddScoped<ConfigService>();
 
 
 
@@ -128,6 +129,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<BudgetRepository>();
             services.AddScoped<BudgetDataRepository>();
             services.AddScoped<BalanceteImportConfigRepository>();
+            services.AddScoped<ConfigPrincipalRepository>();
      
             #endregion
              
