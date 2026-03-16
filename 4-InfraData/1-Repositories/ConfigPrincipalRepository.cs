@@ -148,13 +148,14 @@ namespace _4_InfraData._1_Repositories
                 })
                 .ToListAsync();
         }
-        public async Task<ConfigPrincipal> GetConfigPrincipalTree(int id)
+        public async Task<List<ConfigPrincipal>> GetConfigPrincipalTree()
         {
             return await _context.ConfigPrincipal
                 .AsNoTracking()
                 .Include(c => c.SonConfigs)
                     .ThenInclude(s => s.ViewConfigs)
-                .FirstOrDefaultAsync(c => c.Id == id);
+                .OrderBy(c => c.Id)
+                .ToListAsync();
         }
 
         public async Task<List<ConfigPrincipal>> GetFullTreeByAccountPlan(int accountPlanId)

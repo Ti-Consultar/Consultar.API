@@ -105,16 +105,16 @@ public class ConfigService : BaseService
        CONFIG PRINCIPAL
     ========================= */
 
-    public async Task<ResultValue> GetConfigPrincipalTree(int id)
+    public async Task<ResultValue> GetConfigPrincipalTree()
     {
         try
         {
-            var config = await _configRepository.GetConfigPrincipalTree(id);
+            var configs = await _configRepository.GetConfigPrincipalTree();
 
-            if (config == null)
+            if (configs == null || !configs.Any())
                 return SuccessResponse(Message.NotFound);
 
-            return SuccessResponse(config);
+            return SuccessResponse(configs);
         }
         catch (Exception ex)
         {
@@ -125,7 +125,7 @@ public class ConfigService : BaseService
     /* =========================
        SON CONFIG
     ========================= */
-  
+
     public async Task<ResultValue> GetSonConfigsByPrincipal(int configPrincipalId)
     {
         try
