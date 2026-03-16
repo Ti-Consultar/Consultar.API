@@ -35,6 +35,9 @@ namespace _4_InfraData._1_Context
         public DbSet<BudgetModel> Budget { get; set; }
         public DbSet<BudgetDataModel> BudgetData { get; set; }
         public DbSet<BalanceteImportConfig> BalanceteImportConfig { get; set; }
+        public DbSet<ConfigPrincipal> ConfigPrincipal { get; set; }
+        public DbSet<SonConfig> SonConfig { get; set; }
+        public DbSet<ViewConfig> ViewConfig { get; set; }
     
 
 
