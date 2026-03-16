@@ -103,7 +103,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("principal-tree")]
-        [Authorize()]
+       // [Authorize()]
         public async Task<IActionResult> GetConfigPrincipalTree()
         {
             try

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace _3_Domain._1_Entities
@@ -25,7 +26,7 @@ namespace _3_Domain._1_Entities
 
         public int? ConfigPrincipalId { get; set; }
 
-        // Navigation
+        [JsonIgnore]
         public ConfigPrincipal ConfigPrincipal { get; set; }
 
         public ICollection<ViewConfig> ViewConfigs { get; set; } = new List<ViewConfig>();
@@ -40,11 +41,12 @@ namespace _3_Domain._1_Entities
 
         public int? SonConfigId { get; set; }
 
-        // Navigation
         public AccountPlansModel AccountPlan { get; set; }
 
+        [JsonIgnore]
         public ConfigPrincipal ConfigPrincipal { get; set; }
 
+        [JsonIgnore]
         public SonConfig SonConfig { get; set; }
     }
 }
