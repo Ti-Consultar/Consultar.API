@@ -21,6 +21,11 @@ namespace _4_InfraData._1_Repositories
             await _context.ViewConfig.AddAsync(viewConfig);
             await _context.SaveChangesAsync();
         }
+        public async Task AddRangeViewConfig(List<ViewConfig> list)
+        {
+            await _context.ViewConfig.AddRangeAsync(list);
+            await _context.SaveChangesAsync();
+        }
         public class MenuPrincipalDto
         {
             public int Id { get; set; }

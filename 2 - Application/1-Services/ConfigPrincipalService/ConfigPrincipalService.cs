@@ -23,14 +23,28 @@ public class ConfigService : BaseService
     {
         try
         {
-            var viewConfig = new ViewConfig
-            {
-                AccountPlanId = dto.AccountPlanId,
-                ConfigPrincipalId = dto.ConfigPrincipalId,
-                SonConfigId = dto.SonConfigId
-            };
+            var list = new List<ViewConfig>();
 
-            await _configRepository.AddViewConfig(viewConfig);
+            foreach (var config in dto.Configs)
+            {
+                foreach (var sonId in config.SonConfigIds)
+                {
+                    list.Add(new ViewConfig
+                    {
+                        AccountPlanId = dto.AccountPlanId,
+                        ConfigPrincipalId = config.ConfigPrincipalId,
+                        SonConfigId = sonId
+                    });
+                }
+            }
+
+            // 🔥 REMOVE DUPLICADOS AQUI
+            list = list
+                .GroupBy(x => new { x.AccountPlanId, x.ConfigPrincipalId, x.SonConfigId })
+                .Select(g => g.First())
+                .ToList();
+
+            await _configRepository.AddRangeViewConfig(list);
 
             return SuccessResponse(Message.Success);
         }
