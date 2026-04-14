@@ -1,53 +1,37 @@
 ﻿using Microsoft.OpenApi.Models;
-using _2___Application._4__DependencyInjectionConfig;
+using _2___Application._4__DependencyInjectionConfig; // Importação da configuração de dependências
 using _2___Application._1_Services.User;
 using _4_InfraData._1_Repositories;
 using _4_InfraData._1_Context;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore; // Certifique-se de usar o namespace correto
 
 var builder = WebApplication.CreateBuilder(args);
 
-// =========================
-// 🔧 CONFIGURAÇÕES INICIAIS
-// =========================
-
-// Log para debug no Azure
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-
-// =========================
-// 📦 SERVICES
-// =========================
-
+// Adiciona os serviços ao contêiner
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.ReferenceHandler =
-            System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
-// 🔥 Pega connection string (Azure ou local)
+// Obtém a connection string do appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// ❌ Se não vier do Azure → quebra com erro claro
-if (string.IsNullOrEmpty(connectionString))
-{
-    throw new Exception("❌ Connection string NÃO configurada. Verifique Azure (ConnectionStrings__DefaultConnection)");
-}
-
-// 🗄️ DbContext
+// Configuração do DbContext
 builder.Services.AddDbContext<CoreServiceDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// 🔗 Injeção de dependência customizada
+
+// Chama o método para configurar dependências gerais
 DependencyInjectionConfig.Configure(builder.Services, connectionString);
 
-// Serviços
+// Adiciona o UserService diretamente
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<AuthorizationService>();
+
 builder.Services.AddScoped<UserRepository>();
 
-// 🌐 CORS
+// Configuração de CORS (permitindo todas as origens, ajuste conforme necessário)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -58,7 +42,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 📄 Swagger
+// Configuração do Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -70,55 +54,27 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// =========================
-// 🚀 APP
-// =========================
-
 var app = builder.Build();
 
-// Log pra debug
-app.Logger.LogInformation("🔥 Aplicação iniciando...");
-
-// 🌐 CORS
+// Habilita o CORS para a aplicação
 app.UseCors("AllowAll");
 
-// 📄 Swagger (sempre ativo)
+// Sempre habilita o Swagger, independentemente do ambiente
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "ConsultarAuth API v1");
-    c.RoutePrefix = "swagger";
+    c.RoutePrefix = "swagger"; // O Swagger será acessível em http://localhost:7270/swagger
 });
 
-// 🔐 HTTPS
 app.UseHttpsRedirection();
-
-// ⚠️ Só usa se tiver autenticação configurada
-// app.UseAuthentication();
-
+app.UseAuthentication(); // Adiciona autenticação (caso JWT esteja sendo usado)
 app.UseAuthorization();
-
 app.MapControllers();
-
-// 🔁 Redireciona raiz para Swagger
+// 👇 Redirecionamento da raiz para /swagger
 app.MapGet("/", context =>
 {
     context.Response.Redirect("/swagger");
     return Task.CompletedTask;
 });
-
-// =========================
-// 🧨 RUN COM TRATAMENTO
-// =========================
-
-try
-{
-    app.Run();
-}
-catch (Exception ex)
-{
-    Console.WriteLine("💥 ERRO AO INICIAR A APLICAÇÃO:");
-    Console.WriteLine(ex.Message);
-    Console.WriteLine(ex.StackTrace);
-    throw;
-}
+app.Run();
