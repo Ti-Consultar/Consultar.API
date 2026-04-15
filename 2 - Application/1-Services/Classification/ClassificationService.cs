@@ -1957,11 +1957,11 @@ namespace _2___Application._1_Services
 
                 // BSB
                 if (x.CompanyId == 4005)
-                    return 1;
+                    return 2;
 
                 // MATRIZ
                 if (x.CompanyId == 5009)
-                    return 2;
+                    return 1;
 
                 // Grupo por último
                 if (x.Nivel == "Grupo")
