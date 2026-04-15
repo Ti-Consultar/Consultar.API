@@ -1844,29 +1844,28 @@ namespace _2___Application._1_Services
             }
 
 
-
-
             // ==============================
             // 4️⃣ ORDENAÇÃO CUSTOM
             // ==============================
 
             int GetOrdem(PainelDREHierarquiaCompletaResponse x)
             {
-                // Outras empresas primeiro
-                if (x.Nivel == "Empresa" &&
-                    x.Nome != "PRIMAVIA FIAT - BSB" &&
-                    x.Nome != "PRIMAVIA FIAT - MATRIZ")
+                // 1️⃣ Outras empresas
+                if (x.Nivel == "Empresa"
+                    && x.CompanyId != 4005 // BSB
+                    && x.CompanyId != 5009 // MATRIZ
+                )
                     return 0;
 
-                // BSB
-                if (x.Nome == "PRIMAVIA FIAT - BSB")
+                // 2️⃣ BSB
+                if (x.CompanyId == 4005)
                     return 1;
 
-                // MATRIZ
-                if (x.Nome == "PRIMAVIA FIAT - MATRIZ")
+                // 3️⃣ MATRIZ
+                if (x.CompanyId == 5009)
                     return 2;
 
-                // Grupo por último
+                // 4️⃣ Grupo por último
                 if (x.Nivel == "Grupo")
                     return 3;
 
