@@ -1647,7 +1647,7 @@ namespace _2___Application._1_Services
         }
 
 
-       
+
 
         public class PainelDRECompanyResponse
         {
@@ -1843,8 +1843,51 @@ namespace _2___Application._1_Services
                 }
             }
 
+
+
+
+            // ==============================
+            // 4️⃣ ORDENAÇÃO CUSTOM
+            // ==============================
+
+            var grupo = response
+                .Where(x => x.Nivel == "Grupo")
+                .ToList();
+
+            var prioridade = new List<string>
+                {
+                    "PRIMAVIA FIAT - BSB",
+                    "PRIMAVIA FIAT - MATRIZ"
+                };
+
+            var empresasESubs = response
+                .Where(x => x.Nivel != "Grupo")
+                .OrderBy(x => prioridade.Contains(x.Nome) ? prioridade.IndexOf(x.Nome) : int.MaxValue)
+                .ThenBy(x => x.Nome)
+                .ToList();
+
+            response = grupo
+                .Concat(empresasESubs)
+                .ToList();
+
             return response;
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(int groupId, List<int> companyIds, int year)
         {
             var response = new List<PainelDREHierarquiaResponse>();
@@ -2044,7 +2087,7 @@ namespace _2___Application._1_Services
 
             return response;
         }
-        private PainelBalancoContabilRespone FiltrarPainelPorMes(PainelBalancoContabilRespone painel,int mes)
+        private PainelBalancoContabilRespone FiltrarPainelPorMes(PainelBalancoContabilRespone painel, int mes)
         {
             if (painel == null)
                 return null;
@@ -2063,7 +2106,7 @@ namespace _2___Application._1_Services
                 Totalizador = null
             };
         }
-        public async Task<List<PainelDREEmpresaFilialResponse>>GetDREEmpresaFiliaisMes(int companyId,List<int> subCompanyIds,int year,int mes)
+        public async Task<List<PainelDREEmpresaFilialResponse>> GetDREEmpresaFiliaisMes(int companyId, List<int> subCompanyIds, int year, int mes)
         {
             var response = new List<PainelDREEmpresaFilialResponse>();
 
