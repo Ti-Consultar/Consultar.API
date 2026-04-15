@@ -1888,20 +1888,14 @@ namespace _2___Application._1_Services
 
 
 
-        public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(
-     int groupId,
-     List<int> companyIds,
-     int year)
+        public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(int groupId, List<int> companyIds, int year)
         {
             var response = new List<PainelDREHierarquiaResponse>();
 
-            // ==============================
-            // 1️⃣ GRUPO (consolidado)
-            // ==============================
-
+            // 1️⃣ Grupo (consolidado)
             var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
-            var group = await _groupRepository.GetById(groupId);
 
+            var group = await _groupRepository.GetById(groupId);
             if (groupPlan != null)
             {
                 response.Add(new PainelDREHierarquiaResponse
@@ -1917,10 +1911,7 @@ namespace _2___Application._1_Services
                 });
             }
 
-            // ==============================
-            // 2️⃣ EMPRESAS
-            // ==============================
-
+            // 2️⃣ Empresas
             var companyPlans = await _accountPlansRepository
                 .GetCompanyAccountPlans(groupId, companyIds);
 
@@ -1941,38 +1932,6 @@ namespace _2___Application._1_Services
                         3)
                 });
             }
-
-            // ==============================
-            // 3️⃣ ORDENAÇÃO CUSTOM
-            // ==============================
-
-            int GetOrdem(PainelDREHierarquiaResponse x)
-            {
-                // Outras empresas primeiro
-                if (x.Nivel == "Empresa"
-                    && x.CompanyId != 4005 // BSB
-                    && x.CompanyId != 5009 // MATRIZ
-                )
-                    return 0;
-
-                // BSB
-                if (x.CompanyId == 4005)
-                    return 1;
-
-                // MATRIZ
-                if (x.CompanyId == 5009)
-                    return 2;
-
-                // Grupo por último
-                if (x.Nivel == "Grupo")
-                    return 3;
-
-                return 0;
-            }
-
-            response = response
-                .OrderBy(x => GetOrdem(x))
-                .ToList();
 
             return response;
         }
