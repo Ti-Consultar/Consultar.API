@@ -1850,24 +1850,24 @@ namespace _2___Application._1_Services
             // 4️⃣ ORDENAÇÃO CUSTOM
             // ==============================
 
-            var grupo = response
-                .Where(x => x.Nivel == "Grupo")
-                .ToList();
+            int GetOrdem(string nome, string nivel)
+            {
+                // Grupo sempre por último
+                if (nivel == "Grupo")
+                    return 999;
 
-            var prioridade = new List<string>
-                {
-                    "PRIMAVIA FIAT - BSB",
-                    "PRIMAVIA FIAT - MATRIZ"
-                };
+                if (nome == "PRIMAVIA FIAT - BSB")
+                    return 100;
 
-            var empresasESubs = response
-                .Where(x => x.Nivel != "Grupo")
-                .OrderBy(x => prioridade.Contains(x.Nome) ? prioridade.IndexOf(x.Nome) : int.MaxValue)
+                if (nome == "PRIMAVIA FIAT - MATRIZ")
+                    return 101;
+
+                return 0; // todas as outras primeiro
+            }
+
+            response = response
+                .OrderBy(x => GetOrdem(x.Nome, x.Nivel))
                 .ThenBy(x => x.Nome)
-                .ToList();
-
-            response = grupo
-                .Concat(empresasESubs)
                 .ToList();
 
             return response;
