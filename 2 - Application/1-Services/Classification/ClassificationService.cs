@@ -1844,37 +1844,30 @@ namespace _2___Application._1_Services
             }
 
 
+
+
             // ==============================
             // 4️⃣ ORDENAÇÃO CUSTOM
             // ==============================
 
-            int GetOrdem(PainelDREHierarquiaCompletaResponse x)
-            {
-                // 1️⃣ Outras empresas
-                if (x.Nivel == "Empresa"
-                    && x.CompanyId != 4005 // BSB
-                    && x.CompanyId != 5009 // MATRIZ
-                )
-                    return 0;
+            var grupo = response
+                .Where(x => x.Nivel == "Grupo")
+                .ToList();
 
-                // 2️⃣ BSB
-                if (x.CompanyId == 4005)
-                    return 1;
+            var prioridade = new List<string>
+{
+    "PRIMAVIA FIAT - BSB",
+    "PRIMAVIA FIAT - MATRIZ"
+};
 
-                // 3️⃣ MATRIZ
-                if (x.CompanyId == 5009)
-                    return 2;
-
-                // 4️⃣ Grupo por último
-                if (x.Nivel == "Grupo")
-                    return 3;
-
-                return 0;
-            }
-
-            response = response
-                .OrderBy(x => GetOrdem(x))
+            var empresasESubs = response
+                .Where(x => x.Nivel != "Grupo")
+                .OrderBy(x => prioridade.Contains(x.Nome) ? prioridade.IndexOf(x.Nome) : int.MaxValue)
                 .ThenBy(x => x.Nome)
+                .ToList();
+
+            response = grupo
+                .Concat(empresasESubs)
                 .ToList();
 
             return response;
@@ -1895,14 +1888,20 @@ namespace _2___Application._1_Services
 
 
 
-        public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(int groupId, List<int> companyIds, int year)
+        public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(
+     int groupId,
+     List<int> companyIds,
+     int year)
         {
             var response = new List<PainelDREHierarquiaResponse>();
 
-            // 1️⃣ Grupo (consolidado)
-            var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
+            // ==============================
+            // 1️⃣ GRUPO (consolidado)
+            // ==============================
 
+            var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
             var group = await _groupRepository.GetById(groupId);
+
             if (groupPlan != null)
             {
                 response.Add(new PainelDREHierarquiaResponse
@@ -1918,7 +1917,10 @@ namespace _2___Application._1_Services
                 });
             }
 
-            // 2️⃣ Empresas
+            // ==============================
+            // 2️⃣ EMPRESAS
+            // ==============================
+
             var companyPlans = await _accountPlansRepository
                 .GetCompanyAccountPlans(groupId, companyIds);
 
@@ -1939,6 +1941,38 @@ namespace _2___Application._1_Services
                         3)
                 });
             }
+
+            // ==============================
+            // 3️⃣ ORDENAÇÃO CUSTOM
+            // ==============================
+
+            int GetOrdem(PainelDREHierarquiaResponse x)
+            {
+                // Outras empresas primeiro
+                if (x.Nivel == "Empresa"
+                    && x.CompanyId != 4005 // BSB
+                    && x.CompanyId != 5009 // MATRIZ
+                )
+                    return 0;
+
+                // BSB
+                if (x.CompanyId == 4005)
+                    return 1;
+
+                // MATRIZ
+                if (x.CompanyId == 5009)
+                    return 2;
+
+                // Grupo por último
+                if (x.Nivel == "Grupo")
+                    return 3;
+
+                return 0;
+            }
+
+            response = response
+                .OrderBy(x => GetOrdem(x))
+                .ToList();
 
             return response;
         }
