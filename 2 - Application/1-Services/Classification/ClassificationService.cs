@@ -1850,23 +1850,31 @@ namespace _2___Application._1_Services
             // 4️⃣ ORDENAÇÃO CUSTOM
             // ==============================
 
-            int GetOrdem(string nome, string nivel)
+            int GetOrdem(PainelDREHierarquiaCompletaResponse x)
             {
-                // Grupo sempre por último
-                if (nivel == "Grupo")
-                    return 999;
+                // Outras empresas primeiro
+                if (x.Nivel == "Empresa" &&
+                    x.Nome != "PRIMAVIA FIAT - BSB" &&
+                    x.Nome != "PRIMAVIA FIAT - MATRIZ")
+                    return 0;
 
-                if (nome == "PRIMAVIA FIAT - BSB")
-                    return 100;
+                // BSB
+                if (x.Nome == "PRIMAVIA FIAT - BSB")
+                    return 1;
 
-                if (nome == "PRIMAVIA FIAT - MATRIZ")
-                    return 101;
+                // MATRIZ
+                if (x.Nome == "PRIMAVIA FIAT - MATRIZ")
+                    return 2;
 
-                return 0; // todas as outras primeiro
+                // Grupo por último
+                if (x.Nivel == "Grupo")
+                    return 3;
+
+                return 0;
             }
 
             response = response
-                .OrderBy(x => GetOrdem(x.Nome, x.Nivel))
+                .OrderBy(x => GetOrdem(x))
                 .ThenBy(x => x.Nome)
                 .ToList();
 
