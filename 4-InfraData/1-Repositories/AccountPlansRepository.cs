@@ -52,7 +52,11 @@ namespace _4_InfraData._1_Repositories
                 .Where(ap =>
                     ap.GroupId == groupId &&
                     ap.CompanyId != null &&
-                    !ap.Company.Deleted);
+                    !ap.Company.Deleted &&
+                    (
+                        ap.SubCompanyId == null ||
+                        !ap.SubCompany.Deleted
+                    ));
 
             if (companyIds != null && companyIds.Any())
             {
@@ -182,6 +186,44 @@ namespace _4_InfraData._1_Repositories
             }
 
             return await query.ToListAsync();
+        }
+
+        public async Task<AccountPlansModel?> GetExactScope(
+            int groupId,
+            int? companyId,
+            int? subCompanyId)
+        {
+            return await _context.AccountPlans
+                .Where(x =>
+                    x.GroupId == groupId &&
+                    x.CompanyId == companyId &&
+                    x.SubCompanyId == subCompanyId &&
+                    (
+                        x.CompanyId == null ||
+                        !x.Company.Deleted
+                    ) &&
+                    (
+                        x.SubCompanyId == null ||
+                        !x.SubCompany.Deleted
+                    ))
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<List<AccountPlansModel>> GetAllByGroup(int groupId)
+        {
+            return await _context.AccountPlans
+                .Where(x =>
+                    x.GroupId == groupId &&
+                    (
+                        x.CompanyId == null ||
+                        !x.Company.Deleted
+                    ) &&
+                    (
+                        x.SubCompanyId == null ||
+                        !x.SubCompany.Deleted
+                    )
+                )
+                .ToListAsync();
         }
 
     }

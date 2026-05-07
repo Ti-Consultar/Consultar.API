@@ -2,6 +2,7 @@
 using _2___Application._2_Dto_s.Painel;
 using _2___Application._2_Dto_s.Results.OperationalEfficiency;
 using _2___Application._2_Dto_s.TotalizerClassification;
+using _2___Application._1_Services.Scope;
 using _2___Application.Base;
 using _4_InfraData._1_Repositories;
 using _4_InfraData._2_AppSettings;
@@ -29,6 +30,7 @@ namespace _2___Application._1_Services.CashFlow
         private readonly BalancoReclassificadoRepository _balancoReclassificadoRepository;
         private readonly AccountPlansRepository _accountPlansRepository;
         private readonly ParameterRepository _parameterRepository;
+        private readonly IAccountPlanScopeResolver _accountPlanScopeResolver;
 
         public CashFlowService(
             ClassificationRepository repository,
@@ -43,6 +45,7 @@ namespace _2___Application._1_Services.CashFlow
             BalancoReclassificadoRepository balancoReclassificadoRepository,
             AccountPlansRepository accountPlansRepository,
             ParameterRepository parameterRepository,
+            IAccountPlanScopeResolver accountPlanScopeResolver,
             IAppSettings appSettings) : base(appSettings)
         {
             _repository = repository;
@@ -57,6 +60,7 @@ namespace _2___Application._1_Services.CashFlow
             _balancoReclassificadoRepository = balancoReclassificadoRepository;
             _accountPlansRepository = accountPlansRepository;
             _parameterRepository = parameterRepository;
+            _accountPlanScopeResolver = accountPlanScopeResolver;
         }
 
         #region
@@ -758,6 +762,123 @@ namespace _2___Application._1_Services.CashFlow
                 }
             };
         }
+        public async Task<PainelCashFlowResponseDto> GetCashFlow(EntityScopeRequest scope, int year)
+        {
+            var accountPlanIds = await _accountPlanScopeResolver.ResolveAccountPlanIds(scope);
+            var panels = new List<PainelCashFlowResponseDto>();
+
+            foreach (var accountPlanId in accountPlanIds)
+            {
+                panels.Add(await GetCashFlow(accountPlanId, year));
+            }
+
+            return AggregateCashFlowPanels(panels);
+        }
+
+        public async Task<PainelCashFlowResponseDto> GetCashFlowOrcado(EntityScopeRequest scope, int year)
+        {
+            var accountPlanIds = await _accountPlanScopeResolver.ResolveAccountPlanIds(scope);
+            var panels = new List<PainelCashFlowResponseDto>();
+
+            foreach (var accountPlanId in accountPlanIds)
+            {
+                panels.Add(await GetCashFlowOrcado(accountPlanId, year));
+            }
+
+            return AggregateCashFlowPanels(panels);
+        }
+
+        public async Task<PainelCashFlowComparativoResponseDto> GetCashFlowComparativo(EntityScopeRequest scope, int year)
+        {
+            var accountPlanIds = await _accountPlanScopeResolver.ResolveAccountPlanIds(scope);
+            var comparativos = new List<PainelCashFlowComparativoResponseDto>();
+
+            foreach (var accountPlanId in accountPlanIds)
+            {
+                comparativos.Add(await GetCashFlowComparativo(accountPlanId, year));
+            }
+
+            return new PainelCashFlowComparativoResponseDto
+            {
+                Realizado = AggregateCashFlowPanels(comparativos.Select(x => x.Realizado)),
+                Orcado = AggregateCashFlowPanels(comparativos.Select(x => x.Orcado)),
+                Variacao = AggregateCashFlowPanels(comparativos.Select(x => x.Variacao))
+            };
+        }
+
+        public async Task<PainelCashFlowComparativoRollingResponseDto> GetCashFlowComparativoRolling(EntityScopeRequest scope, int year)
+        {
+            var accountPlanIds = await _accountPlanScopeResolver.ResolveAccountPlanIds(scope);
+            var comparativos = new List<PainelCashFlowComparativoRollingResponseDto>();
+
+            foreach (var accountPlanId in accountPlanIds)
+            {
+                comparativos.Add(await GetCashFlowComparativoRolling(accountPlanId, year));
+            }
+
+            return new PainelCashFlowComparativoRollingResponseDto
+            {
+                Realizado = AggregateCashFlowPanels(comparativos.Select(x => x.Realizado)),
+                Orcado = AggregateCashFlowPanels(comparativos.Select(x => x.Orcado)),
+                Variacao = AggregateCashFlowPanels(comparativos.Select(x => x.Variacao)),
+                Rolling = AggregateCashFlowPanels(comparativos.Select(x => x.Rolling))
+            };
+        }
+
+        private static PainelCashFlowResponseDto AggregateCashFlowPanels(IEnumerable<PainelCashFlowResponseDto> panels)
+        {
+            var months = panels
+                .Where(x => x?.CashFlow?.Months != null)
+                .SelectMany(x => x.CashFlow.Months)
+                .Where(x => x != null)
+                .GroupBy(x => x.DateMonth)
+                .OrderBy(x => x.Key)
+                .Select(x => SumCashFlowResponses(x))
+                .ToList();
+
+            return new PainelCashFlowResponseDto
+            {
+                CashFlow = new CashFlowGroupedDto
+                {
+                    Months = months
+                }
+            };
+        }
+
+        private static CashFlowResponseDto SumCashFlowResponses(IEnumerable<CashFlowResponseDto> months)
+        {
+            var list = months.ToList();
+            var first = list.FirstOrDefault();
+            var dateMonth = first?.DateMonth ?? 0;
+
+            return new CashFlowResponseDto
+            {
+                Name = dateMonth == 13 ? "ACUMULADO" : first?.Name,
+                DateMonth = dateMonth,
+                LucroOperacionalLiquido = list.Sum(x => x.LucroOperacionalLiquido),
+                DepreciacaoAmortizacao = list.Sum(x => x.DepreciacaoAmortizacao),
+                VariacaoNCG = list.Sum(x => x.VariacaoNCG),
+                Clientes = list.Sum(x => x.Clientes),
+                Estoques = list.Sum(x => x.Estoques),
+                OutrosAtivosOperacionais = list.Sum(x => x.OutrosAtivosOperacionais),
+                Fornecedores = list.Sum(x => x.Fornecedores),
+                ObrigacoesTributariasTrabalhistas = list.Sum(x => x.ObrigacoesTributariasTrabalhistas),
+                OutrosPassivosOperacionais = list.Sum(x => x.OutrosPassivosOperacionais),
+                FluxoDeCaixaOperacional = list.Sum(x => x.FluxoDeCaixaOperacional),
+                AtivoNaoCirculante = list.Sum(x => x.AtivoNaoCirculante),
+                VariacaoInvestimento = list.Sum(x => x.VariacaoInvestimento),
+                VariacaoImobilizado = list.Sum(x => x.VariacaoImobilizado),
+                VariacaoIntangivel = list.Sum(x => x.VariacaoIntangivel),
+                FluxoDeCaixaLivre = list.Sum(x => x.FluxoDeCaixaLivre),
+                CaptacoesAmortizacoesFinanceira = list.Sum(x => x.CaptacoesAmortizacoesFinanceira),
+                PassivoNaoCirculante = list.Sum(x => x.PassivoNaoCirculante),
+                VariacaoPatrimonioLiquido = list.Sum(x => x.VariacaoPatrimonioLiquido),
+                FluxoDeCaixaDaEmpresa = list.Sum(x => x.FluxoDeCaixaDaEmpresa),
+                DisponibilidadeInicioDoPeriodo = list.Sum(x => x.DisponibilidadeInicioDoPeriodo),
+                DisponibilidadeFinalDoPeriodo = list.Sum(x => x.DisponibilidadeFinalDoPeriodo)
+            };
+        }
+
         public async Task<PainelCashFlowResponseDto> GetCashFlowA(int accountPlanId, int year)
         {
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);

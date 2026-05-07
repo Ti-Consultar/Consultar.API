@@ -1647,7 +1647,7 @@ namespace _2___Application._1_Services
         }
 
 
-       
+
 
         public class PainelDRECompanyResponse
         {
@@ -1843,16 +1843,65 @@ namespace _2___Application._1_Services
                 }
             }
 
+
+
+
+            // ==============================
+            // 4️⃣ ORDENAÇÃO CUSTOM
+            // ==============================
+
+            var grupo = response
+                .Where(x => x.Nivel == "Grupo")
+                .ToList();
+
+            var prioridade = new List<string>
+{
+    "PRIMAVIA FIAT - BSB",
+    "PRIMAVIA FIAT - MATRIZ"
+};
+
+            var empresasESubs = response
+                .Where(x => x.Nivel != "Grupo")
+                .OrderBy(x => prioridade.Contains(x.Nome) ? prioridade.IndexOf(x.Nome) : int.MaxValue)
+                .ThenBy(x => x.Nome)
+                .ToList();
+
+            response = grupo
+                .Concat(empresasESubs)
+                .ToList();
+
             return response;
         }
-        public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(int groupId, List<int> companyIds, int year)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        public async Task<List<PainelDREHierarquiaResponse>> GetDREGrupoEmpresasAno(
+      int groupId,
+      List<int> companyIds,
+      int year)
         {
             var response = new List<PainelDREHierarquiaResponse>();
 
-            // 1️⃣ Grupo (consolidado)
-            var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
+            // ==============================
+            // 1️⃣ GRUPO (consolidado)
+            // ==============================
 
+            var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
             var group = await _groupRepository.GetById(groupId);
+
             if (groupPlan != null)
             {
                 response.Add(new PainelDREHierarquiaResponse
@@ -1868,7 +1917,10 @@ namespace _2___Application._1_Services
                 });
             }
 
-            // 2️⃣ Empresas
+            // ==============================
+            // 2️⃣ EMPRESAS
+            // ==============================
+
             var companyPlans = await _accountPlansRepository
                 .GetCompanyAccountPlans(groupId, companyIds);
 
@@ -1889,6 +1941,38 @@ namespace _2___Application._1_Services
                         3)
                 });
             }
+
+            // ==============================
+            // 3️⃣ ORDENAÇÃO CUSTOM
+            // ==============================
+
+            int GetOrdem(PainelDREHierarquiaResponse x)
+            {
+                // Outras empresas primeiro
+                if (x.Nivel == "Empresa"
+                    && x.CompanyId != 4005 // BSB
+                    && x.CompanyId != 5009 // MATRIZ
+                )
+                    return 0;
+
+                // BSB
+                if (x.CompanyId == 4005)
+                    return 2;
+
+                // MATRIZ
+                if (x.CompanyId == 5009)
+                    return 1;
+
+                // Grupo por último
+                if (x.Nivel == "Grupo")
+                    return 3;
+
+                return 0;
+            }
+
+            response = response
+                .OrderBy(x => GetOrdem(x))
+                .ToList();
 
             return response;
         }
@@ -2044,7 +2128,7 @@ namespace _2___Application._1_Services
 
             return response;
         }
-        private PainelBalancoContabilRespone FiltrarPainelPorMes(PainelBalancoContabilRespone painel,int mes)
+        private PainelBalancoContabilRespone FiltrarPainelPorMes(PainelBalancoContabilRespone painel, int mes)
         {
             if (painel == null)
                 return null;
@@ -2063,7 +2147,7 @@ namespace _2___Application._1_Services
                 Totalizador = null
             };
         }
-        public async Task<List<PainelDREEmpresaFilialResponse>>GetDREEmpresaFiliaisMes(int companyId,List<int> subCompanyIds,int year,int mes)
+        public async Task<List<PainelDREEmpresaFilialResponse>> GetDREEmpresaFiliaisMes(int companyId, List<int> subCompanyIds, int year, int mes)
         {
             var response = new List<PainelDREEmpresaFilialResponse>();
 
