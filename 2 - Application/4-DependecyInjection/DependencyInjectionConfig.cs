@@ -10,6 +10,7 @@ using _2___Application._1_Services.Results.CIL_e_EC;
 using _2___Application._1_Services.Results.OperationalEfficiency;
 using _2___Application._1_Services.TotalizerClassification;
 using _2___Application._1_Services.ValueTree;
+using _2___Application._1_Services.Scope;
 using _2___Application.Base;
 using _4_Application._1_Services;
 using _4_InfraData._1_Context;
@@ -100,6 +101,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<ValueTreeService>();
             services.AddScoped<BudgetService>();
             services.AddScoped<ConfigService>();
+            services.AddScoped<IAccountPlanScopeResolver, AccountPlanScopeResolver>();
 
 
 
