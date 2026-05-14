@@ -878,16 +878,16 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             }
         }
 
-        public async Task<ResultValue> GetByBalanceteIdDate(int accountplanId, int year, int month)
+        public async Task<ResultValue> GetByBalanceteIdDate(int accountplanId)
         {
             try
             {
-                var balancete = await _balanceteDataRepository.GetByBalanceteIdDate(accountplanId, year, month);
+                var balancete = await _balanceteDataRepository.GetFirstByAccountPlanId(accountplanId);
 
                 if (balancete == null || !balancete.Any())
-                    return SuccessResponse(new BalanceteDataDto());
+                    return SuccessResponse(new BalanceteAccountPlanDataDto());
 
-                var result = MapToBalanceteDataDto(balancete);
+                var result = MapToBalanceteAccountPlanDataDto(balancete);
 
                 return SuccessResponse(result);
             }
@@ -1256,6 +1256,28 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                     Credit = x.Credit,
                     Debit = x.Debit,
                     FinalValue = x.FinalValue,
+                    BudgetedAmount = x.BudgetedAmount
+                }).ToList()
+            };
+        }
+
+        private static BalanceteAccountPlanDataDto MapToBalanceteAccountPlanDataDto(List<BalanceteDataModel> data)
+        {
+            var first = data.First();
+
+            return new BalanceteAccountPlanDataDto
+            {
+                Balancete = new BalanceteDto
+                {
+                    Id = first.Balancete.Id,
+                    DateMonth = first.Balancete.DateMonth,
+                    DateYear = first.Balancete.DateYear,
+                },
+                DataDto = data.Select(x => new AccountPlanDataDto
+                {
+                    Id = x.Id,
+                    CostCenter = x.CostCenter,
+                    Name = x.Name,
                     BudgetedAmount = x.BudgetedAmount
                 }).ToList()
             };

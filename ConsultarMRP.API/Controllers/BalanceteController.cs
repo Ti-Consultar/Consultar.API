@@ -105,9 +105,9 @@ namespace _5_API.Controllers
         /// </summary>
         [HttpGet("accountplan/{accountPlanid}/date")]
         [Authorize()]
-        public async Task<IActionResult> GetByDate(int accountPlanid, [FromQuery] int year, [FromQuery]int month)
+        public async Task<IActionResult> GetByDate(int accountPlanid)
         {
-            var result = await _service.GetByBalanceteIdDate(accountPlanid, year, month);
+            var result = await _service.GetByBalanceteIdDate(accountPlanid);
 
             if (!result.Success)
                 return NotFound(result);

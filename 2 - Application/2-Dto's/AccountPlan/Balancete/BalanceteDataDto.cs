@@ -25,6 +25,20 @@ namespace _2___Application._2_Dto_s.AccountPlan.Balancete
         public bool BudgetedAmount { get; set; }
     }
 
+    public class BalanceteAccountPlanDataDto
+    {
+        public BalanceteDto Balancete { get; set; }
+        public List<AccountPlanDataDto> DataDto { get; set; }
+    }
+
+    public class AccountPlanDataDto
+    {
+        public int Id { get; set; }
+        public string CostCenter { get; set; }
+        public string Name { get; set; }
+        public bool BudgetedAmount { get; set; }
+    }
+
     // Orçamento
 
     public class BudgetDataDto

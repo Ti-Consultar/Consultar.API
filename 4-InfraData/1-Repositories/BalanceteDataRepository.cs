@@ -40,6 +40,24 @@ namespace _4_InfraData._1_Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<BalanceteDataModel>> GetFirstByAccountPlanId(int accountPlanId)
+        {
+            var balanceteId = await _context.Balancete
+                .Where(x => x.AccountPlansId == accountPlanId)
+                .OrderBy(x => x.DateYear)
+                .ThenBy(x => x.DateMonth)
+                .Select(x => x.Id)
+                .FirstOrDefaultAsync();
+
+            if (balanceteId == 0)
+                return new List<BalanceteDataModel>();
+
+            return await _context.BalanceteData
+                .Include(x => x.Balancete)
+                .Where(x => x.BalanceteId == balanceteId)
+                .ToListAsync();
+        }
+
         public async Task<List<BalanceteDataModel>> GetByBalanceteDataByCostCenter(int balanceteId, string? search)
         {
             return await _context.BalanceteData
