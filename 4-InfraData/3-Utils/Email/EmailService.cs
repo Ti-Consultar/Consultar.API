@@ -17,14 +17,13 @@ namespace _4_InfraData._3_Utils.Email
         {
             try
             {
-                var email = _configuration["EmailSettings:Email"];
-                var password = _configuration["EmailSettings:Password"];
+                var settings = GetEmailSettings();
 
-                var smtpClient = CreateSmtpClient(email, password);
+                using var smtpClient = CreateSmtpClient(settings);
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress(email),
+                    From = new MailAddress(settings.Email),
                     Subject = "🔐 Redefinição de Senha - MRP",
                     IsBodyHtml = true,
                     Body = BuildPasswordResetEmailHtml(newPassword)
@@ -44,14 +43,13 @@ namespace _4_InfraData._3_Utils.Email
         {
             try
             {
-                var email = _configuration["EmailSettings:Email"];
-                var password = _configuration["EmailSettings:Password"];
+                var settings = GetEmailSettings();
 
-                var smtpClient = CreateSmtpClient(email, password);
+                using var smtpClient = CreateSmtpClient(settings);
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress(email),
+                    From = new MailAddress(settings.Email),
                     Subject = "🎉 Bem-vindo ao MRP!",
                     IsBodyHtml = true,
                     Body = BuildWelcomeEmailHtml(company, name)
@@ -71,14 +69,13 @@ namespace _4_InfraData._3_Utils.Email
         {
             try
             {
-                var email = _configuration["EmailSettings:Email"];
-                var password = _configuration["EmailSettings:Password"];
+                var settings = GetEmailSettings();
 
-                var smtpClient = CreateSmtpClient(email, password);
+                using var smtpClient = CreateSmtpClient(settings);
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress(email),
+                    From = new MailAddress(settings.Email),
                     Subject = "🎉 Bem-vindo ao MRP!",
                     IsBodyHtml = true,
                     Body = BuildWelcomeSubCompanyEmailHtml(company, name, subcompany)
@@ -99,14 +96,13 @@ namespace _4_InfraData._3_Utils.Email
         {
             try
             {
-                var email = _configuration["EmailSettings:Email"];
-                var passwordEmail = _configuration["EmailSettings:Password"];
+                var settings = GetEmailSettings();
 
-                var smtpClient = CreateSmtpClient(email, passwordEmail);
+                using var smtpClient = CreateSmtpClient(settings);
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress(email),
+                    From = new MailAddress(settings.Email),
                     Subject = "👋 Bem-vindo ao MRP!",
                     IsBodyHtml = true,
                     Body = BuildUserWelcomeEmailHtml(name, emailAddress, password)
@@ -175,15 +171,34 @@ namespace _4_InfraData._3_Utils.Email
 
 
 
-        private SmtpClient CreateSmtpClient(string email, string password)
+        private EmailSettings GetEmailSettings()
         {
-            return new SmtpClient("smtp.outlook.com")
+            var email = _configuration["EmailSettings:Email"];
+            var password = _configuration["EmailSettings:Password"];
+            var host = _configuration["EmailSettings:Host"] ?? "smtp.outlook.com";
+            var port = int.TryParse(_configuration["EmailSettings:Port"], out var configuredPort) ? configuredPort : 587;
+            var enableSsl = !bool.TryParse(_configuration["EmailSettings:EnableSsl"], out var configuredEnableSsl) || configuredEnableSsl;
+
+            if (string.IsNullOrWhiteSpace(email))
+                throw new InvalidOperationException("EmailSettings:Email não foi configurado.");
+
+            if (string.IsNullOrWhiteSpace(password))
+                throw new InvalidOperationException("EmailSettings:Password não foi configurado.");
+
+            return new EmailSettings(email, password, host, port, enableSsl);
+        }
+
+        private SmtpClient CreateSmtpClient(EmailSettings settings)
+        {
+            return new SmtpClient(settings.Host)
             {
-                Port = 587,
-                Credentials = new NetworkCredential(email, password),
-                EnableSsl = true
+                Port = settings.Port,
+                Credentials = new NetworkCredential(settings.Email, settings.Password),
+                EnableSsl = settings.EnableSsl
             };
         }
+
+        private sealed record EmailSettings(string Email, string Password, string Host, int Port, bool EnableSsl);
 
         private string GetEmailStyles() => @"
             <style>
