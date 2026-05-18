@@ -161,6 +161,9 @@ namespace _2___Application.Base
         {
             var errorDetails = new List<string> { "INTERNAL_SERVER_ERROR" };
 
+            if (!string.IsNullOrWhiteSpace(errorMessage))
+                errorDetails.Add(errorMessage);
+
             if (!GetEnvironmentName().Equals("prod") && ex != null)
             {
                 errorDetails.Add(ex.Message);

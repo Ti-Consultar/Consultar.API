@@ -24,6 +24,9 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 {
     public class BalanceteService : BaseService
     {
+        private const int MaxCostCenterLength = 100;
+        private const int MaxNameLength = 255;
+
         private readonly AccountPlansRepository _accountPlansRepository;
         private readonly BalanceteRepository _repository;
         private readonly BalanceteDataRepository _balanceteDataRepository;
@@ -499,6 +502,10 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                     .Select(g => g.First())
                     .ToList();
 
+                var validationError = ValidateBalanceteDataImport(list);
+                if (validationError != null)
+                    return ErrorResponse(validationError);
+
                 await _balanceteDataRepository.AddRangeAsync(list);
 
                 return SuccessResponse("Dados importados com sucesso.");
@@ -629,6 +636,10 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                     .GroupBy(x => x.CostCenter)
                     .Select(g => g.First())
                     .ToList();
+
+                var validationError = ValidateBalanceteDataImport(list);
+                if (validationError != null)
+                    return ErrorResponse(validationError);
 
                 // 🔥 AQUI É A DIFERENÇA
                 await _balanceteDataRepository.BulkInsertAsync(list);
@@ -1380,6 +1391,23 @@ private List<BalanceteDataModel> ReadFromXlsxDinamic(
             {
                 return 0m;
             }
+        }
+
+        private string? ValidateBalanceteDataImport(List<BalanceteDataModel> list)
+        {
+            var invalidCostCenter = list.FirstOrDefault(x => (x.CostCenter?.Length ?? 0) > MaxCostCenterLength);
+            if (invalidCostCenter != null)
+            {
+                return $"Centro de custo excede {MaxCostCenterLength} caracteres. CostCenter: '{invalidCostCenter.CostCenter}'.";
+            }
+
+            var invalidName = list.FirstOrDefault(x => (x.Name?.Length ?? 0) > MaxNameLength);
+            if (invalidName != null)
+            {
+                return $"Descrição excede {MaxNameLength} caracteres. CostCenter: '{invalidName.CostCenter}', tamanho: {invalidName.Name.Length}.";
+            }
+
+            return null;
         }
 
 

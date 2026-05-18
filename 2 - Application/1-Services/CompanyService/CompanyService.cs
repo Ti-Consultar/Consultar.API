@@ -540,7 +540,13 @@ public class CompanyService : BaseService
                 };
 
                 var subCompanies = company.SubCompanies?
-                    .Where(s => s.Deleted == false)
+                    .Where(s =>
+                        s.Deleted == false &&
+                        s.CompanyUsers.Any(cu =>
+                            cu.UserId == _currentUserId &&
+                            cu.GroupId == groupId &&
+                            cu.CompanyId == company.Id &&
+                            cu.SubCompanyId == s.Id))
                     .ToList();
 
                 if (subCompanies != null && subCompanies.Any())

@@ -247,7 +247,8 @@ namespace _4_InfraData._1_Repositories
         {
             return await _context.Companies
                 .Include(c => c.BusinessEntity)
-                .Include(c => c.SubCompanies) // 👈 AQUI
+                .Include(c => c.SubCompanies)
+                    .ThenInclude(sc => sc.CompanyUsers)
                 .Include(c => c.CompanyUsers)
                     .ThenInclude(cu => cu.Permission)
                 .Where(c =>
