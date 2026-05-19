@@ -1462,7 +1462,7 @@ namespace _2___Application._1_Services
                                         InitialValue = bd.InitialValue,
                                         CreditValue = bd.Credit,
                                         DebitValue = bd.Debit,
-                                        Value = bd.FinalValue
+                                        Value = bd.Credit - bd.Debit
                                     })
                             ).ToList();
 
@@ -1471,7 +1471,7 @@ namespace _2___Application._1_Services
                             Id = classification.Id,
                             Name = classification.Name,
                             TypeOrder = classification.TypeOrder,
-                            Value = datas.Sum(a => a.CreditValue - a.DebitValue),
+                            Value = datas.Sum(a => a.Value),
                             Datas = datas
                         };
                     }).ToList();
@@ -2713,7 +2713,7 @@ namespace _2___Application._1_Services
                                         InitialValue = bd.InitialValue,
                                         CreditValue = bd.Credit,
                                         DebitValue = bd.Debit,
-                                        Value = bd.FinalValue
+                                        Value = bd.Credit - bd.Debit
                                     })
                             ).ToList();
 
@@ -2722,7 +2722,7 @@ namespace _2___Application._1_Services
                             Id = classification.Id,
                             Name = classification.Name,
                             TypeOrder = classification.TypeOrder,
-                            Value = datas.Sum(a => a.CreditValue - a.DebitValue),
+                            Value = datas.Sum(a => a.Value),
                             Datas = datas
                         };
                     }).ToList();
