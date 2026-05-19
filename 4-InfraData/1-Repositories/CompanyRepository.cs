@@ -539,23 +539,24 @@ namespace _4_InfraData._1_Repositories
         }
         public async Task<SubCompanyModel> GetSubCompanyId(int userId, int companyId, int id)
         {
-            var companyUser = await _context.CompanyUsers
-                .Where(cu => cu.UserId == userId && cu.SubCompanyId == id && cu.CompanyId == companyId)
-                .Include(cu => cu.Permission)  // Inclui a permissão do usuário
-                .Include(cu => cu.Company)     // Inclui a empresa associada
-                    .ThenInclude(c => c.SubCompanies)  // Inclui as subempresas
-                        .ThenInclude(sc => sc.BusinessEntity)  // Inclui a BusinessEntity da SubCompany
+            return await _context.SubCompanies
+                .Where(sc =>
+                    sc.Id == id &&
+                    sc.CompanyId == companyId &&
+                    !sc.Deleted &&
+                    sc.CompanyUsers.Any(cu =>
+                        cu.UserId == userId &&
+                        cu.CompanyId == companyId &&
+                        cu.SubCompanyId == id))
+                .Include(sc => sc.Company)
+                .Include(sc => sc.BusinessEntity)
+                .Include(sc => sc.CompanyUsers
+                    .Where(cu =>
+                        cu.UserId == userId &&
+                        cu.CompanyId == companyId &&
+                        cu.SubCompanyId == id))
+                    .ThenInclude(cu => cu.Permission)
                 .FirstOrDefaultAsync();
-
-            // Verifica se encontrou o usuário e a subempresa está vinculada
-            if (companyUser?.Company?.SubCompanies == null)
-                return null;
-
-            // Busca a SubCompany específica pelo ID
-            var subCompany = companyUser.Company.SubCompanies
-                .FirstOrDefault(sc => sc.Id == id && !sc.Deleted);
-
-            return subCompany;
         }
         public async Task<List<SubCompanyModel>> GetSubCompaniesDeletedByUserId(int userId)
         {

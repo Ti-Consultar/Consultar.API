@@ -802,7 +802,7 @@ public class CompanyService : BaseService
 
             model.CompanyId = dto.CompanyId;
             model.SubCompanyId = dto.SubCompanyId;
-            model.UserId = user.Id;
+            model.UserId = dto.UserId;
             model.PermissionId = dto.PermissionId;
             model.GroupId = company.GroupId;
             await _companyRepository.AddUserToCompanyOrSubCompany(model.UserId, company.GroupId, model.CompanyId, model.SubCompanyId, model.PermissionId);

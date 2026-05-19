@@ -16,7 +16,8 @@
           Group antigo                      -> Company nova
           Company antiga dentro do Group    -> SubCompany nova
       - Migra CompanyUsers e InvitationToCompany para os novos escopos.
-      - Marca o Group antigo e suas Companies antigas como Deleted = 1.
+      - Remove fisicamente o Group antigo e suas Companies antigas.
+      - Remove as BusinessEntities antigas quando nao estiverem mais referenciadas.
 
     Importante:
       - Este script aborta se as Companies antigas ja tiverem SubCompanies.
@@ -36,12 +37,14 @@ DECLARE @MigrateSourceGroupUsersToNewCompany BIT = 0;
 
 DECLARE @NewCompanyBusinessEntityId INT;
 DECLARE @NewCompanyId INT;
+DECLARE @SourceGroupBusinessEntityId INT;
 
 DECLARE @CompanyMap TABLE
 (
     SourceCompanyId INT NOT NULL PRIMARY KEY,
     SourceCompanyName NVARCHAR(MAX) NOT NULL,
     SourceBusinessEntityId INT NOT NULL,
+    SourceCompanyDeleted BIT NOT NULL,
     NewBusinessEntityId INT NULL,
     NewSubCompanyId INT NULL
 );
@@ -97,11 +100,9 @@ IF EXISTS
     FROM Companies c
     JOIN SubCompanies sc ON sc.CompanyId = c.Id
     WHERE c.GroupId = @SourceGroupId
-      AND c.Deleted = 0
-      AND sc.Deleted = 0
 )
 BEGIN
-    THROW 51005, 'Uma ou mais Companies de origem ja possuem SubCompanies ativas. Este script nao trata quarto nivel.', 1;
+    THROW 51005, 'Uma ou mais Companies de origem ja possuem SubCompanies. Este script nao trata quarto nivel.', 1;
 END;
 
 IF EXISTS
@@ -152,19 +153,24 @@ BEGIN
     THROW 51009, 'Ja existe Company ativa no Group destino com o CNPJ do Group de origem.', 1;
 END;
 
+SELECT @SourceGroupBusinessEntityId = BusinessEntityId
+FROM Groups
+WHERE Id = @SourceGroupId;
+
 INSERT INTO @CompanyMap
 (
     SourceCompanyId,
     SourceCompanyName,
-    SourceBusinessEntityId
+    SourceBusinessEntityId,
+    SourceCompanyDeleted
 )
 SELECT
     c.Id,
     c.Name,
-    c.BusinessEntityId
+    c.BusinessEntityId,
+    c.Deleted
 FROM Companies c
-WHERE c.GroupId = @SourceGroupId
-  AND c.Deleted = 0;
+WHERE c.GroupId = @SourceGroupId;
 
 IF EXISTS
 (
@@ -243,6 +249,7 @@ DECLARE
     @SourceCompanyId INT,
     @SourceCompanyName NVARCHAR(MAX),
     @SourceBusinessEntityId INT,
+    @SourceCompanyDeleted BIT,
     @NewSubCompanyBusinessEntityId INT,
     @NewSubCompanyId INT;
 
@@ -250,14 +257,15 @@ DECLARE source_company_cursor CURSOR LOCAL FAST_FORWARD FOR
 SELECT
     SourceCompanyId,
     SourceCompanyName,
-    SourceBusinessEntityId
+    SourceBusinessEntityId,
+    SourceCompanyDeleted
 FROM @CompanyMap
 ORDER BY SourceCompanyId;
 
 OPEN source_company_cursor;
 
 FETCH NEXT FROM source_company_cursor
-INTO @SourceCompanyId, @SourceCompanyName, @SourceBusinessEntityId;
+INTO @SourceCompanyId, @SourceCompanyName, @SourceBusinessEntityId, @SourceCompanyDeleted;
 
 WHILE @@FETCH_STATUS = 0
 BEGIN
@@ -308,7 +316,7 @@ BEGIN
         GETDATE(),
         @NewCompanyId,
         @NewSubCompanyBusinessEntityId,
-        0
+        @SourceCompanyDeleted
     );
 
     SET @NewSubCompanyId = CONVERT(INT, SCOPE_IDENTITY());
@@ -320,7 +328,7 @@ BEGIN
     WHERE SourceCompanyId = @SourceCompanyId;
 
     FETCH NEXT FROM source_company_cursor
-    INTO @SourceCompanyId, @SourceCompanyName, @SourceBusinessEntityId;
+    INTO @SourceCompanyId, @SourceCompanyName, @SourceBusinessEntityId, @SourceCompanyDeleted;
 END;
 
 CLOSE source_company_cursor;
@@ -365,8 +373,7 @@ SET
     ap.SubCompanyId = cm.NewSubCompanyId
 FROM AccountPlans ap
 JOIN @CompanyMap cm ON cm.SourceCompanyId = ap.CompanyId
-WHERE ap.GroupId = @SourceGroupId
-  AND ap.SubCompanyId IS NULL;
+WHERE ap.SubCompanyId IS NULL;
 
 INSERT INTO AccountPlans
 (
@@ -484,16 +491,69 @@ JOIN @CompanyMap cm ON cm.SourceCompanyId = i.CompanyId
 WHERE i.GroupId = @SourceGroupId
   AND i.SubCompanyId IS NULL;
 
-/* Oculta estrutura antiga sem deletar fisicamente registros usados como origem */
+/* Remove a estrutura antiga.
+   AccountPlans, CompanyUsers e convites ja foram migrados para os novos escopos.
+   Ao deletar as Companies antigas, os CompanyUsers antigos delas caem por ON DELETE CASCADE.
+   Ao deletar o Group antigo, os CompanyUsers/convites remanescentes do Group caem por ON DELETE CASCADE.
+*/
 
-UPDATE c
-SET c.Deleted = 1
+IF EXISTS
+(
+    SELECT 1
+    FROM AccountPlans ap
+    WHERE ap.GroupId = @SourceGroupId
+       OR ap.CompanyId IN (SELECT SourceCompanyId FROM @CompanyMap)
+)
+BEGIN
+    SELECT
+        ap.Id AS AccountPlanId,
+        ap.GroupId,
+        ap.CompanyId,
+        ap.SubCompanyId,
+        c.Name AS OldCompanyName,
+        c.Deleted AS OldCompanyDeleted
+    FROM AccountPlans ap
+    LEFT JOIN Companies c ON c.Id = ap.CompanyId
+    WHERE ap.GroupId = @SourceGroupId
+       OR ap.CompanyId IN (SELECT SourceCompanyId FROM @CompanyMap);
+
+    THROW 51011, 'Ainda existem AccountPlans apontando para a estrutura antiga. Migracao abortada.', 1;
+END;
+
+DELETE c
 FROM Companies c
 JOIN @CompanyMap cm ON cm.SourceCompanyId = c.Id;
 
-UPDATE Groups
-SET Deleted = 1
+DELETE FROM Groups
 WHERE Id = @SourceGroupId;
+
+DELETE be
+FROM BusinessEntity be
+WHERE be.Id IN
+(
+    SELECT @SourceGroupBusinessEntityId
+    UNION
+    SELECT SourceBusinessEntityId
+    FROM @CompanyMap
+)
+AND NOT EXISTS
+(
+    SELECT 1
+    FROM Groups g
+    WHERE g.BusinessEntityId = be.Id
+)
+AND NOT EXISTS
+(
+    SELECT 1
+    FROM Companies c
+    WHERE c.BusinessEntityId = be.Id
+)
+AND NOT EXISTS
+(
+    SELECT 1
+    FROM SubCompanies sc
+    WHERE sc.BusinessEntityId = be.Id
+);
 
 /* Resultado para conferencia */
 
@@ -507,6 +567,7 @@ SELECT
     cm.SourceCompanyId,
     cm.SourceCompanyName,
     cm.SourceBusinessEntityId,
+    cm.SourceCompanyDeleted,
     cm.NewSubCompanyId,
     cm.NewBusinessEntityId
 FROM @CompanyMap cm
