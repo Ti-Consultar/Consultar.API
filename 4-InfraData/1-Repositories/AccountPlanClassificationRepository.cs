@@ -83,7 +83,8 @@ namespace _4_InfraData._1_Repositories
                     AccountPlanId = c.AccountPlanId,
                     Name = c.Name,
                     TypeOrder = c.TypeOrder,
-                    TypeClassification = c.TypeClassification
+                    TypeClassification = c.TypeClassification,
+                    TotalizerClassificationId = c.TotalizerClassificationId
                 })
                 .FirstOrDefaultAsync();
 

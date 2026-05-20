@@ -616,7 +616,8 @@ namespace _2___Application._1_Services
                     Name = dto.Name,
                     TypeClassification = (ETypeClassification)dto.TypeClassification,
                     TypeOrder = dto.TypeOrder,
-                    AccountPlanId = accountplanId
+                    AccountPlanId = accountplanId,
+                    TotalizerClassificationId = dto.TotalizerClassificationId
                 };
 
                 await _accountClassificationRepository.AddAsync(model);
@@ -643,6 +644,8 @@ namespace _2___Application._1_Services
                 // Atualiza os dados do item
                 accountPlanClassification.Name = dto.Name;
                 accountPlanClassification.TypeClassification = (ETypeClassification)dto.TypeClassification;
+                if (dto.TotalizerClassificationId.HasValue)
+                    accountPlanClassification.TotalizerClassificationId = dto.TotalizerClassificationId;
 
 
                 await _accountClassificationRepository.Update(accountPlanClassification);
@@ -1100,6 +1103,9 @@ namespace _2___Application._1_Services
                     "Ganhos e Perdas de Capital" or "Outras Receitas não Operacionais"
                         => totalizerClassifications.FirstOrDefault(r => r.Name == "Margem Operacional %")?.Id,
 
+                    "Outras Receitas" or "Outras Despesas"
+                        => totalizerClassifications.FirstOrDefault(r => r.Name == "Outros Resultados")?.Id,
+
                     "Receitas Financeiras" or "Despesas Financeiras"
                         => totalizerClassifications.FirstOrDefault(r => r.Name == "Margem LAJIR %")?.Id,
 
@@ -1514,6 +1520,7 @@ namespace _2___Application._1_Services
                     .FirstOrDefault(c => c.Name == "Despesas Variáveis")?.Value ?? 0;
                 var outrosReceitas = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Outras Receitas não Operacionais")?.Value ?? 0;
+                var outrosResultados = totalizerResponses.FirstOrDefault(t => t.Name == "Outros Resultados")?.TotalValue ?? 0;
                 var ganhosEPerdas = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Ganhos e Perdas de Capital")?.Value ?? 0;
                 var receitasFin = totalizerResponses.SelectMany(t => t.Classifications)
@@ -1562,7 +1569,7 @@ namespace _2___Application._1_Services
                 if (lucroOperacional != null && despesasOperacionais != null)
                     lucroOperacional.TotalValue = margemContriValor + despesasOperacionais.TotalValue + outrosResultOp;
                 if (lucroAntes != null)
-                    lucroAntes.TotalValue = lucroOperacional?.TotalValue + outrosReceitas + ganhosEPerdas ?? 0;
+                    lucroAntes.TotalValue = lucroOperacional?.TotalValue + outrosReceitas + ganhosEPerdas + outrosResultados ?? 0;
                 if (resultadoAntes != null)
                     resultadoAntes.TotalValue = lucroAntes?.TotalValue + receitasFin + despesasFin ?? 0;
                 if (lucroLiquido != null)
@@ -2765,6 +2772,7 @@ namespace _2___Application._1_Services
                     .FirstOrDefault(c => c.Name == "Despesas Variáveis")?.Value ?? 0;
                 var outrosReceitas = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Outras Receitas não Operacionais")?.Value ?? 0;
+                var outrosResultados = totalizerResponses.FirstOrDefault(t => t.Name == "Outros Resultados")?.TotalValue ?? 0;
                 var ganhosEPerdas = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Ganhos e Perdas de Capital")?.Value ?? 0;
                 var receitasFin = totalizerResponses.SelectMany(t => t.Classifications)
@@ -2813,7 +2821,7 @@ namespace _2___Application._1_Services
                 if (lucroOperacional != null && despesasOperacionais != null)
                     lucroOperacional.TotalValue = margemContriValor + despesasOperacionais.TotalValue + outrosResultOp;
                 if (lucroAntes != null)
-                    lucroAntes.TotalValue = lucroOperacional?.TotalValue + outrosReceitas + ganhosEPerdas ?? 0;
+                    lucroAntes.TotalValue = lucroOperacional?.TotalValue + outrosReceitas + ganhosEPerdas + outrosResultados ?? 0;
                 if (resultadoAntes != null)
                     resultadoAntes.TotalValue = lucroAntes?.TotalValue + receitasFin + despesasFin ?? 0;
                 if (lucroLiquido != null)
@@ -2965,10 +2973,11 @@ namespace _2___Application._1_Services
                     var lucroAntes = totalizerVar.FirstOrDefault(t => t.Name == "Lucro Antes do Resultado Financeiro");
                     var outrosReceitas = totalizerVar.SelectMany(t => t.Classifications)
                         .FirstOrDefault(c => c.Name == "Outras Receitas não Operacionais")?.Value ?? 0;
+                    var outrosResultados = totalizerVar.FirstOrDefault(t => t.Name == "Outros Resultados")?.TotalValue ?? 0;
                     var ganhosEPerdas = totalizerVar.SelectMany(t => t.Classifications)
                         .FirstOrDefault(c => c.Name == "Ganhos e Perdas de Capital")?.Value ?? 0;
                     if (lucroAntes != null)
-                        lucroAntes.TotalValue = (lucroOperacional?.TotalValue ?? 0) + outrosReceitas + ganhosEPerdas;
+                        lucroAntes.TotalValue = (lucroOperacional?.TotalValue ?? 0) + outrosReceitas + ganhosEPerdas + outrosResultados;
 
                     var resultadoAntes = totalizerVar.FirstOrDefault(t => t.Name == "Resultado do Exercício Antes do Imposto");
                     var receitasFin = totalizerVar.SelectMany(t => t.Classifications)

@@ -11,11 +11,13 @@ namespace _2___Application._2_Dto_s.Classification.AccountPlanClassification
         public string Name { get; set; }
         public int TypeOrder { get; set; }
         public int TypeClassification { get; set; }
+        public int? TotalizerClassificationId { get; set; }
     }
 
     public class UpdateItemClassification
     {
         public string Name { get; set; }
         public int TypeClassification { get; set; }
+        public int? TotalizerClassificationId { get; set; }
     }
 }

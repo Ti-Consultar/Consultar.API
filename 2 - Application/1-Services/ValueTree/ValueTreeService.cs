@@ -1680,6 +1680,7 @@ namespace _2___Application._1_Services.ValueTree
                 var outrosReceitas = totalizerResponses
                     .SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Outras Receitas não Operacionais")?.Value ?? 0;
+                var outrosResultados = totalizerResponses.FirstOrDefault(t => t.Name == "Outros Resultados")?.TotalValue ?? 0;
 
                 var ganhosEPerdas = totalizerResponses
                     .SelectMany(t => t.Classifications)
@@ -1727,7 +1728,7 @@ namespace _2___Application._1_Services.ValueTree
                     lucroOperacional.TotalValue = (margemContri + despesasOperacionais.TotalValue + outrosResultadosOperacionais);
 
                 if (lucroAntes != null && lucroOperacional != null)
-                    lucroAntes.TotalValue = (lucroOperacional.TotalValue + outrosReceitas + ganhosEPerdas);
+                    lucroAntes.TotalValue = (lucroOperacional.TotalValue + outrosReceitas + ganhosEPerdas + outrosResultados);
 
                 if (resultadoAntes != null && lucroAntes != null)
                     resultadoAntes.TotalValue = (lucroAntes.TotalValue + receitasFinanceiras + despesasFinanceiras);
@@ -2200,6 +2201,7 @@ namespace _2___Application._1_Services.ValueTree
                     .FirstOrDefault(c => c.Name == "Despesas Variáveis")?.Value ?? 0;
                 var outrosReceitas = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Outras Receitas não Operacionais")?.Value ?? 0;
+                var outrosResultados = totalizerResponses.FirstOrDefault(t => t.Name == "Outros Resultados")?.TotalValue ?? 0;
                 var ganhosEPerdas = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Ganhos e Perdas de Capital")?.Value ?? 0;
                 var receitasFin = totalizerResponses.SelectMany(t => t.Classifications)
@@ -2228,7 +2230,7 @@ namespace _2___Application._1_Services.ValueTree
                 if (lucroOperacional != null && despesasOperacionais != null)
                     lucroOperacional.TotalValue = margemContriValor + despesasOperacionais.TotalValue + outrosResultOp;
                 if (lucroAntes != null)
-                    lucroAntes.TotalValue = lucroOperacional?.TotalValue + outrosReceitas + ganhosEPerdas ?? 0;
+                    lucroAntes.TotalValue = lucroOperacional?.TotalValue + outrosReceitas + ganhosEPerdas + outrosResultados ?? 0;
                 if (resultadoAntes != null)
                     resultadoAntes.TotalValue = lucroAntes?.TotalValue + receitasFin + despesasFin ?? 0;
                 if (lucroLiquido != null)
