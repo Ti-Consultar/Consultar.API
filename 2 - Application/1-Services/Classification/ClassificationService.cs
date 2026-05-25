@@ -1141,6 +1141,26 @@ namespace _2___Application._1_Services
                 _ => null
             };
         }
+        private static void InvertBalancoReclassificadoPassivoSigns(List<TotalizerParentRespone> totalizers)
+        {
+            foreach (var totalizer in totalizers)
+            {
+                totalizer.TotalValue *= -1;
+
+                foreach (var classification in totalizer.Classifications)
+                {
+                    classification.Value *= -1;
+
+                    foreach (var data in classification.Datas)
+                    {
+                        data.Value *= -1;
+                        data.InitialValue *= -1;
+                        data.CreditValue *= -1;
+                        data.DebitValue *= -1;
+                    }
+                }
+            }
+        }
         public async Task<ResultValue> GetPainelBalancoReclassificadoAsync(int accountPlanId, int year, int typeClassification)
         {
             var result = typeClassification switch
@@ -1390,24 +1410,15 @@ namespace _2___Application._1_Services
                         patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + lucrosPrejuizos + (resultadoAcumValor * -1);
                     }
 
-                    // 🔹 NORMALIZAÇÃO: deixa todos os totalizadores POSITIVOS (sem mexer nas Classifications).
-                    // Se quiser preservar "Resultado Acumulado" com sinal original, comente a linha do IF e use a condição abaixo.
-                    foreach (var t in totalizerResponses)
-                    {
-                        // Para preservar o sinal do "Resultado Acumulado", troque por:
-                        if (!string.Equals(t.Name, "Resultado Acumulado", StringComparison.OrdinalIgnoreCase))
-                            t.TotalValue = Math.Abs(t.TotalValue);
-                    }
+                    InvertBalancoReclassificadoPassivoSigns(totalizerResponses);
 
-                    // 🔹 Re-leitura após normalização (para garantir que o total do mês use os valores já positivos)
+                    // Re-leitura apos ajustes para calcular o total com os sinais contabeis reais.
                     decimal passivoFinanceiro = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Financeiro")?.TotalValue ?? 0;
                     decimal passivoOperacional = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Operacional")?.TotalValue ?? 0;
                     decimal patrimonioLiquidoPos = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
                     decimal passivoNaoCirculante = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Não Circulante")?.TotalValue ?? 0;
 
-                    // 🔹 Total do mês (já positivo)
                     decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquidoPos + passivoNaoCirculante;
-                    totalPassivo = Math.Abs(totalPassivo);
 
                     return new MonthPainelContabilRespone
                     {
@@ -3432,24 +3443,15 @@ namespace _2___Application._1_Services
                         patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + lucrosPrejuizos + (resultadoAcumValor * -1);
                     }
 
-                    // 🔹 NORMALIZAÇÃO: deixa todos os totalizadores POSITIVOS (sem mexer nas Classifications).
-                    // Se quiser preservar "Resultado Acumulado" com sinal original, comente a linha do IF e use a condição abaixo.
-                    foreach (var t in totalizerResponses)
-                    {
-                        // Para preservar o sinal do "Resultado Acumulado", troque por:
-                        if (!string.Equals(t.Name, "Resultado Acumulado", StringComparison.OrdinalIgnoreCase))
-                            t.TotalValue = Math.Abs(t.TotalValue);
-                    }
+                    InvertBalancoReclassificadoPassivoSigns(totalizerResponses);
 
-                    // 🔹 Re-leitura após normalização (para garantir que o total do mês use os valores já positivos)
+                    // Re-leitura apos ajustes para calcular o total com os sinais contabeis reais.
                     decimal passivoFinanceiro = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Financeiro")?.TotalValue ?? 0;
                     decimal passivoOperacional = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Operacional")?.TotalValue ?? 0;
                     decimal patrimonioLiquidoPos = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
                     decimal passivoNaoCirculante = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Não Circulante")?.TotalValue ?? 0;
 
-                    // 🔹 Total do mês (já positivo)
                     decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquidoPos + passivoNaoCirculante;
-                    totalPassivo = Math.Abs(totalPassivo);
 
                     return new MonthPainelContabilRespone
                     {
