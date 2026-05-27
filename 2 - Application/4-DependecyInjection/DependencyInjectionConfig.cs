@@ -117,6 +117,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<GroupRepository>();
             services.AddScoped<BusinessEntityRepository>();
             services.AddScoped<AccountPlansRepository>();
+            services.AddScoped<AccountPlanAccountRepository>();
             services.AddScoped<BalanceteRepository>();
             services.AddScoped<BalanceteDataRepository>();
             services.AddScoped<InteractionRepository>();

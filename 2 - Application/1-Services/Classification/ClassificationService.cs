@@ -37,6 +37,7 @@ namespace _2___Application._1_Services
         private readonly BalancoReclassificadoTemplateRepository _balancoReclassificadoTemplateRepository;
         private readonly BalancoReclassificadoRepository _balancoReclassificadoRepository;
         private readonly AccountPlansRepository _accountPlansRepository;
+        private readonly AccountPlanAccountRepository _accountPlanAccountRepository;
         private readonly BudgetRepository _budgetRepository;
         private readonly BudgetDataRepository _budgetDataRepository;
 
@@ -52,6 +53,7 @@ namespace _2___Application._1_Services
             BalancoReclassificadoTemplateRepository balancoReclassificadoTemplateRepository,
             BalancoReclassificadoRepository balancoReclassificadoRepository,
             AccountPlansRepository accountPlansRepository,
+            AccountPlanAccountRepository accountPlanAccountRepository,
             BudgetRepository budgetRepository,
             BudgetDataRepository budgetDataRepository,
             IAppSettings appSettings) : base(appSettings)
@@ -67,6 +69,7 @@ namespace _2___Application._1_Services
             _balancoReclassificadoTemplateRepository = balancoReclassificadoTemplateRepository;
             _balancoReclassificadoRepository = balancoReclassificadoRepository;
             _accountPlansRepository = accountPlansRepository;
+            _accountPlanAccountRepository = accountPlanAccountRepository;
             _budgetRepository = budgetRepository;
             _budgetDataRepository = budgetDataRepository;
         }
@@ -686,6 +689,9 @@ namespace _2___Application._1_Services
                 }).ToList();
 
                 await _accountClassificationRepository.CreateBond(models);
+                var classification = await _accountClassificationRepository.GetById(accountPlanClassificationId);
+                if (classification != null)
+                    await _accountPlanAccountRepository.SyncClassificationsFromBondsAsync(classification.AccountPlanId);
 
                 return SuccessResponse(Message.Success);
             }
@@ -705,6 +711,13 @@ namespace _2___Application._1_Services
                 })).ToList();
 
                 await _accountClassificationRepository.CreateBond(models);
+                var firstClassificationId = models.FirstOrDefault()?.AccountPlanClassificationId;
+                if (firstClassificationId.HasValue)
+                {
+                    var classification = await _accountClassificationRepository.GetById(firstClassificationId.Value);
+                    if (classification != null)
+                        await _accountPlanAccountRepository.SyncClassificationsFromBondsAsync(classification.AccountPlanId);
+                }
 
                 return SuccessResponse(Message.Success);
             }
@@ -774,6 +787,37 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
+        public async Task<ResultValue> GetPendingAccountPlanAccounts(int accountPlanId)
+        {
+            try
+            {
+                await _accountPlanAccountRepository.EnsureFromBalanceteDataAsync(accountPlanId);
+
+                var pendingAccounts = await _accountPlanAccountRepository.GetPendingByAccountPlanIdAsync(accountPlanId);
+
+                var result = new
+                {
+                    HasPendingClassifications = pendingAccounts.Any(),
+                    PendingClassificationsCount = pendingAccounts.Count,
+                    Accounts = pendingAccounts.Select(x => new AccountPlanDataDto
+                    {
+                        Id = x.Id,
+                        CostCenter = x.CostCenter,
+                        Name = x.Name,
+                        BudgetedAmount = false,
+                        AccountPlanClassificationId = x.AccountPlanClassificationId,
+                        ClassificationStatus = x.Status.ToString(),
+                        Origin = x.Origin.ToString()
+                    }).ToList()
+                };
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
         public async Task<ResultValue> UpdateBondList(int accountPlanId, BalanceteDataAccountPlanClassificationCreateList dto)
         {
             try
@@ -803,6 +847,8 @@ namespace _2___Application._1_Services
                     await _accountClassificationRepository.CreateBond(newBonds);
                 }
 
+                await _accountPlanAccountRepository.SyncClassificationsFromBondListAsync(accountPlanId, newBonds);
+
                 return SuccessResponse(Message.Success);
             }
             catch (Exception ex)
@@ -820,6 +866,7 @@ namespace _2___Application._1_Services
                 _ => throw new ArgumentException("Tipo de classificação inválido.")
             };
 
+            await ApplyPendingClassificationInfoAsync(accountPlanId, result);
             return SuccessResponse(result); // Aqui retorna a estrutura padronizada
         }
         private async Task<PainelBalancoContabilRespone> BuildPainelAtivo(int accountPlanId, int year)
@@ -833,6 +880,15 @@ namespace _2___Application._1_Services
         private async Task<PainelBalancoContabilRespone> BuildPainelDRE(int accountPlanId, int year)
         {
             return await BuildPainelByTypeDRE(accountPlanId, year, 3);
+        }
+        private async Task ApplyPendingClassificationInfoAsync(int accountPlanId, PainelBalancoContabilRespone result)
+        {
+            if (result == null)
+                return;
+
+            var pendingCount = await _accountPlanAccountRepository.CountPendingByAccountPlanIdAsync(accountPlanId);
+            result.HasPendingClassifications = pendingCount > 0;
+            result.PendingClassificationsCount = pendingCount;
         }
         private async Task<PainelBalancoContabilRespone> BuildPainelByTypeAtivo(int accountPlanId, int year, int typeClassification)
         {
@@ -1170,6 +1226,7 @@ namespace _2___Application._1_Services
                 _ => throw new ArgumentException("Tipo de classificação inválido.")
             };
 
+            await ApplyPendingClassificationInfoAsync(accountPlanId, result);
             return SuccessResponse(result); // Aqui retorna a estrutura padronizada
         }
         private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoAtivo(int accountPlanId, int year)
@@ -2451,6 +2508,7 @@ namespace _2___Application._1_Services
                 _ => throw new ArgumentException("Tipo de classificação inválido.")
             };
 
+            await ApplyPendingClassificationInfoAsync(accountPlanId, result);
             return SuccessResponse(result); // Aqui retorna a estrutura padronizada
         }
         public async Task<PainelBalancoContabilRespone> BuildPainelAtivoOrcado(int accountPlanId, int year)
@@ -3191,6 +3249,7 @@ namespace _2___Application._1_Services
                 _ => throw new ArgumentException("Tipo de classificação inválido.")
             };
 
+            await ApplyPendingClassificationInfoAsync(accountPlanId, result);
             return SuccessResponse(result); // Aqui retorna a estrutura padronizada
         }
         public async Task<ResultValue> GetPainelBalancoReclassificadoComparativoAsync(int accountPlanId, int year, int typeClassification)

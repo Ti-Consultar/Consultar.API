@@ -198,6 +198,14 @@ namespace ConsultarMRP.API.Controllers
             return Ok(result);
         }
 
+        [HttpGet("accountplan/{accountPlanId}/pending-classifications")]
+        [Authorize()]
+        public async Task<IActionResult> GetPendingAccountPlanAccounts(int accountPlanId)
+        {
+            var result = await _Service.GetPendingAccountPlanAccounts(accountPlanId);
+            return Ok(result);
+        }
+
         [HttpGet]
         [Route("/painel")]
         [Authorize()]
