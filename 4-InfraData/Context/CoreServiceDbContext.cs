@@ -20,6 +20,7 @@ namespace _4_InfraData._1_Context
         public DbSet<GroupCompanyDeletedDto> GroupCompanyDeletedDto { get; set; }
         public DbSet<GroupSubCompanyDeletedDto> GroupSubCompanyDeletedDto { get; set; }
         public DbSet<AccountPlansModel> AccountPlans { get; set; }
+        public DbSet<AccountPlanAccount> AccountPlanAccount { get; set; }
         public DbSet<BalanceteModel> Balancete { get; set; }
         public DbSet<PlansAccountUsersModel> PlansAccountUsers { get; set; }
         public DbSet<BalanceteDataModel> BalanceteData { get; set; }
@@ -46,6 +47,11 @@ namespace _4_InfraData._1_Context
     base.OnModelCreating(modelBuilder);
 
     modelBuilder.Entity<GroupCompanyDeletedDto>().HasNoKey(); // ← ESSENCIAL!
+            modelBuilder.Entity<AccountPlanAccount>(entity =>
+            {
+                entity.ToTable("AccountPlanAccount", "dbo");
+                entity.HasIndex(x => new { x.AccountPlanId, x.CostCenter }).IsUnique();
+            });
             modelBuilder.Entity<GroupSubCompanyDeletedDto>(entity =>
             {
                 entity.HasNoKey();

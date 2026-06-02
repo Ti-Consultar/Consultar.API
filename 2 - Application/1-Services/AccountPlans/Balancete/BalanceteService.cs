@@ -31,6 +31,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
         private readonly BalanceteRepository _repository;
         private readonly BalanceteDataRepository _balanceteDataRepository;
         private readonly BalanceteImportConfigRepository _importConfigRepo;
+        private readonly AccountPlanAccountRepository _accountPlanAccountRepository;
 
 
         public BalanceteService(
@@ -38,6 +39,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             BalanceteRepository repository,
             BalanceteDataRepository balanceteDataRepository,
             BalanceteImportConfigRepository importConfigRepo,
+            AccountPlanAccountRepository accountPlanAccountRepository,
 
 
 
@@ -47,6 +49,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             _repository = repository;
             _balanceteDataRepository = balanceteDataRepository;
             _importConfigRepo = importConfigRepo;
+            _accountPlanAccountRepository = accountPlanAccountRepository;
 
 
             _currentUserId = GetCurrentUserId();
@@ -414,15 +417,24 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 }
 
                 // Remover duplicados na lista importada (CostCenter único)
-                list = list
+                list = NormalizeBalanceteDataList(list)
                     .GroupBy(x => x.CostCenter)
                     .Select(g => g.First())
                     .ToList();
 
+                var validationError = ValidateBalanceteDataImport(list);
+                if (validationError != null)
+                    return ErrorResponse(validationError);
+
+                var newAccounts = await _accountPlanAccountRepository
+                    .UpsertFromBalanceteDataAsync(balancete.AccountPlansId, list);
 
                 await _balanceteDataRepository.AddRangeAsync(list);
 
-                return SuccessResponse("Dados importados com sucesso.");
+                return SuccessResponse(await BuildImportResultAsync(
+                    balancete.AccountPlansId,
+                    "Dados importados com sucesso.",
+                    newAccounts));
             }
             catch (Exception ex)
             {
@@ -497,7 +509,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 else
                     return ErrorResponse("Formato inválido.");
 
-                list = list
+                list = NormalizeBalanceteDataList(list)
                     .GroupBy(x => x.CostCenter)
                     .Select(g => g.First())
                     .ToList();
@@ -506,9 +518,15 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 if (validationError != null)
                     return ErrorResponse(validationError);
 
+                var newAccounts = await _accountPlanAccountRepository
+                    .UpsertFromBalanceteDataAsync(balancete.AccountPlansId, list);
+
                 await _balanceteDataRepository.AddRangeAsync(list);
 
-                return SuccessResponse("Dados importados com sucesso.");
+                return SuccessResponse(await BuildImportResultAsync(
+                    balancete.AccountPlansId,
+                    "Dados importados com sucesso.",
+                    newAccounts));
             }
             catch (Exception ex)
             {
@@ -632,7 +650,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 else
                     return ErrorResponse("Formato inválido.");
 
-                list = list
+                list = NormalizeBalanceteDataList(list)
                     .GroupBy(x => x.CostCenter)
                     .Select(g => g.First())
                     .ToList();
@@ -641,10 +659,16 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 if (validationError != null)
                     return ErrorResponse(validationError);
 
+                var newAccounts = await _accountPlanAccountRepository
+                    .UpsertFromBalanceteDataAsync(balancete.AccountPlansId, list);
+
                 // 🔥 AQUI É A DIFERENÇA
                 await _balanceteDataRepository.BulkInsertAsync(list);
 
-                return SuccessResponse("Importação concluída com sucesso.");
+                return SuccessResponse(await BuildImportResultAsync(
+                    balancete.AccountPlansId,
+                    "Importação concluída com sucesso.",
+                    newAccounts));
             }
             catch (Exception ex)
             {
@@ -893,12 +917,14 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
         {
             try
             {
-                var balancete = await _balanceteDataRepository.GetFirstByAccountPlanId(accountplanId);
+                await _accountPlanAccountRepository.EnsureFromBalanceteDataAsync(accountplanId);
 
-                if (balancete == null || !balancete.Any())
+                var accounts = await _accountPlanAccountRepository.GetByAccountPlanIdAsync(accountplanId);
+
+                if (accounts == null || !accounts.Any())
                     return SuccessResponse(new BalanceteAccountPlanDataDto());
 
-                var result = MapToBalanceteAccountPlanDataDto(balancete);
+                var result = MapToBalanceteAccountPlanDataDto(accounts);
 
                 return SuccessResponse(result);
             }
@@ -1292,6 +1318,68 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                     BudgetedAmount = x.BudgetedAmount
                 }).ToList()
             };
+        }
+
+        private static BalanceteAccountPlanDataDto MapToBalanceteAccountPlanDataDto(List<AccountPlanAccount> accounts)
+        {
+            return new BalanceteAccountPlanDataDto
+            {
+                DataDto = accounts.Select(x => new AccountPlanDataDto
+                {
+                    Id = x.Id,
+                    CostCenter = x.CostCenter,
+                    Name = x.Name,
+                    BudgetedAmount = false,
+                    AccountPlanClassificationId = x.AccountPlanClassificationId,
+                    ClassificationStatus = x.Status.ToString(),
+                    Origin = x.Origin.ToString()
+                }).ToList(),
+                HasPendingClassifications = accounts.Any(x => x.Status == EAccountPlanAccountStatus.PendingClassification),
+                PendingClassificationsCount = accounts.Count(x => x.Status == EAccountPlanAccountStatus.PendingClassification)
+            };
+        }
+
+        private async Task<BalanceteImportResultDto> BuildImportResultAsync(
+            int accountPlanId,
+            string message,
+            List<AccountPlanAccount> newAccounts)
+        {
+            var pendingCount = await _accountPlanAccountRepository.CountPendingByAccountPlanIdAsync(accountPlanId);
+
+            return new BalanceteImportResultDto
+            {
+                Message = message,
+                NewAccountsCount = newAccounts.Count,
+                NewAccounts = newAccounts
+                    .OrderBy(x => x.CostCenter)
+                    .Take(50)
+                    .Select(x => new AccountPlanDataDto
+                    {
+                        Id = x.Id,
+                        CostCenter = x.CostCenter,
+                        Name = x.Name,
+                        BudgetedAmount = false,
+                        AccountPlanClassificationId = x.AccountPlanClassificationId,
+                        ClassificationStatus = x.Status.ToString(),
+                        Origin = x.Origin.ToString()
+                    })
+                    .ToList(),
+                HasPendingClassifications = pendingCount > 0,
+                PendingClassificationsCount = pendingCount
+            };
+        }
+
+        private static List<BalanceteDataModel> NormalizeBalanceteDataList(List<BalanceteDataModel> list)
+        {
+            foreach (var item in list)
+            {
+                item.CostCenter = item.CostCenter?.Trim();
+                item.Name = item.Name?.Trim();
+            }
+
+            return list
+                .Where(x => !string.IsNullOrWhiteSpace(x.CostCenter))
+                .ToList();
         }
 
 

@@ -109,6 +109,11 @@ namespace _4_InfraData._1_Repositories
                     x.Id == id
                 );
         }
+        public async Task<AccountPlansModel> GetByIdSingleAsync(int id)
+        {
+            return await _context.AccountPlans
+                .FirstOrDefaultAsync(x => x.Id == id);
+        }
         public async Task<List<AccountPlansModel>> GetByFilters(int groupId, int? companyId, int? subCompanyId)
         {
             return await _context.AccountPlans

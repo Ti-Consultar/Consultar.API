@@ -10,6 +10,8 @@ namespace _2___Application._2_Dto_s.TotalizerClassification
     {
         public List<MonthPainelContabilRespone> Months { get; set; }
         public List<TotalizerParentRespone> Totalizador { get; set; }
+        public bool HasPendingClassifications { get; set; }
+        public int PendingClassificationsCount { get; set; }
 
     }
     public class MonthPainelContabilRespone

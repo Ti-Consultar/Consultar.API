@@ -17,6 +17,7 @@ namespace _2___Application._2_Dto_s.AccountPlan
         public GroupSimpleDto Group { get; set; }
         public CompanySimpleDto? Company { get; set; }
         public SubCompanySimpleDto? SubCompany { get; set; }
+        public string SourceMode { get; set; }
 
 
     }
