@@ -119,8 +119,10 @@ namespace _4_InfraData._3_Utils.Email
         }
         private string BuildUserWelcomeEmailHtml(string name, string email, string password)
         {
-            // 🔗 URL do sistema em produção
-            var systemUrl = "https://dev.consultarmrp.com.br/login";
+            var systemUrl = _configuration["EmailSettings:FrontendBaseUrl"];
+
+            if (string.IsNullOrWhiteSpace(systemUrl))
+                throw new InvalidOperationException("EmailSettings:FrontendBaseUrl não foi configurado.");
 
             return $@"
             <html>

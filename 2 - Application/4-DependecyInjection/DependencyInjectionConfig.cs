@@ -21,7 +21,9 @@ using _4_InfraData._3_Utils.Email;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -31,7 +33,7 @@ namespace _2___Application._4__DependencyInjectionConfig
 {
     public static class DependencyInjectionConfig
     {
-        public static void Configure(IServiceCollection services, string connectionString)
+        public static void Configure(IServiceCollection services, IConfiguration configuration, string? connectionString)
         {
             // Registra IHttpContextAccessor para ser usado por outros serviços
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -40,7 +42,9 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddDbContext<CoreServiceDbContext>(options => options.UseSqlServer(connectionString));
 
             // Configuração do serviço de autenticação JWT
-            var key = Encoding.ASCII.GetBytes(Settings.Secret);
+            var jwtSettings = CreateJwtSettings(configuration);
+            services.AddSingleton(Options.Create(jwtSettings));
+            var key = Encoding.UTF8.GetBytes(jwtSettings.SecretKey);
 
             services.AddAuthentication(x =>
             {
@@ -54,8 +58,12 @@ namespace _2___Application._4__DependencyInjectionConfig
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false,
-                    ValidateAudience = false
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtSettings.Issuer,
+                    ValidateAudience = true,
+                    ValidAudience = jwtSettings.Audience,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.FromMinutes(2)
                 };
             });
 
@@ -76,6 +84,7 @@ namespace _2___Application._4__DependencyInjectionConfig
 
             #region Services
             services.AddScoped<IAppSettings, AppSettings>(); // Certifique-se de que `AppSettings` não tem dependências não registradas
+            services.AddScoped<TokenService>();
             services.AddScoped<BaseService>();
             services.AddScoped<EmailService>();
             services.AddScoped<CompanyService>();
@@ -137,6 +146,38 @@ namespace _2___Application._4__DependencyInjectionConfig
             #endregion
              
             #endregion
+        }
+
+        private static JwtSettings CreateJwtSettings(IConfiguration configuration)
+        {
+            var expirationHours = int.TryParse(configuration["Jwt:ExpirationHours"], out var configuredExpirationHours)
+                ? configuredExpirationHours
+                : 2;
+
+            var settings = new JwtSettings
+            {
+                SecretKey = configuration["Jwt:SecretKey"] ?? string.Empty,
+                Issuer = configuration["Jwt:Issuer"] ?? string.Empty,
+                Audience = configuration["Jwt:Audience"] ?? string.Empty,
+                ExpirationHours = expirationHours
+            };
+
+            if (string.IsNullOrWhiteSpace(settings.SecretKey))
+                throw new InvalidOperationException("Jwt:SecretKey must be configured.");
+
+            if (Encoding.UTF8.GetByteCount(settings.SecretKey) < 32)
+                throw new InvalidOperationException("Jwt:SecretKey must be at least 32 bytes.");
+
+            if (string.IsNullOrWhiteSpace(settings.Issuer))
+                throw new InvalidOperationException("Jwt:Issuer must be configured.");
+
+            if (string.IsNullOrWhiteSpace(settings.Audience))
+                throw new InvalidOperationException("Jwt:Audience must be configured.");
+
+            if (settings.ExpirationHours <= 0)
+                throw new InvalidOperationException("Jwt:ExpirationHours must be greater than zero.");
+
+            return settings;
         }
     }
 }

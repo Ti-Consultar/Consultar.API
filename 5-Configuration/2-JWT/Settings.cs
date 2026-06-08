@@ -8,6 +8,6 @@ namespace _5_Configuration._2_JWT
 {
     public static class Settings
     {
-        public static string Secret = "345sadsaldjaslfjlafjslajflasfjoeperprwsaçkdãsd";
+        public static string Secret = string.Empty;
     }
 }
