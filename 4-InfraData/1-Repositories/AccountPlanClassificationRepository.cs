@@ -83,7 +83,8 @@ namespace _4_InfraData._1_Repositories
                     AccountPlanId = c.AccountPlanId,
                     Name = c.Name,
                     TypeOrder = c.TypeOrder,
-                    TypeClassification = c.TypeClassification
+                    TypeClassification = c.TypeClassification,
+                    TotalizerClassificationId = c.TotalizerClassificationId
                 })
                 .FirstOrDefaultAsync();
 
@@ -100,7 +101,23 @@ namespace _4_InfraData._1_Repositories
                 .ToListAsync();
         }
 
-        
+
+        public async Task<List<BalanceteDataAccountPlanClassification>>
+         GetBondListByAccountPlanId(int accountPlanId)
+            {
+                var model = await _context.BalanceteDataAccountPlanClassification
+                    .Include(b => b.AccountPlanClassification) // traz o relacionamento
+                    .Where(b => b.AccountPlanClassification.AccountPlanId == accountPlanId)
+                    .ToListAsync();
+
+            return model;
+            }
+
+        public async Task DeletePermanentlyList(List<BalanceteDataAccountPlanClassification> entities)
+        {
+            _context.Set<BalanceteDataAccountPlanClassification>().RemoveRange(entities);
+            await _context.SaveChangesAsync();
+        }
 
 
         public async Task<List<AccountPlanClassification>> GetItemsToDecrementOrderAsync(int accountPlanId, ETypeClassification typeClassification, int oldOrder, int newOrder)
@@ -134,7 +151,21 @@ namespace _4_InfraData._1_Repositories
 
             return model;
         }
+        public async Task<List<BalanceteDataAccountPlanClassification>> GetBond(int accountPlanId)
+        {
+            var model = await _context.BalanceteDataAccountPlanClassification
+                .Include(a => a.AccountPlanClassification)
+                    .ThenInclude(apc => apc.TotalizerClassification)
+                .Include(a => a.AccountPlanClassification)
+                    .ThenInclude(apc => apc.AccountPlan)
+                .Where(c =>
+                    c.AccountPlanClassification.AccountPlanId == accountPlanId 
+                )
+                .OrderBy(c => c.AccountPlanClassification.TypeOrder)
+                .ToListAsync();
 
+            return model;
+        }
         public async Task<List<BalanceteDataAccountPlanClassification>> GetBondAtivo(int accountPlanId)
         {
             var model = await _context.BalanceteDataAccountPlanClassification
@@ -172,5 +203,26 @@ namespace _4_InfraData._1_Repositories
 
             return model;
         }
+
+        public async Task<List<AccountPlanClassification>> GetAllBytypeClassificationAsync(int accountPlanId)
+        {
+            var model = await _context.AccountPlanClassification
+                .Where(c => c.AccountPlanId == accountPlanId)
+                .OrderBy(c => c.TypeOrder)
+                .ToListAsync();
+
+            return model;
+        }
+
+        public async Task<List<AccountPlanClassification>> GetAllClassificationAsync(int accountPlanId)
+        {
+            var model = await _context.AccountPlanClassification
+                .Where(c => c.AccountPlanId == accountPlanId)
+                .OrderBy(c => c.TypeOrder)
+                .ToListAsync();
+
+            return model;
+        }
+
     }
 }

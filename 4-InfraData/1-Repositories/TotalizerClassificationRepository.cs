@@ -29,6 +29,15 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.AccountPlanId == accountPlanId && ids.Contains(x.Id))
                 .ToListAsync();
         }
+        public async Task<List<TotalizerClassificationModel>> GetByAccountPlansId(int accountPlanId)
+        {
+            return await _context.TotalizerClassification
+                .Where(x => x.AccountPlanId == accountPlanId && x.TypeOrder >= 11 && x.TypeOrder <= 30)
+                .ToListAsync();
+        }
+
+
+
 
     }
 }

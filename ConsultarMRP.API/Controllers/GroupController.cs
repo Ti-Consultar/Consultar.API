@@ -84,12 +84,12 @@ namespace _5_API.Controllers
         /// <param name="id">ID do grupo.</param>
         [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         [HttpPatch]
-        [Route("{id}/restore")]
-        public async Task<IActionResult> RestoreGroup(int id)
+        [Route("restore")]
+        public async Task<IActionResult> RestoreGroup([FromBody] List<int> ids)
         {
             try
             {
-                var result = await _groupService.Restore(id);
+                var result = await _groupService.Restore(ids);
                 return Ok(result);
             }
             catch (Exception ex)

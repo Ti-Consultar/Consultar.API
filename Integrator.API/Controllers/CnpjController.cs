@@ -10,12 +10,10 @@ namespace ConsultarMRP.API.Controllers
     public class CnpjController : ControllerBase
     {
         private readonly CnpjService _cnpjService;
-        private readonly CompanyService _companyService;
 
-        public CnpjController(CnpjService cnpjService, CompanyService companyService)
+        public CnpjController(CnpjService cnpjService)
         {
             _cnpjService = cnpjService;
-            _companyService = companyService;
         }
 
         [HttpGet]

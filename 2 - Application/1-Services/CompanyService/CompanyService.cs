@@ -5,10 +5,8 @@ using _4_InfraData._1_Repositories;
 using _2___Application.Base;
 using _4_InfraData._2_AppSettings;
 using _2___Application._2_Dto_s.Permissions;
-using _2___Application._2_Dto_s.Company.CompanyUser;
 using Microsoft.EntityFrameworkCore;
 using _2___Application._2_Dto_s.Group;
-using _2___Application._2_Dto_s.CNPJ;
 using _2___Application._2_Dto_s.BusinesEntity;
 using _4_InfraData._3_Utils.Email;
 using _2___Application._2_Dto_s.Invitation;
@@ -46,11 +44,11 @@ public class CompanyService : BaseService
             var user = await GetCurrentUserAsync();
 
             // Verifica se o CNPJ já existe
-            var cnpjExists = await _businessEntityRepository.CnpjExists(createCompanyDto.BusinessEntity.Cnpj);
-            if (cnpjExists)
-            {
-                return SuccessResponse(Message.CNPJAlreadyRegistered);
-            }
+            //var cnpjExists = await _businessEntityRepository.CnpjExists(createCompanyDto.BusinessEntity.Cnpj);
+            //if (cnpjExists)
+            //{
+            //    return SuccessResponse(Message.CNPJAlreadyRegistered);
+            //}
 
             // Cria a entidade empresarial
             var businessEntity = new BusinessEntity
@@ -157,6 +155,7 @@ public class CompanyService : BaseService
         if (!string.IsNullOrWhiteSpace(dto.Telefone)) entity.Telefone = dto.Telefone;
         if (!string.IsNullOrWhiteSpace(dto.Email)) entity.Email = dto.Email;
     }
+
     public async Task<ResultValue> DeleteCompany(int id, int groupId)
     {
         try
@@ -342,6 +341,251 @@ public class CompanyService : BaseService
         }
     }
 
+    //public async Task<ResultValue> GetSimpleCompaniesByGroupId(int groupId)
+    //{
+    //    try
+    //    {
+    //        // 🔹 Busca o grupo
+    //        var group = await _groupRepository.GetById(groupId);
+    //        if (group == null)
+    //            return ErrorResponse(Message.NotFound);
+
+    //        // 🔹 Busca o plano de contas do grupo
+    //        var groupAccountPlan = await _accountPlansRepository.GetByGroupId(groupId);
+
+    //        // 🔹 Busca a permissão do usuário no grupo
+    //        var groupPermission = await _companyRepository.GetUserPermissionAsync(_currentUserId, groupId, null, null);
+
+    //        // 🔹 Busca todas as empresas (Companies) do grupo que o usuário tem acesso
+    //        var companies = await _companyRepository.GetCompaniesByGroupId(_currentUserId, groupId);
+
+    //        // ===================================================================
+    //        // 🔥 SE NÃO TIVER FILIAIS / EMPRESAS → RETORNAR APENAS O GRUPO
+    //        // ===================================================================
+    //        if (companies == null || !companies.Any())
+    //        {
+    //            var responseGroupOnly = new _2___Application._2_Dto_s.Company.GroupCompanySimpleDto
+    //            {
+    //                Id = group.Id,
+    //                Name = group.Name,
+    //                AccountPlanId = groupAccountPlan?.Id,
+    //                Permission = groupPermission != null
+    //                    ? new PermissionResponse
+    //                    {
+    //                        Id = groupPermission.Id,
+    //                        Name = groupPermission.Name
+    //                    }
+    //                    : null,
+    //                Filiais = new List<CompanySimpleAccountPlanDto>() // lista vazia
+    //            };
+
+    //            return SuccessResponse(responseGroupOnly);
+    //        }
+    //        // ===================================================================
+
+
+    //        // 🔹 Monta o objeto de resposta completo (com empresas)
+    //        var response = new _2___Application._2_Dto_s.Company.GroupCompanySimpleDto
+    //        {
+    //            Id = group.Id,
+    //            Name = group.Name,
+    //            AccountPlanId = groupAccountPlan?.Id,
+    //            Permission = groupPermission != null
+    //                ? new PermissionResponse
+    //                {
+    //                    Id = groupPermission.Id,
+    //                    Name = groupPermission.Name
+    //                }
+    //                : null,
+    //            Filiais = new List<CompanySimpleAccountPlanDto>()
+    //        };
+
+    //        foreach (var company in companies)
+    //        {
+    //            // 🔹 Permissão do usuário nesta empresa
+    //            var companyPermission = await _companyRepository.GetUserPermissionAsync(_currentUserId, groupId, company.Id, null);
+
+    //            // 🔹 Plano de contas da empresa (ou do grupo)
+    //            var accountPlan = await _accountPlansRepository.GetByCompanyOrGroupId(company.Id, groupId);
+
+    //            // 🔹 DTO da empresa
+    //            var companyDto = new CompanySimpleAccountPlanDto
+    //            {
+    //                Id = company.Id,
+    //                Name = company.Name,
+    //                Permission = companyPermission != null
+    //                    ? new PermissionResponse
+    //                    {
+    //                        Id = companyPermission.Id,
+    //                        Name = companyPermission.Name
+    //                    }
+    //                    : null,
+    //                AccountPlanId = accountPlan?.Id,
+    //                SubCompanies = new List<SubCompanySimpleAccountPlanDto>()
+    //            };
+
+    //            // 🔹 Busca as subempresas (filhas)
+    //            if (company.SubCompanies != null && company.SubCompanies.Any())
+    //            {
+    //                foreach (var sub in company.SubCompanies)
+    //                {
+    //                    // 🔹 Permissão do usuário na subempresa
+    //                    var subPermission = await _companyRepository.GetUserPermissionAsync(_currentUserId, groupId, company.Id, sub.Id);
+
+    //                    // 🔹 Plano de contas da subempresa
+    //                    var subAccountPlan = await _accountPlansRepository.GetBySubCompanyOrCompanyOrGroupId(sub.Id, company.Id, groupId);
+
+    //                    companyDto.SubCompanies.Add(new SubCompanySimpleAccountPlanDto
+    //                    {
+    //                        Id = sub.Id,
+    //                        Name = sub.Name,
+    //                        AccountPlanId = subAccountPlan?.Id,
+    //                        Permission = subPermission != null
+    //                            ? new PermissionResponse
+    //                            {
+    //                                Id = subPermission.Id,
+    //                                Name = subPermission.Name
+    //                            }
+    //                            : null
+    //                    });
+    //                }
+    //            }
+
+    //            response.Filiais.Add(companyDto);
+    //        }
+
+    //        return SuccessResponse(response);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        return ErrorResponse(ex);
+    //    }
+    //}
+
+
+    public async Task<ResultValue> GetSimpleCompaniesByGroupId(int groupId)
+    {
+        try
+        {
+            var group = await _groupRepository.GetById(groupId);
+            if (group == null)
+                return ErrorResponse(Message.NotFound);
+
+            var groupAccountPlan = await _accountPlansRepository.GetByGroupId(groupId);
+
+            var groupPermission = await _companyRepository.GetUserPermissionAsync(
+                _currentUserId, groupId, null, null
+            );
+
+            var companies = (await _companyRepository.GetCompaniesByGroupId(_currentUserId, groupId))
+                ?.Where(c => c.Deleted == false)
+                .ToList();
+
+            if (companies == null || !companies.Any())
+            {
+                return SuccessResponse(new GroupCompanySimpleDto
+                {
+                    Id = group.Id,
+                    Name = group.Name,
+                    AccountPlanId = groupAccountPlan?.Id,
+                    Permission = groupPermission != null
+                        ? new PermissionResponse
+                        {
+                            Id = groupPermission.Id,
+                            Name = groupPermission.Name
+                        }
+                        : null,
+                    Filiais = new List<CompanySimpleAccountPlanDto>()
+                });
+            }
+
+            var response = new GroupCompanySimpleDto
+            {
+                Id = group.Id,
+                Name = group.Name,
+                AccountPlanId = groupAccountPlan?.Id,
+                Permission = groupPermission != null
+                    ? new PermissionResponse
+                    {
+                        Id = groupPermission.Id,
+                        Name = groupPermission.Name
+                    }
+                    : null,
+                Filiais = new List<CompanySimpleAccountPlanDto>()
+            };
+
+            foreach (var company in companies)
+            {
+                var companyPermission = await _companyRepository.GetUserPermissionAsync(
+                    _currentUserId, groupId, company.Id, null
+                );
+
+                var accountPlan = await _accountPlansRepository.GetByCompanyOrGroupId(
+                    company.Id, groupId
+                );
+
+                var companyDto = new CompanySimpleAccountPlanDto
+                {
+                    Id = company.Id,
+                    Name = company.Name,
+                    Permission = companyPermission != null
+                        ? new PermissionResponse
+                        {
+                            Id = companyPermission.Id,
+                            Name = companyPermission.Name
+                        }
+                        : null,
+                    AccountPlanId = accountPlan?.Id,
+                    SubCompanies = new List<SubCompanySimpleAccountPlanDto>()
+                };
+
+                var subCompanies = company.SubCompanies?
+                    .Where(s =>
+                        s.Deleted == false &&
+                        s.CompanyUsers.Any(cu =>
+                            cu.UserId == _currentUserId &&
+                            cu.GroupId == groupId &&
+                            cu.CompanyId == company.Id &&
+                            cu.SubCompanyId == s.Id))
+                    .ToList();
+
+                if (subCompanies != null && subCompanies.Any())
+                {
+                    foreach (var sub in subCompanies)
+                    {
+                        var subPermission = await _companyRepository.GetUserPermissionAsync(
+                            _currentUserId, groupId, company.Id, sub.Id
+                        );
+
+                        var subAccountPlan = await _accountPlansRepository
+                            .GetBySubCompanyOrCompanyOrGroupId(sub.Id, company.Id, groupId);
+
+                        companyDto.SubCompanies.Add(new SubCompanySimpleAccountPlanDto
+                        {
+                            Id = sub.Id,
+                            Name = sub.Name,
+                            AccountPlanId = subAccountPlan?.Id,
+                            Permission = subPermission != null
+                                ? new PermissionResponse
+                                {
+                                    Id = subPermission.Id,
+                                    Name = subPermission.Name
+                                }
+                                : null
+                        });
+                    }
+                }
+
+                response.Filiais.Add(companyDto);
+            }
+
+            return SuccessResponse(response);
+        }
+        catch (Exception ex)
+        {
+            return ErrorResponse(ex);
+        }
+    }
 
 
     #endregion
@@ -357,10 +601,10 @@ public class CompanyService : BaseService
             if (company == null)
                 return SuccessResponse(Message.NotFound);
 
-            // Verifica se o CNPJ já está cadastrado
-            var cnpjExists = await _businessEntityRepository.CnpjExists(createSubCompanyDto.BusinessEntity.Cnpj);
-            if (cnpjExists)
-                return SuccessResponse(Message.CNPJAlreadyRegistered);
+            //// Verifica se o CNPJ já está cadastrado
+            //var cnpjExists = await _businessEntityRepository.CnpjExists(createSubCompanyDto.BusinessEntity.Cnpj);
+            //if (cnpjExists)
+            //    return SuccessResponse(Message.CNPJAlreadyRegistered);
 
             // Cria a entidade empresarial
             var businessEntity = new BusinessEntity
@@ -397,6 +641,7 @@ public class CompanyService : BaseService
                 UserId = user.Id,
                 CompanyId = company.Id,
                 GroupId = company.GroupId,
+                SubCompanyId = subCompany.Id,
                 PermissionId = 1 // gestor
             };
 
@@ -414,6 +659,9 @@ public class CompanyService : BaseService
                 CompanyId = companyUser.CompanyId,
                 SubCompanyId = companyUser.SubCompanyId,
             };
+
+
+
 
             await _accountPlansRepository.AddAsync(accountPlan);
 
@@ -554,7 +802,7 @@ public class CompanyService : BaseService
 
             model.CompanyId = dto.CompanyId;
             model.SubCompanyId = dto.SubCompanyId;
-            model.UserId = user.Id;
+            model.UserId = dto.UserId;
             model.PermissionId = dto.PermissionId;
             model.GroupId = company.GroupId;
             await _companyRepository.AddUserToCompanyOrSubCompany(model.UserId, company.GroupId, model.CompanyId, model.SubCompanyId, model.PermissionId);

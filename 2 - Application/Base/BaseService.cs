@@ -67,7 +67,11 @@ namespace _2___Application.Base
         }
 
 
-        
+        public decimal? SafeDivide(decimal numerator, decimal denominator)
+        {
+            if (denominator == 0) return null;
+            return numerator / denominator * 100;
+        }
 
         public bool ParseBoolean(string value)
         {
@@ -156,6 +160,9 @@ namespace _2___Application.Base
         protected ResultValue CreateErrorResponse(string errorMessage, Exception ex = null)
         {
             var errorDetails = new List<string> { "INTERNAL_SERVER_ERROR" };
+
+            if (!string.IsNullOrWhiteSpace(errorMessage))
+                errorDetails.Add(errorMessage);
 
             if (!GetEnvironmentName().Equals("prod") && ex != null)
             {

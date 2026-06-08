@@ -103,7 +103,11 @@ namespace _4_InfraData._1_Repositories
             return group;
         }
 
-
+        public async Task<bool> ExistsCompanyUser(int userId, int groupId)
+        {
+            return await _context.CompanyUsers
+                .AnyAsync(cu => cu.UserId == userId  && cu.GroupId == groupId);
+        }
 
         public async Task<List<GroupCompanyDeletedDto>> GetByIdByCompaniesDeleted(int groupId)
         {

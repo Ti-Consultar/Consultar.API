@@ -32,6 +32,7 @@ namespace _2___Application.Base
         public const string PasswordSuccess = "Senha Alterada com Sucesso!";
         public const string UserNotFound = "Usuário não encontrado!";
         public const string Error = "Erro!";
+        public const string NenhumUsuarioEncontrado = "Nenhum Usuário Encontrado";
     }
 }
 

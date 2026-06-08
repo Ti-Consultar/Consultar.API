@@ -22,12 +22,18 @@ namespace _2___Application._1_Services.User
         private readonly UserRepository _repository;
         private readonly CompanyRepository _companyRepository;
         private readonly EmailService _emailService;
+        private readonly TokenService _tokenService;
         public int _currentUserId;
 
-        public UserService(UserRepository repository, EmailService emailService, IAppSettings appSettings) : base(appSettings)
+        public UserService(
+            UserRepository repository,
+            EmailService emailService,
+            TokenService tokenService,
+            IAppSettings appSettings) : base(appSettings)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _emailService = emailService;
+            _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
             _currentUserId = GetCurrentUserId();
 
         }
@@ -37,28 +43,65 @@ namespace _2___Application._1_Services.User
         #region Metodos
         public async Task<_2_Dto_s.UserDto.Response.LoginResponse> Login(LoginDto request)
         {
-            var user = await _repository.Get(request.Email, request.Password.EncryptPassword());
+            var user = await _repository.Get(request.Email.ToLower(), request.Password.EncryptPassword());
 
             if (!IsUserValid(request, user))
             {
-                return CreateUserResponseInvalid(request.Email);
+                return CreateUserResponseInvalid(request.Email.ToLower());
             }
 
             return CreateUserResponseAuthorized(user);
         }
-
         public async Task<object> InsertUser(InsertDto request)
         {
             try
             {
-                var userExists = await _repository.GetByEmail(request.Email);
-
+                var userExists = await _repository.GetByEmail(request.Email.ToLower());
                 if (userExists != null)
-                {
                     return UserLoginMessage.EmailExists;
-                }
 
-                var user = new UserModel(request.Name, request.Email,request?.Contact ,request?.Role,request.Password.EncryptPassword());
+                var newPassword = GenerateNewPassword();
+
+                var user = new UserModel(
+                    request.Name,
+                    request.Email.ToLower(),
+                    request?.Contact,
+                    request?.Role,
+                    newPassword.EncryptPassword()
+                );
+
+
+                await _repository.AddUser(user);
+
+                await _emailService.SendUserWelcomeAsync(request.Email, request.Name, newPassword);
+
+                return Message.Success;
+            }
+            catch (Exception ex)
+            {
+                return UserLoginMessage.Error + ex;
+            }
+        }
+
+        public async Task<object> InsertSimpleUser(InsertSimpleDto request)
+        {
+            try
+            {
+                var userExists = await _repository.GetByEmail(request.Email.ToLower());
+                if (userExists != null)
+                    return UserLoginMessage.EmailExists;
+
+                var newPassword = GenerateNewPassword();
+
+                var user = new UserModel(
+                    request.Name,
+                    request.Email.ToLower(),
+                    request?.Contact,
+                    request?.Role,
+                    request.Senha.EncryptPassword()
+                );
+
+      
                 await _repository.AddUser(user);
 
                 return Message.Success;
@@ -68,6 +111,7 @@ namespace _2___Application._1_Services.User
                 return UserLoginMessage.Error + ex;
             }
         }
+
 
         public async Task<object> UpdateUser(UpdateUser request)
         {
@@ -80,16 +124,16 @@ namespace _2___Application._1_Services.User
                     return Message.NotFound;
 
                 // Verifica se o e-mail está sendo alterado para um que já existe em outro usuário
-                if (user.Email != request.Email)
+                if (user.Email.ToLower() != request.Email.ToLower())
                 {
-                    var emailExists = await _repository.GetByEmail(request.Email);
+                    var emailExists = await _repository.GetByEmail(request.Email.ToLower());
                     if (emailExists != null && emailExists.Id != user.Id)
                         return UserLoginMessage.EmailExists;
                 }
 
                 // Atualiza os campos
                 user.Name = request.Name;
-                user.Email = request.Email;
+                user.Email = request.Email.ToLower();
                 user.Contact = request.Contact;
 
                 await _repository.UpdateUser(user);
@@ -100,6 +144,56 @@ namespace _2___Application._1_Services.User
                 return UserLoginMessage.Error + ex;
             }
         }
+
+
+        public async Task<object> UpdateRoleUser(UpdateUserByGestor request)
+        {
+            try
+            {
+                var user = await GetCurrentUserAsync();
+
+
+                if (user.Role != ERole.Gestor.ToString())
+                    return Message.NotFound;
+
+               
+
+                var userToUpdate = await _repository.GetById(request.UserId);
+
+                // Atualiza os campos
+                userToUpdate.Role = request.Role;
+
+                await _repository.UpdateUser(userToUpdate);
+                return Message.Success;
+            }
+            catch (Exception ex)
+            {
+                return UserLoginMessage.Error + ex;
+            }
+        }
+
+        public async Task<object> GetUserByEmailOrContact(string find)
+        {
+            var user = await _repository.GetUserByEmailOrContactAsync(find);
+
+            if (user == null)
+            {
+                return  UserLoginMessage.NenhumUsuarioEncontrado; ;
+            }
+
+            var response =  new UserSimpleResponse
+            {
+                Id = user.Id,
+                Email = user.Email.ToLower(),
+                Name = user.Name,
+                Contact = user.Contact,
+                Role = user.Role
+                
+            };
+
+            return response;
+        }
+
 
         public async Task<object> GetUser()
         {
@@ -113,7 +207,7 @@ namespace _2___Application._1_Services.User
                 var response = new UserResponse
                 {
                     Id = user.Id,
-                    Email = user.Email,
+                    Email = user.Email.ToLower(),
                     Name = user.Name,
                     Contact = user.Contact,
                     Role = user.Role,
@@ -156,7 +250,7 @@ namespace _2___Application._1_Services.User
                 var response = users.Select(user => new UserResponse
                 {
                     Id = user.Id,
-                    Email = user.Email,
+                    Email = user.Email.ToLower(),
                     Name = user.Name,
                     Contact = user.Contact
                 }).ToList();
@@ -173,7 +267,7 @@ namespace _2___Application._1_Services.User
             var response = new UserSimpleResponse
             {
                 Id = model.Id,
-                Email = model.Email,
+                Email = model.Email.ToLower(),
                 Name = model.Name,
                 Contact= model.Contact,
                 Role = model.Role
@@ -262,11 +356,11 @@ namespace _2___Application._1_Services.User
         #region Metodos Privados
         private LoginResponse CreateUserResponseAuthorized(UserModel user)
         {
-            var token = TokenService.GenerateToken(user);
+            var token = _tokenService.GenerateToken(user);
 
             return new LoginResponse
             {
-                Email = user.Email,
+                Email = user.Email.ToLower(),
                 Token = token,
                 Role = user.Role,
                 Message = UserLoginMessage.Authorized
@@ -282,13 +376,13 @@ namespace _2___Application._1_Services.User
             return newPassword;
         }
 
-        private bool IsUserValid(LoginDto request, UserModel user) => user != null && request.Email == user.Email && request.Password.EncryptPassword() == user.Password;
+        private bool IsUserValid(LoginDto request, UserModel user) => user != null && request.Email.ToLower() == user.Email.ToLower() && request.Password.EncryptPassword() == user.Password;
 
         private LoginResponse CreateUserResponseInvalid(string email)
         {
             return new LoginResponse
             {
-                Email = email,
+                Email = email.ToLower(),
                 Message = UserLoginMessage.InvalidCredentials
             };
         }

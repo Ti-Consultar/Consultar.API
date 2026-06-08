@@ -105,9 +105,9 @@ namespace _5_API.Controllers
         /// </summary>
         [HttpGet("accountplan/{accountPlanid}/date")]
         [Authorize()]
-        public async Task<IActionResult> GetByDate(int accountPlanid, [FromQuery] int year, [FromQuery]int month)
+        public async Task<IActionResult> GetByDate(int accountPlanid)
         {
-            var result = await _service.GetByBalanceteIdDate(accountPlanid, year, month);
+            var result = await _service.GetByBalanceteIdDate(accountPlanid);
 
             if (!result.Success)
                 return NotFound(result);
@@ -145,6 +145,71 @@ namespace _5_API.Controllers
 
             return Ok(result);
         }
+
+        // [Authorize]
+        [HttpPost("import/dinamic")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> ImportBalanceteDataDinamic([FromQuery] int balanceteId, BalanceteColumnMap dto)
+        {
+            var result = await _service.ImportBalanceteDataDinamic( balanceteId,dto);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        // [Authorize]
+        [HttpPost("insert-config/balancete")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> CreateConfigBalanceteImport( InsertBalanceteImportConfig dto)
+        {
+            var result = await _service.CreateConfigBalanceteImport(dto);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+        // [Authorize]
+        [HttpPut("update-config/balancete")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> UpdateConfigBalanceteImport( UpdateBalanceteImportConfig dto)
+        {
+            var result = await _service.UpdateConfigBalanceteImport( dto);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        // [Authorize]
+        [HttpGet("accountplan/{accountplanId}/config/balancete")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> GetConfigBalanceteImportByAccountPlanId(int accountplanId)
+        {
+            var result = await _service.GetConfigBalanceteImportByAccountPlanId(accountplanId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        // [Authorize]
+        [HttpGet("accountplan/{accountplanId}/config/exists")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> ExistsConfigBalanceteImport(int accountplanId)
+        {
+            var result = await _service.ExistsConfigBalanceteImport(accountplanId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
         // [Authorize]
         [HttpGet("{balanceteId}/data")]
         [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor,Usuario")]
@@ -210,6 +275,57 @@ namespace _5_API.Controllers
 
             return Ok(result);
         }
-        #endregion
+        public class ExtractBranchesRequest
+        {
+            public IFormFile File { get; set; }
+
+            public int  StartRow { get; set; }
+
+            public int CostCenter { get; set; }
+            public int Name { get; set; }
+            public int InitialValue { get; set; }
+            public int Debit { get; set; }
+            public int Credit { get; set; }
+            public int FinalValue { get; set; }
+
+            public BalanceteColumnMap ToMap()
+            {
+                return new BalanceteColumnMap
+                {
+                    StartRow = StartRow,
+                    CostCenter = CostCenter,
+                    Name = Name,
+                    InitialValue = InitialValue,
+                    Debit = Debit,
+                    Credit = Credit,
+                    FinalValue = FinalValue
+                };
+            }
+        }
+
+
+        [HttpPost("extrair/filiais")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ExtractBranchesFromFile(
+     [FromForm] ExtractBranchesRequest request)
+        {
+            if (request?.File == null || request.File.Length == 0)
+                return BadRequest("Arquivo não informado.");
+
+            var map = request.ToMap();
+
+            using var stream = request.File.OpenReadStream();
+
+            var branches = await _service.ExtractBranchesAsync(
+                stream,
+                request.File.FileName,
+                map);
+
+            return Ok(branches);
+        }
+
+
+
     }
 }
+    #endregion

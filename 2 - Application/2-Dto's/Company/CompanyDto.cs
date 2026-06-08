@@ -23,4 +23,30 @@ namespace _2___Application._2_Dto_s.Company
         public string Name { get; set; }
        
     }
+    public class GroupCompanySimpleDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public int? AccountPlanId { get; set; }
+        public PermissionResponse? Permission { get; set; }
+        public List<CompanySimpleAccountPlanDto> Filiais { get; set; }
+    }
+
+    public class CompanySimpleAccountPlanDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public int? AccountPlanId { get; set; }
+        public PermissionResponse? Permission { get; set; }
+        public List<SubCompanySimpleAccountPlanDto> SubCompanies { get; set; }
+    }
+
+    public class SubCompanySimpleAccountPlanDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public int? AccountPlanId { get; set; }
+        public PermissionResponse? Permission { get; set; }
+    }
+
 }

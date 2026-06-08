@@ -24,4 +24,43 @@ namespace _2___Application._2_Dto_s.AccountPlan.Balancete
         public decimal FinalValue { get; set; }
         public bool BudgetedAmount { get; set; }
     }
+
+    public class BalanceteAccountPlanDataDto
+    {
+        public BalanceteDto Balancete { get; set; }
+        public List<AccountPlanDataDto> DataDto { get; set; }
+        public bool HasPendingClassifications { get; set; }
+        public int PendingClassificationsCount { get; set; }
+    }
+
+    public class AccountPlanDataDto
+    {
+        public int Id { get; set; }
+        public string CostCenter { get; set; }
+        public string Name { get; set; }
+        public bool BudgetedAmount { get; set; }
+        public int? AccountPlanClassificationId { get; set; }
+        public string ClassificationStatus { get; set; }
+        public string Origin { get; set; }
+    }
+
+    public class BalanceteImportResultDto
+    {
+        public string Message { get; set; }
+        public int NewAccountsCount { get; set; }
+        public List<AccountPlanDataDto> NewAccounts { get; set; } = new();
+        public bool HasPendingClassifications { get; set; }
+        public int PendingClassificationsCount { get; set; }
+    }
+
+    // Orçamento
+
+    public class BudgetDataDto
+    {
+        public BudgetDto Budget { get; set; }
+        public List<DataDto> DataDto { get; set; }
+
+    }
+
+   
 }

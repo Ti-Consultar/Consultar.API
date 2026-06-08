@@ -17,4 +17,16 @@ namespace _2___Application._2_Dto_s.AccountPlan.Balancete
         public ESituationBalancete Status { get; set; }
         public DateTime DateCreate { get; set; }
     }
+
+    // Orçamento 
+
+    public class BudgetDto
+    {
+        public int Id { get; set; }
+        public AccountPlanResponse AccountPlans { get; set; }
+        public EMonth DateMonth { get; set; }
+        public int DateYear { get; set; }
+        public ESituationBalancete Status { get; set; }
+        public DateTime DateCreate { get; set; }
+    }
 }

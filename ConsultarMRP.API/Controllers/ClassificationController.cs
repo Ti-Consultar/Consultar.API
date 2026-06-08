@@ -59,7 +59,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpPost]
         [Route("")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> Create( CreateAccountPlanClassification dto)
         {
             try
@@ -75,7 +75,7 @@ namespace ConsultarMRP.API.Controllers
         }
         [HttpPut]
         [Route("{accountPlanId}/create-item")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> CreateItemClassification(int accountPlanId, [FromBody]CreateItemClassification dto)
         {
             try
@@ -92,7 +92,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpPut]
         [Route("{accountPlanId}/update-item")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> Update(int accountPlanId,[FromQuery]int id ,[FromBody] UpdateItemClassification dto)
         {
             try
@@ -109,7 +109,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpGet]
         [Route("accountPlan/{accountPlanId}/typeClassification")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetByTypeClassificationReal(int accountPlanId, ETypeClassification typeClassification)
         {
             try
@@ -126,7 +126,7 @@ namespace ConsultarMRP.API.Controllers
 
         [HttpPut]
         [Route("/create-bond")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> CreateBond([FromQuery]int accountPlanClassificationId, [FromBody] BalanceteDataAccountPlanClassificationCreate dto)
         {
             try
@@ -142,7 +142,7 @@ namespace ConsultarMRP.API.Controllers
         }
         [HttpPut]
         [Route("/create-bond-list")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> CreateBondList( [FromBody] BalanceteDataAccountPlanClassificationCreateList dto)
         {
             try
@@ -157,12 +157,58 @@ namespace ConsultarMRP.API.Controllers
             }
         }
 
-        
-        
+        [HttpPut]
+        [Route("accountplan/{accountPlanId}/update-bond-list")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> CreateBondList(int accountPlanId,[FromBody] BalanceteDataAccountPlanClassificationCreateList dto)
+        {
+            try
+            {
+
+                var response = await _Service.UpdateBondList(accountPlanId,dto);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        [Route("/bond")]
+        [Authorize()]
+        public async Task<IActionResult> GetPainelBalancoAsync([FromQuery] int accountPlanId, [FromQuery] int typeClassification)
+        {
+            try
+            {
+
+                var response = await _Service.GetBond(accountPlanId, typeClassification);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("bond-list/{accountPlanId}")]
+        public async Task<IActionResult> GetBondListByAccountPlanId(int accountPlanId)
+        {
+            var result = await _Service.GetBondListByAccountPlanId(accountPlanId);
+            return Ok(result);
+        }
+
+        [HttpGet("accountplan/{accountPlanId}/pending-classifications")]
+        [Authorize()]
+        public async Task<IActionResult> GetPendingAccountPlanAccounts(int accountPlanId)
+        {
+            var result = await _Service.GetPendingAccountPlanAccounts(accountPlanId);
+            return Ok(result);
+        }
 
         [HttpGet]
         [Route("/painel")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetPainelBalancoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
         {
             try
@@ -176,9 +222,45 @@ namespace ConsultarMRP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+
+        [HttpGet]
+        [Route("/painel/orcado")]
+        [Authorize()]
+        public async Task<IActionResult> GetPainelBalancoOrcadoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
+        {
+            try
+            {
+
+                var response = await _Service.GetPainelBalancoOrcadoAsync(accountPlanId, year, typeClassification);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        //[HttpGet]
+        //[Route("/painel/comparativo-DRE")]
+        //[Authorize()]
+        //public async Task<IActionResult> GetPainelBalancoComparativoAsync([FromQuery] int accountPlanId, [FromQuery] int year)
+        //{
+        //    try
+        //    {
+
+        //        var response = await _Service.BuildPainelDREComparativoCompleto(accountPlanId, year);
+        //        return Ok(response);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(new { message = ex.Message });
+        //    }
+        //}
+        [Authorize()]
         [HttpGet]
         [Route("/painel-reclassificado")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+     
         public async Task<IActionResult> GetPainelBalancoReclassificadoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
         {
             try
@@ -194,8 +276,42 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpGet]
+        [Route("/painel-reclassificado/orcado")]
+        [Authorize()]
+        public async Task<IActionResult> GetPainelBalancoReclassificadoOrcadoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
+        {
+            try
+            {
+
+                var response = await _Service.GetPainelBalancoReclassificadoOrcadoAsync(accountPlanId, year, typeClassification);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        [Route("/painel-reclassificado/comparativo")]
+        [Authorize()]
+        public async Task<IActionResult> GetPainelBalancoReclassificadoComparativoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
+        {
+            try
+            {
+
+                var response = await _Service.GetPainelBalancoReclassificadoComparativoAsync(accountPlanId, year, typeClassification);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
         [Route("exists")]
-        // [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        [Authorize()]
         public async Task<IActionResult> GetAccountPlanClassification([FromQuery] int accountPlanId)
         {
             try
@@ -210,8 +326,84 @@ namespace ConsultarMRP.API.Controllers
             }
         }
 
-         
-   
-        #endregion
+        [HttpGet]
+        [Route("/demonstracao-consolidado")]
+    
+        public async Task<IActionResult> GetDREGrupoEmpresasAno([FromQuery]int groupId, [FromQuery] List<int> companyIds, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GetDREGrupoEmpresasAno(groupId,companyIds, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            { 
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        [HttpGet]
+        [Route("/demonstracao-consolidados/completo")]
+
+        public async Task<IActionResult> GetDREGrupoEmpresasFiliaisAno([FromQuery] int groupId, [FromQuery] List<int> companyIds, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GetDREGrupoEmpresasFiliaisAno(groupId, companyIds, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        [Route("/demonstracao-consolidados/filiais")]
+
+        public async Task<IActionResult> GetDREEmpresasFiliaisAno([FromQuery] int companyId, [FromQuery] List<int> subCompanyIds, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GetDREEmpresaFiliaisAno(companyId, subCompanyIds, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        /// <summary>
+        /// Retorna DRE mensal da empresa e filiais selecionadas
+        /// </summary>
+        [HttpGet("empresa-filiais-mes")]
+        public async Task<IActionResult> GetDREEmpresaFiliaisMes(
+            [FromQuery] int companyId,
+            [FromQuery] List<int> subCompanyIds,
+            [FromQuery] int year,
+            [FromQuery] int mes)
+        {
+            // 🔹 Validações básicas
+            if (companyId <= 0)
+                return BadRequest("CompanyId inválido.");
+
+            if (year <= 0)
+                return BadRequest("Ano inválido.");
+
+            if (mes < 1 || mes > 12)
+                return BadRequest("Mês deve estar entre 1 e 12.");
+
+            var result = await _Service
+                .GetDREEmpresaFiliaisMes(
+                    companyId,
+                    subCompanyIds ?? new List<int>(),
+                    year,
+                    mes);
+
+            return Ok(result);
+        }
     }
+        #endregion
 }

@@ -1,34 +1,45 @@
 ﻿using _2___Application._2_Dto_s.AccountPlan;
 using _2___Application._2_Dto_s.AccountPlan.Balancete;
+using _2___Application._2_Dto_s.Company;
+using _2___Application._2_Dto_s.Company.SubCompany;
+using _2___Application._2_Dto_s.Group;
 using _2___Application.Base;
 using _3_Domain._1_Entities;
 using _3_Domain._2_Enum_s;
 using _4_InfraData._1_Repositories;
 using _4_InfraData._2_AppSettings;
-using System.Text;
-using Microsoft.AspNetCore.Http;
-using System.Globalization;
-using CsvHelper;
-using ClosedXML.Excel;
-using _2___Application._2_Dto_s.Company.SubCompany;
-using _2___Application._2_Dto_s.Company;
-using _2___Application._2_Dto_s.Group;
 using _4_InfraData._5_ConfigEnum;
+using ClosedXML.Excel;
+using CsvHelper;
+using DocumentFormat.OpenXml.Office.Word;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.WebEncoders.Testing;
 using Microsoft.IdentityModel.Tokens;
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
+using static _2___Application._1_Services.AccountPlans.Balancete.BalanceteService;
 
 namespace _2___Application._1_Services.AccountPlans.Balancete
 {
     public class BalanceteService : BaseService
     {
+        private const int MaxCostCenterLength = 100;
+        private const int MaxNameLength = 255;
+
         private readonly AccountPlansRepository _accountPlansRepository;
         private readonly BalanceteRepository _repository;
         private readonly BalanceteDataRepository _balanceteDataRepository;
+        private readonly BalanceteImportConfigRepository _importConfigRepo;
+        private readonly AccountPlanAccountRepository _accountPlanAccountRepository;
 
 
         public BalanceteService(
             AccountPlansRepository accountPlansRepository,
             BalanceteRepository repository,
             BalanceteDataRepository balanceteDataRepository,
+            BalanceteImportConfigRepository importConfigRepo,
+            AccountPlanAccountRepository accountPlanAccountRepository,
 
 
 
@@ -37,6 +48,8 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             _accountPlansRepository = accountPlansRepository;
             _repository = repository;
             _balanceteDataRepository = balanceteDataRepository;
+            _importConfigRepo = importConfigRepo;
+            _accountPlanAccountRepository = accountPlanAccountRepository;
 
 
             _currentUserId = GetCurrentUserId();
@@ -75,13 +88,71 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
                 await _repository.AddAsync(model);
 
-                return SuccessResponse( model);
+                return SuccessResponse(model);
             }
             catch (Exception ex)
             {
                 return ErrorResponse(ex);
             }
         }
+
+        public class InsertBalanceteListDto
+        {
+            public int AccountPlansId { get; set; }
+            public int DateYear { get; set; }
+            public List<int> Months { get; set; } = new();
+        }
+
+        public async Task<ResultValue> CreateList(InsertBalanceteListDto dto)
+        {
+            try
+            {
+                var user = GetCurrentUserId();
+
+                var exists = await _accountPlansRepository
+                    .ExistsAccountPlanByIdAsync(dto.AccountPlansId);
+
+                if (!exists)
+                    return ErrorResponse(Message.NotFound);
+
+                var createdBalancetes = new List<BalanceteModel>();
+
+                foreach (var month in dto.Months)
+                {
+                    var balanceteExists = await _repository
+                        .GetExistsParams(dto.AccountPlansId, month, dto.DateYear);
+
+                    if (balanceteExists)
+                        continue; // pula se já existir
+
+                    var model = new BalanceteModel
+                    {
+                        DateMonth = (EMonth)month,
+                        DateYear = dto.DateYear,
+                        AccountPlansId = dto.AccountPlansId,
+                        Status = ESituationBalancete.Pending
+                    };
+
+                    await _repository.AddAsync(model);
+                    createdBalancetes.Add(model);
+                }
+
+                // Retorna apenas os IDs
+                var response = createdBalancetes.Select(x => new
+                {
+                    x.Id,
+                    x.DateMonth,
+                    x.DateYear
+                });
+
+                return SuccessResponse(response);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
         public async Task<ResultValue> Update(int id, UpdateBalanceteDto dto)
         {
             try
@@ -172,7 +243,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             {
                 var balancete = await _repository.GetByIdDelete(id);
 
-                if (balancete == null )
+                if (balancete == null)
                     return ErrorResponse(Message.NotFound);
 
                 await _repository.DeletePermanently(id);
@@ -187,7 +258,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
         public async Task<ResultValue> GetAccountPlanWithBalancetesMonth(int accountPlanId)
         {
-           
+
             var balancetes = await _repository.GetAccountPlanWithBalancetesMonthAsync(accountPlanId);
 
             if (balancetes == null || !balancetes.Any())
@@ -206,7 +277,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                         DateYear = b.DateYear,
                         Status = b.Status.GetDescription(),
                         DateCreate = b.DateCreate
-                      
+
                     })
                     .ToList()
             };
@@ -214,7 +285,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             return SuccessResponse(response);
         }
 
-      
+
 
         public async Task<ResultValue> GetAccountPlanWithBalancetes(int accountPlanId, char tipo)
         {
@@ -303,11 +374,11 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             Id = x.Id,
             DateCreate = x.DateCreate,
             DateMonth = x.DateMonth,
-            DateYear = x.DateYear, 
+            DateYear = x.DateYear,
             Status = x.Status,
             AccountPlans = new AccountPlanResponse
             {
-                Id = x.AccountPlans.Id, 
+                Id = x.AccountPlans.Id,
             }
         };
         #endregion
@@ -346,15 +417,398 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 }
 
                 // Remover duplicados na lista importada (CostCenter único)
-                list = list
+                list = NormalizeBalanceteDataList(list)
                     .GroupBy(x => x.CostCenter)
                     .Select(g => g.First())
                     .ToList();
 
-               
+                var validationError = ValidateBalanceteDataImport(list);
+                if (validationError != null)
+                    return ErrorResponse(validationError);
+
+                var newAccounts = await _accountPlanAccountRepository
+                    .UpsertFromBalanceteDataAsync(balancete.AccountPlansId, list);
+
                 await _balanceteDataRepository.AddRangeAsync(list);
 
-                return SuccessResponse("Dados importados com sucesso.");
+                return SuccessResponse(await BuildImportResultAsync(
+                    balancete.AccountPlansId,
+                    "Dados importados com sucesso.",
+                    newAccounts));
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+        public async Task<ResultValue> ImportBalanceteDataDinamic(int balanceteId, BalanceteColumnMap dto)
+        {
+            try
+            {
+                if (dto.File == null || dto.File.Length == 0)
+                    return ErrorResponse("Arquivo inválido.");
+
+                var balancete = await _repository.GetBalanceteById(balanceteId);
+                if (balancete == null)
+                    return ErrorResponse(Message.NotFound);
+
+                // 🔥 1. Ver se já existe configuração salva
+                var savedConfig = await _importConfigRepo.GetByAccountPlanIdAsync(balancete.AccountPlansId);
+
+                BalanceteColumnMap mapToUse = dto;
+
+                if (savedConfig != null)
+                {
+
+
+                    // Monta map a partir do salvo
+                    mapToUse = new BalanceteColumnMap
+                    {
+                        StartRow = savedConfig.StartRow,
+                        CostCenter = savedConfig.CostCenterCol,
+                        Name = savedConfig.NameCol,
+                        InitialValue = savedConfig.InitialValueCol,
+                        Debit = savedConfig.DebitCol,
+                        Credit = savedConfig.CreditCol,
+                        FinalValue = savedConfig.FinalValueCol,
+                        File = dto.File
+                    };
+                }
+                else
+                {
+                    // 🔥 1ª vez → salvar configuração
+                    if (savedConfig == null)
+                    {
+                        await _importConfigRepo.AddAsync(new BalanceteImportConfig
+                        {
+                            AccountPlanId = balancete.AccountPlansId,
+
+                            StartRow = dto.StartRow,
+                            CostCenterCol = dto.CostCenter,
+                            NameCol = dto.Name,
+                            InitialValueCol = dto.InitialValue,
+                            DebitCol = dto.Debit,
+                            CreditCol = dto.Credit,
+                            FinalValueCol = dto.FinalValue,
+                            CreatedAt = DateTime.Now
+                        });
+                    }
+                }
+
+                // 🔥 2. Processa igual antes
+                var extension = Path.GetExtension(dto.File.FileName).ToLower();
+                var list = new List<BalanceteDataModel>();
+
+                using var stream = new MemoryStream();
+                await dto.File.CopyToAsync(stream);
+
+                if (extension == ".csv")
+                    list = ReadFromCsvDinamic(stream, balanceteId, mapToUse);
+                else if (extension == ".xlsx")
+                    list = ReadFromXlsxDinamic(stream, balanceteId, mapToUse);
+                else
+                    return ErrorResponse("Formato inválido.");
+
+                list = NormalizeBalanceteDataList(list)
+                    .GroupBy(x => x.CostCenter)
+                    .Select(g => g.First())
+                    .ToList();
+
+                var validationError = ValidateBalanceteDataImport(list);
+                if (validationError != null)
+                    return ErrorResponse(validationError);
+
+                var newAccounts = await _accountPlanAccountRepository
+                    .UpsertFromBalanceteDataAsync(balancete.AccountPlansId, list);
+
+                await _balanceteDataRepository.AddRangeAsync(list);
+
+                return SuccessResponse(await BuildImportResultAsync(
+                    balancete.AccountPlansId,
+                    "Dados importados com sucesso.",
+                    newAccounts));
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+        private async Task<BalanceteColumnMap> ResolveImportConfig(
+    BalanceteModel balancete,
+    BalanceteColumnMap dto)
+        {
+            var savedConfig = await _importConfigRepo
+                .GetByAccountPlanIdAsync(balancete.AccountPlansId);
+
+            // 🔥 Se já existe configuração salva → usa ela
+            if (savedConfig != null)
+            {
+                return new BalanceteColumnMap
+                {
+                    StartRow = savedConfig.StartRow,
+                    CostCenter = savedConfig.CostCenterCol,
+                    Name = savedConfig.NameCol,
+                    InitialValue = savedConfig.InitialValueCol,
+                    Debit = savedConfig.DebitCol,
+                    Credit = savedConfig.CreditCol,
+                    FinalValue = savedConfig.FinalValueCol
+                };
+            }
+
+            // 🔥 Primeira vez → salva configuração
+            await _importConfigRepo.AddAsync(new BalanceteImportConfig
+            {
+                AccountPlanId = balancete.AccountPlansId,
+                StartRow = dto.StartRow,
+                CostCenterCol = dto.CostCenter,
+                NameCol = dto.Name,
+                InitialValueCol = dto.InitialValue,
+                DebitCol = dto.Debit,
+                CreditCol = dto.Credit,
+                FinalValueCol = dto.FinalValue,
+                CreatedAt = DateTime.Now
+            });
+
+            return new BalanceteColumnMap
+            {
+                StartRow = dto.StartRow,
+                CostCenter = dto.CostCenter,
+                Name = dto.Name,
+                InitialValue = dto.InitialValue,
+                Debit = dto.Debit,
+                Credit = dto.Credit,
+                FinalValue = dto.FinalValue
+            };
+        }
+        public class ImportMultiploBalanceteRequest
+        {
+            public List<BalanceteArquivoDto> Arquivos { get; set; }
+        }
+
+        public class BalanceteArquivoDto
+        {
+            public int BalanceteId { get; set; }
+            public IFormFile File { get; set; }
+
+            public int StartRow { get; set; }
+            public int CostCenter { get; set; }
+            public int Name { get; set; }
+            public int InitialValue { get; set; }
+            public int Debit { get; set; }
+            public int Credit { get; set; }
+            public int FinalValue { get; set; }
+        }
+        public async Task<ResultValue> ImportarMultiplosBalancetes(
+    ImportMultiploBalanceteRequest request)
+        {
+            foreach (var item in request.Arquivos)
+            {
+                var map = new BalanceteColumnMap
+                {
+                    StartRow = item.StartRow,
+                    CostCenter = item.CostCenter,
+                    Name = item.Name,
+                    InitialValue = item.InitialValue,
+                    Debit = item.Debit,
+                    Credit = item.Credit,
+                    FinalValue = item.FinalValue,
+                    File = item.File
+                };
+                   
+                await ImportBalanceteDataDinamicBulk(item.BalanceteId, map); 
+            }
+
+            return SuccessResponse("Todos os balancetes importados.");
+        }
+        public async Task<ResultValue> ImportBalanceteDataDinamicBulk(
+    int balanceteId,
+    BalanceteColumnMap dto)
+        {
+            try
+            {
+                if (dto.File == null || dto.File.Length == 0)
+                    return ErrorResponse("Arquivo inválido.");
+
+                var balancete = await _repository.GetBalanceteById(balanceteId);
+                if (balancete == null)
+                    return ErrorResponse(Message.NotFound);
+
+                var mapToUse = await ResolveImportConfig(balancete, dto);
+
+                using var stream = new MemoryStream();
+                await dto.File.CopyToAsync(stream);
+
+                var extension = Path.GetExtension(dto.File.FileName).ToLower();
+
+                List<BalanceteDataModel> list;
+
+                if (extension == ".csv")
+                    list = ReadFromCsvDinamic(stream, balanceteId, mapToUse);
+                else if (extension == ".xlsx")
+                    list = ReadFromXlsxDinamic(stream, balanceteId, mapToUse);
+                else
+                    return ErrorResponse("Formato inválido.");
+
+                list = NormalizeBalanceteDataList(list)
+                    .GroupBy(x => x.CostCenter)
+                    .Select(g => g.First())
+                    .ToList();
+
+                var validationError = ValidateBalanceteDataImport(list);
+                if (validationError != null)
+                    return ErrorResponse(validationError);
+
+                var newAccounts = await _accountPlanAccountRepository
+                    .UpsertFromBalanceteDataAsync(balancete.AccountPlansId, list);
+
+                // 🔥 AQUI É A DIFERENÇA
+                await _balanceteDataRepository.BulkInsertAsync(list);
+
+                return SuccessResponse(await BuildImportResultAsync(
+                    balancete.AccountPlansId,
+                    "Importação concluída com sucesso.",
+                    newAccounts));
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+        public class BalanceteColumnMapList
+        {
+            public int StartRow { get; set; }
+            public int CostCenter { get; set; }
+            public int Name { get; set; }
+            public int InitialValue { get; set; }
+            public int Debit { get; set; }
+            public int Credit { get; set; }
+            public int FinalValue { get; set; }
+
+            public List<IFormFile> Files { get; set; } = new();
+        }
+
+    //    public async Task<ResultValue> ImportBalanceteDataDinamic(
+    //List<int> balanceteIds,
+    //BalanceteColumnMapList dto)
+    //    {
+    //        try
+    //        {
+    //            if (dto.Files == null || !dto.Files.Any())
+    //                return ErrorResponse("Arquivos inválidos.");
+
+    //            if (balanceteIds == null || !balanceteIds.Any())
+    //                return ErrorResponse("Nenhum balancete informado.");
+
+    //            var allData = new List<BalanceteDataModel>();
+
+    //            foreach (var balanceteId in balanceteIds)
+    //            {
+    //                var balancete = await _repository.GetBalanceteById(balanceteId);
+    //                if (balancete == null)
+    //                    continue;
+
+    //                // 🔥 Configuração
+    //                var savedConfig =
+    //                    await _importConfigRepo.GetByAccountPlanIdAsync(balancete.AccountPlansId);
+
+    //                var mapToUse = savedConfig != null
+    //                    ? new BalanceteDataModel
+    //                    {
+    //                        StartRow = savedConfig.StartRow,
+    //                        CostCenter = savedConfig.CostCenterCol,
+    //                        Name = savedConfig.NameCol,
+    //                        InitialValue = savedConfig.InitialValueCol,
+    //                        Debit = savedConfig.DebitCol,
+    //                        Credit = savedConfig.CreditCol,
+    //                        FinalValue = savedConfig.FinalValueCol
+    //                    }
+    //                    : dto;
+
+    //                if (savedConfig == null)
+    //                {
+    //                    await _importConfigRepo.AddAsync(new BalanceteImportConfig
+    //                    {
+    //                        AccountPlanId = balancete.AccountPlansId,
+    //                        StartRow = dto.StartRow,
+    //                        CostCenterCol = dto.CostCenter,
+    //                        NameCol = dto.Name,
+    //                        InitialValueCol = dto.InitialValue,
+    //                        DebitCol = dto.Debit,
+    //                        CreditCol = dto.Credit,
+    //                        FinalValueCol = dto.FinalValue,
+    //                        CreatedAt = DateTime.Now
+    //                    });
+    //                }
+
+    //                foreach (var file in dto.Files)
+    //                {
+    //                    using var stream = new MemoryStream();
+    //                    await file.CopyToAsync(stream);
+
+    //                    var extension = Path.GetExtension(file.FileName).ToLower();
+    //                    List<BalanceteDataModel> list;
+
+    //                    if (extension == ".csv")
+    //                        list = ReadFromCsvDinamic(stream, balanceteId, mapToUse);
+    //                    else if (extension == ".xlsx")
+    //                        list = ReadFromXlsxDinamic(stream, balanceteId, mapToUse);
+    //                    else
+    //                        continue;
+
+    //                    list = list
+    //                        .GroupBy(x => x.CostCenter)
+    //                        .Select(g => g.First())
+    //                        .ToList();
+
+    //                    allData.AddRange(list);
+    //                }
+    //            }
+
+    //            if (allData.Any())
+    //                await _balanceteDataRepository.AddRangeAsync(allData);
+
+    //            return SuccessResponse("Dados importados com sucesso.");
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            return ErrorResponse(ex);
+    //        }
+    //    }
+
+
+        public async Task<ResultValue> CreateConfigBalanceteImport(InsertBalanceteImportConfig dto)
+        {
+            try
+            {
+                var user = GetCurrentUserId();
+
+                // Verifica se o plano de contas já existe
+                var exists = await _importConfigRepo.ExistsAccountPlanAsync(dto.AccountPlanId);
+
+                if (exists)
+                {
+                    return ErrorResponse(Message.ExistsAccountPlans);
+                }
+
+
+                var model = new BalanceteImportConfig
+                {
+                    AccountPlanId = dto.AccountPlanId,
+                    StartRow = dto.StartRow,
+                    CostCenterCol = dto.CostCenterCol,
+                    NameCol = dto.NameCol,
+                    InitialValueCol = dto.InitialValueCol,
+                    DebitCol = dto.DebitCol,
+                    CreditCol = dto.CreditCol,
+                    FinalValueCol = dto.FinalValueCol,
+                    CreatedAt = DateTime.Now
+                };
+
+                await _importConfigRepo.AddAsync(model);
+
+                return SuccessResponse(Message.Success);
             }
             catch (Exception ex)
             {
@@ -363,16 +817,114 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
         }
 
 
-        public async Task<ResultValue> GetByBalanceteIdDate(int accountplanId, int year, int month)
+
+
+
+        public async Task<ResultValue> UpdateConfigBalanceteImport(UpdateBalanceteImportConfig dto)
         {
             try
             {
-                var balancete = await _balanceteDataRepository.GetByBalanceteIdDate(accountplanId, year, month);
+                var user = GetCurrentUserId();
 
-                if (balancete == null || !balancete.Any())
-                    return SuccessResponse(new BalanceteDataDto());
+                // 1. Busca configuração existente
+                var existingConfig = await _importConfigRepo
+                    .GetByAccountPlanIdAsync(dto.AccountPlanId);
 
-                var result = MapToBalanceteDataDto(balancete);
+                if (existingConfig == null)
+                {
+                    return ErrorResponse(Message.NotFound);
+                }
+
+                // 2. Remove configuração atual
+                await _importConfigRepo.DeletePermanently(existingConfig.Id);
+
+                // 3. Cria novo modelo
+                var model = new BalanceteImportConfig
+                {
+                    AccountPlanId = dto.AccountPlanId,
+                    StartRow = dto.StartRow,
+                    CostCenterCol = dto.CostCenterCol,
+                    NameCol = dto.NameCol,
+                    InitialValueCol = dto.InitialValueCol,
+                    DebitCol = dto.DebitCol,
+                    CreditCol = dto.CreditCol,
+                    FinalValueCol = dto.FinalValueCol,
+                    CreatedAt = DateTime.Now
+                };
+
+                await _importConfigRepo.AddAsync(model);
+
+                return SuccessResponse(Message.Success);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+        public async Task<ResultValue> GetConfigBalanceteImportByAccountPlanId(int accountPlanId)
+        {
+            try
+            {
+                var user = GetCurrentUserId();
+
+                var config = await _importConfigRepo
+                    .GetByAccountPlanIdAsync(accountPlanId);
+
+                if (config == null)
+                {
+                    return ErrorResponse(Message.NotFound);
+                }
+
+                var result = new
+                {
+                    config.Id,
+                    config.AccountPlanId,
+                    config.StartRow,
+                    config.CostCenterCol,
+                    config.NameCol,
+                    config.InitialValueCol,
+                    config.DebitCol,
+                    config.CreditCol,
+                    config.FinalValueCol
+                };
+
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+        public async Task<ResultValue> ExistsConfigBalanceteImport(int accountPlanId)
+        {
+            try
+            {
+                var user = GetCurrentUserId();
+
+                var exists = await _importConfigRepo
+                    .ExistsAccountPlanAsync(accountPlanId);
+
+                return SuccessResponse(exists);
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+        public async Task<ResultValue> GetByBalanceteIdDate(int accountplanId)
+        {
+            try
+            {
+                await _accountPlanAccountRepository.EnsureFromBalanceteDataAsync(accountplanId);
+
+                var accounts = await _accountPlanAccountRepository.GetByAccountPlanIdAsync(accountplanId);
+
+                if (accounts == null || !accounts.Any())
+                    return SuccessResponse(new BalanceteAccountPlanDataDto());
+
+                var result = MapToBalanceteAccountPlanDataDto(accounts);
 
                 return SuccessResponse(result);
             }
@@ -392,7 +944,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 if (balancete == null || !balancete.Any())
                     return ErrorResponse(Message.NotFound);
 
-                var result = MapToBalanceteDataDto(balancete); 
+                var result = MapToBalanceteDataDto(balancete);
 
                 return SuccessResponse(result);
             }
@@ -435,7 +987,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
         {
             try
             {
-               
+
 
                 var data = await _balanceteDataRepository.GetByBalanceteDataByCostCenter(balanceteId, search);
 
@@ -551,19 +1103,21 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                     }
                 }
 
-                var pais = lookup.Values
-                    .Where(x => x.CostCenter.StartsWith(tipoInicial.ToString() )) //+ ".")) // filtro dinâmico
-                    .Where(x => data.Any(d => d.CostCenter.StartsWith(x.CostCenter + "."))) // tem filhos
+                var tipo = tipoInicial.ToString();
+
+                var filtrados = lookup.Values
+                    .Where(x => x.CostCenter.StartsWith(tipo)) // Começa com tipo + ponto (ex: 1.1, 1.2)
                     .OrderBy(x => x.CostCenter)
                     .ToList();
 
-                return SuccessResponse(pais);
+                return SuccessResponse(filtrados);
             }
             catch (Exception ex)
             {
                 return ErrorResponse(ex);
             }
         }
+
 
 
 
@@ -598,19 +1152,39 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             var firstRowUsed = worksheet.FirstRowUsed();
             var row = firstRowUsed.RowUsed().RowBelow();
 
-            while (!row.IsEmpty())
-            {
-                var costCenter = row.Cell(0).GetFormattedString().Trim();
-                var name = row.Cell(1).GetFormattedString().Trim();
+            int emptyRowCount = 0; // contador de linhas vazias consecutivas
 
-                // Ignorar linhas vazias ou de cabeçalho no meio
+            while (true)
+            {
+                // Se chegou ao fim da planilha, para
+                if (row == null)
+                    break;
+
+                if (row.IsEmpty())
+                {
+                    emptyRowCount++;
+
+                    // se encontrou 3 linhas vazias seguidas, considera fim do arquivo
+                    if (emptyRowCount >= 3)
+                        break;
+
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                emptyRowCount = 0; // reset se linha válida
+
+                var costCenter = row.Cell(1).GetFormattedString().Trim(); // Coluna A
+                var name = row.Cell(2).GetFormattedString().Trim();       // Coluna B
+
+                // Ignorar cabeçalhos no meio
                 if (string.IsNullOrWhiteSpace(costCenter) && string.IsNullOrWhiteSpace(name))
                 {
                     row = row.RowBelow();
                     continue;
                 }
 
-                if (name != null && name.ToUpper().Contains("DESCRIÇÃO"))
+                if (!string.IsNullOrWhiteSpace(name) && name.ToUpper().Contains("DESCRIÇÃO"))
                 {
                     row = row.RowBelow();
                     continue;
@@ -621,10 +1195,10 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                     BalanceteId = balanceteId,
                     CostCenter = costCenter,
                     Name = name,
-                    InitialValue = ParseDecimal(row.Cell(2).GetFormattedString()),
-                    Debit = ParseDecimal(row.Cell(3).GetFormattedString()),
-                    Credit = ParseDecimal(row.Cell(4).GetFormattedString()),
-                    FinalValue = ParseDecimal(row.Cell(5).GetFormattedString()),
+                    InitialValue = ParseDecimal(row.Cell(3).GetFormattedString()), // Coluna C
+                    Debit = ParseDecimal(row.Cell(4).GetFormattedString()),        // Coluna D
+                    Credit = ParseDecimal(row.Cell(5).GetFormattedString()),       // Coluna E
+                    FinalValue = ParseDecimal(row.Cell(6).GetFormattedString()),   // Coluna F
                     BudgetedAmount = false
                 };
 
@@ -634,6 +1208,8 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
             return list;
         }
+
+
         private List<BalanceteDataModel> ReadFromCsv(Stream stream, int balanceteId)
         {
             var list = new List<BalanceteDataModel>();
@@ -646,22 +1222,34 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 Delimiter = ";",
                 BadDataFound = null,
                 MissingFieldFound = null,
-                IgnoreBlankLines = true
+                IgnoreBlankLines = false // ⚠️ vamos controlar manualmente
             });
 
             csv.Read();
             csv.ReadHeader();
+
+            int emptyRowCount = 0;
 
             while (csv.Read())
             {
                 var costCenter = csv.GetField(0)?.Trim();
                 var name = csv.GetField(1)?.Trim();
 
-                // Ignorar linhas vazias ou cabeçalho no meio
+                // Se linha for totalmente vazia
                 if (string.IsNullOrWhiteSpace(costCenter) && string.IsNullOrWhiteSpace(name))
-                    continue;
+                {
+                    emptyRowCount++;
 
-                if (name != null && name.ToUpper().Contains("DESCRIÇÃO"))
+                    if (emptyRowCount >= 3) // 3 linhas vazias seguidas → fim
+                        break;
+
+                    continue;
+                }
+
+                emptyRowCount = 0; // reseta contador se linha válida
+
+                // Ignorar cabeçalho no meio do arquivo
+                if (!string.IsNullOrWhiteSpace(name) && name.ToUpper().Contains("DESCRIÇÃO"))
                     continue;
 
                 var model = new BalanceteDataModel
@@ -681,6 +1269,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
             return list;
         }
+
 
         private static BalanceteDataDto MapToBalanceteDataDto(List<BalanceteDataModel> data)
 
@@ -708,13 +1297,528 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 }).ToList()
             };
         }
-        
+
+        private static BalanceteAccountPlanDataDto MapToBalanceteAccountPlanDataDto(List<BalanceteDataModel> data)
+        {
+            var first = data.First();
+
+            return new BalanceteAccountPlanDataDto
+            {
+                Balancete = new BalanceteDto
+                {
+                    Id = first.Balancete.Id,
+                    DateMonth = first.Balancete.DateMonth,
+                    DateYear = first.Balancete.DateYear,
+                },
+                DataDto = data.Select(x => new AccountPlanDataDto
+                {
+                    Id = x.Id,
+                    CostCenter = x.CostCenter,
+                    Name = x.Name,
+                    BudgetedAmount = x.BudgetedAmount
+                }).ToList()
+            };
+        }
+
+        private static BalanceteAccountPlanDataDto MapToBalanceteAccountPlanDataDto(List<AccountPlanAccount> accounts)
+        {
+            return new BalanceteAccountPlanDataDto
+            {
+                DataDto = accounts.Select(x => new AccountPlanDataDto
+                {
+                    Id = x.Id,
+                    CostCenter = x.CostCenter,
+                    Name = x.Name,
+                    BudgetedAmount = false,
+                    AccountPlanClassificationId = x.AccountPlanClassificationId,
+                    ClassificationStatus = x.Status.ToString(),
+                    Origin = x.Origin.ToString()
+                }).ToList(),
+                HasPendingClassifications = accounts.Any(x => x.Status == EAccountPlanAccountStatus.PendingClassification),
+                PendingClassificationsCount = accounts.Count(x => x.Status == EAccountPlanAccountStatus.PendingClassification)
+            };
+        }
+
+        private async Task<BalanceteImportResultDto> BuildImportResultAsync(
+            int accountPlanId,
+            string message,
+            List<AccountPlanAccount> newAccounts)
+        {
+            var pendingCount = await _accountPlanAccountRepository.CountPendingByAccountPlanIdAsync(accountPlanId);
+
+            return new BalanceteImportResultDto
+            {
+                Message = message,
+                NewAccountsCount = newAccounts.Count,
+                NewAccounts = newAccounts
+                    .OrderBy(x => x.CostCenter)
+                    .Take(50)
+                    .Select(x => new AccountPlanDataDto
+                    {
+                        Id = x.Id,
+                        CostCenter = x.CostCenter,
+                        Name = x.Name,
+                        BudgetedAmount = false,
+                        AccountPlanClassificationId = x.AccountPlanClassificationId,
+                        ClassificationStatus = x.Status.ToString(),
+                        Origin = x.Origin.ToString()
+                    })
+                    .ToList(),
+                HasPendingClassifications = pendingCount > 0,
+                PendingClassificationsCount = pendingCount
+            };
+        }
+
+        private static List<BalanceteDataModel> NormalizeBalanceteDataList(List<BalanceteDataModel> list)
+        {
+            foreach (var item in list)
+            {
+                item.CostCenter = item.CostCenter?.Trim();
+                item.Name = item.Name?.Trim();
+            }
+
+            return list
+                .Where(x => !string.IsNullOrWhiteSpace(x.CostCenter))
+                .ToList();
+        }
+
 
         #endregion
 
         #endregion
 
         #endregion
+
+private List<BalanceteDataModel> ReadFromXlsxDinamic(
+    Stream stream,
+    int balanceteId,
+    BalanceteColumnMap map)
+    {
+        var list = new List<BalanceteDataModel>();
+        stream.Position = 0;
+
+        using var workbook = new XLWorkbook(stream);
+        var worksheet = workbook.Worksheet(1);
+
+        int rowNumber = map.StartRow;
+        var row = worksheet.Row(rowNumber);
+
+        int emptyRowCount = 0;
+
+        while (true)
+        {
+            // encerra após 3 linhas vazias seguidas
+            if (row.IsEmpty())
+            {
+                emptyRowCount++;
+                if (emptyRowCount >= 3)
+                    break;
+
+                row = row.RowBelow();
+                continue;
+            }
+
+            emptyRowCount = 0;
+
+            var costCenter = row.Cell(map.CostCenter).GetString().Trim();
+            var name = row.Cell(map.Name).GetString().Trim();
+
+            if (string.IsNullOrWhiteSpace(costCenter) &&
+                string.IsNullOrWhiteSpace(name))
+            {
+                row = row.RowBelow();
+                continue;
+            }
+
+            var model = new BalanceteDataModel
+            {
+                BalanceteId = balanceteId,
+                CostCenter = costCenter,
+                Name = name,
+                InitialValue = GetDecimalFromCellRaw(row.Cell(map.InitialValue)),
+                Debit = GetDecimalFromCellRaw(row.Cell(map.Debit)),
+                Credit = GetDecimalFromCellRaw(row.Cell(map.Credit)),
+                FinalValue = GetDecimalFromCellRaw(row.Cell(map.FinalValue)),
+                BudgetedAmount = false
+            };
+
+            list.Add(model);
+            row = row.RowBelow();
+        }
+
+        return list;
+    }
+        private decimal GetDecimalFromCellRaw(IXLCell cell)
+        {
+            if (cell == null || cell.IsEmpty())
+                return 0m;
+
+            try
+            {
+                // 1️⃣ Se o Excel entende como número → pega direto
+                if (cell.DataType == XLDataType.Number)
+                    return cell.GetValue<decimal>();
+
+                // 2️⃣ Se vier como texto → força leitura do texto bruto
+                var raw = cell.GetString();
+
+                if (string.IsNullOrWhiteSpace(raw))
+                    return 0m;
+
+                // remove tudo que não é número, vírgula, ponto ou sinal
+                raw = raw.Trim();
+                raw = raw.Replace(".", "");
+                raw = raw.Replace(",", ".");
+
+                if (decimal.TryParse(raw, CultureInfo.InvariantCulture, out var value))
+                    return value;
+
+                return 0m;
+            }
+            catch
+            {
+                return 0m;
+            }
+        }
+
+        private string? ValidateBalanceteDataImport(List<BalanceteDataModel> list)
+        {
+            var invalidCostCenter = list.FirstOrDefault(x => (x.CostCenter?.Length ?? 0) > MaxCostCenterLength);
+            if (invalidCostCenter != null)
+            {
+                return $"Centro de custo excede {MaxCostCenterLength} caracteres. CostCenter: '{invalidCostCenter.CostCenter}'.";
+            }
+
+            var invalidName = list.FirstOrDefault(x => (x.Name?.Length ?? 0) > MaxNameLength);
+            if (invalidName != null)
+            {
+                return $"Descrição excede {MaxNameLength} caracteres. CostCenter: '{invalidName.CostCenter}', tamanho: {invalidName.Name.Length}.";
+            }
+
+            return null;
+        }
+
+
+
+
+        private List<BalanceteDataModel> ReadFromCsvDinamic(Stream stream, int balanceteId, BalanceteColumnMap map)
+        {
+            var list = new List<BalanceteDataModel>();
+            stream.Position = 0;
+
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+            using var csv = new CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                HasHeaderRecord = false,
+                Delimiter = ";"
+            });
+
+            int currentRow = 0;
+            int emptyRowCount = 0; // contador de linhas vazias seguidas
+
+            while (csv.Read())
+            {
+                currentRow++;
+
+                // só começa a partir da linha selecionada
+                if (currentRow < map.StartRow)
+                    continue;
+
+                var costCenter = csv.GetField(map.CostCenter - 1)?.Trim();
+                var name = csv.GetField(map.Name - 1)?.Trim();
+
+                bool emptyLine = string.IsNullOrWhiteSpace(costCenter) && string.IsNullOrWhiteSpace(name);
+
+                // 🔹 Linha vazia
+                if (emptyLine)
+                {
+                    emptyRowCount++;
+
+                    // 🔥 Para após 3 vazias seguidas
+                    if (emptyRowCount >= 3)
+                        break;
+
+                    continue;
+                }
+
+                // 🔹 Achou linha com conteúdo → reseta
+                emptyRowCount = 0;
+
+                var model = new BalanceteDataModel
+                {
+                    BalanceteId = balanceteId,
+                    CostCenter = costCenter,
+                    Name = name,
+                    InitialValue = ParseDecimalWithDC(csv.GetField(map.InitialValue - 1)),
+                    Debit = ParseDecimalWithDC(csv.GetField(map.Debit - 1)),
+                    Credit = ParseDecimalWithDC(csv.GetField(map.Credit - 1)),
+                    FinalValue = ParseDecimalWithDC(csv.GetField(map.FinalValue - 1)),
+                    BudgetedAmount = false
+                };
+
+                list.Add(model);
+            }
+
+            return list;
+        }
+
+
+
+        private decimal ParseDecimalWithDC(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return 0m;
+
+            input = input.Trim();
+
+            char last = input[^1];
+            bool hasDC = last is 'D' or 'd' or 'C' or 'c';
+
+            string numeric = hasDC ? input[..^1] : input;
+
+            // 🔥 Remove QUALQUER coisa que não seja número, vírgula ou sinal
+            numeric = Regex.Replace(numeric, @"[^\d,\-]", "");
+
+            // Converte padrão BR → Invariant
+            numeric = numeric.Replace(",", ".");
+
+            if (!decimal.TryParse(
+                numeric,
+                NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign,
+                CultureInfo.InvariantCulture,
+                out decimal value))
+            {
+                return 0m;
+            }
+
+            // Crédito vira negativo
+            if (hasDC && (last == 'C' || last == 'c'))
+                value *= -1;
+
+            return value;
+        }
+
+
+
+        public class ExternalBranchDto
+        {
+            public int ExternalCode { get; set; }
+            public string Name { get; set; }
+        }
+
+
+        public IEnumerable<ExternalBranchDto> ExtractBranchesFromBalancete(
+    IEnumerable<string> linhas)
+        {
+            var branches = new Dictionary<int, ExternalBranchDto>();
+
+            foreach (var linha in linhas)
+            {
+                if (!linha.Contains("FILIAL:", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                // Exemplo: FILIAL: 9 - FIAT - UNAI
+                var match = Regex.Match(
+                    linha,
+                    @"FILIAL:\s*(\d+)\s*-\s*.*?\s*-\s*(.+)$",
+                    RegexOptions.IgnoreCase);
+
+                if (!match.Success)
+                    continue;
+
+                var externalCode = int.Parse(match.Groups[1].Value);
+                var name = match.Groups[2].Value.Trim();
+
+                if (!branches.ContainsKey(externalCode))
+                {
+                    branches.Add(externalCode, new ExternalBranchDto
+                    {
+                        ExternalCode = externalCode,
+                        Name = name
+                    });
+                }
+            }
+
+            return branches.Values;
+        }
+
+
+
+        public async Task<IEnumerable<ExternalBranchDto>> ExtractBranchesAsync(
+    Stream stream,
+    string fileName,
+    BalanceteColumnMap map)
+        {
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
+
+            if (string.IsNullOrWhiteSpace(fileName))
+                throw new ArgumentNullException(nameof(fileName));
+
+            var extension = Path.GetExtension(fileName).ToLowerInvariant();
+
+            return extension switch
+            {
+                ".csv" => await ExtractBranchesFromCsvAsync(stream, map),
+                ".xlsx" => await Task.Run(() => ExtractBranchesFromXlsxDinamic(stream, map)),
+
+                _ => throw new NotSupportedException(
+                    $"Formato de arquivo não suportado: {extension}")
+            };
+        }
+
+        public async Task<IEnumerable<ExternalBranchDto>> ExtractBranchesFromCsvAsync(
+    Stream stream,
+    BalanceteColumnMap map)
+        {
+            return await Task.Run(() =>
+            {
+                var branches = new Dictionary<int, ExternalBranchDto>();
+
+                stream.Position = 0;
+
+                using var reader = new StreamReader(stream, Encoding.UTF8);
+                using var csv = new CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    HasHeaderRecord = false,
+                    Delimiter = ";"
+                });
+
+                int currentRow = 0;
+                int emptyRowCount = 0;
+
+                while (csv.Read())
+                {
+                    currentRow++;
+
+                    if (currentRow < map.StartRow)
+                        continue;
+
+                    var descricao = csv.GetField(map.Name - 1)?.Trim();
+
+                    if (string.IsNullOrWhiteSpace(descricao))
+                    {
+                        emptyRowCount++;
+
+                        if (emptyRowCount >= 3)
+                            break;
+
+                        continue;
+                    }
+
+                    emptyRowCount = 0;
+
+                    if (!descricao.Contains("FILIAL", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var match = Regex.Match(
+                        descricao,
+                        @"FILIAL\s*[:\-]\s*(\d+)\s*-\s*(.+)$",
+                        RegexOptions.IgnoreCase);
+
+                    if (!match.Success)
+                        continue;
+
+                    var externalCode = int.Parse(match.Groups[1].Value);
+                    var branchName = match.Groups[2].Value.Trim();
+
+                    if (!branches.ContainsKey(externalCode))
+                    {
+                        branches.Add(externalCode, new ExternalBranchDto
+                        {
+                            ExternalCode = externalCode,
+                            Name = branchName
+                        });
+                    }
+                }
+
+                return branches.Values;
+            });
+        }
+
+
+
+        private IEnumerable<ExternalBranchDto> ExtractBranchesFromXlsxDinamic(
+            Stream stream,
+            BalanceteColumnMap map)
+        {
+            var branches = new Dictionary<int, ExternalBranchDto>();
+
+            stream.Position = 0;
+
+            using var workbook = new XLWorkbook(stream);
+            var worksheet = workbook.Worksheet(1);
+
+            int emptyRowCount = 0;
+
+            var row = worksheet.Row(map.StartRow);
+
+            while (true)
+            {
+                // 🔹 Linha completamente vazia
+                if (row.IsEmpty())
+                {
+                    emptyRowCount++;
+
+                    if (emptyRowCount >= 3)
+                        break;
+
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                // achou conteúdo → reseta
+                emptyRowCount = 0;
+
+                // 🔹 Lê apenas a coluna da descrição
+                var descricao = row.Cell(map.Name)
+                                   .GetFormattedString()
+                                   ?.Trim();
+
+                if (string.IsNullOrWhiteSpace(descricao))
+                {
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                // 🔍 Procura FILIAL
+                if (!descricao.Contains("FILIAL", StringComparison.OrdinalIgnoreCase))
+                {
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                var match = Regex.Match(
+                    descricao,
+                    @"FILIAL\s*[:\-]\s*(\d+)\s*-\s*(.+)$",
+                    RegexOptions.IgnoreCase);
+
+                if (!match.Success)
+                {
+                    row = row.RowBelow();
+                    continue;
+                }
+
+                var externalCode = int.Parse(match.Groups[1].Value);
+                var branchName = match.Groups[2].Value.Trim();
+
+                if (!branches.ContainsKey(externalCode))
+                {
+                    branches.Add(externalCode, new ExternalBranchDto
+                    {
+                        ExternalCode = externalCode,
+                        Name = branchName
+                    });
+                }
+
+                row = row.RowBelow();
+            }
+
+            return branches.Values;
+        }
+
+
+
 
 
 

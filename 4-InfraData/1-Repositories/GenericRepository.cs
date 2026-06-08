@@ -51,7 +51,18 @@ namespace _4_InfraData._1_Repositories
                 await _context.SaveChangesAsync();
             }
         }
+        public async Task DeletePermanentlyList(List<int> ids)
+        {
+            var entities = await _context.Set<T>()
+                .Where(a => ids.Contains(EF.Property<int>(a, "Id")))
+                .ToListAsync();
 
+            if (entities.Any())
+            {
+                _context.Set<T>().RemoveRange(entities);
+                await _context.SaveChangesAsync();
+            }
+        }
         public async Task Delete(int id)
         {
             var entity = await _context.Set<T>().FindAsync(id);

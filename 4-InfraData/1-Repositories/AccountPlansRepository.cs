@@ -12,7 +12,59 @@ namespace _4_InfraData._1_Repositories
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
+        public async Task<AccountPlansModel> GetGroupAccountPlan(int groupId)
+        {
+            return await _context.AccountPlans
+                .FirstOrDefaultAsync(ap =>
+                    ap.GroupId == groupId &&
+                    ap.CompanyId == null);
+        }
+        //    public async Task<List<AccountPlansModel>> GetCompanyAccountPlans(
+        //int groupId,
+        //List<int> companyIds)
+        //    {
+        //        return await _context.AccountPlans
+        //            .Where(ap =>
+        //                ap.GroupId == groupId &&
+        //                ap.CompanyId != null &&
+        //                companyIds.Contains(ap.CompanyId.Value))
+        //            .ToListAsync();
+        //    }
+        public async Task<List<AccountPlansModel>> GetSubCompaniesAccountPlans(List<int> subCompanyIds)
+        {
+            return await _context.AccountPlans
+                .Where(ap =>
+                    ap.SubCompanyId != null &&
+                    subCompanyIds.Contains(ap.SubCompanyId.Value) &&
+                    !ap.SubCompany.Deleted)
+                .ToListAsync();
+        }
+        public async Task<AccountPlansModel> GetCompanyAccountPlanByCompanyId(int companyId)
+        {
+            return await _context.AccountPlans
+                .FirstOrDefaultAsync(a => a.CompanyId == companyId);
+        }
+        public async Task<List<AccountPlansModel>> GetCompanyAccountPlans(
+     int groupId,
+     List<int> companyIds)
+        {
+            var query = _context.AccountPlans
+                .Where(ap =>
+                    ap.GroupId == groupId &&
+                    ap.CompanyId != null &&
+                    !ap.Company.Deleted &&
+                    (
+                        ap.SubCompanyId == null ||
+                        !ap.SubCompany.Deleted
+                    ));
 
+            if (companyIds != null && companyIds.Any())
+            {
+                query = query.Where(ap => companyIds.Contains(ap.CompanyId.Value));
+            }
+
+            return await query.ToListAsync();
+        }
         public async Task<bool> ExistsAccountPlanAsync(int groupId, int? companyId, int? subCompanyId)
         {
             return await _context.AccountPlans
@@ -25,13 +77,42 @@ namespace _4_InfraData._1_Repositories
                     )
                 );
         }
+        public async Task<AccountPlansModel> GetSubCompanyAccountPlan(int subCompanyId)
+        {
+            return await _context.AccountPlans
+                .FirstOrDefaultAsync(a => a.SubCompanyId == subCompanyId);
+        }
+        public async Task<AccountPlansModel> GetByCompanyOrGroupId(int companyId, int groupId)
+        {
+            return await _context.AccountPlans
+                .FirstOrDefaultAsync(x => x.CompanyId == companyId ||
+                                         (x.CompanyId == null && x.GroupId == groupId));
+        }
+        public async Task<AccountPlansModel> GetBySubCompanyOrCompanyOrGroupId(int subCompanyId, int companyId, int groupId)
+        {
+            return await _context.AccountPlans
+                .FirstOrDefaultAsync(x =>
+                    x.SubCompanyId == subCompanyId ||
+                    x.CompanyId == companyId ||
+                    x.GroupId == groupId);
+        }
 
+        public async Task<AccountPlansModel> GetByGroupId(int groupId)
+        {
+            return await _context.AccountPlans
+                .FirstOrDefaultAsync(x => x.GroupId == groupId && x.CompanyId == null);
+        }
         public async Task<bool> ExistsAccountPlanByIdAsync(int id)
         {
             return await _context.AccountPlans
                 .AnyAsync(x =>
                     x.Id == id
                 );
+        }
+        public async Task<AccountPlansModel> GetByIdSingleAsync(int id)
+        {
+            return await _context.AccountPlans
+                .FirstOrDefaultAsync(x => x.Id == id);
         }
         public async Task<List<AccountPlansModel>> GetByFilters(int groupId, int? companyId, int? subCompanyId)
         {
@@ -63,7 +144,7 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.Id == id)
                 .ToListAsync();
         }
-
+       
         public async Task<AccountPlansModel> GetByaccountPlanId(int id)
         {
             return await _context.AccountPlans
@@ -72,6 +153,82 @@ namespace _4_InfraData._1_Repositories
                 .Include(x => x.SubCompany)
                 .Where(x => x.Id == id)
                 .FirstOrDefaultAsync();
+        }
+
+
+        public class DreFilterRequest
+        {
+            public int GroupId { get; set; }
+
+            public List<int> CompanyIds { get; set; } = new();
+            public List<int> SubCompanyIds { get; set; } = new();
+
+            public int Year { get; set; }
+            public List<int> Months { get; set; } = new(); // opcional
+        }
+
+        public async Task<List<AccountPlansModel>> GetAccountPlansByFilter(DreFilterRequest filter)
+        {
+            var query = _context.AccountPlans.AsQueryable();
+
+            // sempre do grupo
+            query = query.Where(ap => ap.GroupId == filter.GroupId);
+
+            // filtro por company
+            if (filter.CompanyIds.Any())
+            {
+                query = query.Where(ap =>
+                    ap.CompanyId != null &&
+                    filter.CompanyIds.Contains(ap.CompanyId.Value));
+            }
+
+            // filtro por subcompany
+            if (filter.SubCompanyIds.Any())
+            {
+                query = query.Where(ap =>
+                    ap.SubCompanyId != null &&
+                    filter.SubCompanyIds.Contains(ap.SubCompanyId.Value));
+            }
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<AccountPlansModel?> GetExactScope(
+            int groupId,
+            int? companyId,
+            int? subCompanyId)
+        {
+            return await _context.AccountPlans
+                .Where(x =>
+                    x.GroupId == groupId &&
+                    x.CompanyId == companyId &&
+                    x.SubCompanyId == subCompanyId &&
+                    (
+                        x.CompanyId == null ||
+                        !x.Company.Deleted
+                    ) &&
+                    (
+                        x.SubCompanyId == null ||
+                        !x.SubCompany.Deleted
+                    ))
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<List<AccountPlansModel>> GetAllByGroup(int groupId)
+        {
+            return await _context.AccountPlans
+                .Where(x =>
+                    x.GroupId == groupId &&
+                    (
+                        x.CompanyId == null ||
+                        !x.Company.Deleted
+                    ) &&
+                    (
+                        x.SubCompanyId == null ||
+                        !x.SubCompany.Deleted
+                    )
+                )
+                .ToListAsync();
         }
 
     }

@@ -1,0 +1,72 @@
+﻿using _2___Application._1_Services.CashFlow;
+using _2___Application._1_Services.Results;
+using _2___Application._1_Services.Results.OperationalEfficiency;
+using _2___Application._1_Services.TotalizerClassification;
+using _2___Application._1_Services.ValueTree;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace ConsultarMRP.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ValueTreeController : ControllerBase
+    {
+        private readonly ValueTreeService _Service;
+
+        public ValueTreeController(ValueTreeService service)
+        {
+            _Service = service;
+        }
+        [HttpGet]
+        [Route("")]
+        [Authorize()]
+        public async Task<IActionResult> GetAll([FromQuery] int accountPlanId, [FromQuery] int month,[FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GettAll(accountPlanId, month, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        [Route("Orcado")]
+        [Authorize()]
+        public async Task<IActionResult> GettAllOrcado([FromQuery] int accountPlanId, [FromQuery] int month, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.GettAllOrcado(accountPlanId, month, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+
+        }
+        [HttpGet]
+        [Route("variacao")]
+        [Authorize()]
+        public async Task<IActionResult> BuildValueTreeComparativo([FromQuery] int accountPlanId, [FromQuery] int month, [FromQuery] int year)
+        {
+            try
+            {
+
+                var response = await _Service.BuildValueTreeComparativo(accountPlanId, month, year);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+    }
+}

@@ -17,14 +17,13 @@ namespace _4_InfraData._3_Utils.Email
         {
             try
             {
-                var email = _configuration["EmailSettings:Email"];
-                var password = _configuration["EmailSettings:Password"];
+                var settings = GetEmailSettings();
 
-                var smtpClient = CreateSmtpClient(email, password);
+                using var smtpClient = CreateSmtpClient(settings);
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress(email),
+                    From = new MailAddress(settings.Email),
                     Subject = "🔐 Redefinição de Senha - MRP",
                     IsBodyHtml = true,
                     Body = BuildPasswordResetEmailHtml(newPassword)
@@ -44,14 +43,13 @@ namespace _4_InfraData._3_Utils.Email
         {
             try
             {
-                var email = _configuration["EmailSettings:Email"];
-                var password = _configuration["EmailSettings:Password"];
+                var settings = GetEmailSettings();
 
-                var smtpClient = CreateSmtpClient(email, password);
+                using var smtpClient = CreateSmtpClient(settings);
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress(email),
+                    From = new MailAddress(settings.Email),
                     Subject = "🎉 Bem-vindo ao MRP!",
                     IsBodyHtml = true,
                     Body = BuildWelcomeEmailHtml(company, name)
@@ -71,14 +69,13 @@ namespace _4_InfraData._3_Utils.Email
         {
             try
             {
-                var email = _configuration["EmailSettings:Email"];
-                var password = _configuration["EmailSettings:Password"];
+                var settings = GetEmailSettings();
 
-                var smtpClient = CreateSmtpClient(email, password);
+                using var smtpClient = CreateSmtpClient(settings);
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress(email),
+                    From = new MailAddress(settings.Email),
                     Subject = "🎉 Bem-vindo ao MRP!",
                     IsBodyHtml = true,
                     Body = BuildWelcomeSubCompanyEmailHtml(company, name, subcompany)
@@ -94,15 +91,116 @@ namespace _4_InfraData._3_Utils.Email
             }
         }
 
-        private SmtpClient CreateSmtpClient(string email, string password)
+
+        public async Task SendUserWelcomeAsync(string emailAddress, string name, string password)
         {
-            return new SmtpClient("smtp.outlook.com")
+            try
             {
-                Port = 587,
-                Credentials = new NetworkCredential(email, password),
-                EnableSsl = true
+                var settings = GetEmailSettings();
+
+                using var smtpClient = CreateSmtpClient(settings);
+
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(settings.Email),
+                    Subject = "👋 Bem-vindo ao MRP!",
+                    IsBodyHtml = true,
+                    Body = BuildUserWelcomeEmailHtml(name, emailAddress, password)
+                };
+
+                mailMessage.To.Add(emailAddress);
+                await smtpClient.SendMailAsync(mailMessage);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao enviar e-mail de boas-vindas ao usuário: {ex.Message}");
+                throw;
+            }
+        }
+        private string BuildUserWelcomeEmailHtml(string name, string email, string password)
+        {
+            var systemUrl = _configuration["EmailSettings:FrontendBaseUrl"];
+
+            if (string.IsNullOrWhiteSpace(systemUrl))
+                throw new InvalidOperationException("EmailSettings:FrontendBaseUrl não foi configurado.");
+
+            return $@"
+            <html>
+            <head>
+                {GetEmailStyles()}
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='card'>
+                        <div class='title'>Bem-vindo ao MRP, {name}!</div>
+                        <div class='subtitle'>Sua conta foi criada com sucesso 🎉</div>
+                        <p>Agora você já pode acessar o sistema e explorar todos os recursos disponíveis.</p>
+
+                        <p>Use as credenciais abaixo para fazer login:</p>
+                        <div class='password-box'>
+                            <div><strong>E-mail:</strong> {email}</div>
+                            <div><strong>Senha:</strong> {password}</div>
+                        </div>
+
+                        <p style='text-align:center; margin-top:25px;'>
+                            <a href='{systemUrl}' 
+                               style='background-color:#007BFF;
+                                      color:white;
+                                      padding:12px 25px;
+                                      border-radius:8px;
+                                      text-decoration:none;
+                                      font-weight:bold;
+                                      font-size:16px;
+                                      display:inline-block;
+                                      box-shadow:0 4px 8px rgba(0, 123, 255, 0.3);'>
+                                👉 Acessar o Sistema
+                            </a>
+                        </p>
+
+                        <p style='text-align:center; margin-top:20px; font-size:14px; color:#555;'>
+                            Recomendamos que altere sua senha após o primeiro acesso por segurança.
+                        </p>
+
+                        <div class='footer'>
+                            {DateTime.Now.Year} MRP © - Todos os direitos reservados.
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>";
+        }
+
+
+
+
+        private EmailSettings GetEmailSettings()
+        {
+            var email = _configuration["EmailSettings:Email"];
+            var password = _configuration["EmailSettings:Password"];
+            var host = _configuration["EmailSettings:Host"] ?? "smtp.outlook.com";
+            var port = int.TryParse(_configuration["EmailSettings:Port"], out var configuredPort) ? configuredPort : 587;
+            var enableSsl = !bool.TryParse(_configuration["EmailSettings:EnableSsl"], out var configuredEnableSsl) || configuredEnableSsl;
+
+            if (string.IsNullOrWhiteSpace(email))
+                throw new InvalidOperationException("EmailSettings:Email não foi configurado.");
+
+            if (string.IsNullOrWhiteSpace(password))
+                throw new InvalidOperationException("EmailSettings:Password não foi configurado.");
+
+            return new EmailSettings(email, password, host, port, enableSsl);
+        }
+
+        private SmtpClient CreateSmtpClient(EmailSettings settings)
+        {
+            return new SmtpClient(settings.Host)
+            {
+                Port = settings.Port,
+                Credentials = new NetworkCredential(settings.Email, settings.Password),
+                EnableSsl = settings.EnableSsl
             };
         }
+
+        private sealed record EmailSettings(string Email, string Password, string Host, int Port, bool EnableSsl);
 
         private string GetEmailStyles() => @"
             <style>

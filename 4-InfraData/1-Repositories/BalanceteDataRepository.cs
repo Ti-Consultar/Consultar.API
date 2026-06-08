@@ -1,8 +1,11 @@
 ﻿using _3_Domain._1_Entities;
 using _4_InfraData._1_Context;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
-
+using System.Data;
+using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace _4_InfraData._1_Repositories
 {
@@ -34,6 +37,24 @@ namespace _4_InfraData._1_Repositories
             return await _context.BalanceteData
                 .Include(x => x.Balancete)
                 .Where(x => x.Balancete.AccountPlansId == accountPlanId && x.Balancete.DateYear == year && (int)x.Balancete.DateMonth == month)
+                .ToListAsync();
+        }
+
+        public async Task<List<BalanceteDataModel>> GetFirstByAccountPlanId(int accountPlanId)
+        {
+            var balanceteId = await _context.Balancete
+                .Where(x => x.AccountPlansId == accountPlanId)
+                .OrderBy(x => x.DateYear)
+                .ThenBy(x => x.DateMonth)
+                .Select(x => x.Id)
+                .FirstOrDefaultAsync();
+
+            if (balanceteId == 0)
+                return new List<BalanceteDataModel>();
+
+            return await _context.BalanceteData
+                .Include(x => x.Balancete)
+                .Where(x => x.BalanceteId == balanceteId)
                 .ToListAsync();
         }
 
@@ -114,5 +135,59 @@ namespace _4_InfraData._1_Repositories
         }
 
 
+
+public async Task BulkInsertAsync(List<BalanceteDataModel> list)
+    {
+        if (list == null || !list.Any())
+            return;
+
+        var table = new DataTable();
+
+        table.Columns.Add("BalanceteId", typeof(int));
+        table.Columns.Add("CostCenter", typeof(string));
+        table.Columns.Add("Name", typeof(string));
+        table.Columns.Add("InitialValue", typeof(decimal));
+        table.Columns.Add("Debit", typeof(decimal));
+        table.Columns.Add("Credit", typeof(decimal));
+        table.Columns.Add("FinalValue", typeof(decimal));
+        table.Columns.Add("CreatedAt", typeof(DateTime));
+
+        foreach (var item in list)
+        {
+            table.Rows.Add(
+                item.BalanceteId,
+                item.CostCenter,
+                item.Name,
+                item.InitialValue,
+                item.Debit,
+                item.Credit,
+                item.FinalValue,
+                DateTime.Now
+            );
+        }
+
+        var connection = (SqlConnection)_context.Database.GetDbConnection();
+
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync();
+
+        using var bulkCopy = new SqlBulkCopy(connection)
+        {
+            DestinationTableName = "BalanceteData",
+            BatchSize = 5000,
+            BulkCopyTimeout = 0 // sem limite
+        };
+
+        bulkCopy.ColumnMappings.Add("BalanceteId", "BalanceteId");
+        bulkCopy.ColumnMappings.Add("CostCenter", "CostCenter");
+        bulkCopy.ColumnMappings.Add("Name", "Name");
+        bulkCopy.ColumnMappings.Add("InitialValue", "InitialValue");
+        bulkCopy.ColumnMappings.Add("Debit", "Debit");
+        bulkCopy.ColumnMappings.Add("Credit", "Credit");
+        bulkCopy.ColumnMappings.Add("FinalValue", "FinalValue");
+        bulkCopy.ColumnMappings.Add("CreatedAt", "CreatedAt");
+
+        await bulkCopy.WriteToServerAsync(table);
     }
+}
 }
