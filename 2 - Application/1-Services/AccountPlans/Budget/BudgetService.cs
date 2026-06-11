@@ -1,5 +1,6 @@
 ﻿using _2___Application._2_Dto_s.AccountPlan;
 using _2___Application._2_Dto_s.AccountPlan.Balancete;
+using _2___Application._3_Utils;
 using _2___Application.Base;
 using _3_Domain._1_Entities;
 using _3_Domain._2_Enum_s;
@@ -267,6 +268,9 @@ namespace _2___Application._1_Services.Budget
                     .Select(g => g.First())
                     .ToList();
 
+                var validationError = ValidateBudgetDataImport(list);
+                if (validationError != null)
+                    return ErrorResponse(validationError);
 
                 await _budgetDataRepository.AddRangeAsync(list);
 
@@ -579,7 +583,7 @@ namespace _2___Application._1_Services.Budget
             var list = new List<BudgetDataModel>();
             stream.Position = 0;
 
-            using var reader = new StreamReader(stream, Encoding.UTF8);
+            using var reader = CsvImportTextReader.CreateReader(stream);
             var csv = new CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
             {
                 HasHeaderRecord = true,
@@ -632,6 +636,31 @@ namespace _2___Application._1_Services.Budget
             }
 
             return list;
+        }
+
+        private static string? ValidateBudgetDataImport(List<BudgetDataModel> list)
+        {
+            var invalidCostCenter = list.FirstOrDefault(x =>
+                CsvImportTextReader.ContainsReplacementCharacter(x.CostCenter));
+
+            if (invalidCostCenter != null)
+            {
+                return CsvImportTextReader.BuildReplacementCharacterError(
+                    "centro de custo",
+                    invalidCostCenter.CostCenter);
+            }
+
+            var invalidName = list.FirstOrDefault(x =>
+                CsvImportTextReader.ContainsReplacementCharacter(x.Name));
+
+            if (invalidName != null)
+            {
+                return CsvImportTextReader.BuildReplacementCharacterError(
+                    "descricao",
+                    invalidName.CostCenter);
+            }
+
+            return null;
         }
 
         private List<BudgetDataModel> ReadFromXlsx(Stream stream,int budgetId)

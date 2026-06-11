@@ -3,6 +3,7 @@ using _2___Application._2_Dto_s.AccountPlan.Balancete;
 using _2___Application._2_Dto_s.Company;
 using _2___Application._2_Dto_s.Company.SubCompany;
 using _2___Application._2_Dto_s.Group;
+using _2___Application._3_Utils;
 using _2___Application.Base;
 using _3_Domain._1_Entities;
 using _3_Domain._2_Enum_s;
@@ -1215,7 +1216,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             var list = new List<BalanceteDataModel>();
             stream.Position = 0;
 
-            using var reader = new StreamReader(stream, Encoding.UTF8);
+            using var reader = CsvImportTextReader.CreateReader(stream);
             var csv = new CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
             {
                 HasHeaderRecord = true,
@@ -1483,6 +1484,26 @@ private List<BalanceteDataModel> ReadFromXlsxDinamic(
 
         private string? ValidateBalanceteDataImport(List<BalanceteDataModel> list)
         {
+            var corruptedCostCenter = list.FirstOrDefault(x =>
+                CsvImportTextReader.ContainsReplacementCharacter(x.CostCenter));
+
+            if (corruptedCostCenter != null)
+            {
+                return CsvImportTextReader.BuildReplacementCharacterError(
+                    "centro de custo",
+                    corruptedCostCenter.CostCenter);
+            }
+
+            var corruptedName = list.FirstOrDefault(x =>
+                CsvImportTextReader.ContainsReplacementCharacter(x.Name));
+
+            if (corruptedName != null)
+            {
+                return CsvImportTextReader.BuildReplacementCharacterError(
+                    "descricao",
+                    corruptedName.CostCenter);
+            }
+
             var invalidCostCenter = list.FirstOrDefault(x => (x.CostCenter?.Length ?? 0) > MaxCostCenterLength);
             if (invalidCostCenter != null)
             {
@@ -1506,7 +1527,7 @@ private List<BalanceteDataModel> ReadFromXlsxDinamic(
             var list = new List<BalanceteDataModel>();
             stream.Position = 0;
 
-            using var reader = new StreamReader(stream, Encoding.UTF8);
+            using var reader = CsvImportTextReader.CreateReader(stream);
             using var csv = new CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
             {
                 HasHeaderRecord = false,
@@ -1677,7 +1698,7 @@ private List<BalanceteDataModel> ReadFromXlsxDinamic(
 
                 stream.Position = 0;
 
-                using var reader = new StreamReader(stream, Encoding.UTF8);
+                using var reader = CsvImportTextReader.CreateReader(stream);
                 using var csv = new CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
                 {
                     HasHeaderRecord = false,
@@ -1707,6 +1728,9 @@ private List<BalanceteDataModel> ReadFromXlsxDinamic(
                     }
 
                     emptyRowCount = 0;
+
+                    if (CsvImportTextReader.ContainsReplacementCharacter(descricao))
+                        throw new InvalidDataException(CsvImportTextReader.BuildReplacementCharacterError("descricao da filial"));
 
                     if (!descricao.Contains("FILIAL", StringComparison.OrdinalIgnoreCase))
                         continue;
