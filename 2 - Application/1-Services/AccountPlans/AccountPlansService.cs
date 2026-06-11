@@ -2,6 +2,7 @@
 using _2___Application._2_Dto_s.Company;
 using _2___Application._2_Dto_s.Company.SubCompany;
 using _2___Application._2_Dto_s.Group;
+using _2___Application._3_Utils;
 using _2___Application.Base;
 using _3_Domain._1_Entities;
 using _3_Domain._2_Enum_s;
@@ -146,6 +147,10 @@ namespace _2___Application._1_Services.AccountPlans
                     ? ReadAccountPlanAccountsFromXlsx(stream, accountPlanId)
                     : ReadAccountPlanAccountsFromCsv(stream, accountPlanId);
 
+                var validationError = ValidateAccountPlanAccountsImport(accounts);
+                if (validationError != null)
+                    return ErrorResponse(validationError);
+
                 var upsertResult = await _accountPlanAccountRepository
                     .UpsertOfficialAccountsAsync(accountPlanId, accounts);
 
@@ -255,6 +260,10 @@ namespace _2___Application._1_Services.AccountPlans
                 if (string.IsNullOrWhiteSpace(dto.Name))
                     return ErrorResponse("Descrição da conta é obrigatória.");
 
+                var validationError = ValidateAccountPlanAccountText(dto.CostCenter, dto.Name);
+                if (validationError != null)
+                    return ErrorResponse(validationError);
+
                 var exists = await _repository.ExistsAccountPlanByIdAsync(accountPlanId);
                 if (!exists)
                     return ErrorResponse(Message.NotFound);
@@ -311,12 +320,11 @@ namespace _2___Application._1_Services.AccountPlans
             var accounts = new List<AccountPlanAccount>();
             stream.Position = 0;
 
-            using var delimiterReader = new StreamReader(stream, Encoding.UTF8, true, 1024, true);
+            using var delimiterReader = CsvImportTextReader.CreateReader(stream);
             var firstLine = delimiterReader.ReadLine() ?? string.Empty;
             var delimiter = firstLine.Count(c => c == ';') >= firstLine.Count(c => c == ',') ? ";" : ",";
 
-            stream.Position = 0;
-            using var reader = new StreamReader(stream);
+            using var reader = CsvImportTextReader.CreateReader(stream);
             using var csv = new CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
             {
                 HasHeaderRecord = false,
@@ -335,6 +343,33 @@ namespace _2___Application._1_Services.AccountPlans
             }
 
             return accounts;
+        }
+
+        private static string? ValidateAccountPlanAccountsImport(List<AccountPlanAccount> accounts)
+        {
+            foreach (var account in accounts)
+            {
+                var validationError = ValidateAccountPlanAccountText(account.CostCenter, account.Name);
+                if (validationError != null)
+                    return validationError;
+            }
+
+            return null;
+        }
+
+        private static string? ValidateAccountPlanAccountText(string? costCenter, string? name)
+        {
+            if (CsvImportTextReader.ContainsReplacementCharacter(costCenter))
+            {
+                return CsvImportTextReader.BuildReplacementCharacterError("numero da conta", costCenter);
+            }
+
+            if (CsvImportTextReader.ContainsReplacementCharacter(name))
+            {
+                return CsvImportTextReader.BuildReplacementCharacterError("descricao da conta", costCenter);
+            }
+
+            return null;
         }
 
         private static void AddAccountPlanAccountIfValid(

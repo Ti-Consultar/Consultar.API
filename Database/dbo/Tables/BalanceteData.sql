@@ -2,7 +2,7 @@
     Id INT IDENTITY(1,1) PRIMARY KEY,
     BalanceteId INT NOT NULL,
     CostCenter VARCHAR(100),
-    Name VARCHAR(255),
+    Name NVARCHAR(255),
     InitialValue DECIMAL(18, 2),
     Credit DECIMAL(18, 2),
     Debit DECIMAL(18, 2),
