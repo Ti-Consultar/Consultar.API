@@ -440,6 +440,9 @@ namespace _2___Application._1_Services
                     case "Passivos Contingentes":
                     case "Passivos de Arrendamento":
                     case "Contas Transitórias":
+                    case "Recursos p/ Aumento de Capital":
+                    case "Antecipações de Dividendos":
+                    case "Dividendos Recebidos":
                         classification.TotalizerClassificationId = totalizerClassifications
                             .Where(r => r.Name == "Total Passivo Não Circulante")
                             .Select(r => r.Id)
@@ -505,6 +508,9 @@ namespace _2___Application._1_Services
                     case "Empréstimos e Financiamentos a Longo Prazo":
                     case "Passivos de Arrendamento":
                     case "Impostos Parcelados":
+                    case "Recursos p/ Aumento de Capital":
+                    case "Antecipações de Dividendos":
+                    case "Dividendos Recebidos":
                         classification.BalancoReclassificadoId = reclassifications
                             .Where(r => r.Name == "Passivo Não Circulante Financeiro")
                             .Select(r => (int?)r.Id)
