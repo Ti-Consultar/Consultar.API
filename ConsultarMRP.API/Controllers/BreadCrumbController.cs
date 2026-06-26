@@ -30,5 +30,20 @@ namespace _5_API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet]
+        [Route("resolve")]
+        public async Task<IActionResult> ResolveBreadcrumb([FromQuery] BreadcrumbResolveQueryDto query)
+        {
+            try
+            {
+                var result = await _breadcrumbService.ResolveBreadcrumbAsync(query);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
