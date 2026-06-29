@@ -22,12 +22,18 @@ namespace _2___Application._1_Services.User
         private readonly UserRepository _repository;
         private readonly CompanyRepository _companyRepository;
         private readonly EmailService _emailService;
+        private readonly TokenService _tokenService;
         public int _currentUserId;
 
-        public UserService(UserRepository repository, EmailService emailService, IAppSettings appSettings) : base(appSettings)
+        public UserService(
+            UserRepository repository,
+            EmailService emailService,
+            TokenService tokenService,
+            IAppSettings appSettings) : base(appSettings)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _emailService = emailService;
+            _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
             _currentUserId = GetCurrentUserId();
 
         }
@@ -350,7 +356,7 @@ namespace _2___Application._1_Services.User
         #region Metodos Privados
         private LoginResponse CreateUserResponseAuthorized(UserModel user)
         {
-            var token = TokenService.GenerateToken(user);
+            var token = _tokenService.GenerateToken(user);
 
             return new LoginResponse
             {

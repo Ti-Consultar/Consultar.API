@@ -1,48 +1,38 @@
-﻿using Microsoft.OpenApi.Models;
-using _2___Application._4__DependencyInjectionConfig; // Importação da configuração de dependências
+using Microsoft.OpenApi.Models;
+using _2___Application._4__DependencyInjectionConfig;
 using _2___Application._1_Services.User;
 using _4_InfraData._1_Repositories;
-using _4_InfraData._1_Context;
-using Microsoft.EntityFrameworkCore; // Certifique-se de usar o namespace correto
 
 var builder = WebApplication.CreateBuilder(args);
+var environmentName = builder.Environment.EnvironmentName;
+const string CorsPolicyName = "ConfiguredCors";
 
-// Adiciona os serviços ao contêiner
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
-// Obtém a connection string do appsettings.json
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = GetRequiredConnectionString(builder);
+var allowedOrigins = GetRequiredCorsOrigins(builder.Configuration, environmentName);
 
-// Configuração do DbContext
-builder.Services.AddDbContext<CoreServiceDbContext>(options =>
-    options.UseSqlServer(connectionString));
+DependencyInjectionConfig.Configure(builder.Services, builder.Configuration, connectionString);
 
-
-// Chama o método para configurar dependências gerais
-DependencyInjectionConfig.Configure(builder.Services, connectionString);
-
-// Adiciona o UserService diretamente
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<AuthorizationService>();
-
 builder.Services.AddScoped<UserRepository>();
 
-// Configuração de CORS (permitindo todas as origens, ajuste conforme necessário)
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy(CorsPolicyName, policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
 });
 
-// Configuração do Swagger/OpenAPI
+builder.Services.AddHealthChecks();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -50,31 +40,65 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Consultar Auth API",
         Version = "v1",
-        Description = "API de Autenticação do sistema ConsultarAuth"
+        Description = "API de Autenticacao do sistema ConsultarAuth"
     });
 });
 
 var app = builder.Build();
+var swaggerEnabled = bool.TryParse(app.Configuration["Swagger:Enabled"], out var configuredSwaggerEnabled) && configuredSwaggerEnabled;
 
-// Habilita o CORS para a aplicação
-app.UseCors("AllowAll");
+app.Logger.LogInformation("Starting ConsultarAuth.API in {EnvironmentName}.", app.Environment.EnvironmentName);
 
-// Sempre habilita o Swagger, independentemente do ambiente
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+app.UseCors(CorsPolicyName);
+
+if (swaggerEnabled)
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "ConsultarAuth API v1");
-    c.RoutePrefix = "swagger"; // O Swagger será acessível em http://localhost:7270/swagger
-});
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ConsultarAuth API v1");
+        c.RoutePrefix = "swagger";
+    });
+
+    app.MapGet("/", context =>
+    {
+        context.Response.Redirect("/swagger");
+        return Task.CompletedTask;
+    });
+}
 
 app.UseHttpsRedirection();
-app.UseAuthentication(); // Adiciona autenticação (caso JWT esteja sendo usado)
+app.UseAuthentication();
 app.UseAuthorization();
+app.MapHealthChecks("/health");
 app.MapControllers();
-// 👇 Redirecionamento da raiz para /swagger
-app.MapGet("/", context =>
-{
-    context.Response.Redirect("/swagger");
-    return Task.CompletedTask;
-});
 app.Run();
+
+static string GetRequiredConnectionString(WebApplicationBuilder builder)
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+    if (string.IsNullOrWhiteSpace(connectionString))
+        throw new InvalidOperationException($"ConnectionStrings:DefaultConnection must be configured for {builder.Environment.EnvironmentName}.");
+
+    return connectionString;
+}
+
+static string[] GetRequiredCorsOrigins(IConfiguration configuration, string environmentName)
+{
+    var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins")
+        .GetChildren()
+        .Select(origin => origin.Value)
+        .Where(origin => !string.IsNullOrWhiteSpace(origin))
+        .Select(origin => origin!)
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToArray();
+
+    if (allowedOrigins.Length == 0)
+        throw new InvalidOperationException($"Cors:AllowedOrigins must be configured for {environmentName}.");
+
+    if (allowedOrigins.Any(origin => origin == "*"))
+        throw new InvalidOperationException($"Cors:AllowedOrigins must list explicit origins for {environmentName}.");
+
+    return allowedOrigins;
+}
