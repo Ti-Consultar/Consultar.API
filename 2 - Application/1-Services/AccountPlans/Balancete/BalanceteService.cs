@@ -65,9 +65,9 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 var user = GetCurrentUserId();
 
                 // Verifica se o plano de contas já existe
-                var exists = await _accountPlansRepository.ExistsAccountPlanByIdAsync(dto.AccountPlansId);
+                var accountPlan = await _accountPlansRepository.GetByIdSingleAsync(dto.AccountPlansId);
 
-                if (exists is false)
+                if (accountPlan is null)
                 {
                     return ErrorResponse(Message.NotFound);
                 }
@@ -84,12 +84,15 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                     DateMonth = (EMonth)dto.DateMonth,
                     DateYear = dto.DateYear,
                     AccountPlansId = dto.AccountPlansId,
+                    GroupId = dto.GroupId ?? accountPlan.GroupId,
+                    CompanyId = dto.CompanyId ?? accountPlan.CompanyId,
+                    SubCompanyId = dto.SubCompanyId ?? accountPlan.SubCompanyId,
                     Status = ESituationBalancete.Pending
                 };
 
                 await _repository.AddAsync(model);
 
-                return SuccessResponse(model);
+                return SuccessResponse(MapToBalanceteDto(model));
             }
             catch (Exception ex)
             {
@@ -110,10 +113,10 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             {
                 var user = GetCurrentUserId();
 
-                var exists = await _accountPlansRepository
-                    .ExistsAccountPlanByIdAsync(dto.AccountPlansId);
+                var accountPlan = await _accountPlansRepository
+                    .GetByIdSingleAsync(dto.AccountPlansId);
 
-                if (!exists)
+                if (accountPlan is null)
                     return ErrorResponse(Message.NotFound);
 
                 var createdBalancetes = new List<BalanceteModel>();
@@ -131,6 +134,9 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                         DateMonth = (EMonth)month,
                         DateYear = dto.DateYear,
                         AccountPlansId = dto.AccountPlansId,
+                        GroupId = accountPlan.GroupId,
+                        CompanyId = accountPlan.CompanyId,
+                        SubCompanyId = accountPlan.SubCompanyId,
                         Status = ESituationBalancete.Pending
                     };
 
@@ -377,6 +383,9 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             DateMonth = x.DateMonth,
             DateYear = x.DateYear,
             Status = x.Status,
+            GroupId = x.GroupId,
+            CompanyId = x.CompanyId,
+            SubCompanyId = x.SubCompanyId,
             AccountPlans = new AccountPlanResponse
             {
                 Id = x.AccountPlans.Id,

@@ -17,7 +17,8 @@ namespace _4_InfraData._1_Repositories
             return await _context.AccountPlans
                 .FirstOrDefaultAsync(ap =>
                     ap.GroupId == groupId &&
-                    ap.CompanyId == null);
+                    ap.CompanyId == null &&
+                    ap.SubCompanyId == null);
         }
         //    public async Task<List<AccountPlansModel>> GetCompanyAccountPlans(
         //int groupId,
@@ -100,7 +101,7 @@ namespace _4_InfraData._1_Repositories
         public async Task<AccountPlansModel> GetByGroupId(int groupId)
         {
             return await _context.AccountPlans
-                .FirstOrDefaultAsync(x => x.GroupId == groupId && x.CompanyId == null);
+                .FirstOrDefaultAsync(x => x.GroupId == groupId && x.CompanyId == null && x.SubCompanyId == null);
         }
         public async Task<bool> ExistsAccountPlanByIdAsync(int id)
         {

@@ -52,9 +52,9 @@ namespace _2___Application._1_Services.Budget
                 var user = GetCurrentUserId();
 
                 // Verifica se o plano de contas já existe
-                var exists = await _accountPlansRepository.ExistsAccountPlanByIdAsync(dto.AccountPlansId);
+                var accountPlan = await _accountPlansRepository.GetByIdSingleAsync(dto.AccountPlansId);
 
-                if (exists is false)
+                if (accountPlan is null)
                 {
                     return ErrorResponse(Message.NotFound);
                 }
@@ -71,11 +71,14 @@ namespace _2___Application._1_Services.Budget
                     DateMonth = (EMonth)dto.DateMonth,
                     DateYear = dto.DateYear,
                     AccountPlansId = dto.AccountPlansId,
+                    GroupId = dto.GroupId ?? accountPlan.GroupId,
+                    CompanyId = dto.CompanyId ?? accountPlan.CompanyId,
+                    SubCompanyId = dto.SubCompanyId ?? accountPlan.SubCompanyId,
                 };
 
                 await _repository.AddAsync(model);
 
-                return SuccessResponse(model);
+                return SuccessResponse(MapToBalanceteDto(model));
             }
             catch (Exception ex)
             {
@@ -222,6 +225,9 @@ namespace _2___Application._1_Services.Budget
             DateCreate = x.DateCreate,
             DateMonth = x.DateMonth,
             DateYear = x.DateYear,
+            GroupId = x.GroupId,
+            CompanyId = x.CompanyId,
+            SubCompanyId = x.SubCompanyId,
             AccountPlans = new AccountPlanResponse
             {
                 Id = x.AccountPlans.Id,

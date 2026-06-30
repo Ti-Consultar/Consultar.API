@@ -12,6 +12,9 @@ namespace _2___Application._2_Dto_s.AccountPlan.Balancete
     {
 
         public int AccountPlansId { get; set; }
+        public int? GroupId { get; set; }
+        public int? CompanyId { get; set; }
+        public int? SubCompanyId { get; set; }
         public int DateMonth { get; set; }
         public int DateYear { get; set; }
     }

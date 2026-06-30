@@ -17,6 +17,12 @@ namespace _3_Domain._1_Entities
         public int Id { get; set; }
         public int AccountPlansId { get; set; }
         public AccountPlansModel AccountPlans { get; set; }
+        public int? GroupId { get; set; }
+        public GroupModel? Group { get; set; }
+        public int? CompanyId { get; set; }
+        public CompanyModel? Company { get; set; }
+        public int? SubCompanyId { get; set; }
+        public SubCompanyModel? SubCompany { get; set; }
         public EMonth DateMonth { get; set; }
         public int DateYear { get; set; }
         public ESituationBalancete Status { get; set; }

@@ -12,6 +12,9 @@ namespace _2___Application._2_Dto_s.AccountPlan.Balancete
     {
         public int Id { get; set; }
         public AccountPlanResponse AccountPlans { get; set; }
+        public int? GroupId { get; set; }
+        public int? CompanyId { get; set; }
+        public int? SubCompanyId { get; set; }
         public EMonth DateMonth { get; set; }
         public int DateYear { get; set; }
         public ESituationBalancete Status { get; set; }
@@ -24,6 +27,9 @@ namespace _2___Application._2_Dto_s.AccountPlan.Balancete
     {
         public int Id { get; set; }
         public AccountPlanResponse AccountPlans { get; set; }
+        public int? GroupId { get; set; }
+        public int? CompanyId { get; set; }
+        public int? SubCompanyId { get; set; }
         public EMonth DateMonth { get; set; }
         public int DateYear { get; set; }
         public ESituationBalancete Status { get; set; }

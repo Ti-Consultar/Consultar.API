@@ -47,10 +47,57 @@ namespace _4_InfraData._1_Context
     base.OnModelCreating(modelBuilder);
 
     modelBuilder.Entity<GroupCompanyDeletedDto>().HasNoKey(); // ← ESSENCIAL!
+            modelBuilder.Entity<AccountPlansModel>(entity =>
+            {
+                entity.HasIndex(x => x.GroupId)
+                    .IsUnique()
+                    .HasDatabaseName("UX_AccountPlans_CanonicalGroup")
+                    .HasFilter("[CompanyId] IS NULL AND [SubCompanyId] IS NULL");
+            });
             modelBuilder.Entity<AccountPlanAccount>(entity =>
             {
                 entity.ToTable("AccountPlanAccount", "dbo");
                 entity.HasIndex(x => new { x.AccountPlanId, x.CostCenter }).IsUnique();
+            });
+            modelBuilder.Entity<BalanceteModel>(entity =>
+            {
+                entity.HasOne(x => x.Group)
+                    .WithMany()
+                    .HasForeignKey(x => x.GroupId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(x => x.Company)
+                    .WithMany()
+                    .HasForeignKey(x => x.CompanyId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(x => x.SubCompany)
+                    .WithMany()
+                    .HasForeignKey(x => x.SubCompanyId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasIndex(x => new { x.GroupId, x.CompanyId, x.SubCompanyId, x.DateYear, x.DateMonth })
+                    .HasDatabaseName("IX_Balancete_FinancialScope_Period");
+            });
+            modelBuilder.Entity<BudgetModel>(entity =>
+            {
+                entity.HasOne(x => x.Group)
+                    .WithMany()
+                    .HasForeignKey(x => x.GroupId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(x => x.Company)
+                    .WithMany()
+                    .HasForeignKey(x => x.CompanyId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(x => x.SubCompany)
+                    .WithMany()
+                    .HasForeignKey(x => x.SubCompanyId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasIndex(x => new { x.GroupId, x.CompanyId, x.SubCompanyId, x.DateYear, x.DateMonth })
+                    .HasDatabaseName("IX_Budget_FinancialScope_Period");
             });
             modelBuilder.Entity<GroupSubCompanyDeletedDto>(entity =>
             {
