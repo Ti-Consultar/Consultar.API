@@ -4,6 +4,7 @@ using _2___Application._2_Dto_s.Company;
 using _2___Application._2_Dto_s.Company.SubCompany;
 using _2___Application._2_Dto_s.Group;
 using _2___Application._3_Utils;
+using _2___Application._1_Services.Scope;
 using _2___Application.Base;
 using _3_Domain._1_Entities;
 using _3_Domain._2_Enum_s;
@@ -33,6 +34,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
         private readonly BalanceteDataRepository _balanceteDataRepository;
         private readonly BalanceteImportConfigRepository _importConfigRepo;
         private readonly AccountPlanAccountRepository _accountPlanAccountRepository;
+        private readonly IAccountPlanScopeResolver _accountPlanScopeResolver;
 
 
         public BalanceteService(
@@ -41,6 +43,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             BalanceteDataRepository balanceteDataRepository,
             BalanceteImportConfigRepository importConfigRepo,
             AccountPlanAccountRepository accountPlanAccountRepository,
+            IAccountPlanScopeResolver accountPlanScopeResolver,
 
 
 
@@ -51,6 +54,7 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             _balanceteDataRepository = balanceteDataRepository;
             _importConfigRepo = importConfigRepo;
             _accountPlanAccountRepository = accountPlanAccountRepository;
+            _accountPlanScopeResolver = accountPlanScopeResolver;
 
 
             _currentUserId = GetCurrentUserId();
@@ -64,15 +68,21 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             {
                 var user = GetCurrentUserId();
 
-                // Verifica se o plano de contas já existe
-                var accountPlan = await _accountPlansRepository.GetByIdSingleAsync(dto.AccountPlansId);
+                var accountPlan = await ResolveCanonicalAccountPlanForScopeAsync(dto);
 
                 if (accountPlan is null)
                 {
-                    return ErrorResponse(Message.NotFound);
+                    return ErrorResponse("Plano de contas canônico do grupo não encontrado.");
                 }
 
-                var balanceteExists = await _repository.GetExistsParams(dto.AccountPlansId, dto.DateMonth, dto.DateYear);
+                var groupId = dto.GroupId ?? accountPlan.GroupId;
+                var balanceteExists = await _repository.GetExistsParams(
+                    accountPlan.Id,
+                    groupId,
+                    dto.CompanyId,
+                    dto.SubCompanyId,
+                    dto.DateMonth,
+                    dto.DateYear);
 
                 if (balanceteExists is true)
                 {
@@ -83,10 +93,10 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                 {
                     DateMonth = (EMonth)dto.DateMonth,
                     DateYear = dto.DateYear,
-                    AccountPlansId = dto.AccountPlansId,
-                    GroupId = dto.GroupId ?? accountPlan.GroupId,
-                    CompanyId = dto.CompanyId ?? accountPlan.CompanyId,
-                    SubCompanyId = dto.SubCompanyId ?? accountPlan.SubCompanyId,
+                    AccountPlansId = accountPlan.Id,
+                    GroupId = groupId,
+                    CompanyId = dto.CompanyId,
+                    SubCompanyId = dto.SubCompanyId,
                     Status = ESituationBalancete.Pending
                 };
 
@@ -103,6 +113,9 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
         public class InsertBalanceteListDto
         {
             public int AccountPlansId { get; set; }
+            public int? GroupId { get; set; }
+            public int? CompanyId { get; set; }
+            public int? SubCompanyId { get; set; }
             public int DateYear { get; set; }
             public List<int> Months { get; set; } = new();
         }
@@ -113,18 +126,22 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             {
                 var user = GetCurrentUserId();
 
-                var accountPlan = await _accountPlansRepository
-                    .GetByIdSingleAsync(dto.AccountPlansId);
+                var accountPlan = await ResolveCanonicalAccountPlanForScopeAsync(
+                    dto.AccountPlansId,
+                    dto.GroupId,
+                    dto.CompanyId,
+                    dto.SubCompanyId);
 
                 if (accountPlan is null)
-                    return ErrorResponse(Message.NotFound);
+                    return ErrorResponse("Plano de contas canônico do grupo não encontrado.");
 
                 var createdBalancetes = new List<BalanceteModel>();
+                var groupId = dto.GroupId ?? accountPlan.GroupId;
 
                 foreach (var month in dto.Months)
                 {
                     var balanceteExists = await _repository
-                        .GetExistsParams(dto.AccountPlansId, month, dto.DateYear);
+                        .GetExistsParams(accountPlan.Id, groupId, dto.CompanyId, dto.SubCompanyId, month, dto.DateYear);
 
                     if (balanceteExists)
                         continue; // pula se já existir
@@ -133,10 +150,10 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
                     {
                         DateMonth = (EMonth)month,
                         DateYear = dto.DateYear,
-                        AccountPlansId = dto.AccountPlansId,
-                        GroupId = accountPlan.GroupId,
-                        CompanyId = accountPlan.CompanyId,
-                        SubCompanyId = accountPlan.SubCompanyId,
+                        AccountPlansId = accountPlan.Id,
+                        GroupId = groupId,
+                        CompanyId = dto.CompanyId,
+                        SubCompanyId = dto.SubCompanyId,
                         Status = ESituationBalancete.Pending
                     };
 
@@ -263,10 +280,18 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             }
         }
 
-        public async Task<ResultValue> GetAccountPlanWithBalancetesMonth(int accountPlanId)
+        public async Task<ResultValue> GetAccountPlanWithBalancetesMonth(
+            int accountPlanId,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
 
-            var balancetes = await _repository.GetAccountPlanWithBalancetesMonthAsync(accountPlanId);
+            var balancetes = await _repository.GetAccountPlanWithBalancetesMonthAsync(
+                accountPlanId,
+                groupId,
+                companyId,
+                subCompanyId);
 
             if (balancetes == null || !balancetes.Any())
                 return SuccessResponse(new List<AccountPlanWithBalancetesDto>());
@@ -376,6 +401,37 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
 
 
         #region Private Balancete
+        private Task<AccountPlansModel?> ResolveCanonicalAccountPlanForScopeAsync(InsertBalanceteDto dto)
+        {
+            return ResolveCanonicalAccountPlanForScopeAsync(
+                dto.AccountPlansId,
+                dto.GroupId,
+                dto.CompanyId,
+                dto.SubCompanyId);
+        }
+
+        private async Task<AccountPlansModel?> ResolveCanonicalAccountPlanForScopeAsync(
+            int accountPlansId,
+            int? groupId,
+            int? companyId,
+            int? subCompanyId)
+        {
+            if (groupId.HasValue)
+                return await _accountPlanScopeResolver.ResolveCanonicalAccountPlanByScopeAsync(
+                    groupId.Value,
+                    companyId,
+                    subCompanyId);
+
+            var legacyAccountPlan = await _accountPlansRepository.GetByIdSingleAsync(accountPlansId);
+            if (legacyAccountPlan == null)
+                return null;
+
+            if (legacyAccountPlan.CompanyId.HasValue || legacyAccountPlan.SubCompanyId.HasValue)
+                return null;
+
+            return await _accountPlanScopeResolver.ResolveCanonicalAccountPlanAsync(legacyAccountPlan.GroupId);
+        }
+
         private static BalanceteDto MapToBalanceteDto(BalanceteModel x) => new()
         {
             Id = x.Id,

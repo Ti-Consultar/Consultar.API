@@ -11,6 +11,7 @@ using _2___Application._2_Dto_s.BusinesEntity;
 using _4_InfraData._3_Utils.Email;
 using _2___Application._2_Dto_s.Invitation;
 using _2___Application._2_Dto_s.Users;
+using _2___Application._1_Services.Scope;
 
 
 public class CompanyService : BaseService
@@ -19,18 +20,18 @@ public class CompanyService : BaseService
     private readonly UserRepository _userRepository;
     private readonly BusinessEntityRepository _businessEntityRepository;
     private readonly GroupRepository _groupRepository;
-    private readonly AccountPlansRepository _accountPlansRepository;
+    private readonly IAccountPlanScopeResolver _accountPlanScopeResolver;
     private readonly EmailService _emailService;
     private readonly int _currentUserId;
 
-    public CompanyService(CompanyRepository companyRepository, UserRepository userRepository, BusinessEntityRepository businessEntityRepository, GroupRepository groupRepository, AccountPlansRepository accountPlansRepository, EmailService emailService, IAppSettings appSettings)
+    public CompanyService(CompanyRepository companyRepository, UserRepository userRepository, BusinessEntityRepository businessEntityRepository, GroupRepository groupRepository, IAccountPlanScopeResolver accountPlanScopeResolver, EmailService emailService, IAppSettings appSettings)
         : base(appSettings)
     {
         _companyRepository = companyRepository;
         _userRepository = userRepository;
         _businessEntityRepository = businessEntityRepository;
         _groupRepository = groupRepository;
-        _accountPlansRepository = accountPlansRepository;
+        _accountPlanScopeResolver = accountPlanScopeResolver;
         _emailService = emailService;
 
         _currentUserId = GetCurrentUserId();
@@ -90,14 +91,6 @@ public class CompanyService : BaseService
 
             await _companyRepository.AddUserToCompany(companyUser.UserId, company.Id, companyUser.GroupId, companyUser.PermissionId);
 
-            var accountPlan = new AccountPlansModel
-            {
-                GroupId = createCompanyDto.GroupId,
-                CompanyId = company.Id,
-                SubCompanyId = null,
-            };
-
-            await _accountPlansRepository.AddAsync(accountPlan);
             await _emailService.SendWelcomeAsync(user.Email, company.Name, user.Name);
 
             return SuccessResponse(Message.Success);
@@ -471,7 +464,10 @@ public class CompanyService : BaseService
             if (group == null)
                 return ErrorResponse(Message.NotFound);
 
-            var groupAccountPlan = await _accountPlansRepository.GetByGroupId(groupId);
+            var groupAccountPlan = await _accountPlanScopeResolver.ResolveCanonicalAccountPlanAsync(groupId);
+
+            if (groupAccountPlan is null)
+                return ErrorResponse("Plano de contas canônico do grupo não encontrado.");
 
             var groupPermission = await _companyRepository.GetUserPermissionAsync(
                 _currentUserId, groupId, null, null
@@ -520,10 +516,6 @@ public class CompanyService : BaseService
                     _currentUserId, groupId, company.Id, null
                 );
 
-                var accountPlan = await _accountPlansRepository.GetByCompanyOrGroupId(
-                    company.Id, groupId
-                );
-
                 var companyDto = new CompanySimpleAccountPlanDto
                 {
                     Id = company.Id,
@@ -535,7 +527,7 @@ public class CompanyService : BaseService
                             Name = companyPermission.Name
                         }
                         : null,
-                    AccountPlanId = accountPlan?.Id,
+                    AccountPlanId = groupAccountPlan.Id,
                     SubCompanies = new List<SubCompanySimpleAccountPlanDto>()
                 };
 
@@ -557,14 +549,11 @@ public class CompanyService : BaseService
                             _currentUserId, groupId, company.Id, sub.Id
                         );
 
-                        var subAccountPlan = await _accountPlansRepository
-                            .GetBySubCompanyOrCompanyOrGroupId(sub.Id, company.Id, groupId);
-
                         companyDto.SubCompanies.Add(new SubCompanySimpleAccountPlanDto
                         {
                             Id = sub.Id,
                             Name = sub.Name,
-                            AccountPlanId = subAccountPlan?.Id,
+                            AccountPlanId = groupAccountPlan.Id,
                             Permission = subPermission != null
                                 ? new PermissionResponse
                                 {
@@ -652,18 +641,6 @@ public class CompanyService : BaseService
                 subCompany.Id,
                 companyUser.PermissionId
             );
-
-            var accountPlan = new AccountPlansModel
-            {
-                GroupId = companyUser.GroupId,
-                CompanyId = companyUser.CompanyId,
-                SubCompanyId = companyUser.SubCompanyId,
-            };
-
-
-
-
-            await _accountPlansRepository.AddAsync(accountPlan);
 
             await _emailService.SendWelcomeSubCompanyAsync(user.Email, company.Name, subCompany.Name, user.Name);
             return SuccessResponse(Message.Success);

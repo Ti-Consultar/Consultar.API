@@ -6,6 +6,7 @@ using _2___Application._2_Dto_s.Painel;
 using _2___Application._2_Dto_s.Permissions;
 using _2___Application._2_Dto_s.Results.LiquidManagement;
 using _2___Application._2_Dto_s.TotalizerClassification;
+using _2___Application._1_Services.Scope;
 using _2___Application.Base;
 using _3_Domain._1_Entities;
 using _3_Domain._2_Enum_s;
@@ -40,6 +41,7 @@ namespace _2___Application._1_Services
         private readonly AccountPlanAccountRepository _accountPlanAccountRepository;
         private readonly BudgetRepository _budgetRepository;
         private readonly BudgetDataRepository _budgetDataRepository;
+        private readonly IAccountPlanScopeResolver _accountPlanScopeResolver;
 
         public ClassificationService(
             ClassificationRepository repository,
@@ -56,6 +58,7 @@ namespace _2___Application._1_Services
             AccountPlanAccountRepository accountPlanAccountRepository,
             BudgetRepository budgetRepository,
             BudgetDataRepository budgetDataRepository,
+            IAccountPlanScopeResolver accountPlanScopeResolver,
             IAppSettings appSettings) : base(appSettings)
         {
             _repository = repository;
@@ -72,6 +75,7 @@ namespace _2___Application._1_Services
             _accountPlanAccountRepository = accountPlanAccountRepository;
             _budgetRepository = budgetRepository;
             _budgetDataRepository = budgetDataRepository;
+            _accountPlanScopeResolver = accountPlanScopeResolver;
         }
 
         #region Métodos
@@ -194,11 +198,20 @@ namespace _2___Application._1_Services
 
         #region AccountPlan Classification
 
-        public async Task<ResultValue> GetByTypeClassificationReal(int accountPlanId, ETypeClassification typeClassification)
+        public async Task<ResultValue> GetByTypeClassificationReal(
+            int accountPlanId,
+            ETypeClassification typeClassification,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
             try
             {
-                var model = await _accountClassificationRepository.GetByTypeClassification(accountPlanId, typeClassification);
+                var canonicalAccountPlanId = await ResolveCanonicalAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+                if (!canonicalAccountPlanId.HasValue)
+                    return ErrorResponse("Plano de contas canônico do grupo não encontrado.");
+
+                var model = await _accountClassificationRepository.GetByTypeClassification(canonicalAccountPlanId.Value, typeClassification);
                 if (model == null || !model.Any())
                     return ErrorResponse(Message.NotFound);
 
@@ -219,14 +232,22 @@ namespace _2___Application._1_Services
             try
             {
                 var user = GetCurrentUserId();
+                var accountPlanId = await ResolveCanonicalAccountPlanIdAsync(
+                    dto.AccountPlanId,
+                    dto.GroupId,
+                    dto.CompanyId,
+                    dto.SubCompanyId);
+
+                if (!accountPlanId.HasValue)
+                    return ErrorResponse("Plano de contas canônico do grupo não encontrado.");
 
                 // Verifica se já existem classificações cadastradas para evitar duplicação
-                var existingClassifications = await _accountClassificationRepository.GetAllAsync(dto.AccountPlanId);
+                var existingClassifications = await _accountClassificationRepository.GetAllAsync(accountPlanId.Value);
                 if (existingClassifications != null && existingClassifications.Any())
                     return ErrorResponse("Já existem classificações cadastradas para este plano de contas.");
 
-                await CreateBalancosReclassificadosAsync(dto.AccountPlanId);
-                await CreateTotalizersAsync(dto.AccountPlanId);
+                await CreateBalancosReclassificadosAsync(accountPlanId.Value);
+                await CreateTotalizersAsync(accountPlanId.Value);
 
                 var classificationsTemplate = await _repository.GetAllAsNoTracking();
 
@@ -235,11 +256,11 @@ namespace _2___Application._1_Services
                     Name = i.Name,
                     TypeOrder = i.TypeOrder,
                     TypeClassification = i.TypeClassification,
-                    AccountPlanId = dto.AccountPlanId,
+                    AccountPlanId = accountPlanId.Value,
                 }).ToList();
 
-                var reclassifications = await _balancoReclassificadoRepository.GetByAccountPlanId(dto.AccountPlanId);
-                var totalizerClassifications = await _totalizerClassificationRepository.GetByAccountPlanId(dto.AccountPlanId);
+                var reclassifications = await _balancoReclassificadoRepository.GetByAccountPlanId(accountPlanId.Value);
+                var totalizerClassifications = await _totalizerClassificationRepository.GetByAccountPlanId(accountPlanId.Value);
 
                 // Organização modular
                 MapAtivos(models, reclassifications);
@@ -611,21 +632,29 @@ namespace _2___Application._1_Services
 
             await _balancoReclassificadoRepository.AddRangeAsync(balancoModels);
         }
-        public async Task<ResultValue> CreateItemClassification(int accountplanId, CreateItemClassification dto)
+        public async Task<ResultValue> CreateItemClassification(
+            int accountplanId,
+            CreateItemClassification dto,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
             try
             {
                 var user = GetCurrentUserId();
+                var canonicalAccountPlanId = await ResolveCanonicalAccountPlanIdAsync(accountplanId, groupId, companyId, subCompanyId);
+                if (!canonicalAccountPlanId.HasValue)
+                    return ErrorResponse("Plano de contas canônico do grupo não encontrado.");
 
                 // Reorganiza antes de adicionar o novo item
-                await ReorganizeTypeOrders(accountplanId, dto.TypeClassification, dto.TypeOrder);
+                await ReorganizeTypeOrders(canonicalAccountPlanId.Value, dto.TypeClassification, dto.TypeOrder);
 
                 var model = new AccountPlanClassification
                 {
                     Name = dto.Name,
                     TypeClassification = (ETypeClassification)dto.TypeClassification,
                     TypeOrder = dto.TypeOrder,
-                    AccountPlanId = accountplanId,
+                    AccountPlanId = canonicalAccountPlanId.Value,
                     TotalizerClassificationId = dto.TotalizerClassificationId
                 };
 
@@ -638,13 +667,22 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
-        public async Task<ResultValue> Update(int accountplanId, int id, UpdateItemClassification dto)
+        public async Task<ResultValue> Update(
+            int accountplanId,
+            int id,
+            UpdateItemClassification dto,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
             try
             {
                 var user = GetCurrentUserId();
+                var canonicalAccountPlanId = await ResolveCanonicalAccountPlanIdAsync(accountplanId, groupId, companyId, subCompanyId);
+                if (!canonicalAccountPlanId.HasValue)
+                    return ErrorResponse("Plano de contas canônico do grupo não encontrado.");
 
-                var accountPlanClassification = await _accountClassificationRepository.GetByAccountIdAndId(accountplanId, id);
+                var accountPlanClassification = await _accountClassificationRepository.GetByAccountIdAndId(canonicalAccountPlanId.Value, id);
 
                 if (accountPlanClassification == null)
                     return ErrorResponse("Item não encontrado");
@@ -666,11 +704,19 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
-        public async Task<ResultValue> GetAccountPlanClassification(int accountPlanId)
+        public async Task<ResultValue> GetAccountPlanClassification(
+            int accountPlanId,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
             try
             {
-                var exists = await _accountClassificationRepository.ExistsAccountPlanClassification(accountPlanId);
+                var canonicalAccountPlanId = await ResolveCanonicalAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+                if (!canonicalAccountPlanId.HasValue)
+                    return ErrorResponse("Plano de contas canônico do grupo não encontrado.");
+
+                var exists = await _accountClassificationRepository.ExistsAccountPlanClassification(canonicalAccountPlanId.Value);
 
 
                 return SuccessResponse(exists);
@@ -732,11 +778,20 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
-        public async Task<ResultValue> GetBond(int accountPlanId, int typeClassification)
+        public async Task<ResultValue> GetBond(
+            int accountPlanId,
+            int typeClassification,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
             try
             {
-                var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
+                var canonicalAccountPlanId = await ResolveCanonicalAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+                if (!canonicalAccountPlanId.HasValue)
+                    return ErrorResponse("Plano de contas canônico do grupo não encontrado.");
+
+                var model = await _accountClassificationRepository.GetBond(canonicalAccountPlanId.Value, typeClassification);
 
                 if (model == null || !model.Any())
                     return ErrorResponse(Message.NotFound);
@@ -762,12 +817,20 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
-        public async Task<ResultValue> GetBondListByAccountPlanId(int accountPlanId)
+        public async Task<ResultValue> GetBondListByAccountPlanId(
+            int accountPlanId,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
             try
             {
+                var canonicalAccountPlanId = await ResolveCanonicalAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+                if (!canonicalAccountPlanId.HasValue)
+                    return ErrorResponse("Plano de contas canônico do grupo não encontrado.");
+
                 var bonds = await _accountClassificationRepository
-                    .GetBondListByAccountPlanId(accountPlanId);
+                    .GetBondListByAccountPlanId(canonicalAccountPlanId.Value);
 
                 if (bonds == null || !bonds.Any())
                     return SuccessResponse(Message.NotFound);
@@ -793,13 +856,21 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
-        public async Task<ResultValue> GetPendingAccountPlanAccounts(int accountPlanId)
+        public async Task<ResultValue> GetPendingAccountPlanAccounts(
+            int accountPlanId,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
             try
             {
-                await _accountPlanAccountRepository.EnsureFromBalanceteDataAsync(accountPlanId);
+                var canonicalAccountPlanId = await ResolveCanonicalAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+                if (!canonicalAccountPlanId.HasValue)
+                    return ErrorResponse("Plano de contas canônico do grupo não encontrado.");
 
-                var pendingAccounts = await _accountPlanAccountRepository.GetPendingByAccountPlanIdAsync(accountPlanId);
+                await _accountPlanAccountRepository.EnsureFromBalanceteDataAsync(canonicalAccountPlanId.Value);
+
+                var pendingAccounts = await _accountPlanAccountRepository.GetPendingByAccountPlanIdAsync(canonicalAccountPlanId.Value);
 
                 var result = new
                 {
@@ -824,13 +895,22 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
-        public async Task<ResultValue> UpdateBondList(int accountPlanId, BalanceteDataAccountPlanClassificationCreateList dto)
+        public async Task<ResultValue> UpdateBondList(
+            int accountPlanId,
+            BalanceteDataAccountPlanClassificationCreateList dto,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
             try
             {
+                var canonicalAccountPlanId = await ResolveCanonicalAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+                if (!canonicalAccountPlanId.HasValue)
+                    return ErrorResponse("Plano de contas canônico do grupo não encontrado.");
+
                 // Busca vínculos existentes
                 var existingBonds = await _accountClassificationRepository
-                    .GetBondListByAccountPlanId(accountPlanId);
+                    .GetBondListByAccountPlanId(canonicalAccountPlanId.Value);
 
                 // Se houver vínculos antigos, remove
                 if (existingBonds != null && existingBonds.Any())
@@ -853,7 +933,7 @@ namespace _2___Application._1_Services
                     await _accountClassificationRepository.CreateBond(newBonds);
                 }
 
-                await _accountPlanAccountRepository.SyncClassificationsFromBondListAsync(accountPlanId, newBonds);
+                await _accountPlanAccountRepository.SyncClassificationsFromBondListAsync(canonicalAccountPlanId.Value, newBonds);
 
                 return SuccessResponse(Message.Success);
             }
@@ -3791,6 +3871,38 @@ namespace _2___Application._1_Services
 
 
         #region Private 
+        private async Task<int?> ResolveCanonicalAccountPlanIdAsync(
+            int? accountPlanId,
+            int? groupId,
+            int? companyId = null,
+            int? subCompanyId = null)
+        {
+            if (groupId.HasValue)
+            {
+                var canonicalAccountPlan = await _accountPlanScopeResolver
+                    .ResolveCanonicalAccountPlanByScopeAsync(groupId.Value, companyId, subCompanyId);
+
+                return canonicalAccountPlan?.Id;
+            }
+
+            if (!accountPlanId.HasValue)
+                return null;
+
+            var legacyAccountPlan = await _accountPlansRepository.GetByIdSingleAsync(accountPlanId.Value);
+            if (legacyAccountPlan == null)
+                return null;
+
+            if (legacyAccountPlan.CompanyId.HasValue || legacyAccountPlan.SubCompanyId.HasValue)
+                return null;
+
+            var canonicalLegacyAccountPlan = await _accountPlanScopeResolver
+                .ResolveCanonicalAccountPlanAsync(legacyAccountPlan.GroupId);
+
+            return canonicalLegacyAccountPlan?.Id == legacyAccountPlan.Id
+                ? canonicalLegacyAccountPlan.Id
+                : null;
+        }
+
         private async Task ReorganizeTypeOrders(int accountPlanId, int typeClassification, int typeOrder)
         {
             var classifications = await _accountClassificationRepository

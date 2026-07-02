@@ -105,6 +105,62 @@ namespace _4_InfraData._1_Repositories
             return newAccounts;
         }
 
+        public async Task<List<AccountPlanAccount>> UpsertFromBudgetDataAsync(
+            int accountPlanId,
+            IEnumerable<BudgetDataModel> budgetData)
+        {
+            var importedAccounts = budgetData
+                .Where(x => !string.IsNullOrWhiteSpace(x.CostCenter))
+                .GroupBy(x => NormalizeCostCenter(x.CostCenter))
+                .Select(g => new
+                {
+                    CostCenter = g.Key,
+                    Name = g.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Name))?.Name?.Trim() ?? string.Empty
+                })
+                .ToList();
+
+            if (!importedAccounts.Any())
+                return new List<AccountPlanAccount>();
+
+            var costCenters = importedAccounts.Select(x => x.CostCenter).ToList();
+            var existing = await _context.AccountPlanAccount
+                .Where(x => x.AccountPlanId == accountPlanId && costCenters.Contains(x.CostCenter))
+                .ToListAsync();
+
+            var existingByCostCenter = existing.ToDictionary(x => x.CostCenter, StringComparer.OrdinalIgnoreCase);
+            var newAccounts = new List<AccountPlanAccount>();
+
+            foreach (var importedAccount in importedAccounts)
+            {
+                if (existingByCostCenter.TryGetValue(importedAccount.CostCenter, out var account))
+                {
+                    if (!string.IsNullOrWhiteSpace(importedAccount.Name) && account.Name != importedAccount.Name)
+                    {
+                        account.Name = importedAccount.Name;
+                        account.UpdatedAt = DateTime.UtcNow;
+                    }
+
+                    continue;
+                }
+
+                newAccounts.Add(new AccountPlanAccount
+                {
+                    AccountPlanId = accountPlanId,
+                    CostCenter = importedAccount.CostCenter,
+                    Name = importedAccount.Name,
+                    Status = EAccountPlanAccountStatus.PendingClassification,
+                    Origin = EAccountPlanAccountOrigin.BalanceteImport,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            if (newAccounts.Any())
+                await _context.AccountPlanAccount.AddRangeAsync(newAccounts);
+
+            await _context.SaveChangesAsync();
+            return newAccounts;
+        }
+
         public async Task<(List<AccountPlanAccount> NewAccounts, int UpdatedAccountsCount)> UpsertOfficialAccountsAsync(
             int accountPlanId,
             IEnumerable<AccountPlanAccount> accounts)

@@ -60,9 +60,17 @@ namespace _5_API.Controllers
         /// </summary>
         [HttpGet("accountplan/{accountPlanId}")]
         [Authorize()]
-        public async Task<IActionResult> GetAccountPlanWithBalancetesMonth(int accountPlanId )
+        public async Task<IActionResult> GetAccountPlanWithBalancetesMonth(
+            int accountPlanId,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
-            var result = await _service.GetAccountPlanWithBalancetesMonth(accountPlanId);
+            var result = await _service.GetAccountPlanWithBalancetesMonth(
+                accountPlanId,
+                groupId,
+                companyId,
+                subCompanyId);
 
             if (!result.Success)
                 return NotFound(result);

@@ -3,6 +3,7 @@ using _2___Application._2_Dto_s.Company;
 using _2___Application._2_Dto_s.Company.SubCompany;
 using _2___Application._2_Dto_s.Group;
 using _2___Application._3_Utils;
+using _2___Application._1_Services.Scope;
 using _2___Application.Base;
 using _3_Domain._1_Entities;
 using _3_Domain._2_Enum_s;
@@ -27,6 +28,7 @@ namespace _2___Application._1_Services.AccountPlans
         private readonly CompanyRepository _companyRepository;
         private readonly UserRepository _userRepository;
         private readonly AccountPlanAccountRepository _accountPlanAccountRepository;
+        private readonly IAccountPlanScopeResolver _accountPlanScopeResolver;
         private readonly int _currentUserId;
 
         public AccountPlansService(
@@ -35,6 +37,7 @@ namespace _2___Application._1_Services.AccountPlans
             CompanyRepository companyRepository,
             UserRepository userRepository,
             AccountPlanAccountRepository accountPlanAccountRepository,
+            IAccountPlanScopeResolver accountPlanScopeResolver,
 
 
             IAppSettings appSettings) : base(appSettings)
@@ -44,6 +47,7 @@ namespace _2___Application._1_Services.AccountPlans
             _companyRepository = companyRepository;
             _userRepository = userRepository;
             _accountPlanAccountRepository = accountPlanAccountRepository;
+            _accountPlanScopeResolver = accountPlanScopeResolver;
 
             _currentUserId = GetCurrentUserId();
 
@@ -56,8 +60,11 @@ namespace _2___Application._1_Services.AccountPlans
             {
                 var user = GetCurrentUserId();
 
+                if (dto.CompanyId.HasValue || dto.SubCompanyId.HasValue)
+                    return ErrorResponse("Plano de contas deve ser criado apenas no grupo.");
+
                 // Verifica se o plano de contas já existe
-                var exists = await _repository.ExistsAccountPlanAsync(dto.GroupId, dto.CompanyId, dto.SubCompanyId);
+                var exists = await _repository.ExistsAccountPlanAsync(dto.GroupId, null, null);
 
                 if (exists)
                 {
@@ -73,8 +80,8 @@ namespace _2___Application._1_Services.AccountPlans
                 var model = new AccountPlansModel
                 {
                     GroupId = dto.GroupId,
-                    CompanyId = dto.CompanyId,
-                    SubCompanyId = dto.SubCompanyId,
+                    CompanyId = null,
+                    SubCompanyId = null,
                 };
 
                 await _repository.AddAsync(model);       
@@ -91,7 +98,12 @@ namespace _2___Application._1_Services.AccountPlans
         {
             try
             {
-                var accountPlans = await _repository.GetByFilters(groupId, companyId, subCompanyId);
+                var canonicalAccountPlan = await _accountPlanScopeResolver
+                    .ResolveCanonicalAccountPlanByScopeAsync(groupId, companyId, subCompanyId);
+
+                var accountPlans = canonicalAccountPlan == null
+                    ? await _repository.GetByFilters(groupId, companyId, subCompanyId)
+                    : await _repository.GetById(canonicalAccountPlan.Id);
 
                 if (accountPlans == null || !accountPlans.Any())
                     return ErrorResponse(Message.NotFound);
@@ -134,6 +146,13 @@ namespace _2___Application._1_Services.AccountPlans
                 var accountPlan = await _repository.GetByIdSingleAsync(accountPlanId);
                 if (accountPlan == null)
                     return ErrorResponse(Message.NotFound);
+
+                if (accountPlan.CompanyId.HasValue || accountPlan.SubCompanyId.HasValue)
+                    return ErrorResponse("Importação de plano de contas só é permitida no plano canônico do grupo.");
+
+                var canonicalAccountPlan = await _accountPlanScopeResolver.ResolveCanonicalAccountPlanAsync(accountPlan.GroupId);
+                if (canonicalAccountPlan == null || canonicalAccountPlan.Id != accountPlan.Id)
+                    return ErrorResponse("Plano de contas canônico do grupo não encontrado.");
 
                 var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
                 if (extension != ".xlsx" && extension != ".csv")

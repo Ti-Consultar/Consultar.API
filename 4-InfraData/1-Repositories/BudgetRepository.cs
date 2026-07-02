@@ -36,6 +36,24 @@ namespace _4_InfraData._1_Repositories
                                x.DateYear == year);
         }
 
+        public async Task<bool> GetExistsParams(
+            int accountPlansId,
+            int? groupId,
+            int? companyId,
+            int? subCompanyId,
+            int month,
+            int year)
+        {
+            return await _context.Budget
+                .AnyAsync(x =>
+                    x.AccountPlansId == accountPlansId &&
+                    x.GroupId == groupId &&
+                    x.CompanyId == companyId &&
+                    x.SubCompanyId == subCompanyId &&
+                    (int)x.DateMonth == month &&
+                    x.DateYear == year);
+        }
+
         public async Task<List<BudgetModel>> GetById(int id)
         {
             return await _context.Budget
@@ -128,6 +146,30 @@ namespace _4_InfraData._1_Repositories
             return await _context.Budget
                 .Include(x => x.AccountPlans)
                 .Where(ap => ap.AccountPlansId == accountPlanId)
+                .OrderBy(ap => ap.DateYear)
+                .ThenBy(ap => ap.DateMonth)
+                .ToListAsync();
+        }
+
+        public async Task<List<BudgetModel>> GetAccountPlanWithBalancetesMonthAsync(
+            int accountPlanId,
+            int? groupId,
+            int? companyId,
+            int? subCompanyId)
+        {
+            var query = _context.Budget
+                .Include(x => x.AccountPlans)
+                .Where(ap => ap.AccountPlansId == accountPlanId);
+
+            if (groupId.HasValue)
+            {
+                query = query.Where(ap =>
+                    ap.GroupId == groupId &&
+                    ap.CompanyId == companyId &&
+                    ap.SubCompanyId == subCompanyId);
+            }
+
+            return await query
                 .OrderBy(ap => ap.DateYear)
                 .ThenBy(ap => ap.DateMonth)
                 .ToListAsync();

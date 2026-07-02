@@ -8,7 +8,10 @@ namespace _2___Application._2_Dto_s.Classification.AccountPlanClassification
 {
     public class CreateAccountPlanClassification
     {
-        public int AccountPlanId { get; set; }
+        public int? AccountPlanId { get; set; }
+        public int? GroupId { get; set; }
+        public int? CompanyId { get; set; }
+        public int? SubCompanyId { get; set; }
 
 
     }

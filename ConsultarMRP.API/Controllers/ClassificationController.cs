@@ -76,12 +76,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpPut]
         [Route("{accountPlanId}/create-item")]
         [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
-        public async Task<IActionResult> CreateItemClassification(int accountPlanId, [FromBody]CreateItemClassification dto)
+        public async Task<IActionResult> CreateItemClassification(
+            int accountPlanId,
+            [FromBody]CreateItemClassification dto,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.CreateItemClassification(accountPlanId,dto);
+                var response = await _Service.CreateItemClassification(accountPlanId, dto, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -93,12 +98,18 @@ namespace ConsultarMRP.API.Controllers
         [HttpPut]
         [Route("{accountPlanId}/update-item")]
         [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
-        public async Task<IActionResult> Update(int accountPlanId,[FromQuery]int id ,[FromBody] UpdateItemClassification dto)
+        public async Task<IActionResult> Update(
+            int accountPlanId,
+            [FromQuery]int id,
+            [FromBody] UpdateItemClassification dto,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.Update(accountPlanId, id,dto);
+                var response = await _Service.Update(accountPlanId, id, dto, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -110,12 +121,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("accountPlan/{accountPlanId}/typeClassification")]
         [Authorize()]
-        public async Task<IActionResult> GetByTypeClassificationReal(int accountPlanId, ETypeClassification typeClassification)
+        public async Task<IActionResult> GetByTypeClassificationReal(
+            int accountPlanId,
+            ETypeClassification typeClassification,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetByTypeClassificationReal(accountPlanId, typeClassification);
+                var response = await _Service.GetByTypeClassificationReal(accountPlanId, typeClassification, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -160,12 +176,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpPut]
         [Route("accountplan/{accountPlanId}/update-bond-list")]
         [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
-        public async Task<IActionResult> CreateBondList(int accountPlanId,[FromBody] BalanceteDataAccountPlanClassificationCreateList dto)
+        public async Task<IActionResult> CreateBondList(
+            int accountPlanId,
+            [FromBody] BalanceteDataAccountPlanClassificationCreateList dto,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.UpdateBondList(accountPlanId,dto);
+                var response = await _Service.UpdateBondList(accountPlanId, dto, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -177,12 +198,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("/bond")]
         [Authorize()]
-        public async Task<IActionResult> GetPainelBalancoAsync([FromQuery] int accountPlanId, [FromQuery] int typeClassification)
+        public async Task<IActionResult> GetPainelBalancoAsync(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int typeClassification,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetBond(accountPlanId, typeClassification);
+                var response = await _Service.GetBond(accountPlanId, typeClassification, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -192,17 +218,25 @@ namespace ConsultarMRP.API.Controllers
         }
 
         [HttpGet("bond-list/{accountPlanId}")]
-        public async Task<IActionResult> GetBondListByAccountPlanId(int accountPlanId)
+        public async Task<IActionResult> GetBondListByAccountPlanId(
+            int accountPlanId,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
-            var result = await _Service.GetBondListByAccountPlanId(accountPlanId);
+            var result = await _Service.GetBondListByAccountPlanId(accountPlanId, groupId, companyId, subCompanyId);
             return Ok(result);
         }
 
         [HttpGet("accountplan/{accountPlanId}/pending-classifications")]
         [Authorize()]
-        public async Task<IActionResult> GetPendingAccountPlanAccounts(int accountPlanId)
+        public async Task<IActionResult> GetPendingAccountPlanAccounts(
+            int accountPlanId,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
-            var result = await _Service.GetPendingAccountPlanAccounts(accountPlanId);
+            var result = await _Service.GetPendingAccountPlanAccounts(accountPlanId, groupId, companyId, subCompanyId);
             return Ok(result);
         }
 
@@ -312,12 +346,16 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("exists")]
         [Authorize()]
-        public async Task<IActionResult> GetAccountPlanClassification([FromQuery] int accountPlanId)
+        public async Task<IActionResult> GetAccountPlanClassification(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetAccountPlanClassification(accountPlanId);
+                var response = await _Service.GetAccountPlanClassification(accountPlanId, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
