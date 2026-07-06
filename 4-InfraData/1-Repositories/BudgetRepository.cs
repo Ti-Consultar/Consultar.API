@@ -28,6 +28,23 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.AccountPlansId == accountPlansId && x.DateYear == year)
                 .ToListAsync();
         }
+        public async Task<List<BudgetModel>> GetByFinancialScopeMonth(
+            int accountPlansId,
+            int groupId,
+            int? companyId,
+            int? subCompanyId,
+            int year)
+        {
+            return await _context.Budget
+                .Include(x => x.AccountPlans)
+                .Where(x =>
+                    x.AccountPlansId == accountPlansId &&
+                    x.GroupId == groupId &&
+                    x.CompanyId == companyId &&
+                    x.SubCompanyId == subCompanyId &&
+                    x.DateYear == year)
+                .ToListAsync();
+        }
         public async Task<bool> GetExistsParams(int accountPlansId, int month, int year)
         {
             return await _context.Budget
@@ -79,6 +96,25 @@ namespace _4_InfraData._1_Repositories
             return await _context.Budget
                 .Include(x => x.AccountPlans)
                 .Where(x => x.AccountPlansId == accountPlanId && (int)x.DateMonth == month && x.DateYear == year)
+                .ToListAsync();
+        }
+        public async Task<List<BudgetModel>> GetByFinancialScopeDate(
+            int accountPlanId,
+            int groupId,
+            int? companyId,
+            int? subCompanyId,
+            int year,
+            int month)
+        {
+            return await _context.Budget
+                .Include(x => x.AccountPlans)
+                .Where(x =>
+                    x.AccountPlansId == accountPlanId &&
+                    x.GroupId == groupId &&
+                    x.CompanyId == companyId &&
+                    x.SubCompanyId == subCompanyId &&
+                    (int)x.DateMonth == month &&
+                    x.DateYear == year)
                 .ToListAsync();
         }
         public async Task<List<BudgetModel>> GetByIdDelete(int id)

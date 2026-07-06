@@ -286,19 +286,22 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             int? companyId = null,
             int? subCompanyId = null)
         {
+            var scope = await ResolveFinancialScopeAsync(accountPlanId, groupId, companyId, subCompanyId);
+            if (scope == null)
+                return ErrorResponse(Message.NotFound);
 
             var balancetes = await _repository.GetAccountPlanWithBalancetesMonthAsync(
-                accountPlanId,
-                groupId,
-                companyId,
-                subCompanyId);
+                scope.AccountPlanId,
+                scope.GroupId,
+                scope.CompanyId,
+                scope.SubCompanyId);
 
             if (balancetes == null || !balancetes.Any())
                 return SuccessResponse(new List<AccountPlanWithBalancetesDto>());
 
             var response = new AccountPlanWithBalancetesDto
             {
-                Id = accountPlanId,
+                Id = scope.AccountPlanId,
                 Balancetes = balancetes
                     .OrderByDescending(b => b.DateYear)
                     .ThenByDescending(b => b.DateMonth)
@@ -416,20 +419,85 @@ namespace _2___Application._1_Services.AccountPlans.Balancete
             int? companyId,
             int? subCompanyId)
         {
-            if (groupId.HasValue)
-                return await _accountPlanScopeResolver.ResolveCanonicalAccountPlanByScopeAsync(
-                    groupId.Value,
-                    companyId,
-                    subCompanyId);
+            var scope = await ResolveFinancialScopeAsync(accountPlansId, groupId, companyId, subCompanyId);
 
-            var legacyAccountPlan = await _accountPlansRepository.GetByIdSingleAsync(accountPlansId);
+            return scope == null
+                ? null
+                : await _accountPlansRepository.GetByIdSingleAsync(scope.AccountPlanId);
+        }
+
+        private async Task<FinancialScopeResolution?> ResolveFinancialScopeAsync(
+            int accountPlanId,
+            int? groupId,
+            int? companyId,
+            int? subCompanyId)
+        {
+            if (groupId.HasValue || companyId.HasValue || subCompanyId.HasValue)
+            {
+                var scopeGroupId = groupId;
+                var scopeCompanyId = companyId;
+
+                if (subCompanyId.HasValue)
+                {
+                    var scopedPlan = await _accountPlansRepository.GetSubCompanyAccountPlan(subCompanyId.Value);
+                    if (scopedPlan == null && !scopeGroupId.HasValue)
+                        return null;
+
+                    if (scopedPlan != null)
+                    {
+                        scopeGroupId ??= scopedPlan.GroupId;
+                        scopeCompanyId ??= scopedPlan.CompanyId;
+                    }
+                }
+                else if (companyId.HasValue)
+                {
+                    var scopedPlan = await _accountPlansRepository.GetCompanyAccountPlanByCompanyId(companyId.Value);
+                    if (scopedPlan == null && !scopeGroupId.HasValue)
+                        return null;
+
+                    if (scopedPlan != null)
+                        scopeGroupId ??= scopedPlan.GroupId;
+                }
+
+                if (!scopeGroupId.HasValue)
+                    return null;
+
+                var canonicalAccountPlan = await _accountPlanScopeResolver.ResolveCanonicalAccountPlanAsync(scopeGroupId.Value);
+                return canonicalAccountPlan == null
+                    ? null
+                    : new FinancialScopeResolution
+                    {
+                        AccountPlanId = canonicalAccountPlan.Id,
+                        GroupId = scopeGroupId.Value,
+                        CompanyId = scopeCompanyId,
+                        SubCompanyId = subCompanyId
+                    };
+            }
+
+            var legacyAccountPlan = await _accountPlansRepository.GetByIdSingleAsync(accountPlanId);
             if (legacyAccountPlan == null)
                 return null;
 
-            if (legacyAccountPlan.CompanyId.HasValue || legacyAccountPlan.SubCompanyId.HasValue)
-                return null;
+            var canonicalLegacyAccountPlan = await _accountPlanScopeResolver
+                .ResolveCanonicalAccountPlanAsync(legacyAccountPlan.GroupId);
 
-            return await _accountPlanScopeResolver.ResolveCanonicalAccountPlanAsync(legacyAccountPlan.GroupId);
+            return canonicalLegacyAccountPlan == null
+                ? null
+                : new FinancialScopeResolution
+                {
+                    AccountPlanId = canonicalLegacyAccountPlan.Id,
+                    GroupId = legacyAccountPlan.GroupId,
+                    CompanyId = legacyAccountPlan.CompanyId,
+                    SubCompanyId = legacyAccountPlan.SubCompanyId
+                };
+        }
+
+        private class FinancialScopeResolution
+        {
+            public int AccountPlanId { get; set; }
+            public int GroupId { get; set; }
+            public int? CompanyId { get; set; }
+            public int? SubCompanyId { get; set; }
         }
 
         private static BalanceteDto MapToBalanceteDto(BalanceteModel x) => new()

@@ -233,19 +233,30 @@ namespace _2___Application._1_Services.CashFlow
         }
         public async Task<PainelCashFlowResponseDto> GetCashFlow(int accountPlanId, int year)
         {
-            var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
-            var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
-            var painelBcPassivo = await BuildPainelByTypePassivo(accountPlanId, year, 2);
-            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
+            var reportScope = await ResolveFinancialReportScopeAsync(accountPlanId);
+            return reportScope == null
+                ? new PainelCashFlowResponseDto { CashFlow = new CashFlowGroupedDto { Months = new List<CashFlowResponseDto>() } }
+                : await GetCashFlow(reportScope.AccountPlanId, year, reportScope);
+        }
+
+        private async Task<PainelCashFlowResponseDto> GetCashFlow(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope)
+        {
+            var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1, scope);
+            var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2, scope);
+            var painelBcPassivo = await BuildPainelByTypePassivo(accountPlanId, year, 2, scope);
+            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3, scope);
             var cashFlow = new List<CashFlowResponseDto>();
 
             CashFlowResponseDto previousMonth = null;
 
             // Inicializar com base em dezembro do ano anterior
-            var painelAtivoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1);
-            var painelPassivoAnterior = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year - 1, 2);
-            var painelPassivoBcAnterior = await BuildPainelByTypePassivo(accountPlanId, year - 1, 2);
-            var painelDREAnterior = await BuildPainelByTypeDRE(accountPlanId, year - 1, 3);
+            var painelAtivoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year - 1, 1, scope);
+            var painelPassivoAnterior = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year - 1, 2, scope);
+            var painelPassivoBcAnterior = await BuildPainelByTypePassivo(accountPlanId, year - 1, 2, scope);
+            var painelDREAnterior = await BuildPainelByTypeDRE(accountPlanId, year - 1, 3, scope);
 
             var dezembroAtivo = painelAtivoAnterior?.Months?.FirstOrDefault(m => m.DateMonth == 12);
             var dezembroPassivo = painelPassivoAnterior?.Months?.FirstOrDefault(m => m.DateMonth == 12);
@@ -764,15 +775,10 @@ namespace _2___Application._1_Services.CashFlow
         }
         public async Task<PainelCashFlowResponseDto> GetCashFlow(EntityScopeRequest scope, int year)
         {
-            var accountPlanIds = await _accountPlanScopeResolver.ResolveAccountPlanIds(scope);
-            var panels = new List<PainelCashFlowResponseDto>();
-
-            foreach (var accountPlanId in accountPlanIds)
-            {
-                panels.Add(await GetCashFlow(accountPlanId, year));
-            }
-
-            return AggregateCashFlowPanels(panels);
+            var reportScope = await ResolveFinancialReportScopeAsync(scope);
+            return reportScope == null
+                ? new PainelCashFlowResponseDto { CashFlow = new CashFlowGroupedDto { Months = new List<CashFlowResponseDto>() } }
+                : await GetCashFlow(reportScope.AccountPlanId, year, reportScope);
         }
 
         public async Task<PainelCashFlowResponseDto> GetCashFlowOrcado(EntityScopeRequest scope, int year)
@@ -2377,9 +2383,13 @@ namespace _2___Application._1_Services.CashFlow
 
         #endregion
         #region Dados
-        private async Task<PainelBalancoContabilRespone> BuildPainelByTypePassivo(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelByTypePassivo(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year, scope);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
             var classificationTotalizerIds = classifications
@@ -2397,7 +2407,7 @@ namespace _2___Application._1_Services.CashFlow
             var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
 
-            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3); // Painel da DRE para pegar o lucro líquido
+            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3, scope); // Painel da DRE para pegar o lucro líquido
 
 
 
@@ -2749,9 +2759,13 @@ namespace _2___Application._1_Services.CashFlow
 
             return new PainelBalancoContabilRespone { Months = months };
         }
-        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypeAtivo(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypeAtivo(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year, scope);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
 
@@ -2874,9 +2888,13 @@ namespace _2___Application._1_Services.CashFlow
         }
 
 
-        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypePassivo(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypePassivo(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year, scope);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
             var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
@@ -3494,9 +3512,13 @@ namespace _2___Application._1_Services.CashFlow
             return new PainelBalancoContabilRespone { Months = months };
         }
 
-        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDRE(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDRE(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year, scope);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
             var totalizersBase = await _totalizerClassificationRepository.GetByAccountPlansId(accountPlanId);
             var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
@@ -3817,6 +3839,65 @@ namespace _2___Application._1_Services.CashFlow
 
                 _ => null
             };
+        }
+
+        private async Task<FinancialReportScope?> ResolveFinancialReportScopeAsync(int accountPlanId)
+        {
+            var legacyAccountPlan = await _accountPlansRepository.GetByIdSingleAsync(accountPlanId);
+            if (legacyAccountPlan == null)
+                return null;
+
+            var canonicalAccountPlan = await _accountPlanScopeResolver
+                .ResolveCanonicalAccountPlanAsync(legacyAccountPlan.GroupId);
+
+            return canonicalAccountPlan == null
+                ? null
+                : new FinancialReportScope
+                {
+                    AccountPlanId = canonicalAccountPlan.Id,
+                    GroupId = legacyAccountPlan.GroupId,
+                    CompanyId = legacyAccountPlan.CompanyId,
+                    SubCompanyId = legacyAccountPlan.SubCompanyId
+                };
+        }
+
+        private async Task<FinancialReportScope?> ResolveFinancialReportScopeAsync(EntityScopeRequest scope)
+        {
+            var canonicalAccountPlan = await _accountPlanScopeResolver
+                .ResolveCanonicalAccountPlanByScopeAsync(scope.GroupId, scope.CompanyId, scope.SubCompanyId);
+
+            return canonicalAccountPlan == null
+                ? null
+                : new FinancialReportScope
+                {
+                    AccountPlanId = canonicalAccountPlan.Id,
+                    GroupId = scope.GroupId,
+                    CompanyId = scope.CompanyId,
+                    SubCompanyId = scope.SubCompanyId
+                };
+        }
+
+        private Task<List<_3_Domain._1_Entities.BalanceteModel>> GetBalancetesByReportScopeAsync(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope)
+        {
+            return scope == null
+                ? _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year)
+                : _balanceteRepository.GetByFinancialScopeMonth(
+                    accountPlanId,
+                    scope.GroupId,
+                    scope.CompanyId,
+                    scope.SubCompanyId,
+                    year);
+        }
+
+        private class FinancialReportScope
+        {
+            public int AccountPlanId { get; set; }
+            public int GroupId { get; set; }
+            public int? CompanyId { get; set; }
+            public int? SubCompanyId { get; set; }
         }
 
         #endregion

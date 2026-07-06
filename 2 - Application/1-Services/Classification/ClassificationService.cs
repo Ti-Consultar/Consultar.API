@@ -942,30 +942,49 @@ namespace _2___Application._1_Services
                 return ErrorResponse(ex);
             }
         }
-        public async Task<ResultValue> GetPainelBalancoAsync(int accountPlanId, int year, int typeClassification)
+        public async Task<ResultValue> GetPainelBalancoAsync(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            var reportScope = await ResolveFinancialReportScopeAsync(accountPlanId, groupId, companyId, subCompanyId);
+            if (reportScope == null)
+                return ErrorResponse(Message.NotFound);
+
             var result = typeClassification switch
             {
-                1 => await BuildPainelAtivo(accountPlanId, year),
-                2 => await BuildPainelPassivo(accountPlanId, year),
-                3 => await BuildPainelDRE(accountPlanId, year),
+                1 => await BuildPainelAtivo(reportScope.AccountPlanId, year, reportScope),
+                2 => await BuildPainelPassivo(reportScope.AccountPlanId, year, reportScope),
+                3 => await BuildPainelDRE(reportScope.AccountPlanId, year, reportScope),
                 _ => throw new ArgumentException("Tipo de classificação inválido.")
             };
 
-            await ApplyPendingClassificationInfoAsync(accountPlanId, result);
+            await ApplyPendingClassificationInfoAsync(reportScope.AccountPlanId, result);
             return SuccessResponse(result); // Aqui retorna a estrutura padronizada
         }
-        private async Task<PainelBalancoContabilRespone> BuildPainelAtivo(int accountPlanId, int year)
+        private async Task<PainelBalancoContabilRespone> BuildPainelAtivo(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope = null)
         {
-            return await BuildPainelByTypeAtivo(accountPlanId, year, 1);
+            return await BuildPainelByTypeAtivo(accountPlanId, year, 1, scope);
         }
-        private async Task<PainelBalancoContabilRespone> BuildPainelPassivo(int accountPlanId, int year)
+        private async Task<PainelBalancoContabilRespone> BuildPainelPassivo(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope = null)
         {
-            return await BuildPainelByTypePassivo(accountPlanId, year, 2);
+            return await BuildPainelByTypePassivo(accountPlanId, year, 2, scope);
         }
-        private async Task<PainelBalancoContabilRespone> BuildPainelDRE(int accountPlanId, int year)
+        private async Task<PainelBalancoContabilRespone> BuildPainelDRE(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope = null)
         {
-            return await BuildPainelByTypeDRE(accountPlanId, year, 3);
+            return await BuildPainelByTypeDRE(accountPlanId, year, 3, scope);
         }
         private async Task ApplyPendingClassificationInfoAsync(int accountPlanId, PainelBalancoContabilRespone result)
         {
@@ -976,9 +995,13 @@ namespace _2___Application._1_Services
             result.HasPendingClassifications = pendingCount > 0;
             result.PendingClassificationsCount = pendingCount;
         }
-        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeAtivo(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeAtivo(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year, scope);
 
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
@@ -1061,9 +1084,13 @@ namespace _2___Application._1_Services
 
             return new PainelBalancoContabilRespone { Months = months };
         }
-        private async Task<PainelBalancoContabilRespone> BuildPainelByTypePassivo(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelByTypePassivo(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year, scope);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
             var classificationTotalizerIds = classifications
@@ -1081,7 +1108,7 @@ namespace _2___Application._1_Services
             var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
 
-            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3); // Painel da DRE para pegar o lucro líquido
+            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3, scope); // Painel da DRE para pegar o lucro líquido
 
 
 
@@ -1584,9 +1611,13 @@ namespace _2___Application._1_Services
                 Months = months
             };
         }
-        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDRE(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDRE(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year, scope);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
             var totalizersBase = await _totalizerClassificationRepository.GetByAccountPlansId(accountPlanId);
             var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
@@ -1833,15 +1864,26 @@ namespace _2___Application._1_Services
         {
             var accountPlans = await _accountPlansRepository
                 .GetAccountPlansByFilter(filter);
+            var canonicalAccountPlan = await _accountPlanScopeResolver
+                .ResolveCanonicalAccountPlanAsync(filter.GroupId);
 
             var result = new List<PainelDREAccountPlanResponse>();
+            if (canonicalAccountPlan == null)
+                return result;
 
             foreach (var accountPlan in accountPlans.OrderBy(a => a.Id))
             {
                 var painel = await BuildPainelByTypeDRE(
-                    accountPlan.Id,
+                    canonicalAccountPlan.Id,
                     filter.Year,
-                    typeClassification
+                    typeClassification,
+                    new FinancialReportScope
+                    {
+                        AccountPlanId = canonicalAccountPlan.Id,
+                        GroupId = accountPlan.GroupId,
+                        CompanyId = accountPlan.CompanyId,
+                        SubCompanyId = accountPlan.SubCompanyId
+                    }
                 );
 
                 // filtro de meses
@@ -1916,13 +1958,22 @@ namespace _2___Application._1_Services
 
             var group = await _groupRepository.GetById(groupId);
             var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
+            if (groupPlan == null)
+                return response;
 
-            if (group != null && groupPlan != null)
+            if (group != null)
             {
                 var painelGrupo = await BuildPainelByTypeDRE(
                     groupPlan.Id,
                     year,
-                    3);
+                    3,
+                    new FinancialReportScope
+                    {
+                        AccountPlanId = groupPlan.Id,
+                        GroupId = groupId,
+                        CompanyId = null,
+                        SubCompanyId = null
+                    });
 
                 response.Add(new PainelDREHierarquiaCompletaResponse
                 {
@@ -1956,9 +2007,16 @@ namespace _2___Application._1_Services
 
                 // 🔹 Empresa
                 var painelEmpresa = await BuildPainelByTypeDRE(
-                    plan.Id,
+                    groupPlan.Id,
                     year,
-                    3);
+                    3,
+                    new FinancialReportScope
+                    {
+                        AccountPlanId = groupPlan.Id,
+                        GroupId = groupId,
+                        CompanyId = company.Id,
+                        SubCompanyId = null
+                    });
 
                 response.Add(new PainelDREHierarquiaCompletaResponse
                 {
@@ -1986,9 +2044,16 @@ namespace _2___Application._1_Services
                             continue;
 
                         var painelSub = await BuildPainelByTypeDRE(
-                            subPlan.Id,
+                            groupPlan.Id,
                             year,
-                            3);
+                            3,
+                            new FinancialReportScope
+                            {
+                                AccountPlanId = groupPlan.Id,
+                                GroupId = groupId,
+                                CompanyId = company.Id,
+                                SubCompanyId = sub.Id
+                            });
 
                         response.Add(new PainelDREHierarquiaCompletaResponse
                         {
@@ -2062,21 +2127,27 @@ namespace _2___Application._1_Services
 
             var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(groupId);
             var group = await _groupRepository.GetById(groupId);
+            if (groupPlan == null)
+                return response;
 
-            if (groupPlan != null)
+            response.Add(new PainelDREHierarquiaResponse
             {
-                response.Add(new PainelDREHierarquiaResponse
-                {
-                    Nivel = "Grupo",
-                    Nome = group.Name,
-                    AccountPlanId = groupPlan.Id,
-                    GroupId = groupId,
-                    Painel = await BuildPainelByTypeDRE(
-                        groupPlan.Id,
-                        year,
-                        3)
-                });
-            }
+                Nivel = "Grupo",
+                Nome = group.Name,
+                AccountPlanId = groupPlan.Id,
+                GroupId = groupId,
+                Painel = await BuildPainelByTypeDRE(
+                    groupPlan.Id,
+                    year,
+                    3,
+                    new FinancialReportScope
+                    {
+                        AccountPlanId = groupPlan.Id,
+                        GroupId = groupId,
+                        CompanyId = null,
+                        SubCompanyId = null
+                    })
+            });
 
             // ==============================
             // 2️⃣ EMPRESAS
@@ -2097,9 +2168,16 @@ namespace _2___Application._1_Services
                     GroupId = groupId,
                     CompanyId = plan.CompanyId,
                     Painel = await BuildPainelByTypeDRE(
-                        plan.Id,
+                        groupPlan.Id,
                         year,
-                        3)
+                        3,
+                        new FinancialReportScope
+                        {
+                            AccountPlanId = groupPlan.Id,
+                            GroupId = groupId,
+                            CompanyId = plan.CompanyId,
+                            SubCompanyId = null
+                        })
                 });
             }
 
@@ -2153,6 +2231,9 @@ namespace _2___Application._1_Services
 
             var companyPlan = await _accountPlansRepository
                 .GetCompanyAccountPlanByCompanyId(companyId);
+            var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(company.GroupId);
+            if (groupPlan == null)
+                return response;
 
             // EMPRESA
             if (companyPlan != null)
@@ -2165,9 +2246,16 @@ namespace _2___Application._1_Services
                     CompanyId = companyId,
                     SubCompanyId = null,
                     Painel = await BuildPainelByTypeDRE(
-                        companyPlan.Id,
+                        groupPlan.Id,
                         year,
-                        3)
+                        3,
+                        new FinancialReportScope
+                        {
+                            AccountPlanId = groupPlan.Id,
+                            GroupId = company.GroupId,
+                            CompanyId = companyId,
+                            SubCompanyId = null
+                        })
                 });
             }
 
@@ -2204,9 +2292,16 @@ namespace _2___Application._1_Services
                     CompanyId = companyId,
                     SubCompanyId = sub.Id,
                     Painel = await BuildPainelByTypeDRE(
-                        subPlan.Id,
+                        groupPlan.Id,
                         year,
-                        3)
+                        3,
+                        new FinancialReportScope
+                        {
+                            AccountPlanId = groupPlan.Id,
+                            GroupId = company.GroupId,
+                            CompanyId = companyId,
+                            SubCompanyId = sub.Id
+                        })
                 });
             }
 
@@ -2320,6 +2415,9 @@ namespace _2___Application._1_Services
 
             var companyPlan = await _accountPlansRepository
                 .GetCompanyAccountPlanByCompanyId(companyId);
+            var groupPlan = await _accountPlansRepository.GetGroupAccountPlan(company.GroupId);
+            if (groupPlan == null)
+                return response;
 
             // 🔹 ========================
             // 🔹 EMPRESA
@@ -2327,9 +2425,16 @@ namespace _2___Application._1_Services
             if (companyPlan != null)
             {
                 var painelCompleto = await BuildPainelByTypeDRE(
-                    companyPlan.Id,
+                    groupPlan.Id,
                     year,
-                    3);
+                    3,
+                    new FinancialReportScope
+                    {
+                        AccountPlanId = groupPlan.Id,
+                        GroupId = company.GroupId,
+                        CompanyId = companyId,
+                        SubCompanyId = null
+                    });
 
                 var painelFiltrado = FiltrarPainelPorMes(
                     painelCompleto,
@@ -2380,9 +2485,16 @@ namespace _2___Application._1_Services
                     continue;
 
                 var painelCompleto = await BuildPainelByTypeDRE(
-                    subPlan.Id,
+                    groupPlan.Id,
                     year,
-                    3);
+                    3,
+                    new FinancialReportScope
+                    {
+                        AccountPlanId = groupPlan.Id,
+                        GroupId = company.GroupId,
+                        CompanyId = companyId,
+                        SubCompanyId = sub.Id
+                    });
 
                 var painelFiltrado = FiltrarPainelPorMes(
                     painelCompleto,
@@ -3877,13 +3989,8 @@ namespace _2___Application._1_Services
             int? companyId = null,
             int? subCompanyId = null)
         {
-            if (groupId.HasValue)
-            {
-                var canonicalAccountPlan = await _accountPlanScopeResolver
-                    .ResolveCanonicalAccountPlanByScopeAsync(groupId.Value, companyId, subCompanyId);
-
-                return canonicalAccountPlan?.Id;
-            }
+            if (groupId.HasValue || companyId.HasValue || subCompanyId.HasValue)
+                return (await ResolveFinancialReportScopeAsync(accountPlanId, groupId, companyId, subCompanyId))?.AccountPlanId;
 
             if (!accountPlanId.HasValue)
                 return null;
@@ -3901,6 +4008,100 @@ namespace _2___Application._1_Services
             return canonicalLegacyAccountPlan?.Id == legacyAccountPlan.Id
                 ? canonicalLegacyAccountPlan.Id
                 : null;
+        }
+
+        private async Task<FinancialReportScope?> ResolveFinancialReportScopeAsync(
+            int? accountPlanId,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
+        {
+            if (groupId.HasValue || companyId.HasValue || subCompanyId.HasValue)
+            {
+                var scopeGroupId = groupId;
+                var scopeCompanyId = companyId;
+
+                if (subCompanyId.HasValue)
+                {
+                    var scopedPlan = await _accountPlansRepository.GetSubCompanyAccountPlan(subCompanyId.Value);
+                    if (scopedPlan == null && !scopeGroupId.HasValue)
+                        return null;
+
+                    if (scopedPlan != null)
+                    {
+                        scopeGroupId ??= scopedPlan.GroupId;
+                        scopeCompanyId ??= scopedPlan.CompanyId;
+                    }
+                }
+                else if (companyId.HasValue)
+                {
+                    var scopedPlan = await _accountPlansRepository.GetCompanyAccountPlanByCompanyId(companyId.Value);
+                    if (scopedPlan == null && !scopeGroupId.HasValue)
+                        return null;
+
+                    if (scopedPlan != null)
+                        scopeGroupId ??= scopedPlan.GroupId;
+                }
+
+                if (!scopeGroupId.HasValue)
+                    return null;
+
+                var canonicalAccountPlan = await _accountPlanScopeResolver
+                    .ResolveCanonicalAccountPlanAsync(scopeGroupId.Value);
+
+                return canonicalAccountPlan == null
+                    ? null
+                    : new FinancialReportScope
+                    {
+                        AccountPlanId = canonicalAccountPlan.Id,
+                        GroupId = scopeGroupId.Value,
+                        CompanyId = scopeCompanyId,
+                        SubCompanyId = subCompanyId
+                    };
+            }
+
+            if (!accountPlanId.HasValue)
+                return null;
+
+            var legacyAccountPlan = await _accountPlansRepository.GetByIdSingleAsync(accountPlanId.Value);
+            if (legacyAccountPlan == null)
+                return null;
+
+            var canonicalLegacyAccountPlan = await _accountPlanScopeResolver
+                .ResolveCanonicalAccountPlanAsync(legacyAccountPlan.GroupId);
+
+            return canonicalLegacyAccountPlan == null
+                ? null
+                : new FinancialReportScope
+                {
+                    AccountPlanId = canonicalLegacyAccountPlan.Id,
+                    GroupId = legacyAccountPlan.GroupId,
+                    CompanyId = legacyAccountPlan.CompanyId,
+                    SubCompanyId = legacyAccountPlan.SubCompanyId
+                };
+        }
+
+        private Task<List<BalanceteModel>> GetBalancetesByReportScopeAsync(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope)
+        {
+            return scope == null
+                ? _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year)
+                : _balanceteRepository.GetByFinancialScopeMonth(
+                    accountPlanId,
+                    scope.GroupId,
+                    scope.CompanyId,
+                    scope.SubCompanyId,
+                    year);
+        }
+
+        private class FinancialReportScope
+        {
+            public int AccountPlanId { get; set; }
+            public int GroupId { get; set; }
+            public int? CompanyId { get; set; }
+            public int? SubCompanyId { get; set; }
         }
 
         private async Task ReorganizeTypeOrders(int accountPlanId, int typeClassification, int typeOrder)

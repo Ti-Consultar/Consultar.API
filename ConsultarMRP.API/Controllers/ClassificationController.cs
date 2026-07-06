@@ -243,12 +243,24 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("/painel")]
         [Authorize()]
-        public async Task<IActionResult> GetPainelBalancoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
+        public async Task<IActionResult> GetPainelBalancoAsync(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int typeClassification,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetPainelBalancoAsync(accountPlanId, year,typeClassification);
+                var response = await _Service.GetPainelBalancoAsync(
+                    accountPlanId,
+                    year,
+                    typeClassification,
+                    groupId,
+                    companyId,
+                    subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
