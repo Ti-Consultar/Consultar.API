@@ -1330,29 +1330,49 @@ namespace _2___Application._1_Services
                 }
             }
         }
-        public async Task<ResultValue> GetPainelBalancoReclassificadoAsync(int accountPlanId, int year, int typeClassification)
+        public async Task<ResultValue> GetPainelBalancoReclassificadoAsync(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            var reportScope = await ResolveFinancialReportScopeAsync(accountPlanId, groupId, companyId, subCompanyId);
+            if (reportScope == null)
+                return ErrorResponse(Message.NotFound);
+
             var result = typeClassification switch
             {
-                1 => await BuildPainelBalancoReclassificadoAtivo(accountPlanId, year),
-                2 => await BuildPainelBalancoReclassificadoPassivo(accountPlanId, year),
+                1 => await BuildPainelBalancoReclassificadoAtivo(reportScope.AccountPlanId, year, reportScope),
+                2 => await BuildPainelBalancoReclassificadoPassivo(reportScope.AccountPlanId, year, reportScope),
                 _ => throw new ArgumentException("Tipo de classificação inválido.")
             };
 
-            await ApplyPendingClassificationInfoAsync(accountPlanId, result);
+            await ApplyPendingClassificationInfoAsync(reportScope.AccountPlanId, result);
             return SuccessResponse(result); // Aqui retorna a estrutura padronizada
         }
-        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoAtivo(int accountPlanId, int year)
+        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoAtivo(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope = null)
         {
-            return await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
+            return await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1, scope);
         }
-        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoPassivo(int accountPlanId, int year)
+        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoPassivo(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope = null)
         {
-            return await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
+            return await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2, scope);
         }
-        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypeAtivo(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypeAtivo(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year, scope);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
             var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
 
@@ -1473,9 +1493,13 @@ namespace _2___Application._1_Services
                 Months = months
             };
         }
-        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypePassivo(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypePassivo(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year, scope);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
             var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
@@ -1490,7 +1514,7 @@ namespace _2___Application._1_Services
 
             var balanceteData = await _balanceteDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _balanceteDataRepository.GetByAccountPlanClassificationId(accountPlanId);
-            var painelBalancoContabilPassivo = await BuildPainelByTypePassivo(accountPlanId, year, 2);
+            var painelBalancoContabilPassivo = await BuildPainelByTypePassivo(accountPlanId, year, 2, scope);
 
             var months = balancetes
                 .Select(balancete =>
@@ -2696,26 +2720,43 @@ namespace _2___Application._1_Services
         #region Orçamento
         // Orçamento
 
-        public async Task<ResultValue> GetPainelBalancoOrcadoAsync(int accountPlanId, int year, int typeClassification)
+        public async Task<ResultValue> GetPainelBalancoOrcadoAsync(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            var reportScope = await ResolveFinancialReportScopeAsync(accountPlanId, groupId, companyId, subCompanyId);
+            if (reportScope == null)
+                return ErrorResponse(Message.NotFound);
+
             var result = typeClassification switch
             {
-                1 => await BuildPainelAtivoOrcado(accountPlanId, year),
-                2 => await BuildPainelPassivoOrcado(accountPlanId, year),
-                3 => await BuildPainelDREOrcado(accountPlanId, year),
+                1 => await BuildPainelAtivoOrcado(reportScope.AccountPlanId, year, reportScope),
+                2 => await BuildPainelPassivoOrcado(reportScope.AccountPlanId, year, reportScope),
+                3 => await BuildPainelDREOrcado(reportScope.AccountPlanId, year, reportScope),
                 _ => throw new ArgumentException("Tipo de classificação inválido.")
             };
 
-            await ApplyPendingClassificationInfoAsync(accountPlanId, result);
+            await ApplyPendingClassificationInfoAsync(reportScope.AccountPlanId, result);
             return SuccessResponse(result); // Aqui retorna a estrutura padronizada
         }
-        public async Task<PainelBalancoContabilRespone> BuildPainelAtivoOrcado(int accountPlanId, int year)
+        public async Task<PainelBalancoContabilRespone> BuildPainelAtivoOrcado(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope = null)
         {
-            return await BuildPainelByTypeAtivoOrcado(accountPlanId, year, 1);
+            return await BuildPainelByTypeAtivoOrcado(accountPlanId, year, 1, scope);
         }
-        public async Task<PainelBalancoContabilRespone> BuildPainelByTypeAtivoOrcado(int accountPlanId, int year, int typeClassification)
+        public async Task<PainelBalancoContabilRespone> BuildPainelByTypeAtivoOrcado(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var budgets = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var budgets = await GetBudgetsByReportScopeAsync(accountPlanId, year, scope);
 
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
@@ -2798,13 +2839,20 @@ namespace _2___Application._1_Services
 
             return new PainelBalancoContabilRespone { Months = months };
         }
-        public async Task<PainelBalancoContabilRespone> BuildPainelPassivoOrcado(int accountPlanId, int year)
+        public async Task<PainelBalancoContabilRespone> BuildPainelPassivoOrcado(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope = null)
         {
-            return await BuildPainelByTypePassivoOrcado(accountPlanId, year, 2);
+            return await BuildPainelByTypePassivoOrcado(accountPlanId, year, 2, scope);
         }
-        public async Task<PainelBalancoContabilRespone> BuildPainelByTypePassivoOrcado(int accountPlanId, int year, int typeClassification)
+        public async Task<PainelBalancoContabilRespone> BuildPainelByTypePassivoOrcado(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBudgetsByReportScopeAsync(accountPlanId, year, scope);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
             var classificationTotalizerIds = classifications
@@ -2822,7 +2870,7 @@ namespace _2___Application._1_Services
             var balanceteData = await _budgetDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _budgetDataRepository.GetByAccountPlanClassificationId(accountPlanId);
 
-            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3); // Painel da DRE para pegar o lucro líquido
+            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3, scope); // Painel da DRE para pegar o lucro líquido
 
 
 
@@ -2945,13 +2993,20 @@ namespace _2___Application._1_Services
 
             return new PainelBalancoContabilRespone { Months = months };
         }
-        public async Task<PainelBalancoContabilRespone> BuildPainelDREOrcado(int accountPlanId, int year)
+        public async Task<PainelBalancoContabilRespone> BuildPainelDREOrcado(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope = null)
         {
-            return await BuildPainelByTypeDREOrcado(accountPlanId, year, 3);
+            return await BuildPainelByTypeDREOrcado(accountPlanId, year, 3, scope);
         }
-        public async Task<PainelBalancoContabilRespone> BuildPainelByTypeDREOrcado(int accountPlanId, int year, int typeClassification)
+        public async Task<PainelBalancoContabilRespone> BuildPainelByTypeDREOrcado(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBudgetsByReportScopeAsync(accountPlanId, year, scope);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
             var totalizersBase = await _totalizerClassificationRepository.GetByAccountPlansId(accountPlanId);
             var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
@@ -3170,11 +3225,14 @@ namespace _2___Application._1_Services
 
             return new PainelBalancoContabilRespone { Months = months };
         }
-        private async Task<PainelBalancoComparativoResponse> BuildPainelDREComparativoCompleto(int accountPlanId, int year)
+        private async Task<PainelBalancoComparativoResponse> BuildPainelDREComparativoCompleto(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope = null)
         {
             // 1️⃣ Chama os métodos existentes
-            var realizado = await BuildPainelByTypeDRE(accountPlanId, year, 3);
-            var orcado = await BuildPainelByTypeDREOrcado(accountPlanId, year, 3);
+            var realizado = await BuildPainelByTypeDRE(accountPlanId, year, 3, scope);
+            var orcado = await BuildPainelByTypeDREOrcado(accountPlanId, year, 3, scope);
 
             // 2️⃣ Calcula variação mês a mês
             var variacao = new PainelBalancoContabilRespone
@@ -3430,49 +3488,85 @@ namespace _2___Application._1_Services
                 totalizer.Name += " CAGR %";
             }
         }
-        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoAtivoOrcado(int accountPlanId, int year)
+        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoAtivoOrcado(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope = null)
         {
-            return await BuildPainelBalancoReclassificadoByTypeAtivoOrcado(accountPlanId, year, 1);
+            return await BuildPainelBalancoReclassificadoByTypeAtivoOrcado(accountPlanId, year, 1, scope);
         }
-        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoPassivoOrcado(int accountPlanId, int year)
+        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoPassivoOrcado(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope = null)
         {
-            return await BuildPainelBalancoReclassificadoByTypePassivoOrcado(accountPlanId, year, 2);
+            return await BuildPainelBalancoReclassificadoByTypePassivoOrcado(accountPlanId, year, 2, scope);
         }
-        public async Task<ResultValue> GetPainelBalancoReclassificadoOrcadoAsync(int accountPlanId, int year, int typeClassification)
+        public async Task<ResultValue> GetPainelBalancoReclassificadoOrcadoAsync(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            var reportScope = await ResolveFinancialReportScopeAsync(accountPlanId, groupId, companyId, subCompanyId);
+            if (reportScope == null)
+                return ErrorResponse(Message.NotFound);
+
             var result = typeClassification switch
             {
-                1 => await BuildPainelBalancoReclassificadoAtivoOrcado(accountPlanId, year),
-                2 => await BuildPainelBalancoReclassificadoPassivoOrcado(accountPlanId, year),
+                1 => await BuildPainelBalancoReclassificadoAtivoOrcado(reportScope.AccountPlanId, year, reportScope),
+                2 => await BuildPainelBalancoReclassificadoPassivoOrcado(reportScope.AccountPlanId, year, reportScope),
                 _ => throw new ArgumentException("Tipo de classificação inválido.")
             };
 
-            await ApplyPendingClassificationInfoAsync(accountPlanId, result);
+            await ApplyPendingClassificationInfoAsync(reportScope.AccountPlanId, result);
             return SuccessResponse(result); // Aqui retorna a estrutura padronizada
         }
-        public async Task<ResultValue> GetPainelBalancoReclassificadoComparativoAsync(int accountPlanId, int year, int typeClassification)
+        public async Task<ResultValue> GetPainelBalancoReclassificadoComparativoAsync(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            var reportScope = await ResolveFinancialReportScopeAsync(accountPlanId, groupId, companyId, subCompanyId);
+            if (reportScope == null)
+                return ErrorResponse(Message.NotFound);
+
             var result = typeClassification switch
             {
-                1 => await BuildPainelBalancoReclassificadoAtivoComparativo(accountPlanId, year),
-                2 => await BuildPainelBalancoReclassificadoPassivoComparativo(accountPlanId, year),
-                3 => await BuildPainelDREComparativoCompleto(accountPlanId, year),
+                1 => await BuildPainelBalancoReclassificadoAtivoComparativo(reportScope.AccountPlanId, year, reportScope),
+                2 => await BuildPainelBalancoReclassificadoPassivoComparativo(reportScope.AccountPlanId, year, reportScope),
+                3 => await BuildPainelDREComparativoCompleto(reportScope.AccountPlanId, year, reportScope),
                 _ => throw new ArgumentException("Tipo de classificação inválido.")
             };
 
             return SuccessResponse(result); // Aqui retorna a estrutura padronizada
         }
-        private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoAtivoComparativo(int accountPlanId, int year)
+        private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoAtivoComparativo(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope = null)
         {
-            return await BuildPainelBalancoReclassificadoComparativo(accountPlanId, year);
+            return await BuildPainelBalancoReclassificadoComparativo(accountPlanId, year, scope);
         }
-        private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoPassivoComparativo(int accountPlanId, int year)
+        private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoPassivoComparativo(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope = null)
         {
-            return await BuildPainelBalancoReclassificadoComparativoPassivo(accountPlanId, year);
+            return await BuildPainelBalancoReclassificadoComparativoPassivo(accountPlanId, year, scope);
         }
-        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypeAtivoOrcado(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypeAtivoOrcado(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBudgetsByReportScopeAsync(accountPlanId, year, scope);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
 
@@ -3593,9 +3687,13 @@ namespace _2___Application._1_Services
                 Months = months
             };
         }
-        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypePassivoOrcado(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypePassivoOrcado(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBudgetsByReportScopeAsync(accountPlanId, year, scope);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
             var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
@@ -3610,7 +3708,7 @@ namespace _2___Application._1_Services
 
             var balanceteData = await _budgetDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _budgetDataRepository.GetByAccountPlanClassificationId(accountPlanId);
-            var painelBalancoContabilPassivo = await BuildPainelByTypePassivo(accountPlanId, year, 2);
+            var painelBalancoContabilPassivo = await BuildPainelByTypePassivo(accountPlanId, year, 2, scope);
 
             var months = balancetes
                 .Select(balancete =>
@@ -3731,11 +3829,14 @@ namespace _2___Application._1_Services
                 Months = months
             };
         }
-        private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoComparativo(int accountPlanId, int year)
+        private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoComparativo(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope = null)
         {
             // 1️⃣ Chama os dois métodos originais (realizado e orçado)
-            var realizado = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
-            var orcado = await BuildPainelBalancoReclassificadoByTypeAtivoOrcado(accountPlanId, year, 1);
+            var realizado = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1, scope);
+            var orcado = await BuildPainelBalancoReclassificadoByTypeAtivoOrcado(accountPlanId, year, 1, scope);
 
             // 2️⃣ Calcula a variação (diferença)
             var variacao = new PainelBalancoContabilRespone
@@ -3794,11 +3895,14 @@ namespace _2___Application._1_Services
                 Variacao = variacao
             };
         }
-        private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoComparativoPassivo(int accountPlanId, int year)
+        private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoComparativoPassivo(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope = null)
         {
             // 1️⃣ Chama os métodos existentes
-            var realizado = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
-            var orcado = await BuildPainelBalancoReclassificadoByTypePassivoOrcado(accountPlanId, year, 2);
+            var realizado = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2, scope);
+            var orcado = await BuildPainelBalancoReclassificadoByTypePassivoOrcado(accountPlanId, year, 2, scope);
 
             // 2️⃣ Calcula variação
             var variacao = new PainelBalancoContabilRespone
@@ -4096,7 +4200,22 @@ namespace _2___Application._1_Services
                     year);
         }
 
-        private class FinancialReportScope
+        private Task<List<BudgetModel>> GetBudgetsByReportScopeAsync(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope)
+        {
+            return scope == null
+                ? _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year)
+                : _budgetRepository.GetByFinancialScopeMonth(
+                    accountPlanId,
+                    scope.GroupId,
+                    scope.CompanyId,
+                    scope.SubCompanyId,
+                    year);
+        }
+
+        public class FinancialReportScope
         {
             public int AccountPlanId { get; set; }
             public int GroupId { get; set; }

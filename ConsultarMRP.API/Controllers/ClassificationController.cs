@@ -273,12 +273,24 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("/painel/orcado")]
         [Authorize()]
-        public async Task<IActionResult> GetPainelBalancoOrcadoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
+        public async Task<IActionResult> GetPainelBalancoOrcadoAsync(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int typeClassification,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetPainelBalancoOrcadoAsync(accountPlanId, year, typeClassification);
+                var response = await _Service.GetPainelBalancoOrcadoAsync(
+                    accountPlanId,
+                    year,
+                    typeClassification,
+                    groupId,
+                    companyId,
+                    subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -307,12 +319,24 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("/painel-reclassificado")]
      
-        public async Task<IActionResult> GetPainelBalancoReclassificadoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
+        public async Task<IActionResult> GetPainelBalancoReclassificadoAsync(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int typeClassification,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetPainelBalancoReclassificadoAsync(accountPlanId, year, typeClassification);
+                var response = await _Service.GetPainelBalancoReclassificadoAsync(
+                    accountPlanId,
+                    year,
+                    typeClassification,
+                    groupId,
+                    companyId,
+                    subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -324,12 +348,24 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("/painel-reclassificado/orcado")]
         [Authorize()]
-        public async Task<IActionResult> GetPainelBalancoReclassificadoOrcadoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
+        public async Task<IActionResult> GetPainelBalancoReclassificadoOrcadoAsync(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int typeClassification,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetPainelBalancoReclassificadoOrcadoAsync(accountPlanId, year, typeClassification);
+                var response = await _Service.GetPainelBalancoReclassificadoOrcadoAsync(
+                    accountPlanId,
+                    year,
+                    typeClassification,
+                    groupId,
+                    companyId,
+                    subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -341,12 +377,24 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("/painel-reclassificado/comparativo")]
         [Authorize()]
-        public async Task<IActionResult> GetPainelBalancoReclassificadoComparativoAsync([FromQuery] int accountPlanId, [FromQuery] int year, [FromQuery] int typeClassification)
+        public async Task<IActionResult> GetPainelBalancoReclassificadoComparativoAsync(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int typeClassification,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetPainelBalancoReclassificadoComparativoAsync(accountPlanId, year, typeClassification);
+                var response = await _Service.GetPainelBalancoReclassificadoComparativoAsync(
+                    accountPlanId,
+                    year,
+                    typeClassification,
+                    groupId,
+                    companyId,
+                    subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
