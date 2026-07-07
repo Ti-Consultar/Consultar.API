@@ -1153,7 +1153,7 @@ namespace _2___Application._1_Services
                     "(-) Devoluções de Vendas" or "(-) Abatimentos" or "(-) Impostos e Contribuições"
                         => totalizerClassifications.FirstOrDefault(r => r.Name == "(-) Deduções da Receita Bruta")?.Id,
 
-                    "(-) Custos das Mercadorias" or "(-) Custos dos Serviços Prestados"
+                    "(-) Custos das Mercadorias" or "(-) Custos dos Serviços Prestados" or "(-) Custos Variáveis"
                         => totalizerClassifications.FirstOrDefault(r => r.Name == "(=) Receita Líquida de Vendas")?.Id,
 
                     "Despesas Variáveis"
@@ -1590,6 +1590,8 @@ namespace _2___Application._1_Services
                     .FirstOrDefault(c => c.Name == "(-) Custos das Mercadorias")?.Value ?? 0;
                 var custoServicos = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "(-) Custos dos Serviços Prestados")?.Value ?? 0;
+                var custosVariaveis = totalizerResponses.SelectMany(t => t.Classifications)
+                    .FirstOrDefault(c => c.Name == "(-) Custos Variáveis")?.Value ?? 0;
                 var despesasV = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Despesas Variáveis")?.Value ?? 0;
                 var outrosReceitas = totalizerResponses.SelectMany(t => t.Classifications)
@@ -1635,7 +1637,7 @@ namespace _2___Application._1_Services
 
                 var receitaLiquidaValor = receitaOperacionalBruta + deducoes;
                 if (receitaLiquida != null) receitaLiquida.TotalValue = receitaLiquidaValor;
-                if (lucroBruto != null) lucroBruto.TotalValue = receitaLiquidaValor + custoMercadorias + custoServicos;
+                if (lucroBruto != null) lucroBruto.TotalValue = receitaLiquidaValor + custoMercadorias + custoServicos + custosVariaveis;
                 if (margemContribuicao != null && lucroBruto != null)
                     margemContribuicao.TotalValue = lucroBruto.TotalValue + despesasV;
 
@@ -2843,6 +2845,8 @@ namespace _2___Application._1_Services
                     .FirstOrDefault(c => c.Name == "(-) Custos das Mercadorias")?.Value ?? 0;
                 var custoServicos = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "(-) Custos dos Serviços Prestados")?.Value ?? 0;
+                var custosVariaveis = totalizerResponses.SelectMany(t => t.Classifications)
+                    .FirstOrDefault(c => c.Name == "(-) Custos Variáveis")?.Value ?? 0;
                 var despesasV = totalizerResponses.SelectMany(t => t.Classifications)
                     .FirstOrDefault(c => c.Name == "Despesas Variáveis")?.Value ?? 0;
                 var outrosReceitas = totalizerResponses.SelectMany(t => t.Classifications)
@@ -2888,7 +2892,7 @@ namespace _2___Application._1_Services
 
                 var receitaLiquidaValor = receitaOperacionalBruta + deducoes;
                 if (receitaLiquida != null) receitaLiquida.TotalValue = receitaLiquidaValor;
-                if (lucroBruto != null) lucroBruto.TotalValue = receitaLiquidaValor + custoMercadorias + custoServicos;
+                if (lucroBruto != null) lucroBruto.TotalValue = receitaLiquidaValor + custoMercadorias + custoServicos + custosVariaveis;
                 if (margemContribuicao != null && lucroBruto != null)
                     margemContribuicao.TotalValue = lucroBruto.TotalValue + despesasV;
 
@@ -3029,8 +3033,10 @@ namespace _2___Application._1_Services
                         .FirstOrDefault(c => c.Name == "(-) Custos das Mercadorias")?.Value ?? 0;
                     var custoServicos = totalizerVar.SelectMany(t => t.Classifications)
                         .FirstOrDefault(c => c.Name == "(-) Custos dos Serviços Prestados")?.Value ?? 0;
+                    var custosVariaveis = totalizerVar.SelectMany(t => t.Classifications)
+                        .FirstOrDefault(c => c.Name == "(-) Custos Variáveis")?.Value ?? 0;
                     if (lucroBruto != null)
-                        lucroBruto.TotalValue = receitaLiquida?.TotalValue ?? 0 + custoMercadorias + custoServicos;
+                        lucroBruto.TotalValue = (receitaLiquida?.TotalValue ?? 0) + custoMercadorias + custoServicos + custosVariaveis;
 
                     var margemContribuicao = totalizerVar.FirstOrDefault(t => t.Name == "Margem Contribuição");
                     var despesasVariaveis = totalizerVar.SelectMany(t => t.Classifications)
@@ -3722,13 +3728,21 @@ namespace _2___Application._1_Services
             // -----------------------------------------------------
             var custoMercReal = GetValoresMensaisRealizados(realizado, "(-) Custos das Mercadorias");
             var custoServReal = GetValoresMensaisRealizados(realizado, "(-) Custos dos Serviços Prestados");
+            var custoVarReal = GetValoresMensaisRealizados(realizado, "(-) Custos Variáveis");
 
             var custoMercOrc = GetValoresMensaisOrcados(orcado, "(-) Custos das Mercadorias");
             var custoServOrc = GetValoresMensaisOrcados(orcado, "(-) Custos dos Serviços Prestados");
+            var custoVarOrc = GetValoresMensaisOrcados(orcado, "(-) Custos Variáveis");
 
             // Soma mês a mês (não soma o ano inteiro)
-            var custosReal = custoMercReal.Zip(custoServReal, (m, s) => m + s).ToList();
-            var custosOrc = custoMercOrc.Zip(custoServOrc, (m, s) => m + s).ToList();
+            var custosReal = custoMercReal
+                .Zip(custoServReal, (m, s) => m + s)
+                .Zip(custoVarReal, (ms, v) => ms + v)
+                .ToList();
+            var custosOrc = custoMercOrc
+                .Zip(custoServOrc, (m, s) => m + s)
+                .Zip(custoVarOrc, (ms, v) => ms + v)
+                .ToList();
 
             // -----------------------------------------------------
             // 3) Despesas Operacionais Mensais
