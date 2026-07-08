@@ -19,12 +19,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("cil-ec")]
         [Authorize()]
-        public async Task<IActionResult> GetCileEC([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetCileEC(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetCileEC(accountPlanId, year);
+                var response = await _Service.GetCileEC(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -36,12 +41,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("cil-ec/variacao")]
         [Authorize()]
-        public async Task<IActionResult> GetCileECComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetCileECComparativo(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetCileECComparativo(accountPlanId, year);
+                var response = await _Service.GetCileECComparativo(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)

@@ -21,12 +21,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("")]
         [Authorize()]
-        public async Task<IActionResult> GetCashFlow([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetCashFlow(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetCashFlow(accountPlanId, year);
+                var response = await _Service.GetCashFlow(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -62,12 +67,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("/variacao")]
         [Authorize()]
-        public async Task<IActionResult> GetCashFlowComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetCashFlowComparativo(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetCashFlowComparativo(accountPlanId, year);
+                var response = await _Service.GetCashFlowComparativo(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -103,12 +113,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("/rolling")]
         [Authorize()]
-        public async Task<IActionResult> GetCashFlowComparativoRolling([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetCashFlowComparativoRolling(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetCashFlowComparativoRolling(accountPlanId, year);
+                var response = await _Service.GetCashFlowComparativoRolling(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)

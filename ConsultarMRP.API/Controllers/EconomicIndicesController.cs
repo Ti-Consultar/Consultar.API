@@ -19,12 +19,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("profitability")]
         [Authorize()]
-        public async Task<IActionResult> GetProfitability([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetProfitability(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetProfitability(accountPlanId, year);
+                var response = await _Service.GetProfitability(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -36,12 +41,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("profitability/orcado")]
         [Authorize()]
-        public async Task<IActionResult> GetProfitabilityComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetProfitabilityComparativo(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetProfitabilityComparativo(accountPlanId, year);
+                var response = await _Service.GetProfitabilityComparativo(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -53,12 +63,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("rentability")]
         [Authorize()]
-        public async Task<IActionResult> GetRentabilibty([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetRentabilibty(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetRentabilibty(accountPlanId, year);
+                var response = await _Service.GetRentabilibty(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -70,12 +85,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("rentability/orcado")]
         [Authorize()]
-        public async Task<IActionResult> GetRentabilityComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetRentabilityComparativo(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetRentabilityComparativo(accountPlanId, year);
+                var response = await _Service.GetRentabilityComparativo(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -87,12 +107,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("return-expectation")]
         [Authorize()]
-        public async Task<IActionResult> GetReturnExpectation([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetReturnExpectation(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetReturnExpectation(accountPlanId, year);
+                var response = await _Service.GetReturnExpectation(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -104,12 +129,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("return-expectation/orcado")]
         [Authorize()]
-        public async Task<IActionResult> GetReturnExpectationComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetReturnExpectationComparativo(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetReturnExpectationComparativo(accountPlanId, year);
+                var response = await _Service.GetReturnExpectationComparativo(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -122,12 +152,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("ebitda")]
         [Authorize()]
-        public async Task<IActionResult> GetEBITDA([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetEBITDA(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetEBITDA(accountPlanId, year);
+                var response = await _Service.GetEBITDA(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -139,12 +174,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("ebitda/orcado")]
         [Authorize()]
-        public async Task<IActionResult> GetEBITDAOrcado([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetEBITDAOrcado(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetEBITDAOrcado(accountPlanId, year);
+                var response = await _Service.GetEBITDAOrcado(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -156,12 +196,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("ebitda/variacao")]
         [Authorize()]
-        public async Task<IActionResult> GetEBITDAOrcados([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetEBITDAOrcados(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetEBITDAComparativo(accountPlanId, year);
+                var response = await _Service.GetEBITDAComparativo(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -173,12 +218,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("nopat")]
         [Authorize()]
-        public async Task<IActionResult> GetNOPAT([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetNOPAT(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetNOPAT(accountPlanId, year);
+                var response = await _Service.GetNOPAT(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -190,12 +240,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("nopat/variacao")]
         [Authorize()]
-        public async Task<IActionResult> GetNOPATComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetNOPATComparativo(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetNOPATComparativo(accountPlanId, year);
+                var response = await _Service.GetNOPATComparativo(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)

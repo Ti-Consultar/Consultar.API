@@ -52,12 +52,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("")]
         [Authorize()]
-        public async Task<IActionResult> GetDashboard([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetDashboard(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetDashboard(accountPlanId, year);
+                var response = await _Service.GetDashboard(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -68,12 +73,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("gestao-prazo-medio")]
         [Authorize()]
-        public async Task<IActionResult> GetDashboardGestaoPrazoMedio([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetDashboardGestaoPrazoMedio(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetDashboardGestaoPrazoMedio(accountPlanId, year);
+                var response = await _Service.GetDashboardGestaoPrazoMedio(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)

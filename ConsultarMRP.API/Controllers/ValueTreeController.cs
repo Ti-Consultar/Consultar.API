@@ -21,12 +21,18 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("")]
         [Authorize()]
-        public async Task<IActionResult> GetAll([FromQuery] int accountPlanId, [FromQuery] int month,[FromQuery] int year)
+        public async Task<IActionResult> GetAll(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int month,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GettAll(accountPlanId, month, year);
+                var response = await _Service.GettAll(accountPlanId, month, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -38,12 +44,18 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("Orcado")]
         [Authorize()]
-        public async Task<IActionResult> GettAllOrcado([FromQuery] int accountPlanId, [FromQuery] int month, [FromQuery] int year)
+        public async Task<IActionResult> GettAllOrcado(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int month,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GettAllOrcado(accountPlanId, month, year);
+                var response = await _Service.GettAllOrcado(accountPlanId, month, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -55,12 +67,18 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("variacao")]
         [Authorize()]
-        public async Task<IActionResult> BuildValueTreeComparativo([FromQuery] int accountPlanId, [FromQuery] int month, [FromQuery] int year)
+        public async Task<IActionResult> BuildValueTreeComparativo(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int month,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.BuildValueTreeComparativo(accountPlanId, month, year);
+                var response = await _Service.BuildValueTreeComparativo(accountPlanId, month, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)

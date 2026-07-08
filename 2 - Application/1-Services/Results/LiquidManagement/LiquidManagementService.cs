@@ -2,6 +2,8 @@
 using _2___Application._2_Dto_s.Results.CILeEC;
 using _2___Application._2_Dto_s.Results.LiquidManagement;
 using _2___Application._2_Dto_s.TotalizerClassification;
+using _2___Application._1_Services.Scope;
+using _3_Domain._1_Entities;
 using _2___Application.Base;
 using _3_Domain._2_Enum_s;
 using _4_InfraData._1_Repositories;
@@ -29,6 +31,8 @@ namespace _2___Application._1_Services.Results
         private readonly BalancoReclassificadoTemplateRepository _balancoReclassificadoTemplateRepository;
         private readonly BalancoReclassificadoRepository _balancoReclassificadoRepository;
         private readonly AccountPlansRepository _accountPlansRepository;
+        private readonly IAccountPlanScopeResolver _accountPlanScopeResolver;
+        private FinancialReportScope? _financialReportScope;
 
         public LiquidManagementService(
             ClassificationRepository repository,
@@ -42,6 +46,7 @@ namespace _2___Application._1_Services.Results
             BalancoReclassificadoTemplateRepository balancoReclassificadoTemplateRepository,
             BalancoReclassificadoRepository balancoReclassificadoRepository,
             AccountPlansRepository accountPlansRepository,
+            IAccountPlanScopeResolver accountPlanScopeResolver,
             IAppSettings appSettings) : base(appSettings)
         {
             _repository = repository;
@@ -55,12 +60,20 @@ namespace _2___Application._1_Services.Results
             _balancoReclassificadoTemplateRepository = balancoReclassificadoTemplateRepository;
             _balancoReclassificadoRepository = balancoReclassificadoRepository;
             _accountPlansRepository = accountPlansRepository;
+            _accountPlanScopeResolver = accountPlanScopeResolver;
         }
 
         #region Variáveis da Liquidez
 
-        public async Task<PainelLiquidityManagementResponseDto> GetLiquidityManagement(int accountPlanId, int year)
+        public async Task<PainelLiquidityManagementResponseDto> GetLiquidityManagement(
+            int accountPlanId,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
 
@@ -131,8 +144,15 @@ namespace _2___Application._1_Services.Results
             };
         }
 
-        public async Task<PainelLiquidityManagementComparativoResponseDto> GetLiquidityManagementComparativo(int accountPlanId, int year)
+        public async Task<PainelLiquidityManagementComparativoResponseDto> GetLiquidityManagementComparativo(
+            int accountPlanId,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+
             var painelAtivoRealizado = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelAtivoOrcado = await BuildPainelBalancoReclassificadoByTypeAtivoOrcado(accountPlanId, year, 1);
 
@@ -269,8 +289,16 @@ namespace _2___Application._1_Services.Results
         }
 
 
-        public async Task<PainelLiquidityManagementResponseDto> GetLiquidityManagementMonth(int accountPlanId, int year, int month)
+        public async Task<PainelLiquidityManagementResponseDto> GetLiquidityManagementMonth(
+            int accountPlanId,
+            int year,
+            int month,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
 
@@ -346,8 +374,15 @@ namespace _2___Application._1_Services.Results
 
         #region Dinâmica do Capital de Giro
 
-        public async Task<PainelCapitalDynamicsResponseDto> GetCapitalDynamics(int accountPlanId, int year)
+        public async Task<PainelCapitalDynamicsResponseDto> GetCapitalDynamics(
+            int accountPlanId,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+
 
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
@@ -426,8 +461,15 @@ namespace _2___Application._1_Services.Results
             };
         }
 
-        public async Task<PainelCapitalDynamicsComparativoResponseDto> GetCapitalDynamicsComparativo(int accountPlanId, int year)
+        public async Task<PainelCapitalDynamicsComparativoResponseDto> GetCapitalDynamicsComparativo(
+            int accountPlanId,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+
             // Painéis realizados
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
@@ -580,8 +622,15 @@ namespace _2___Application._1_Services.Results
 
         #region Geração de Fluxo de Caixa Bruto
 
-        public async Task<PainelGrossCashFlowResponseDto> GetGrossCashFlow(int accountPlanId, int year)
+        public async Task<PainelGrossCashFlowResponseDto> GetGrossCashFlow(
+            int accountPlanId,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
@@ -646,8 +695,15 @@ namespace _2___Application._1_Services.Results
             };
         }
 
-        public async Task<PainelGrossCashFlowComparativoResponseDto> GetGrossCashFlowComparativo(int accountPlanId, int year)
+        public async Task<PainelGrossCashFlowComparativoResponseDto> GetGrossCashFlowComparativo(
+            int accountPlanId,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+
             // 🔹 Painéis realizados
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
@@ -795,8 +851,15 @@ namespace _2___Application._1_Services.Results
         #endregion
 
         #region Rotatividade
-        public async Task<PainelTurnoverResponseDto> GetTurnover(int accountPlanId, int year)
+        public async Task<PainelTurnoverResponseDto> GetTurnover(
+            int accountPlanId,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
@@ -878,8 +941,15 @@ namespace _2___Application._1_Services.Results
             };
         }
 
-        public async Task<PainelTurnoverComparativoResponseDto> GetTurnoverComparativo(int accountPlanId, int year)
+        public async Task<PainelTurnoverComparativoResponseDto> GetTurnoverComparativo(
+            int accountPlanId,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+
             // Painéis realizados
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
@@ -1016,8 +1086,15 @@ namespace _2___Application._1_Services.Results
         #endregion
 
         #region Liquidez
-        public async Task<PainelLiquidityResponseDto> GetLiquidity(int accountPlanId, int year)
+        public async Task<PainelLiquidityResponseDto> GetLiquidity(
+            int accountPlanId,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
@@ -1064,8 +1141,15 @@ namespace _2___Application._1_Services.Results
             };
         }
 
-        public async Task<PainelLiquidityComparativoResponseDto> GetLiquidityComparativo(int accountPlanId, int year)
+        public async Task<PainelLiquidityComparativoResponseDto> GetLiquidityComparativo(
+            int accountPlanId,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+
             var painelAtivoRealizado = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivoRealizado = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
             var painelDRERealizado = await BuildPainelByTypeDRE(accountPlanId, year, 3);
@@ -1202,8 +1286,15 @@ namespace _2___Application._1_Services.Results
         #endregion
 
         #region Estrutura de Capital 
-        public async Task<PainelCapitalStructureResponseDto> GetCapitalStructure(int accountPlanId, int year)
+        public async Task<PainelCapitalStructureResponseDto> GetCapitalStructure(
+            int accountPlanId,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
 
@@ -1268,8 +1359,15 @@ namespace _2___Application._1_Services.Results
         }
 
 
-        public async Task<PainelCapitalStructureComparativoResponseDto> GetCapitalStructureComparativo(int accountPlanId, int year)
+        public async Task<PainelCapitalStructureComparativoResponseDto> GetCapitalStructureComparativo(
+            int accountPlanId,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+
             var painelAtivoRealizado = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivoRealizado = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
 
@@ -1442,7 +1540,7 @@ namespace _2___Application._1_Services.Results
         #region Dados
         private async Task<PainelBalancoContabilRespone> BuildPainelByTypePassivo(int accountPlanId, int year, int typeClassification)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
             var classificationTotalizerIds = classifications
@@ -1585,7 +1683,7 @@ namespace _2___Application._1_Services.Results
         }
         private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypeAtivo(int accountPlanId, int year, int typeClassification)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
 
@@ -1710,7 +1808,7 @@ namespace _2___Application._1_Services.Results
 
         private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypePassivo(int accountPlanId, int year, int typeClassification)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
             var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
@@ -1859,7 +1957,7 @@ namespace _2___Application._1_Services.Results
 
         private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDRE(int accountPlanId, int year, int typeClassification)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
             var totalizersBase = await _totalizerClassificationRepository.GetByAccountPlansId(accountPlanId);
             var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
@@ -2112,7 +2210,7 @@ namespace _2___Application._1_Services.Results
 
         private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypeAtivoOrcado(int accountPlanId, int year, int typeClassification)
         {
-            var balancetes = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBudgetsByReportScopeAsync(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
 
@@ -2236,7 +2334,7 @@ namespace _2___Application._1_Services.Results
 
         private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypePassivoOrcado(int accountPlanId, int year, int typeClassification)
         {
-            var balancetes = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBudgetsByReportScopeAsync(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
             var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
@@ -2383,7 +2481,7 @@ namespace _2___Application._1_Services.Results
         }
         private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDREOrcado(int accountPlanId, int year, int typeClassification)
         {
-            var balancetes = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBudgetsByReportScopeAsync(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
             var totalizersBase = await _totalizerClassificationRepository.GetByAccountPlansId(accountPlanId);
             var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
@@ -2706,6 +2804,52 @@ namespace _2___Application._1_Services.Results
             };
         }
 
+        private async Task<int> ResolveReportAccountPlanIdAsync(
+            int accountPlanId,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
+        {
+            _financialReportScope = await _accountPlanScopeResolver.ResolveFinancialReportScopeAsync(
+                _accountPlansRepository,
+                accountPlanId,
+                groupId,
+                companyId,
+                subCompanyId);
+
+            if (_financialReportScope == null && (groupId.HasValue || companyId.HasValue || subCompanyId.HasValue))
+                throw new InvalidOperationException("Escopo financeiro não encontrado.");
+
+            return _financialReportScope?.AccountPlanId ?? accountPlanId;
+        }
+
+        private Task<List<BalanceteModel>> GetBalancetesByReportScopeAsync(int accountPlanId, int year)
+        {
+            return _financialReportScope == null
+                ? _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year)
+                : _balanceteRepository.GetByFinancialScopeMonth(
+                    accountPlanId,
+                    _financialReportScope.GroupId,
+                    _financialReportScope.CompanyId,
+                    _financialReportScope.SubCompanyId,
+                    year);
+        }
+
+        private Task<List<BudgetModel>> GetBudgetsByReportScopeAsync(int accountPlanId, int year)
+        {
+            return _financialReportScope == null
+                ? _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year)
+                : _budgetRepository.GetByFinancialScopeMonth(
+                    accountPlanId,
+                    _financialReportScope.GroupId,
+                    _financialReportScope.CompanyId,
+                    _financialReportScope.SubCompanyId,
+                    year);
+        }
+
         #endregion
     }
 }
+
+
+

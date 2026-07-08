@@ -2,6 +2,8 @@
 using _2___Application._2_Dto_s.Results.OperationalEfficiency;
 using _2___Application._2_Dto_s.TotalizerClassification;
 using _2___Application._2_Dto_s.ValueTree;
+using _2___Application._1_Services.Scope;
+using _3_Domain._1_Entities;
 using _2___Application.Base;
 using _4_InfraData._1_Repositories;
 using _4_InfraData._2_AppSettings;
@@ -28,6 +30,8 @@ namespace _2___Application._1_Services.ValueTree
         private readonly BalancoReclassificadoRepository _balancoReclassificadoRepository;
         private readonly AccountPlansRepository _accountPlansRepository;
         private readonly ParameterRepository _parameterRepository;
+        private readonly IAccountPlanScopeResolver _accountPlanScopeResolver;
+        private FinancialReportScope? _financialReportScope;
 
         public ValueTreeService(
             ClassificationRepository repository,
@@ -42,6 +46,7 @@ namespace _2___Application._1_Services.ValueTree
             BalancoReclassificadoRepository balancoReclassificadoRepository,
             AccountPlansRepository accountPlansRepository,
             ParameterRepository parameterRepository,
+            IAccountPlanScopeResolver accountPlanScopeResolver,
             IAppSettings appSettings) : base(appSettings)
         {
             _repository = repository;
@@ -56,13 +61,22 @@ namespace _2___Application._1_Services.ValueTree
             _balancoReclassificadoRepository = balancoReclassificadoRepository;
             _accountPlansRepository = accountPlansRepository;
             _parameterRepository = parameterRepository;
+            _accountPlanScopeResolver = accountPlanScopeResolver;
         }
 
         #region
 
 
-        public async Task<ValueTreeResultDto> GetAll(int accountPlanId, int month, int year)
+        public async Task<ValueTreeResultDto> GetAll(
+            int accountPlanId,
+            int month,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);
             var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivo(accountPlanId, year, 2);
             var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3);
@@ -235,8 +249,15 @@ namespace _2___Application._1_Services.ValueTree
             };
         }
 
-        public async Task<ValueTreeResultDto> GettAll(int accountPlanId, int month, int year)
+        public async Task<ValueTreeResultDto> GettAll(
+            int accountPlanId,
+            int month,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
 
 
             // === Painéis completos do ano ===
@@ -555,8 +576,15 @@ namespace _2___Application._1_Services.ValueTree
 
    
 
-        public async Task<ValueTreeResultDto> GettAllOrcado(int accountPlanId, int month, int year)
+        public async Task<ValueTreeResultDto> GettAllOrcado(
+            int accountPlanId,
+            int month,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
 
 
             // === Painéis completos do ano ===
@@ -871,14 +899,22 @@ namespace _2___Application._1_Services.ValueTree
         }
 
 
-        public async Task<ValueTreeComparativoResponse> BuildValueTreeComparativo(int accountPlanId, int month, int year)
+        public async Task<ValueTreeComparativoResponse> BuildValueTreeComparativo(
+            int accountPlanId,
+            int month,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            accountPlanId = await ResolveReportAccountPlanIdAsync(accountPlanId, groupId, companyId, subCompanyId);
+
             ValueTreeResultDto realizado = null;
             ValueTreeResultDto orcado = null;
 
             try
             {
-                realizado = await GettAll(accountPlanId, month, year);
+                realizado = await GettAll(accountPlanId, month, year, groupId, companyId, subCompanyId);
             }
             catch
             {
@@ -887,7 +923,7 @@ namespace _2___Application._1_Services.ValueTree
 
             try
             {
-                orcado = await GettAllOrcado(accountPlanId, month, year);
+                orcado = await GettAllOrcado(accountPlanId, month, year, groupId, companyId, subCompanyId);
             }
             catch
             {
@@ -1102,7 +1138,7 @@ namespace _2___Application._1_Services.ValueTree
                 InvestimentosAtivosFixos = ultimoMes?.InvestimentosAtivosFixos ?? 0,
                 CapitalInvestidoLiquido = ultimoMes?.CapitalInvestidoLiquido ?? 0,
 
-                WACC = waccAcumulado, // ✅ ajuste feito aqui
+                WACC = waccAcumulado, // ? ajuste feito aqui
 
                 MargemEBITDA = operationalEfficiency.Sum(x => x.ReceitasLiquidas) != 0
                     ? Math.Round(operationalEfficiency.Sum(x => x.EBITDA) / operationalEfficiency.Sum(x => x.ReceitasLiquidas) * 100, 2)
@@ -1137,7 +1173,7 @@ namespace _2___Application._1_Services.ValueTree
         }
         private async Task<PainelBalancoContabilRespone> BuildPainelByTypePassivo(int accountPlanId, int year, int typeClassification)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
             var classificationTotalizerIds = classifications
@@ -1280,7 +1316,7 @@ namespace _2___Application._1_Services.ValueTree
         }
         private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypeAtivo(int accountPlanId, int year, int typeClassification)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
 
@@ -1405,7 +1441,7 @@ namespace _2___Application._1_Services.ValueTree
 
         private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypePassivo(int accountPlanId, int year, int typeClassification)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
             var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
@@ -1487,7 +1523,7 @@ namespace _2___Application._1_Services.ValueTree
                         }
                     }
 
-                    // 🔹 Ajuste de "Resultado do Exercício Acumulado" -> "Resultado Acumulado"
+                    // ?? Ajuste de "Resultado do Exercício Acumulado" -> "Resultado Acumulado"
                     var resultadodoExercicioAcumulado = painelBalancoContabilPassivo.Months
                         .Where(m => m.DateMonth == (int)balancete.DateMonth)
                         .SelectMany(m => m.Totalizer)
@@ -1500,7 +1536,7 @@ namespace _2___Application._1_Services.ValueTree
                         resultadoAcumulado.TotalValue = resultadodoExercicioAcumulado.Value;
                     }
 
-                    // 🔹 Cálculo do PL
+                    // ?? Cálculo do PL
                     var patrimonioLiquido = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido");
                     var lucrosPrejuizos = totalizerResponses.FirstOrDefault(a => a.Name == "Lucros / Prejuízos Acumulados")?.TotalValue ?? 0;
                     var resultadoAcumValor = resultadoAcumulado?.TotalValue ?? 0;
@@ -1510,7 +1546,7 @@ namespace _2___Application._1_Services.ValueTree
                         patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + lucrosPrejuizos + (resultadoAcumValor * -1);
                     }
 
-                    // 🔹 NORMALIZAÇÃO: deixa todos os totalizadores POSITIVOS (sem mexer nas Classifications).
+                    // ?? NORMALIZAÇÃO: deixa todos os totalizadores POSITIVOS (sem mexer nas Classifications).
                     // Se quiser preservar "Resultado Acumulado" com sinal original, comente a linha do IF e use a condição abaixo.
                     foreach (var t in totalizerResponses)
                     {
@@ -1519,13 +1555,13 @@ namespace _2___Application._1_Services.ValueTree
                             t.TotalValue = Math.Abs(t.TotalValue);
                     }
 
-                    // 🔹 Re-leitura após normalização (para garantir que o total do mês use os valores já positivos)
+                    // ?? Re-leitura após normalização (para garantir que o total do mês use os valores já positivos)
                     decimal passivoFinanceiro = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Financeiro")?.TotalValue ?? 0;
                     decimal passivoOperacional = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Operacional")?.TotalValue ?? 0;
                     decimal patrimonioLiquidoPos = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
                     decimal passivoNaoCirculante = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Não Circulante")?.TotalValue ?? 0;
 
-                    // 🔹 Total do mês (já positivo)
+                    // ?? Total do mês (já positivo)
                     decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquidoPos + passivoNaoCirculante;
                     totalPassivo = Math.Abs(totalPassivo);
 
@@ -1554,7 +1590,7 @@ namespace _2___Application._1_Services.ValueTree
 
         private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDRE(int accountPlanId, int year, int typeClassification)
         {
-            var balancetes = await _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBalancetesByReportScopeAsync(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
             var totalizersBase = await _totalizerClassificationRepository.GetByAccountPlansId(accountPlanId);
             var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
@@ -1842,7 +1878,7 @@ namespace _2___Application._1_Services.ValueTree
 
         private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypeAtivoOrcado(int accountPlanId, int year, int typeClassification)
         {
-            var balancetes = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBudgetsByReportScopeAsync(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
 
@@ -1966,7 +2002,7 @@ namespace _2___Application._1_Services.ValueTree
 
         private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypePassivoOrcado(int accountPlanId, int year, int typeClassification)
         {
-            var balancetes = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBudgetsByReportScopeAsync(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
             var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
@@ -2048,7 +2084,7 @@ namespace _2___Application._1_Services.ValueTree
                         }
                     }
 
-                    // 🔹 Ajuste de "Resultado do Exercício Acumulado" -> "Resultado Acumulado"
+                    // ?? Ajuste de "Resultado do Exercício Acumulado" -> "Resultado Acumulado"
                     var resultadodoExercicioAcumulado = painelBalancoContabilPassivo.Months
                         .Where(m => m.DateMonth == (int)balancete.DateMonth)
                         .SelectMany(m => m.Totalizer)
@@ -2061,7 +2097,7 @@ namespace _2___Application._1_Services.ValueTree
                         resultadoAcumulado.TotalValue = resultadodoExercicioAcumulado.Value;
                     }
 
-                    // 🔹 Cálculo do PL
+                    // ?? Cálculo do PL
                     var patrimonioLiquido = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido");
                     var lucrosPrejuizos = totalizerResponses.FirstOrDefault(a => a.Name == "Lucros / Prejuízos Acumulados")?.TotalValue ?? 0;
                     var resultadoAcumValor = resultadoAcumulado?.TotalValue ?? 0;
@@ -2071,7 +2107,7 @@ namespace _2___Application._1_Services.ValueTree
                         patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + lucrosPrejuizos + (resultadoAcumValor * -1);
                     }
 
-                    // 🔹 NORMALIZAÇÃO: deixa todos os totalizadores POSITIVOS (sem mexer nas Classifications).
+                    // ?? NORMALIZAÇÃO: deixa todos os totalizadores POSITIVOS (sem mexer nas Classifications).
                     // Se quiser preservar "Resultado Acumulado" com sinal original, comente a linha do IF e use a condição abaixo.
                     foreach (var t in totalizerResponses)
                     {
@@ -2080,13 +2116,13 @@ namespace _2___Application._1_Services.ValueTree
                             t.TotalValue = Math.Abs(t.TotalValue);
                     }
 
-                    // 🔹 Re-leitura após normalização (para garantir que o total do mês use os valores já positivos)
+                    // ?? Re-leitura após normalização (para garantir que o total do mês use os valores já positivos)
                     decimal passivoFinanceiro = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Financeiro")?.TotalValue ?? 0;
                     decimal passivoOperacional = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Operacional")?.TotalValue ?? 0;
                     decimal patrimonioLiquidoPos = totalizerResponses.FirstOrDefault(a => a.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
                     decimal passivoNaoCirculante = totalizerResponses.FirstOrDefault(a => a.Name == "Passivo Não Circulante")?.TotalValue ?? 0;
 
-                    // 🔹 Total do mês (já positivo)
+                    // ?? Total do mês (já positivo)
                     decimal totalPassivo = passivoFinanceiro + passivoOperacional + patrimonioLiquidoPos + passivoNaoCirculante;
                     totalPassivo = Math.Abs(totalPassivo);
 
@@ -2113,7 +2149,7 @@ namespace _2___Application._1_Services.ValueTree
         }
         private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDREOrcado(int accountPlanId, int year, int typeClassification)
         {
-            var balancetes = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBudgetsByReportScopeAsync(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
             var totalizersBase = await _totalizerClassificationRepository.GetByAccountPlansId(accountPlanId);
             var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
@@ -2401,7 +2437,7 @@ namespace _2___Application._1_Services.ValueTree
         }
         public async Task<PainelBalancoContabilRespone> BuildPainelByTypeAtivoOrcado(int accountPlanId, int year, int typeClassification)
         {
-            var budgets = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var budgets = await GetBudgetsByReportScopeAsync(accountPlanId, year);
 
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
@@ -2486,7 +2522,7 @@ namespace _2___Application._1_Services.ValueTree
         }
         public async Task<PainelBalancoContabilRespone> BuildPainelByTypePassivoOrcado(int accountPlanId, int year, int typeClassification)
         {
-            var balancetes = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBudgetsByReportScopeAsync(accountPlanId, year);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
             var classificationTotalizerIds = classifications
@@ -2809,7 +2845,7 @@ namespace _2___Application._1_Services.ValueTree
                 InvestimentosAtivosFixos = ultimoMes?.InvestimentosAtivosFixos ?? 0,
                 CapitalInvestidoLiquido = ultimoMes?.CapitalInvestidoLiquido ?? 0,
 
-                WACC = waccAcumulado, // ✅ ajuste feito aqui
+                WACC = waccAcumulado, // ? ajuste feito aqui
 
                 MargemEBITDA = operationalEfficiency.Sum(x => x.ReceitasLiquidas) != 0
                     ? Math.Round(operationalEfficiency.Sum(x => x.EBITDA) / operationalEfficiency.Sum(x => x.ReceitasLiquidas) * 100, 2)
@@ -2842,6 +2878,52 @@ namespace _2___Application._1_Services.ValueTree
                 }
             };
         }
+
+        private async Task<int> ResolveReportAccountPlanIdAsync(
+            int accountPlanId,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
+        {
+            _financialReportScope = await _accountPlanScopeResolver.ResolveFinancialReportScopeAsync(
+                _accountPlansRepository,
+                accountPlanId,
+                groupId,
+                companyId,
+                subCompanyId);
+
+            if (_financialReportScope == null && (groupId.HasValue || companyId.HasValue || subCompanyId.HasValue))
+                throw new InvalidOperationException("Escopo financeiro não encontrado.");
+
+            return _financialReportScope?.AccountPlanId ?? accountPlanId;
+        }
+
+        private Task<List<BalanceteModel>> GetBalancetesByReportScopeAsync(int accountPlanId, int year)
+        {
+            return _financialReportScope == null
+                ? _balanceteRepository.GetByAccountPlanIdMonth(accountPlanId, year)
+                : _balanceteRepository.GetByFinancialScopeMonth(
+                    accountPlanId,
+                    _financialReportScope.GroupId,
+                    _financialReportScope.CompanyId,
+                    _financialReportScope.SubCompanyId,
+                    year);
+        }
+
+        private Task<List<BudgetModel>> GetBudgetsByReportScopeAsync(int accountPlanId, int year)
+        {
+            return _financialReportScope == null
+                ? _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year)
+                : _budgetRepository.GetByFinancialScopeMonth(
+                    accountPlanId,
+                    _financialReportScope.GroupId,
+                    _financialReportScope.CompanyId,
+                    _financialReportScope.SubCompanyId,
+                    year);
+        }
+
         #endregion
     }
 }
+
+

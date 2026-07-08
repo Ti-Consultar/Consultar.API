@@ -19,12 +19,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("")]
         [Authorize()]
-        public async Task<IActionResult> GetOperationalEfficiency([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetOperationalEfficiency(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetOperationalEfficiency(accountPlanId, year);
+                var response = await _Service.GetOperationalEfficiency(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -36,12 +41,17 @@ namespace ConsultarMRP.API.Controllers
         [HttpGet]
         [Route("/orcado")]
         [Authorize()]
-        public async Task<IActionResult> GetOperationalEfficiencyComparativo([FromQuery] int accountPlanId, [FromQuery] int year)
+        public async Task<IActionResult> GetOperationalEfficiencyComparativo(
+            [FromQuery] int accountPlanId,
+            [FromQuery] int year,
+            [FromQuery] int? groupId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? subCompanyId)
         {
             try
             {
 
-                var response = await _Service.GetOperationalEfficiencyComparativo(accountPlanId, year);
+                var response = await _Service.GetOperationalEfficiencyComparativo(accountPlanId, year, groupId, companyId, subCompanyId);
                 return Ok(response);
             }
             catch (Exception ex)

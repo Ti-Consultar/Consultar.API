@@ -231,9 +231,14 @@ namespace _2___Application._1_Services.CashFlow
                 }
             };
         }
-        public async Task<PainelCashFlowResponseDto> GetCashFlow(int accountPlanId, int year)
+        public async Task<PainelCashFlowResponseDto> GetCashFlow(
+            int accountPlanId,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
-            var reportScope = await ResolveFinancialReportScopeAsync(accountPlanId);
+            var reportScope = await ResolveFinancialReportScopeAsync(accountPlanId, groupId, companyId, subCompanyId);
             return reportScope == null
                 ? new PainelCashFlowResponseDto { CashFlow = new CashFlowGroupedDto { Months = new List<CashFlowResponseDto>() } }
                 : await GetCashFlow(reportScope.AccountPlanId, year, reportScope);
@@ -508,21 +513,24 @@ namespace _2___Application._1_Services.CashFlow
             };
         }
 
-        public async Task<PainelCashFlowResponseDto> GetCashFlowOrcado(int accountPlanId, int year)
+        public async Task<PainelCashFlowResponseDto> GetCashFlowOrcado(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope = null)
         {
-            var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivoOrcado(accountPlanId, year, 1);
-            var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivoOrcado(accountPlanId, year, 2);
-            var painelBcPassivo = await BuildPainelByTypePassivoOrcado(accountPlanId, year, 2);
-            var painelDRE = await BuildPainelByTypeDREOrcado(accountPlanId, year, 3);
+            var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivoOrcado(accountPlanId, year, 1, scope);
+            var painelPassivo = await BuildPainelBalancoReclassificadoByTypePassivoOrcado(accountPlanId, year, 2, scope);
+            var painelBcPassivo = await BuildPainelByTypePassivoOrcado(accountPlanId, year, 2, scope);
+            var painelDRE = await BuildPainelByTypeDREOrcado(accountPlanId, year, 3, scope);
             var cashFlow = new List<CashFlowResponseDto>();
 
             CashFlowResponseDto previousMonth = null;
 
             // Inicializar com base em dezembro do ano anterior
-            var painelAtivoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivoOrcado(accountPlanId, year - 1, 1);
-            var painelPassivoAnterior = await BuildPainelBalancoReclassificadoByTypePassivoOrcado(accountPlanId, year - 1, 2);
-            var painelPassivoBcAnterior = await BuildPainelByTypePassivoOrcado(accountPlanId, year - 1, 2);
-            var painelDREAnterior = await BuildPainelByTypeDREOrcado(accountPlanId, year - 1, 3);
+            var painelAtivoAnterior = await BuildPainelBalancoReclassificadoByTypeAtivoOrcado(accountPlanId, year - 1, 1, scope);
+            var painelPassivoAnterior = await BuildPainelBalancoReclassificadoByTypePassivoOrcado(accountPlanId, year - 1, 2, scope);
+            var painelPassivoBcAnterior = await BuildPainelByTypePassivoOrcado(accountPlanId, year - 1, 2, scope);
+            var painelDREAnterior = await BuildPainelByTypeDREOrcado(accountPlanId, year - 1, 3, scope);
 
             var dezembroAtivo = painelAtivoAnterior?.Months?.FirstOrDefault(m => m.DateMonth == 12);
             var dezembroPassivo = painelPassivoAnterior?.Months?.FirstOrDefault(m => m.DateMonth == 12);
@@ -783,52 +791,26 @@ namespace _2___Application._1_Services.CashFlow
 
         public async Task<PainelCashFlowResponseDto> GetCashFlowOrcado(EntityScopeRequest scope, int year)
         {
-            var accountPlanIds = await _accountPlanScopeResolver.ResolveAccountPlanIds(scope);
-            var panels = new List<PainelCashFlowResponseDto>();
-
-            foreach (var accountPlanId in accountPlanIds)
-            {
-                panels.Add(await GetCashFlowOrcado(accountPlanId, year));
-            }
-
-            return AggregateCashFlowPanels(panels);
+            var reportScope = await ResolveFinancialReportScopeAsync(scope);
+            return reportScope == null
+                ? new PainelCashFlowResponseDto { CashFlow = new CashFlowGroupedDto { Months = new List<CashFlowResponseDto>() } }
+                : await GetCashFlowOrcado(reportScope.AccountPlanId, year, reportScope);
         }
 
         public async Task<PainelCashFlowComparativoResponseDto> GetCashFlowComparativo(EntityScopeRequest scope, int year)
         {
-            var accountPlanIds = await _accountPlanScopeResolver.ResolveAccountPlanIds(scope);
-            var comparativos = new List<PainelCashFlowComparativoResponseDto>();
-
-            foreach (var accountPlanId in accountPlanIds)
-            {
-                comparativos.Add(await GetCashFlowComparativo(accountPlanId, year));
-            }
-
-            return new PainelCashFlowComparativoResponseDto
-            {
-                Realizado = AggregateCashFlowPanels(comparativos.Select(x => x.Realizado)),
-                Orcado = AggregateCashFlowPanels(comparativos.Select(x => x.Orcado)),
-                Variacao = AggregateCashFlowPanels(comparativos.Select(x => x.Variacao))
-            };
+            var reportScope = await ResolveFinancialReportScopeAsync(scope);
+            return reportScope == null
+                ? EmptyCashFlowComparativo()
+                : await GetCashFlowComparativo(reportScope.AccountPlanId, year, reportScope);
         }
 
         public async Task<PainelCashFlowComparativoRollingResponseDto> GetCashFlowComparativoRolling(EntityScopeRequest scope, int year)
         {
-            var accountPlanIds = await _accountPlanScopeResolver.ResolveAccountPlanIds(scope);
-            var comparativos = new List<PainelCashFlowComparativoRollingResponseDto>();
-
-            foreach (var accountPlanId in accountPlanIds)
-            {
-                comparativos.Add(await GetCashFlowComparativoRolling(accountPlanId, year));
-            }
-
-            return new PainelCashFlowComparativoRollingResponseDto
-            {
-                Realizado = AggregateCashFlowPanels(comparativos.Select(x => x.Realizado)),
-                Orcado = AggregateCashFlowPanels(comparativos.Select(x => x.Orcado)),
-                Variacao = AggregateCashFlowPanels(comparativos.Select(x => x.Variacao)),
-                Rolling = AggregateCashFlowPanels(comparativos.Select(x => x.Rolling))
-            };
+            var reportScope = await ResolveFinancialReportScopeAsync(scope);
+            return reportScope == null
+                ? EmptyCashFlowComparativoRolling()
+                : await GetCashFlowComparativoRolling(reportScope.AccountPlanId, year, reportScope);
         }
 
         private static PainelCashFlowResponseDto AggregateCashFlowPanels(IEnumerable<PainelCashFlowResponseDto> panels)
@@ -1463,13 +1445,29 @@ namespace _2___Application._1_Services.CashFlow
                 Variacao = variacao
             };
         }
-        public async Task<PainelCashFlowComparativoResponseDto> GetCashFlowComparativo(int accountPlanId, int year)
+        public async Task<PainelCashFlowComparativoResponseDto> GetCashFlowComparativo(
+            int accountPlanId,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
+        {
+            var reportScope = await ResolveFinancialReportScopeAsync(accountPlanId, groupId, companyId, subCompanyId);
+            return reportScope == null
+                ? EmptyCashFlowComparativo()
+                : await GetCashFlowComparativo(reportScope.AccountPlanId, year, reportScope);
+        }
+
+        private async Task<PainelCashFlowComparativoResponseDto> GetCashFlowComparativo(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope)
         {
             // 1️⃣ Monta o painel realizado e orçado com segurança
-            var realizado = await GetCashFlow(accountPlanId, year)
+            var realizado = await GetCashFlow(accountPlanId, year, scope)
                 ?? new PainelCashFlowResponseDto { CashFlow = new CashFlowGroupedDto { Months = new List<CashFlowResponseDto>() } };
 
-            var orcado = await GetCashFlowOrcado(accountPlanId, year)
+            var orcado = await GetCashFlowOrcado(accountPlanId, year, scope)
                 ?? new PainelCashFlowResponseDto { CashFlow = new CashFlowGroupedDto { Months = new List<CashFlowResponseDto>() } };
 
             // 1.5️⃣ Garante listas não nulas
@@ -1548,11 +1546,27 @@ namespace _2___Application._1_Services.CashFlow
             };
         }
 
-        public async Task<PainelCashFlowComparativoRollingResponseDto> GetCashFlowComparativoRolling(int accountPlanId, int year)
+        public async Task<PainelCashFlowComparativoRollingResponseDto> GetCashFlowComparativoRolling(
+            int accountPlanId,
+            int year,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
+        {
+            var reportScope = await ResolveFinancialReportScopeAsync(accountPlanId, groupId, companyId, subCompanyId);
+            return reportScope == null
+                ? EmptyCashFlowComparativoRolling()
+                : await GetCashFlowComparativoRolling(reportScope.AccountPlanId, year, reportScope);
+        }
+
+        private async Task<PainelCashFlowComparativoRollingResponseDto> GetCashFlowComparativoRolling(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope)
         {
             // 1️⃣ Monta o painel realizado e orçado
-            var realizado = await GetCashFlow(accountPlanId, year);
-            var orcado = await GetCashFlowOrcado(accountPlanId, year);
+            var realizado = await GetCashFlow(accountPlanId, year, scope);
+            var orcado = await GetCashFlowOrcado(accountPlanId, year, scope);
 
             // 2️⃣ Calcula a variação (Realizado - Orçado)
             var variacao = new PainelCashFlowResponseDto
@@ -2531,9 +2545,13 @@ namespace _2___Application._1_Services.CashFlow
             return new PainelBalancoContabilRespone { Months = months };
         }
 
-        public async Task<PainelBalancoContabilRespone> BuildPainelByTypeAtivoOrcado(int accountPlanId, int year, int typeClassification)
+        public async Task<PainelBalancoContabilRespone> BuildPainelByTypeAtivoOrcado(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var budgets = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var budgets = await GetBudgetsByReportScopeAsync(accountPlanId, year, scope);
 
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
@@ -2616,9 +2634,13 @@ namespace _2___Application._1_Services.CashFlow
 
             return new PainelBalancoContabilRespone { Months = months };
         }
-        public async Task<PainelBalancoContabilRespone> BuildPainelByTypePassivoOrcado(int accountPlanId, int year, int typeClassification)
+        public async Task<PainelBalancoContabilRespone> BuildPainelByTypePassivoOrcado(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBudgetsByReportScopeAsync(accountPlanId, year, scope);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
             var classificationTotalizerIds = classifications
@@ -2636,7 +2658,7 @@ namespace _2___Application._1_Services.CashFlow
             var balanceteData = await _budgetDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _budgetDataRepository.GetByAccountPlanClassificationId(accountPlanId);
 
-            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3); // Painel da DRE para pegar o lucro líquido
+            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3, scope); // Painel da DRE para pegar o lucro líquido
 
 
 
@@ -3040,9 +3062,13 @@ namespace _2___Application._1_Services.CashFlow
             };
         }
 
-        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypeAtivoOrcado(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypeAtivoOrcado(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBudgetsByReportScopeAsync(accountPlanId, year, scope);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
 
@@ -3164,9 +3190,13 @@ namespace _2___Application._1_Services.CashFlow
             };
         }
 
-        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypePassivoOrcado(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelBalancoReclassificadoByTypePassivoOrcado(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBudgetsByReportScopeAsync(accountPlanId, year, scope);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationAsync(accountPlanId, typeClassification);
 
             var balancoReclassificados = await _balancoReclassificadoRepository.GetByAccountPlanIdListt(accountPlanId);
@@ -3311,9 +3341,13 @@ namespace _2___Application._1_Services.CashFlow
                 Months = months
             };
         }
-        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDREOrcado(int accountPlanId, int year, int typeClassification)
+        private async Task<PainelBalancoContabilRespone> BuildPainelByTypeDREOrcado(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            FinancialReportScope? scope = null)
         {
-            var balancetes = await _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year);
+            var balancetes = await GetBudgetsByReportScopeAsync(accountPlanId, year, scope);
             var classifications = await _accountClassificationRepository.GetAllBytypeClassificationDREAsync(accountPlanId, typeClassification);
             var totalizersBase = await _totalizerClassificationRepository.GetByAccountPlansId(accountPlanId);
             var model = await _accountClassificationRepository.GetBond(accountPlanId, typeClassification);
@@ -3841,8 +3875,56 @@ namespace _2___Application._1_Services.CashFlow
             };
         }
 
-        private async Task<FinancialReportScope?> ResolveFinancialReportScopeAsync(int accountPlanId)
+        private async Task<FinancialReportScope?> ResolveFinancialReportScopeAsync(
+            int accountPlanId,
+            int? groupId = null,
+            int? companyId = null,
+            int? subCompanyId = null)
         {
+            if (groupId.HasValue || companyId.HasValue || subCompanyId.HasValue)
+            {
+                var scopeGroupId = groupId;
+                var scopeCompanyId = companyId;
+
+                if (subCompanyId.HasValue)
+                {
+                    var scopedPlan = await _accountPlansRepository.GetSubCompanyAccountPlan(subCompanyId.Value);
+                    if (scopedPlan == null && !scopeGroupId.HasValue)
+                        return null;
+
+                    if (scopedPlan != null)
+                    {
+                        scopeGroupId ??= scopedPlan.GroupId;
+                        scopeCompanyId ??= scopedPlan.CompanyId;
+                    }
+                }
+                else if (companyId.HasValue)
+                {
+                    var scopedPlan = await _accountPlansRepository.GetCompanyAccountPlanByCompanyId(companyId.Value);
+                    if (scopedPlan == null && !scopeGroupId.HasValue)
+                        return null;
+
+                    if (scopedPlan != null)
+                        scopeGroupId ??= scopedPlan.GroupId;
+                }
+
+                if (!scopeGroupId.HasValue)
+                    return null;
+
+                var canonicalScopeAccountPlan = await _accountPlanScopeResolver
+                    .ResolveCanonicalAccountPlanAsync(scopeGroupId.Value);
+
+                return canonicalScopeAccountPlan == null
+                    ? null
+                    : new FinancialReportScope
+                    {
+                        AccountPlanId = canonicalScopeAccountPlan.Id,
+                        GroupId = scopeGroupId.Value,
+                        CompanyId = scopeCompanyId,
+                        SubCompanyId = subCompanyId
+                    };
+            }
+
             var legacyAccountPlan = await _accountPlansRepository.GetByIdSingleAsync(accountPlanId);
             if (legacyAccountPlan == null)
                 return null;
@@ -3892,7 +3974,53 @@ namespace _2___Application._1_Services.CashFlow
                     year);
         }
 
-        private class FinancialReportScope
+        private Task<List<_3_Domain._1_Entities.BudgetModel>> GetBudgetsByReportScopeAsync(
+            int accountPlanId,
+            int year,
+            FinancialReportScope? scope)
+        {
+            return scope == null
+                ? _budgetRepository.GetByAccountPlanIdMonth(accountPlanId, year)
+                : _budgetRepository.GetByFinancialScopeMonth(
+                    accountPlanId,
+                    scope.GroupId,
+                    scope.CompanyId,
+                    scope.SubCompanyId,
+                    year);
+        }
+
+        private static PainelCashFlowComparativoResponseDto EmptyCashFlowComparativo()
+        {
+            var empty = new PainelCashFlowResponseDto
+            {
+                CashFlow = new CashFlowGroupedDto { Months = new List<CashFlowResponseDto>() }
+            };
+
+            return new PainelCashFlowComparativoResponseDto
+            {
+                Realizado = empty,
+                Orcado = empty,
+                Variacao = empty
+            };
+        }
+
+        private static PainelCashFlowComparativoRollingResponseDto EmptyCashFlowComparativoRolling()
+        {
+            var empty = new PainelCashFlowResponseDto
+            {
+                CashFlow = new CashFlowGroupedDto { Months = new List<CashFlowResponseDto>() }
+            };
+
+            return new PainelCashFlowComparativoRollingResponseDto
+            {
+                Realizado = empty,
+                Orcado = empty,
+                Variacao = empty,
+                Rolling = empty
+            };
+        }
+
+        public class FinancialReportScope
         {
             public int AccountPlanId { get; set; }
             public int GroupId { get; set; }
