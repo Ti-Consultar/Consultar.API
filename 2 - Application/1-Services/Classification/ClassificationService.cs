@@ -1124,6 +1124,14 @@ namespace _2___Application._1_Services
 
             return new PainelBalancoContabilRespone { Months = months };
         }
+        private static Dictionary<string, TValue> CreateNameMap<TValue>(IEnumerable<TValue> values, Func<TValue, string> keySelector)
+        {
+            return values
+                .Where(value => !string.IsNullOrWhiteSpace(keySelector(value)))
+                .GroupBy(keySelector, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+        }
+
         private decimal? ApplyBalancoReclassificadoTotalAtivoValueRules(string name, Dictionary<string, TotalizerParentRespone> totals, Dictionary<string, ClassificationRespone> classes)
         {
             decimal GetValue(string key) =>
@@ -1434,10 +1442,8 @@ namespace _2___Application._1_Services
                         }).ToList();
 
                     // Mapas para regras
-                    var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
-                    var classificationMap = totalizerResponses
-                        .SelectMany(t => t.Classifications)
-                        .ToDictionary(c => c.Name);
+                    var totalizerMap = CreateNameMap(totalizerResponses, t => t.Name);
+                    var classificationMap = CreateNameMap(totalizerResponses.SelectMany(t => t.Classifications), c => c.Name);
 
                     // Regras de valor
                     for (int i = 0; i < 3; i++)
@@ -3354,10 +3360,8 @@ namespace _2___Application._1_Services
                         }).ToList();
 
                     // Mapas para acesso rápido
-                    var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
-                    var classificationMap = totalizerResponses
-                        .SelectMany(t => t.Classifications)
-                        .ToDictionary(c => c.Name);
+                    var totalizerMap = CreateNameMap(totalizerResponses, t => t.Name);
+                    var classificationMap = CreateNameMap(totalizerResponses.SelectMany(t => t.Classifications), c => c.Name);
 
                     // Aplicar regras de valor nos totalizadores
                     for (int i = 0; i < 3; i++)
@@ -3475,10 +3479,8 @@ namespace _2___Application._1_Services
                         }).ToList();
 
                     // Mapas para regras
-                    var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
-                    var classificationMap = totalizerResponses
-                        .SelectMany(t => t.Classifications)
-                        .ToDictionary(c => c.Name);
+                    var totalizerMap = CreateNameMap(totalizerResponses, t => t.Name);
+                    var classificationMap = CreateNameMap(totalizerResponses.SelectMany(t => t.Classifications), c => c.Name);
 
                     // Regras de valor
                     for (int i = 0; i < 3; i++)
