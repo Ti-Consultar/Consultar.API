@@ -2822,15 +2822,12 @@ namespace _2___Application._1_Services.CashFlow
                             };
                         }).ToList();
 
-                    // Mapas para acesso rápido
-                    var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
-                    var classificationMap = totalizerResponses
-                        .SelectMany(t => t.Classifications)
-                        .ToDictionary(c => c.Name);
-
                     // Aplicar regras de valor nos totalizadores
                     for (int i = 0; i < 3; i++)
                     {
+                        var totalizerMap = BuildTotalizerMap(totalizerResponses);
+                        var classificationMap = BuildClassificationMap(totalizerResponses);
+
                         foreach (var totalizer in totalizerResponses.OrderBy(t => t.TypeOrder))
                         {
                             var ruleValue = ApplyBalancoReclassificadoTotalAtivoValueRules(totalizer.Name, totalizerMap, classificationMap);
@@ -2945,15 +2942,12 @@ namespace _2___Application._1_Services.CashFlow
                             };
                         }).ToList();
 
-                    // Mapas para regras
-                    var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
-                    var classificationMap = totalizerResponses
-                        .SelectMany(t => t.Classifications)
-                        .ToDictionary(c => c.Name);
-
                     // Regras de valor
                     for (int i = 0; i < 3; i++)
                     {
+                        var totalizerMap = BuildTotalizerMap(totalizerResponses);
+                        var classificationMap = BuildClassificationMap(totalizerResponses);
+
                         foreach (var totalizer in totalizerResponses.OrderBy(t => t.TypeOrder))
                         {
                             var ruleValue = ApplyBalancoReclassificadoTotalPassivoValueRules(totalizer.Name, totalizerMap, classificationMap);
@@ -3095,15 +3089,12 @@ namespace _2___Application._1_Services.CashFlow
                             };
                         }).ToList();
 
-                    // Mapas para acesso rápido
-                    var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
-                    var classificationMap = totalizerResponses
-                        .SelectMany(t => t.Classifications)
-                        .ToDictionary(c => c.Name);
-
                     // Aplicar regras de valor nos totalizadores
                     for (int i = 0; i < 3; i++)
                     {
+                        var totalizerMap = BuildTotalizerMap(totalizerResponses);
+                        var classificationMap = BuildClassificationMap(totalizerResponses);
+
                         foreach (var totalizer in totalizerResponses.OrderBy(t => t.TypeOrder))
                         {
                             var ruleValue = ApplyBalancoReclassificadoTotalAtivoValueRules(totalizer.Name, totalizerMap, classificationMap);
@@ -3217,15 +3208,12 @@ namespace _2___Application._1_Services.CashFlow
                             };
                         }).ToList();
 
-                    // Mapas para regras
-                    var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
-                    var classificationMap = totalizerResponses
-                        .SelectMany(t => t.Classifications)
-                        .ToDictionary(c => c.Name);
-
                     // Regras de valor
                     for (int i = 0; i < 3; i++)
                     {
+                        var totalizerMap = BuildTotalizerMap(totalizerResponses);
+                        var classificationMap = BuildClassificationMap(totalizerResponses);
+
                         foreach (var totalizer in totalizerResponses.OrderBy(t => t.TypeOrder))
                         {
                             var ruleValue = ApplyBalancoReclassificadoTotalPassivoValueRules(totalizer.Name, totalizerMap, classificationMap);
@@ -3807,6 +3795,57 @@ namespace _2___Application._1_Services.CashFlow
 
                 _ => null
             };
+        }
+
+        private static Dictionary<string, TotalizerParentRespone> BuildTotalizerMap(IEnumerable<TotalizerParentRespone> totalizers)
+        {
+            return totalizers
+                .Where(t => !string.IsNullOrWhiteSpace(t.Name))
+                .GroupBy(t => t.Name, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    g => g.Key,
+                    g =>
+                    {
+                        var first = g.First();
+
+                        return new TotalizerParentRespone
+                        {
+                            Id = first.Id,
+                            Name = first.Name,
+                            TypeOrder = first.TypeOrder,
+                            TotalValue = g.Sum(t => t.TotalValue),
+                            Classifications = g
+                                .SelectMany(t => t.Classifications ?? new List<ClassificationRespone>())
+                                .ToList()
+                        };
+                    },
+                    StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static Dictionary<string, ClassificationRespone> BuildClassificationMap(IEnumerable<TotalizerParentRespone> totalizers)
+        {
+            return totalizers
+                .SelectMany(t => t.Classifications ?? new List<ClassificationRespone>())
+                .Where(c => !string.IsNullOrWhiteSpace(c.Name))
+                .GroupBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    g => g.Key,
+                    g =>
+                    {
+                        var first = g.First();
+
+                        return new ClassificationRespone
+                        {
+                            Id = first.Id,
+                            Name = first.Name,
+                            TypeOrder = first.TypeOrder,
+                            Value = g.Sum(c => c.Value),
+                            Datas = g
+                                .SelectMany(c => c.Datas ?? new List<BalanceteDataResponse>())
+                                .ToList()
+                        };
+                    },
+                    StringComparer.OrdinalIgnoreCase);
         }
 
         private decimal? ApplyBalancoReclassificadoTotalPassivoValueRules(string name, Dictionary<string, TotalizerParentRespone> totals, Dictionary<string, ClassificationRespone> classes)
