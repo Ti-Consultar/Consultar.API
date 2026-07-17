@@ -70,6 +70,32 @@ namespace _5_API.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Exclui as contas importadas e suas classificações, mantendo o AccountPlan da empresa.
+        /// </summary>
+        /// <param name="accountPlanId">Identificador do AccountPlan da empresa.</param>
+        [HttpDelete("{accountPlanId}/accounts")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> DeleteAccountsAndClassifications(int accountPlanId)
+        {
+            try
+            {
+                var deleted = await _service
+                    .DeleteAccountsAndClassificationsAsync(accountPlanId);
+
+                if (!deleted)
+                    return NotFound(new { message = "AccountPlan não encontrado." });
+
+                return NoContent();
+            }
+            catch (Exception)
+            {
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    new { message = "Não foi possível excluir as contas do Plano de Contas." });
+            }
+        }
+
         [HttpPost("{accountPlanId}/accounts/import")]
         [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
         public async Task<IActionResult> ImportAccountsFromExcel(int accountPlanId, IFormFile file)
@@ -82,11 +108,51 @@ namespace _5_API.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Substitui as contas de um Plano de Contas já importado.
+        /// </summary>
+        /// <param name="accountPlanId">Identificador do Plano de Contas.</param>
+        /// <param name="file">Arquivo XLSX ou CSV com o novo Plano de Contas.</param>
+        [HttpPut("{accountPlanId}/accounts/import")]
+        [Authorize(Roles = "Gestor,Admin,Consultor,Desenvolvedor")]
+        public async Task<IActionResult> ReplaceAccountsFromExcel(int accountPlanId, IFormFile file)
+        {
+            var result = await _service.ReplaceAccountsFromExcel(accountPlanId, file);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
         [HttpGet("{accountPlanId}/accounts")]
         [Authorize()]
         public async Task<IActionResult> GetAccounts(int accountPlanId)
         {
             var result = await _service.GetAccounts(accountPlanId);
+
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Lista, de forma paginada, todas as contas de um Plano de Contas.
+        /// </summary>
+        /// <param name="accountPlanId">Identificador do Plano de Contas.</param>
+        /// <param name="skip">Quantidade de registros a ignorar.</param>
+        /// <param name="take">Quantidade de registros a retornar.</param>
+        /// <param name="search">Termo opcional para pesquisa pelo número ou descrição da conta.</param>
+        [HttpGet("{accountPlanId}/accounts/paginated")]
+        [Authorize()]
+        public async Task<IActionResult> GetAccountsPaginated(
+            int accountPlanId,
+            [FromQuery] int skip = 0,
+            [FromQuery] int take = 10,
+            [FromQuery] string? search = null)
+        {
+            var result = await _service.GetAccountsPaginated(accountPlanId, skip, take, search);
 
             if (!result.Success)
                 return BadRequest(result);
