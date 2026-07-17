@@ -96,6 +96,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<BreadcrumbService>();
             services.AddScoped<ClassificationRepository>();
             services.AddScoped<AccountPlansService>();
+            services.AddScoped<AccountPlanImportService>();
             services.AddScoped<BalanceteService>();
             services.AddScoped<BalanceteDataService>();
             services.AddScoped<InteractionService>();

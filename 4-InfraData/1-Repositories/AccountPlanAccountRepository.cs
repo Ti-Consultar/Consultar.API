@@ -1,6 +1,7 @@
 using _3_Domain._1_Entities;
 using _3_Domain._2_Enum_s;
 using _4_InfraData._1_Context;
+using _4_InfraData._3_Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace _4_InfraData._1_Repositories
@@ -21,6 +22,40 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.AccountPlanId == accountPlanId)
                 .OrderBy(x => x.CostCenter)
                 .ToListAsync();
+        }
+
+        public async Task<PaginatedResult<AccountPlanAccount>> GetPaginatedByAccountPlanIdAsync(
+            int accountPlanId,
+            int skip,
+            int take,
+            string? search = null)
+        {
+            var query = _context.AccountPlanAccount
+                .AsNoTracking()
+                .Include(x => x.AccountPlanClassification)
+                .Where(x => x.AccountPlanId == accountPlanId);
+
+            var normalizedSearch = search?.Trim();
+            if (!string.IsNullOrWhiteSpace(normalizedSearch))
+            {
+                query = query.Where(x =>
+                    x.CostCenter.Contains(normalizedSearch) ||
+                    x.Name.Contains(normalizedSearch));
+            }
+
+            var totalCount = await query.CountAsync();
+            var accounts = await query
+                .OrderBy(x => x.CostCenter)
+                .ThenBy(x => x.Id)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+
+            return new PaginatedResult<AccountPlanAccount>
+            {
+                TotalCount = totalCount,
+                Items = accounts
+            };
         }
 
         public async Task<AccountPlanAccount?> GetByAccountPlanAndCostCenterAsync(int accountPlanId, string costCenter)
@@ -47,6 +82,57 @@ namespace _4_InfraData._1_Repositories
             return await _context.AccountPlanAccount
                 .CountAsync(x => x.AccountPlanId == accountPlanId &&
                                  x.Status == EAccountPlanAccountStatus.PendingClassification);
+        }
+
+        public async Task<bool> AnyByAccountPlanIdAsync(int accountPlanId)
+        {
+            return await _context.AccountPlanAccount
+                .AnyAsync(x => x.AccountPlanId == accountPlanId);
+        }
+
+        public async Task<bool> DeleteAccountsAndClassificationsAsync(int accountPlanId)
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var accountPlanExists = await _context.AccountPlans
+                    .AnyAsync(x => x.Id == accountPlanId);
+
+                if (!accountPlanExists)
+                    return false;
+
+                // Exclui a tabela importada de conta e descrição.
+                await _context.AccountPlanAccount
+                    .Where(x => x.AccountPlanId == accountPlanId)
+                    .ExecuteDeleteAsync();
+
+                // Exclui vínculos e classificações antigas desse catálogo.
+                await _context.BalanceteDataAccountPlanClassification
+                    .Where(x => x.AccountPlanClassification.AccountPlanId == accountPlanId)
+                    .ExecuteDeleteAsync();
+
+                await _context.AccountPlanClassification
+                    .Where(x => x.AccountPlanId == accountPlanId)
+                    .ExecuteDeleteAsync();
+
+                // Estruturas auxiliares são recriadas junto com as classificações.
+                await _context.TotalizerClassification
+                    .Where(x => x.AccountPlanId == accountPlanId)
+                    .ExecuteDeleteAsync();
+
+                await _context.BalancoReclassificado
+                    .Where(x => x.AccountPlanId == accountPlanId)
+                    .ExecuteDeleteAsync();
+
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<List<AccountPlanAccount>> UpsertFromBalanceteDataAsync(
@@ -109,6 +195,29 @@ namespace _4_InfraData._1_Repositories
             int accountPlanId,
             IEnumerable<AccountPlanAccount> accounts)
         {
+            var result = await SynchronizeOfficialAccountsAsync(
+                accountPlanId,
+                accounts,
+                removeMissingAccounts: false);
+
+            return (result.NewAccounts, result.UpdatedAccountsCount);
+        }
+
+        public async Task<AccountPlanAccountSynchronizationResult> ReplaceOfficialAccountsAsync(
+            int accountPlanId,
+            IEnumerable<AccountPlanAccount> accounts)
+        {
+            return await SynchronizeOfficialAccountsAsync(
+                accountPlanId,
+                accounts,
+                removeMissingAccounts: true);
+        }
+
+        private async Task<AccountPlanAccountSynchronizationResult> SynchronizeOfficialAccountsAsync(
+            int accountPlanId,
+            IEnumerable<AccountPlanAccount> accounts,
+            bool removeMissingAccounts)
+        {
             var importedAccounts = accounts
                 .Where(x => !string.IsNullOrWhiteSpace(x.CostCenter))
                 .GroupBy(x => NormalizeCostCenter(x.CostCenter))
@@ -121,14 +230,16 @@ namespace _4_InfraData._1_Repositories
                 .ToList();
 
             if (!importedAccounts.Any())
-                return (new List<AccountPlanAccount>(), 0);
+                return new AccountPlanAccountSynchronizationResult();
 
-            var costCenters = importedAccounts.Select(x => x.CostCenter).ToList();
             var existing = await _context.AccountPlanAccount
-                .Where(x => x.AccountPlanId == accountPlanId && costCenters.Contains(x.CostCenter))
+                .Where(x => x.AccountPlanId == accountPlanId)
                 .ToListAsync();
 
             var existingByCostCenter = existing.ToDictionary(x => x.CostCenter, StringComparer.OrdinalIgnoreCase);
+            var importedCostCenters = importedAccounts
+                .Select(x => x.CostCenter)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
             var newAccounts = new List<AccountPlanAccount>();
             var updatedAccountsCount = 0;
 
@@ -173,8 +284,20 @@ namespace _4_InfraData._1_Repositories
             if (newAccounts.Any())
                 await _context.AccountPlanAccount.AddRangeAsync(newAccounts);
 
+            var removedAccounts = removeMissingAccounts
+                ? existing.Where(x => !importedCostCenters.Contains(x.CostCenter)).ToList()
+                : new List<AccountPlanAccount>();
+
+            if (removedAccounts.Any())
+                _context.AccountPlanAccount.RemoveRange(removedAccounts);
+
             await _context.SaveChangesAsync();
-            return (newAccounts, updatedAccountsCount);
+            return new AccountPlanAccountSynchronizationResult
+            {
+                NewAccounts = newAccounts,
+                RemovedAccounts = removedAccounts,
+                UpdatedAccountsCount = updatedAccountsCount
+            };
         }
 
         public async Task EnsureFromBalanceteDataAsync(int accountPlanId)
@@ -266,5 +389,12 @@ namespace _4_InfraData._1_Repositories
         {
             return costCenter.Trim();
         }
+    }
+
+    public class AccountPlanAccountSynchronizationResult
+    {
+        public List<AccountPlanAccount> NewAccounts { get; set; } = new();
+        public List<AccountPlanAccount> RemovedAccounts { get; set; } = new();
+        public int UpdatedAccountsCount { get; set; }
     }
 }

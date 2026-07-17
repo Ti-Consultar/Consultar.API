@@ -8,12 +8,9 @@ using _3_Domain._1_Entities;
 using _3_Domain._2_Enum_s;
 using _4_InfraData._1_Repositories;
 using _4_InfraData._2_AppSettings;
-using ClosedXML.Excel;
-using CsvHelper;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,6 +24,7 @@ namespace _2___Application._1_Services.AccountPlans
         private readonly CompanyRepository _companyRepository;
         private readonly UserRepository _userRepository;
         private readonly AccountPlanAccountRepository _accountPlanAccountRepository;
+        private readonly AccountPlanImportService _accountPlanImportService;
         private readonly int _currentUserId;
 
         public AccountPlansService(
@@ -35,6 +33,7 @@ namespace _2___Application._1_Services.AccountPlans
             CompanyRepository companyRepository,
             UserRepository userRepository,
             AccountPlanAccountRepository accountPlanAccountRepository,
+            AccountPlanImportService accountPlanImportService,
 
 
             IAppSettings appSettings) : base(appSettings)
@@ -44,6 +43,7 @@ namespace _2___Application._1_Services.AccountPlans
             _companyRepository = companyRepository;
             _userRepository = userRepository;
             _accountPlanAccountRepository = accountPlanAccountRepository;
+            _accountPlanImportService = accountPlanImportService;
 
             _currentUserId = GetCurrentUserId();
 
@@ -124,57 +124,20 @@ namespace _2___Application._1_Services.AccountPlans
             }
         }
 
+        public async Task<bool> DeleteAccountsAndClassificationsAsync(int accountPlanId)
+        {
+            return await _accountPlanAccountRepository
+                .DeleteAccountsAndClassificationsAsync(accountPlanId);
+        }
+
         public async Task<ResultValue> ImportAccountsFromExcel(int accountPlanId, IFormFile file)
         {
-            try
-            {
-                if (file == null || file.Length == 0)
-                    return ErrorResponse("Arquivo inválido.");
+            return await _accountPlanImportService.UploadInitialAsync(accountPlanId, file);
+        }
 
-                var accountPlan = await _repository.GetByIdSingleAsync(accountPlanId);
-                if (accountPlan == null)
-                    return ErrorResponse(Message.NotFound);
-
-                var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (extension != ".xlsx" && extension != ".csv")
-                    return ErrorResponse("Formato inválido. Envie um arquivo XLSX ou CSV.");
-
-                using var stream = new MemoryStream();
-                await file.CopyToAsync(stream);
-                stream.Position = 0;
-
-                var accounts = extension == ".xlsx"
-                    ? ReadAccountPlanAccountsFromXlsx(stream, accountPlanId)
-                    : ReadAccountPlanAccountsFromCsv(stream, accountPlanId);
-
-                var validationError = ValidateAccountPlanAccountsImport(accounts);
-                if (validationError != null)
-                    return ErrorResponse(validationError);
-
-                var upsertResult = await _accountPlanAccountRepository
-                    .UpsertOfficialAccountsAsync(accountPlanId, accounts);
-
-                accountPlan.SourceMode = EAccountPlanSourceMode.UploadedAccountPlan;
-                await _repository.Update(accountPlan);
-
-                return SuccessResponse(new ImportAccountPlanAccountsResponse
-                {
-                    Message = "Plano de contas importado com sucesso.",
-                    ImportedAccountsCount = accounts
-                        .Select(x => x.CostCenter?.Trim())
-                        .Where(x => !string.IsNullOrWhiteSpace(x))
-                        .Distinct(StringComparer.OrdinalIgnoreCase)
-                        .Count(),
-                    NewAccountsCount = upsertResult.NewAccounts.Count,
-                    UpdatedAccountsCount = upsertResult.UpdatedAccountsCount,
-                    SourceMode = accountPlan.SourceMode.ToString(),
-                    NewAccounts = upsertResult.NewAccounts.Select(MapToAccountPlanAccountResponse).ToList()
-                });
-            }
-            catch (Exception ex)
-            {
-                return ErrorResponse(ex);
-            }
+        public async Task<ResultValue> ReplaceAccountsFromExcel(int accountPlanId, IFormFile file)
+        {
+            return await _accountPlanImportService.ReplaceAsync(accountPlanId, file);
         }
 
         public async Task<ResultValue> GetAccounts(int accountPlanId)
@@ -191,6 +154,56 @@ namespace _2___Application._1_Services.AccountPlans
                 var accounts = await _accountPlanAccountRepository.GetByAccountPlanIdAsync(accountPlanId);
 
                 return SuccessResponse(accounts.Select(MapToAccountPlanAccountResponse).ToList());
+            }
+            catch (Exception ex)
+            {
+                return ErrorResponse(ex);
+            }
+        }
+
+        public async Task<ResultValue> GetAccountsPaginated(
+            int accountPlanId,
+            int skip = 0,
+            int take = 10,
+            string? search = null)
+        {
+            try
+            {
+                if (skip < 0)
+                    return ErrorResponse("O parâmetro skip não pode ser negativo.");
+
+                if (take <= 0)
+                    return ErrorResponse("O parâmetro take deve ser maior que zero.");
+
+                var accountPlan = await _repository.GetByaccountPlanId(accountPlanId);
+                if (accountPlan == null)
+                    return ErrorResponse(Message.NotFound);
+
+                if (accountPlan.SourceMode == EAccountPlanSourceMode.LegacyFromBalancete)
+                    await _accountPlanAccountRepository.EnsureFromBalanceteDataAsync(accountPlanId);
+
+                var paginatedAccounts = await _accountPlanAccountRepository
+                    .GetPaginatedByAccountPlanIdAsync(accountPlanId, skip, take, search);
+                var pendingCount = await _accountPlanAccountRepository
+                    .CountPendingByAccountPlanIdAsync(accountPlanId);
+
+                return SuccessResponse(new AccountPlanAccountListResponse
+                {
+                    AccountPlanId = accountPlan.Id,
+                    Name = accountPlan.SubCompany?.Name
+                        ?? accountPlan.Company?.Name
+                        ?? accountPlan.Group?.Name
+                        ?? string.Empty,
+                    SourceMode = accountPlan.SourceMode.ToString(),
+                    TotalCount = paginatedAccounts.TotalCount,
+                    Skip = skip,
+                    Take = take,
+                    HasPendingClassifications = pendingCount > 0,
+                    PendingClassificationsCount = pendingCount,
+                    Accounts = paginatedAccounts.Items
+                        .Select(MapToAccountPlanAccountListItemResponse)
+                        .ToList()
+                });
             }
             catch (Exception ex)
             {
@@ -292,71 +305,6 @@ namespace _2___Application._1_Services.AccountPlans
             }
         }
 
-        private static List<AccountPlanAccount> ReadAccountPlanAccountsFromXlsx(Stream stream, int accountPlanId)
-        {
-            var accounts = new List<AccountPlanAccount>();
-            stream.Position = 0;
-
-            using var workbook = new XLWorkbook(stream);
-            var worksheet = workbook.Worksheet(1);
-            var row = worksheet.FirstRowUsed();
-
-            while (row != null && !row.IsEmpty())
-            {
-                AddAccountPlanAccountIfValid(
-                    accounts,
-                    accountPlanId,
-                    row.Cell(1).GetFormattedString(),
-                    row.Cell(2).GetFormattedString());
-
-                row = row.RowBelow();
-            }
-
-            return accounts;
-        }
-
-        private static List<AccountPlanAccount> ReadAccountPlanAccountsFromCsv(Stream stream, int accountPlanId)
-        {
-            var accounts = new List<AccountPlanAccount>();
-            stream.Position = 0;
-
-            using var delimiterReader = CsvImportTextReader.CreateReader(stream);
-            var firstLine = delimiterReader.ReadLine() ?? string.Empty;
-            var delimiter = firstLine.Count(c => c == ';') >= firstLine.Count(c => c == ',') ? ";" : ",";
-
-            using var reader = CsvImportTextReader.CreateReader(stream);
-            using var csv = new CsvReader(reader, new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
-            {
-                HasHeaderRecord = false,
-                Delimiter = delimiter,
-                BadDataFound = null,
-                MissingFieldFound = null
-            });
-
-            while (csv.Read())
-            {
-                AddAccountPlanAccountIfValid(
-                    accounts,
-                    accountPlanId,
-                    csv.GetField(0),
-                    csv.GetField(1));
-            }
-
-            return accounts;
-        }
-
-        private static string? ValidateAccountPlanAccountsImport(List<AccountPlanAccount> accounts)
-        {
-            foreach (var account in accounts)
-            {
-                var validationError = ValidateAccountPlanAccountText(account.CostCenter, account.Name);
-                if (validationError != null)
-                    return validationError;
-            }
-
-            return null;
-        }
-
         private static string? ValidateAccountPlanAccountText(string? costCenter, string? name)
         {
             if (CsvImportTextReader.ContainsReplacementCharacter(costCenter))
@@ -371,30 +319,6 @@ namespace _2___Application._1_Services.AccountPlans
 
             return null;
         }
-
-        private static void AddAccountPlanAccountIfValid(
-            List<AccountPlanAccount> accounts,
-            int accountPlanId,
-            string? costCenter,
-            string? name)
-        {
-            costCenter = costCenter?.Trim();
-            name = name?.Trim();
-
-            if (string.IsNullOrWhiteSpace(costCenter) ||
-                string.IsNullOrWhiteSpace(name) ||
-                costCenter.Contains("conta", StringComparison.OrdinalIgnoreCase))
-                return;
-
-            accounts.Add(new AccountPlanAccount
-            {
-                AccountPlanId = accountPlanId,
-                CostCenter = costCenter,
-                Name = name,
-                Origin = EAccountPlanAccountOrigin.ExcelUpload
-            });
-        }
-
 
         private static AccountPlanResponse MapToAccountPlanDto(AccountPlansModel x) => new()
         {
@@ -424,6 +348,21 @@ namespace _2___Application._1_Services.AccountPlans
             CostCenter = x.CostCenter,
             Name = x.Name,
             AccountPlanClassificationId = x.AccountPlanClassificationId,
+            ClassificationStatus = x.Status.ToString(),
+            Origin = x.Origin.ToString(),
+            CreatedAt = x.CreatedAt,
+            UpdatedAt = x.UpdatedAt
+        };
+
+        private static AccountPlanAccountListItemResponse MapToAccountPlanAccountListItemResponse(AccountPlanAccount x) => new()
+        {
+            Id = x.Id,
+            AccountPlanId = x.AccountPlanId,
+            CostCenter = x.CostCenter,
+            Name = x.Name,
+            AccountPlanClassificationId = x.AccountPlanClassificationId,
+            AccountPlanClassificationName = x.AccountPlanClassification?.Name,
+            AccountPlanClassificationType = x.AccountPlanClassification?.TypeClassification.ToString(),
             ClassificationStatus = x.Status.ToString(),
             Origin = x.Origin.ToString(),
             CreatedAt = x.CreatedAt,
