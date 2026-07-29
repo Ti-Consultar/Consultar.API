@@ -2638,7 +2638,7 @@ namespace _2___Application._1_Services
             var balanceteData = await _budgetDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _budgetDataRepository.GetByAccountPlanClassificationId(accountPlanId);
 
-            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3); // Painel da DRE para pegar o lucro líquido
+            var painelDRE = await BuildPainelByTypeDREOrcado(accountPlanId, year, 3); // Painel da DRE orçada para pegar o lucro líquido
 
 
 
@@ -3428,7 +3428,7 @@ namespace _2___Application._1_Services
 
             var balanceteData = await _budgetDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _budgetDataRepository.GetByAccountPlanClassificationId(accountPlanId);
-            var painelBalancoContabilPassivo = await BuildPainelByTypePassivo(accountPlanId, year, 2);
+            var painelBalancoContabilPassivo = await BuildPainelByTypePassivoOrcado(accountPlanId, year, 2);
 
             var months = balancetes
                 .Select(balancete =>
