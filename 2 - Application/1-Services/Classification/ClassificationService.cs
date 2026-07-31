@@ -3118,6 +3118,17 @@ namespace _2___Application._1_Services
             };
         }
 
+        public async Task<PainelBalancoComparativoResponse> GetDreComparativeLegacyResultAsync(
+            int accountPlanId,
+            int year,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var result = await BuildPainelDREComparativoCompleto(accountPlanId, year);
+            cancellationToken.ThrowIfCancellationRequested();
+            return result;
+        }
+
         private void AdicionarMesCagr(PainelBalancoContabilRespone painel)
         {
             if (painel?.Months == null || painel.Months.Count < 2)
@@ -3276,7 +3287,7 @@ namespace _2___Application._1_Services
             {
                 1 => await BuildPainelBalancoReclassificadoAtivoComparativo(accountPlanId, year),
                 2 => await BuildPainelBalancoReclassificadoPassivoComparativo(accountPlanId, year),
-                3 => await BuildPainelDREComparativoCompleto(accountPlanId, year),
+                3 => await GetDreComparativeLegacyResultAsync(accountPlanId, year),
                 _ => throw new ArgumentException("Tipo de classificação inválido.")
             };
 

@@ -37,6 +37,11 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "API MRP"
     });
+
+    var xmlDocumentation = Path.Combine(
+        AppContext.BaseDirectory,
+        $"{typeof(Program).Assembly.GetName().Name}.xml");
+    c.IncludeXmlComments(xmlDocumentation);
 });
 
 var app = builder.Build();
