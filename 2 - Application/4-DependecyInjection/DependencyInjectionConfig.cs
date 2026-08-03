@@ -1,6 +1,7 @@
 ﻿
 using _2___Application._1_Services;
 using _2___Application._1_Services.DRE.V2;
+using _2___Application._1_Services.ReclassifiedBalanceSheet.V2;
 using _2___Application._1_Services.AccountPlans;
 using _2___Application._1_Services.AccountPlans.Balancete;
 using _2___Application._1_Services.Budget;
@@ -103,6 +104,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<InteractionService>();
             services.AddScoped<ClassificationService>();
             services.AddScoped<DreV2Service>();
+            services.AddScoped<ReclassifiedBalanceSheetV2Service>();
             services.AddScoped<TotalizerClassificationService>();
             services.AddScoped<CilECService>();
             services.AddScoped<EconomicIndicesService>();

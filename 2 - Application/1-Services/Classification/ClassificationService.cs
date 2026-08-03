@@ -3293,6 +3293,25 @@ namespace _2___Application._1_Services
 
             return SuccessResponse(result); // Aqui retorna a estrutura padronizada
         }
+
+        public async Task<PainelBalancoComparativoResponse> GetReclassifiedBalanceSheetComparativeLegacyResultAsync(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var result = typeClassification switch
+            {
+                1 => await BuildPainelBalancoReclassificadoAtivoComparativo(accountPlanId, year),
+                2 => await BuildPainelBalancoReclassificadoPassivoComparativo(accountPlanId, year),
+                _ => throw new ArgumentException("Tipo de classificação inválido.", nameof(typeClassification))
+            };
+
+            cancellationToken.ThrowIfCancellationRequested();
+            return result;
+        }
         private async Task<PainelBalancoComparativoResponse> BuildPainelBalancoReclassificadoAtivoComparativo(int accountPlanId, int year)
         {
             return await BuildPainelBalancoReclassificadoComparativo(accountPlanId, year);
