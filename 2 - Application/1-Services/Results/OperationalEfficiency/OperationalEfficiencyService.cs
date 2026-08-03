@@ -1,6 +1,7 @@
 ﻿using _2___Application._2_Dto_s.Results.LiquidManagement;
 using _2___Application._2_Dto_s.Results.OperationalEfficiency;
 using _2___Application._2_Dto_s.TotalizerClassification;
+using _2___Application._1_Services.TotalizerClassification;
 using _2___Application.Base;
 using _4_InfraData._1_Repositories;
 using _4_InfraData._2_AppSettings;
@@ -1097,10 +1098,8 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                         }).ToList();
 
                     // Mapas para acesso rápido
-                    var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
-                    var classificationMap = totalizerResponses
-                        .SelectMany(t => t.Classifications)
-                        .ToDictionary(c => c.Name);
+                    var totalizerMap = ReclassifiedBalanceSheetAggregation.BuildTotalizerMap(totalizerResponses);
+                    var classificationMap = ReclassifiedBalanceSheetAggregation.BuildClassificationMap(totalizerResponses);
 
                     // Aplicar regras de valor nos totalizadores
                     for (int i = 0; i < 3; i++)
@@ -1218,10 +1217,8 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                         }).ToList();
 
                     // Mapas para regras
-                    var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
-                    var classificationMap = totalizerResponses
-                        .SelectMany(t => t.Classifications)
-                        .ToDictionary(c => c.Name);
+                    var totalizerMap = ReclassifiedBalanceSheetAggregation.BuildTotalizerMap(totalizerResponses);
+                    var classificationMap = ReclassifiedBalanceSheetAggregation.BuildClassificationMap(totalizerResponses);
 
                     // Regras de valor
                     for (int i = 0; i < 3; i++)
@@ -1570,10 +1567,8 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                         }).ToList();
 
                     // Mapas para acesso rápido
-                    var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
-                    var classificationMap = totalizerResponses
-                        .SelectMany(t => t.Classifications)
-                        .ToDictionary(c => c.Name);
+                    var totalizerMap = ReclassifiedBalanceSheetAggregation.BuildTotalizerMap(totalizerResponses);
+                    var classificationMap = ReclassifiedBalanceSheetAggregation.BuildClassificationMap(totalizerResponses);
 
                     // Aplicar regras de valor nos totalizadores
                     for (int i = 0; i < 3; i++)
@@ -1692,10 +1687,8 @@ namespace _2___Application._1_Services.Results.OperationalEfficiency
                         }).ToList();
 
                     // Mapas para regras
-                    var totalizerMap = totalizerResponses.ToDictionary(t => t.Name);
-                    var classificationMap = totalizerResponses
-                        .SelectMany(t => t.Classifications)
-                        .ToDictionary(c => c.Name);
+                    var totalizerMap = ReclassifiedBalanceSheetAggregation.BuildTotalizerMap(totalizerResponses);
+                    var classificationMap = ReclassifiedBalanceSheetAggregation.BuildClassificationMap(totalizerResponses);
 
                     // Regras de valor
                     for (int i = 0; i < 3; i++)

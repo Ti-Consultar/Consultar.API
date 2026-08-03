@@ -3,6 +3,7 @@ using _2___Application._2_Dto_s.Painel;
 using _2___Application._2_Dto_s.Results.OperationalEfficiency;
 using _2___Application._2_Dto_s.TotalizerClassification;
 using _2___Application._1_Services.Scope;
+using _2___Application._1_Services.TotalizerClassification;
 using _2___Application.Base;
 using _4_InfraData._1_Repositories;
 using _4_InfraData._2_AppSettings;
@@ -2492,7 +2493,7 @@ namespace _2___Application._1_Services.CashFlow
                     var patrimonioLiquido = totalizerResponses
                         .FirstOrDefault(c => c.Name == "Patrimônio Liquido");
 
-                    patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + resultadoAcumuladoClass.Value;
+                    ReclassifiedBalanceSheetAggregation.RecalculateTotalValue(patrimonioLiquido);
                 }
                 var patrimonioLiquidos = totalizerResponses
                        .FirstOrDefault(c => c.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
@@ -2630,7 +2631,7 @@ namespace _2___Application._1_Services.CashFlow
             var balanceteData = await _budgetDataRepository.GetAgrupadoPorCostCenterListMultiBalancete(costCenters, balanceteIds);
             var balanceteDataClassifications = await _budgetDataRepository.GetByAccountPlanClassificationId(accountPlanId);
 
-            var painelDRE = await BuildPainelByTypeDRE(accountPlanId, year, 3); // Painel da DRE para pegar o lucro líquido
+            var painelDRE = await BuildPainelByTypeDREOrcado(accountPlanId, year, 3); // Painel orçado da DRE para pegar o lucro líquido
 
 
 
@@ -2721,7 +2722,7 @@ namespace _2___Application._1_Services.CashFlow
                     var patrimonioLiquido = totalizerResponses
                         .FirstOrDefault(c => c.Name == "Patrimônio Liquido");
 
-                    patrimonioLiquido.TotalValue = patrimonioLiquido.TotalValue + resultadoAcumuladoClass.Value;
+                    ReclassifiedBalanceSheetAggregation.RecalculateTotalValue(patrimonioLiquido);
                 }
                 var patrimonioLiquidos = totalizerResponses
                        .FirstOrDefault(c => c.Name == "Patrimônio Liquido")?.TotalValue ?? 0;
