@@ -35,7 +35,8 @@ public static class DreRowCatalog
 
         Total("NET_REVENUE", "(=) Receita Líquida de Vendas", "subtotal", 100),
         Class("COST_OF_GOODS", "(-) Custos das Mercadorias", 110, null, "(=) Receita Líquida de Vendas"),
-        Class("COST_OF_SERVICES", "(-) Custos dos Serviços Prestados", 120, null, "(=) Receita Líquida de Vendas"),
+        Class("COST_OF_SERVICES", "(-) Custos dos Serviços Prestados", 120, null, "(=) Receita Líquida de Vendas",
+            name: "Custos Operacionais"),
         Class("VARIABLE_COSTS", "(-) Custos Variáveis", 130, null, "(=) Receita Líquida de Vendas",
             required: false),
         Total("GROSS_PROFIT", "Lucro Bruto", "subtotal", 140),
@@ -75,7 +76,7 @@ public static class DreRowCatalog
         Total("NET_INCOME", "Lucro Líquido do Periodo", "subtotal", 410,
             name: "Lucro Líquido do Período"),
         Total("NET_MARGIN_PERCENT", "Margem Líquida %", "percentage", 420, "percentage"),
-        Class("EBITDA_DEPRECIATION_ADDBACK", "Despesas com Depreciação", 430, "NET_MARGIN_PERCENT", "Margem Líquida %",
+        Class("EBITDA_DEPRECIATION_ADDBACK", "Despesas com Depreciação", 430, null, "Margem Líquida %",
             "adjustment"),
         Total("EBITDA", "EBITDA", "subtotal", 440),
         Total("EBITDA_MARGIN_PERCENT", "Margem EBITDA %", "percentage", 450, "percentage"),

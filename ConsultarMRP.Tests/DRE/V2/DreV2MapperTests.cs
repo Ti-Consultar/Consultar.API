@@ -71,6 +71,22 @@ public sealed class DreV2MapperTests
     }
 
     [Fact]
+    public void Renames_cost_of_services_only_in_the_v2_contract()
+    {
+        var fixture = new DreV2Fixture();
+
+        var response = DreV2Mapper.Map(fixture.Legacy, DreV2Fixture.Year);
+        var definition = DreRowCatalog.All.Single(row => row.Code == "COST_OF_SERVICES");
+
+        Assert.Equal("Custos Operacionais", Row(response, "COST_OF_SERVICES").Name);
+        Assert.Equal("(-) Custos dos Serviços Prestados", definition.LegacySourceName);
+        Assert.Equal("(=) Receita Líquida de Vendas", definition.LegacyParentTotalizerName);
+        Assert.Equal(
+            fixture.Expected("realizado", "2026-01", "COST_OF_SERVICES"),
+            Row(response, "COST_OF_SERVICES").Values["realizado"]["2026-01"]);
+    }
+
+    [Fact]
     public void Orders_other_results_and_its_children_immediately_before_ebit()
     {
         var fixture = new DreV2Fixture();
@@ -147,7 +163,7 @@ public sealed class DreV2MapperTests
     }
 
     [Fact]
-    public void Makes_net_margin_expandable_with_depreciation_as_its_immediate_child()
+    public void Keeps_depreciation_immediately_after_net_margin_without_parent_relationship()
     {
         var fixture = new DreV2Fixture();
 
@@ -157,10 +173,10 @@ public sealed class DreV2MapperTests
         var depreciation = Row(response, "EBITDA_DEPRECIATION_ADDBACK");
         var netMarginIndex = Array.FindIndex(rows, row => row.Code == netMargin.Code);
 
-        Assert.True(netMargin.Expandable);
-        Assert.True(netMargin.Details.Available);
-        Assert.Equal("NET_MARGIN_PERCENT", depreciation.ParentCode);
-        Assert.Equal(1, depreciation.Level);
+        Assert.False(netMargin.Expandable);
+        Assert.False(netMargin.Details.Available);
+        Assert.Null(depreciation.ParentCode);
+        Assert.Equal(0, depreciation.Level);
         Assert.Equal(netMargin.DisplayOrder + 10, depreciation.DisplayOrder);
         Assert.Equal(depreciation.Code, rows[netMarginIndex + 1].Code);
     }
