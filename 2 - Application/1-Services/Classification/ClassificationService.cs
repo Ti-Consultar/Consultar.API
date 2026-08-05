@@ -875,6 +875,24 @@ namespace _2___Application._1_Services
             await ApplyPendingClassificationInfoAsync(accountPlanId, result);
             return SuccessResponse(result); // Aqui retorna a estrutura padronizada
         }
+        public async Task<PainelBalancoContabilRespone> GetAccountingPanelLegacyResultAsync(
+            int accountPlanId,
+            int year,
+            int typeClassification,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var result = typeClassification switch
+            {
+                1 => await BuildPainelByTypeAtivo(accountPlanId, year, 1),
+                2 => await BuildPainelByTypePassivo(accountPlanId, year, 2),
+                _ => throw new ArgumentException("Tipo de classificação inválido.", nameof(typeClassification))
+            };
+
+            cancellationToken.ThrowIfCancellationRequested();
+            return result;
+        }
         private async Task<PainelBalancoContabilRespone> BuildPainelAtivo(int accountPlanId, int year)
         {
             return await BuildPainelByTypeAtivo(accountPlanId, year, 1);
