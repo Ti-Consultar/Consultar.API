@@ -10,3 +10,7 @@
     BudgetedAmount BIT,
      CONSTRAINT FK_BalanceteData_Balancete FOREIGN KEY (BalanceteId) REFERENCES Balancete(Id) ON DELETE CASCADE
 );
+
+CREATE INDEX IX_BalanceteData_BalanceteId_Id
+    ON BalanceteData (BalanceteId, Id)
+    INCLUDE (CostCenter, Name, InitialValue, Debit, Credit, FinalValue);
