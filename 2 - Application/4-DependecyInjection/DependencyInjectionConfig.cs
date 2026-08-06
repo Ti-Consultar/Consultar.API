@@ -5,6 +5,7 @@ using _2___Application._1_Services.DRE.V2;
 using _2___Application._1_Services.ReclassifiedBalanceSheet.V2;
 using _2___Application._1_Services.AccountPlans;
 using _2___Application._1_Services.AccountPlans.Balancete;
+using _2___Application._1_Services.AccountPlans.Balancete.V2;
 using _2___Application._1_Services.Budget;
 using _2___Application._1_Services.CashFlow;
 using _2___Application._1_Services.Parameter;
@@ -101,6 +102,7 @@ namespace _2___Application._4__DependencyInjectionConfig
             services.AddScoped<AccountPlansService>();
             services.AddScoped<AccountPlanImportService>();
             services.AddScoped<BalanceteService>();
+            services.AddScoped<TrialBalanceViewerV2Service>();
             services.AddScoped<BalanceteDataService>();
             services.AddScoped<InteractionService>();
               services.AddScoped<ClassificationService>();
