@@ -3147,6 +3147,17 @@ namespace _2___Application._1_Services
             return result;
         }
 
+        public async Task<PainelBalancoContabilRespone> GetDreRealizedLegacyResultAsync(
+            int accountPlanId,
+            int year,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var result = await BuildPainelByTypeDRE(accountPlanId, year, 3);
+            cancellationToken.ThrowIfCancellationRequested();
+            return result;
+        }
+
         private void AdicionarMesCagr(PainelBalancoContabilRespone painel)
         {
             if (painel?.Months == null || painel.Months.Count < 2)
