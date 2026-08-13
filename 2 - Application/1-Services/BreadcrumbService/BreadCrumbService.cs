@@ -33,6 +33,7 @@ public class BreadcrumbService : BaseService
             ["economic-indices"] = new("Índices Econômicos", "resultados/indices-economicos", "Resultados"),
             ["cil-ec"] = new("CIL e PFL", "resultados/cil-ec", "Resultados"),
             ["operational-efficiency"] = new("Eficiência Operacional", "resultados/eficiencia-operacional", "Resultados"),
+            ["break-even"] = new("Ponto de Equilíbrio", "ponto-equilibrio"),
             ["cash-flow"] = new("Fluxo de Caixa", "fluxo-caixa"),
             ["eva"] = new("Árvore de Valor", "eva"),
             ["home"] = new("Início", "dashboard", null, false),

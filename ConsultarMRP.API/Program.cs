@@ -38,6 +38,31 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API MRP"
     });
 
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Informe somente o token JWT, sem o prefixo Bearer."
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+
     var xmlDocumentation = Path.Combine(
         AppContext.BaseDirectory,
         $"{typeof(Program).Assembly.GetName().Name}.xml");
@@ -58,6 +83,7 @@ if (swaggerEnabled)
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "ConsultarMRP API v1");
         c.RoutePrefix = "swagger";
+        c.EnablePersistAuthorization();
     });
 
     app.MapGet("/", context =>
