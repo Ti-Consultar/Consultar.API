@@ -458,6 +458,20 @@ namespace _2___Application._1_Services.Results
             return dashboard;
         }
 
+        public async Task<LatestDashboardPeriodDto?> GetLatestDashboardPeriod(int accountPlanId)
+        {
+            var latestBalancete = await _balanceteRepository.GetLatestWithDataByAccountPlanId(accountPlanId);
+
+            if (latestBalancete is null)
+                return null;
+
+            return new LatestDashboardPeriodDto
+            {
+                Year = latestBalancete.DateYear,
+                Month = (int)latestBalancete.DateMonth
+            };
+        }
+
         public async Task<List<DashBoardGestaoPrazoMedioDto>> GetDashboardGestaoPrazoMedio(int accountPlanId, int year)
         {
             var painelAtivo = await BuildPainelBalancoReclassificadoByTypeAtivo(accountPlanId, year, 1);

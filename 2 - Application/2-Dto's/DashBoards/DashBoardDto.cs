@@ -6,6 +6,12 @@ using System.Threading.Tasks;
 
 namespace _2___Application._2_Dto_s.DashBoards
 {
+    public class LatestDashboardPeriodDto
+    {
+        public int Year { get; set; }
+        public int Month { get; set; }
+    }
+
     public class DashBoardDto
     {
         public string Name { get; set; }

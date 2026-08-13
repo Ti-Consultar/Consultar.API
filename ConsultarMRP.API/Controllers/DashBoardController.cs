@@ -65,6 +65,29 @@ namespace ConsultarMRP.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Obtém o último ano e mês com balancete disponível para o plano de contas.
+        /// </summary>
+        [HttpGet("latest-period")]
+        [Authorize]
+        public async Task<IActionResult> GetLatestPeriod([FromQuery] int accountPlanId)
+        {
+            try
+            {
+                var response = await _Service.GetLatestDashboardPeriod(accountPlanId);
+
+                if (response is null)
+                    return NotFound(new { message = "Nenhum balancete encontrado para o plano de contas informado." });
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet]
         [Route("gestao-prazo-medio")]
         [Authorize()]

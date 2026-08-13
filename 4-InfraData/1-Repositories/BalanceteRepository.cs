@@ -28,6 +28,17 @@ namespace _4_InfraData._1_Repositories
                 .Where(x => x.AccountPlansId == accountPlansId && x.DateYear == year)
                 .ToListAsync();
         }
+
+        public async Task<BalanceteModel?> GetLatestWithDataByAccountPlanId(int accountPlansId)
+        {
+            return await _context.Balancete
+                .AsNoTracking()
+                .Where(x => x.AccountPlansId == accountPlansId && x.BalancetesData.Any())
+                .OrderByDescending(x => x.DateYear)
+                .ThenByDescending(x => x.DateMonth)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task<bool> GetExistsParams(int accountPlansId, int month, int year)
         {
             return await _context.Balancete
