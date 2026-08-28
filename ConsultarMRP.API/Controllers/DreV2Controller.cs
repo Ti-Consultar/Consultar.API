@@ -28,6 +28,12 @@ public sealed class DreV2Controller : ControllerBase
     /// define a hierarquia e valueType distingue moeda de percentual.
     /// Linhas de classificação incluem os lançamentos já disponíveis no resultado
     /// legado em details.data, também indexados por cenário e período.
+    /// Após o período accumulated, a resposta inclui annual-rolling, identificado
+    /// por type=rolling e pelo ano consultado. Suas colunas são Orçado, Rolling e
+    /// Variação. Rolling projeta o exercício com realizado até o último período
+    /// efetivamente disponível e orçamento nos períodos posteriores; Orçado soma
+    /// todos os períodos orçados disponíveis no exercício. Rolling pertence apenas
+    /// às columns do período annual-rolling e não integra os cenários mensais.
     /// </remarks>
     [HttpGet]
     [ProducesResponseType(typeof(DreV2Response), StatusCodes.Status200OK)]

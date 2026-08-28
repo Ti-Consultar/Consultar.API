@@ -22,6 +22,15 @@ public sealed class DrePeriodDto
     public int? Month { get; init; }
     public string Type { get; init; } = string.Empty;
     public int DisplayOrder { get; init; }
+    public IReadOnlyList<DrePeriodColumnDto> Columns { get; init; } = Array.Empty<DrePeriodColumnDto>();
+}
+
+public sealed class DrePeriodColumnDto
+{
+    public string Key { get; init; } = string.Empty;
+    public string Label { get; init; } = string.Empty;
+    public string Type { get; init; } = string.Empty;
+    public int DisplayOrder { get; init; }
 }
 
 public sealed class DreScenarioDto

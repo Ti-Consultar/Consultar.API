@@ -18,8 +18,8 @@ public sealed class DreV2MapperTests
 
         var response = DreV2Mapper.Map(fixture.Legacy, DreV2Fixture.Year);
 
-        foreach (var scenario in response.Data.Scenarios)
         foreach (var period in response.Data.Periods)
+        foreach (var scenario in period.Columns.Where(column => period.Type != "rolling"))
         foreach (var row in response.Data.Rows)
         {
             var actual = row.Values[scenario.Key][period.Key];
@@ -224,8 +224,8 @@ public sealed class DreV2MapperTests
         Assert.Equal(financialIncome.Code, rows[financialResultIndex + 1].Code);
         Assert.Equal(financialExpenses.Code, rows[financialResultIndex + 2].Code);
 
-        foreach (var scenario in response.Data.Scenarios)
         foreach (var period in response.Data.Periods)
+        foreach (var scenario in period.Columns)
             Assert.Equal(
                 financialIncome.Values[scenario.Key][period.Key] +
                 financialExpenses.Values[scenario.Key][period.Key],
@@ -282,12 +282,33 @@ public sealed class DreV2MapperTests
         var fixture = new DreV2Fixture();
         var response = DreV2Mapper.Map(fixture.Legacy, DreV2Fixture.Year);
 
-        Assert.Equal(new[] { "2026-01", "2026-02", "accumulated" },
+        Assert.Equal(new[] { "2026-01", "2026-02", "accumulated", "annual-rolling" },
             response.Data.Periods.Select(period => period.Key));
-        Assert.Equal(new[] { "Janeiro", "Fevereiro", "Acumulado" },
+        Assert.Equal(new[] { "Janeiro", "Fevereiro", "Acumulado", "2026" },
             response.Data.Periods.Select(period => period.Label));
-        Assert.Equal(new[] { "realizado", "orcado", "variacao" },
+        Assert.Equal(new[] { "orcado", "realizado", "variacao" },
             response.Data.Scenarios.Select(scenario => scenario.Key));
+
+        var january = response.Data.Periods.Single(period => period.Key == "2026-01");
+        Assert.Equal(new[] { "orcado", "realizado", "variacao" },
+            january.Columns.Select(column => column.Key));
+
+        var annual = response.Data.Periods.Single(period => period.Type == "rolling");
+        Assert.Equal(2026, annual.Year);
+        Assert.Equal(14, annual.DisplayOrder);
+        Assert.Equal(new[] { "orcado", "rolling", "variacao" },
+            annual.Columns.Select(column => column.Key));
+        Assert.Equal(new[] { "Orçado", "Rolling", "Variação" },
+            annual.Columns.Select(column => column.Label));
+        Assert.DoesNotContain(response.Data.Scenarios, scenario => scenario.Key == "rolling");
+        Assert.All(response.Data.Periods.Where(period => period.Type != "rolling"), period =>
+            Assert.DoesNotContain(period.Columns, column => column.Key == "rolling"));
+        Assert.All(response.Data.Rows, row =>
+        {
+            Assert.True(row.Values["rolling"].ContainsKey("annual-rolling"));
+            Assert.DoesNotContain(row.Values["rolling"].Keys,
+                key => key != "annual-rolling");
+        });
 
         var empty = DreV2Mapper.Map(new PainelBalancoComparativoResponse
         {
@@ -314,8 +335,9 @@ public sealed class DreV2MapperTests
         Assert.All(response.Data.Rows, row =>
         {
             Assert.True(row.Values.ContainsKey("realizado"));
-            Assert.False(row.Values.ContainsKey("orcado"));
-            Assert.False(row.Values.ContainsKey("variacao"));
+            Assert.True(row.Values.ContainsKey("rolling"));
+            Assert.Null(row.Values["orcado"]["annual-rolling"]);
+            Assert.Null(row.Values["variacao"]["annual-rolling"]);
         });
     }
 
