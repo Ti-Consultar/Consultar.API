@@ -100,9 +100,20 @@ namespace ConsultarMRP.API.Controllers
             }
         }
 
+        /// <summary>
+        /// Retorna o Fluxo de Caixa comparativo com o agrupamento anual Rolling.
+        /// </summary>
+        /// <remarks>
+        /// annual é posicionado após o acumulado e identificado por type=rolling e
+        /// pelo ano consultado. O grupo contém Orçado, Rolling e Variação. Rolling
+        /// combina realizado até o último período efetivamente disponível com o
+        /// orçamento dos períodos posteriores; Orçado soma todo o orçamento disponível.
+        /// Saldos inicial e final mantêm o tratamento não aditivo do Fluxo de Caixa.
+        /// </remarks>
         [HttpGet]
         [Route("/rolling")]
         [Authorize()]
+        [ProducesResponseType(typeof(_2___Application._2_Dto_s.CashFlow.PainelCashFlowComparativoRollingResponseDto), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetCashFlowComparativoRolling([FromQuery] int accountPlanId, [FromQuery] int year)
         {
             try
@@ -117,9 +128,13 @@ namespace ConsultarMRP.API.Controllers
             }
         }
 
+        /// <summary>
+        /// Retorna o Fluxo de Caixa comparativo Rolling consolidado por escopo.
+        /// </summary>
         [HttpGet]
         [Route("scope/rolling")]
         [Authorize()]
+        [ProducesResponseType(typeof(_2___Application._2_Dto_s.CashFlow.PainelCashFlowComparativoRollingResponseDto), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetCashFlowComparativoRollingByScope(
             [FromQuery] int groupId,
             [FromQuery] int? companyId,

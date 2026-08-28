@@ -3,6 +3,7 @@ using _2___Application._2_Dto_s.Painel;
 using _2___Application._2_Dto_s.Results.OperationalEfficiency;
 using _2___Application._2_Dto_s.TotalizerClassification;
 using _2___Application._1_Services.Scope;
+using _2___Application._1_Services.FinancialReports;
 using _2___Application._1_Services.TotalizerClassification;
 using _2___Application.Base;
 using _4_InfraData._1_Repositories;
@@ -817,12 +818,29 @@ namespace _2___Application._1_Services.CashFlow
                 comparativos.Add(await GetCashFlowComparativoRolling(accountPlanId, year));
             }
 
+            var realized = AggregateCashFlowPanels(comparativos.Select(x => x.Realizado));
+            var budget = AggregateCashFlowPanels(comparativos.Select(x => x.Orcado));
+            var annual = CashFlowRollingCalculator.Calculate(
+                realized.CashFlow.Months,
+                budget.CashFlow.Months,
+                year);
+
             return new PainelCashFlowComparativoRollingResponseDto
             {
-                Realizado = AggregateCashFlowPanels(comparativos.Select(x => x.Realizado)),
-                Orcado = AggregateCashFlowPanels(comparativos.Select(x => x.Orcado)),
+                Realizado = realized,
+                Orcado = budget,
                 Variacao = AggregateCashFlowPanels(comparativos.Select(x => x.Variacao)),
-                Rolling = AggregateCashFlowPanels(comparativos.Select(x => x.Rolling))
+                Rolling = new PainelCashFlowResponseDto
+                {
+                    CashFlow = new CashFlowGroupedDto
+                    {
+                        Months = new List<CashFlowResponseDto>
+                        {
+                            annual.Columns.Single(column => column.Key == RollingContract.RollingKey).Value
+                        }
+                    }
+                },
+                Annual = annual
             };
         }
 
@@ -1588,98 +1606,26 @@ namespace _2___Application._1_Services.CashFlow
                 }
             };
 
-            // 3️⃣ Calcula o Rolling (soma acumulada: usa realizado se houver, senão orçado)
+            var annual = CashFlowRollingCalculator.Calculate(
+                realizado.CashFlow.Months,
+                orcado.CashFlow.Months,
+                year);
+            var rollingValue = annual.Columns.Single(column => column.Key == RollingContract.RollingKey).Value;
             var rolling = new PainelCashFlowResponseDto
             {
                 CashFlow = new CashFlowGroupedDto
                 {
-                    Months = new List<CashFlowResponseDto>()
+                    Months = new List<CashFlowResponseDto> { rollingValue }
                 }
             };
 
-            decimal acumLucroOperacionalLiquido = 0;
-            decimal acumDepreciacaoAmortizacao = 0;
-            decimal acumVariacaoNCG = 0;
-            decimal acumClientes = 0;
-            decimal acumEstoques = 0;
-            decimal acumOutrosAtivosOperacionais = 0;
-            decimal acumFornecedores = 0;
-            decimal acumObrigacoesTributariasTrabalhistas = 0;
-            decimal acumOutrosPassivosOperacionais = 0;
-            decimal acumFluxoDeCaixaOperacional = 0;
-            decimal acumAtivoNaoCirculante = 0;
-            decimal acumVariacaoInvestimento = 0;
-            decimal acumVariacaoImobilizado = 0;
-            decimal acumVariacaoIntangivel = 0;
-            decimal acumFluxoDeCaixaLivre = 0;
-            decimal acumCaptacoesAmortizacoesFinanceira = 0;
-            decimal acumPassivoNaoCirculante = 0;
-            decimal acumVariacaoPatrimonioLiquido = 0;
-            decimal acumFluxoDeCaixaDaEmpresa = 0;
-            decimal acumDisponibilidadeInicioDoPeriodo = 0;
-            decimal acumDisponibilidadeFinalDoPeriodo = 0;
-
-            foreach (var month in realizado.CashFlow.Months)
-            {
-                var o = orcado.CashFlow.Months.FirstOrDefault(x => x.DateMonth == month.DateMonth);
-
-                acumLucroOperacionalLiquido += month.LucroOperacionalLiquido != 0 ? month.LucroOperacionalLiquido : (o?.LucroOperacionalLiquido ?? 0);
-                acumDepreciacaoAmortizacao += month.DepreciacaoAmortizacao != 0 ? month.DepreciacaoAmortizacao : (o?.DepreciacaoAmortizacao ?? 0);
-                acumVariacaoNCG += month.VariacaoNCG != 0 ? month.VariacaoNCG : (o?.VariacaoNCG ?? 0);
-                acumClientes += month.Clientes != 0 ? month.Clientes : (o?.Clientes ?? 0);
-                acumEstoques += month.Estoques != 0 ? month.Estoques : (o?.Estoques ?? 0);
-                acumOutrosAtivosOperacionais += month.OutrosAtivosOperacionais != 0 ? month.OutrosAtivosOperacionais : (o?.OutrosAtivosOperacionais ?? 0);
-                acumFornecedores += month.Fornecedores != 0 ? month.Fornecedores : (o?.Fornecedores ?? 0);
-                acumObrigacoesTributariasTrabalhistas += month.ObrigacoesTributariasTrabalhistas != 0 ? month.ObrigacoesTributariasTrabalhistas : (o?.ObrigacoesTributariasTrabalhistas ?? 0);
-                acumOutrosPassivosOperacionais += month.OutrosPassivosOperacionais != 0 ? month.OutrosPassivosOperacionais : (o?.OutrosPassivosOperacionais ?? 0);
-                acumFluxoDeCaixaOperacional += month.FluxoDeCaixaOperacional != 0 ? month.FluxoDeCaixaOperacional : (o?.FluxoDeCaixaOperacional ?? 0);
-                acumAtivoNaoCirculante += month.AtivoNaoCirculante != 0 ? month.AtivoNaoCirculante : (o?.AtivoNaoCirculante ?? 0);
-                acumVariacaoInvestimento += month.VariacaoInvestimento != 0 ? month.VariacaoInvestimento : (o?.VariacaoInvestimento ?? 0);
-                acumVariacaoImobilizado += month.VariacaoImobilizado != 0 ? month.VariacaoImobilizado : (o?.VariacaoImobilizado ?? 0);
-                acumVariacaoIntangivel += month.VariacaoIntangivel != 0 ? month.VariacaoIntangivel : (o?.VariacaoIntangivel ?? 0);
-                acumFluxoDeCaixaLivre += month.FluxoDeCaixaLivre != 0 ? month.FluxoDeCaixaLivre : (o?.FluxoDeCaixaLivre ?? 0);
-                acumCaptacoesAmortizacoesFinanceira += month.CaptacoesAmortizacoesFinanceira != 0 ? month.CaptacoesAmortizacoesFinanceira : (o?.CaptacoesAmortizacoesFinanceira ?? 0);
-                acumPassivoNaoCirculante += month.PassivoNaoCirculante != 0 ? month.PassivoNaoCirculante : (o?.PassivoNaoCirculante ?? 0);
-                acumVariacaoPatrimonioLiquido += month.VariacaoPatrimonioLiquido != 0 ? month.VariacaoPatrimonioLiquido : (o?.VariacaoPatrimonioLiquido ?? 0);
-                acumFluxoDeCaixaDaEmpresa += month.FluxoDeCaixaDaEmpresa != 0 ? month.FluxoDeCaixaDaEmpresa : (o?.FluxoDeCaixaDaEmpresa ?? 0);
-                acumDisponibilidadeInicioDoPeriodo += month.DisponibilidadeInicioDoPeriodo != 0 ? month.DisponibilidadeInicioDoPeriodo : (o?.DisponibilidadeInicioDoPeriodo ?? 0);
-                acumDisponibilidadeFinalDoPeriodo += month.DisponibilidadeFinalDoPeriodo != 0 ? month.DisponibilidadeFinalDoPeriodo : (o?.DisponibilidadeFinalDoPeriodo ?? 0);
-
-                rolling.CashFlow.Months.Add(new CashFlowResponseDto
-                {
-                    Name = month.Name,
-                    DateMonth = month.DateMonth,
-                    LucroOperacionalLiquido = acumLucroOperacionalLiquido,
-                    DepreciacaoAmortizacao = acumDepreciacaoAmortizacao,
-                    VariacaoNCG = acumVariacaoNCG,
-                    Clientes = acumClientes,
-                    Estoques = acumEstoques,
-                    OutrosAtivosOperacionais = acumOutrosAtivosOperacionais,
-                    Fornecedores = acumFornecedores,
-                    ObrigacoesTributariasTrabalhistas = acumObrigacoesTributariasTrabalhistas,
-                    OutrosPassivosOperacionais = acumOutrosPassivosOperacionais,
-                    FluxoDeCaixaOperacional = acumFluxoDeCaixaOperacional,
-                    AtivoNaoCirculante = acumAtivoNaoCirculante,
-                    VariacaoInvestimento = acumVariacaoInvestimento,
-                    VariacaoImobilizado = acumVariacaoImobilizado,
-                    VariacaoIntangivel = acumVariacaoIntangivel,
-                    FluxoDeCaixaLivre = acumFluxoDeCaixaLivre,
-                    CaptacoesAmortizacoesFinanceira = acumCaptacoesAmortizacoesFinanceira,
-                    PassivoNaoCirculante = acumPassivoNaoCirculante,
-                    VariacaoPatrimonioLiquido = acumVariacaoPatrimonioLiquido,
-                    FluxoDeCaixaDaEmpresa = acumFluxoDeCaixaDaEmpresa,
-                    DisponibilidadeInicioDoPeriodo = acumDisponibilidadeInicioDoPeriodo,
-                    DisponibilidadeFinalDoPeriodo = acumDisponibilidadeFinalDoPeriodo
-                });
-            }
-
-            // 4️⃣ Retorna os quatro painéis (Realizado, Orçado, Variação e Rolling)
             return new PainelCashFlowComparativoRollingResponseDto
             {
                 Realizado = realizado,
                 Orcado = orcado,
                 Variacao = variacao,
-                Rolling = rolling
+                Rolling = rolling,
+                Annual = annual
             };
         }
 

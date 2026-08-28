@@ -43,6 +43,24 @@ internal sealed class DreV2Fixture
               _expected[(scenario, period, "FINANCIAL_EXPENSES")]
             : _expected[(scenario, period, code)];
 
+    public PainelBalancoContabilRespone CreatePanel(
+        string scenario,
+        int scenarioOffset,
+        IEnumerable<int> months)
+    {
+        var monthly = months
+            .Distinct()
+            .OrderBy(month => month)
+            .Select(month => BuildMonth(
+                scenario,
+                month,
+                $"{Year:D4}-{month:D2}",
+                scenarioOffset))
+            .ToList();
+        monthly.Add(BuildMonth(scenario, 13, "accumulated", scenarioOffset));
+        return new PainelBalancoContabilRespone { Months = monthly };
+    }
+
     private PainelBalancoContabilRespone BuildPanel(string scenario, int scenarioOffset) =>
         new()
         {

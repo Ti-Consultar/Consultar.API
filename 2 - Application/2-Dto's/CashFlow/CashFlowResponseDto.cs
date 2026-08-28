@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace _2___Application._2_Dto_s.CashFlow
@@ -34,6 +35,10 @@ namespace _2___Application._2_Dto_s.CashFlow
     {
         public string Name { get; set; }
         public int DateMonth { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? Year { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? PeriodType { get; set; }
         //public decimal  ReceitaLiquida { get; set; }
         //public decimal  CustosOperacionais { get; set; }
         //public decimal  DespesasVariaveis { get; set; }
@@ -76,5 +81,23 @@ namespace _2___Application._2_Dto_s.CashFlow
         public PainelCashFlowResponseDto Orcado { get; set; }
         public PainelCashFlowResponseDto Variacao { get; set; }
         public PainelCashFlowResponseDto Rolling { get; set; }
+        public CashFlowAnnualGroupDto Annual { get; set; } = new();
+    }
+
+    public class CashFlowAnnualGroupDto
+    {
+        public int Year { get; set; }
+        public string Type { get; set; } = "rolling";
+        public int DisplayOrder { get; set; } = 14;
+        public List<CashFlowAnnualColumnDto> Columns { get; set; } = new();
+    }
+
+    public class CashFlowAnnualColumnDto
+    {
+        public string Key { get; set; } = string.Empty;
+        public string Label { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public int DisplayOrder { get; set; }
+        public CashFlowResponseDto Value { get; set; } = new();
     }
 }

@@ -1,5 +1,6 @@
 using _2___Application._2_Dto_s.DRE.V2;
 using _2___Application._2_Dto_s.TotalizerClassification;
+using _2___Application._1_Services.FinancialReports;
 
 namespace _2___Application._1_Services.DRE.V2;
 
@@ -18,10 +19,12 @@ public sealed record DreBoundRowDefinition(
 
 public static class DreV2Mapper
 {
+    private const string RollingPeriodKey = "annual-rolling";
+
     private static readonly (string Key, string Label, int Order)[] ScenarioDefinitions =
     {
-        ("realizado", "Realizado", 1),
-        ("orcado", "Orçado", 2),
+        ("orcado", "Orçado", 1),
+        ("realizado", "Realizado", 2),
         ("variacao", "Variação", 3)
     };
 
@@ -35,7 +38,7 @@ public static class DreV2Mapper
     {
         ArgumentNullException.ThrowIfNull(legacy);
 
-        var scenarios = GetScenarios(legacy);
+        var sourceScenarios = GetScenarios(legacy);
         var periods = GetPeriods(legacy, year);
         var boundRows = BindCatalog(legacy);
         var parentCodes = boundRows
@@ -47,11 +50,15 @@ public static class DreV2Mapper
                 bound,
                 legacy,
                 periods,
-                scenarios,
+                sourceScenarios,
                 boundRows,
                 parentCodes.Contains(bound.Definition.Code)))
             .OrderBy(row => row.DisplayOrder)
             .ToArray();
+
+        var hasRolling = periods.Any(period => period.Type == RollingContract.PeriodType);
+        if (hasRolling)
+            ApplyRollingValues(rows, legacy, year);
 
         var duplicateCode = rows.GroupBy(row => row.Code).FirstOrDefault(group => group.Count() > 1);
         if (duplicateCode is not null)
@@ -62,7 +69,7 @@ public static class DreV2Mapper
             Data = new DreV2DataDto
             {
                 Periods = periods,
-                Scenarios = scenarios,
+                Scenarios = sourceScenarios,
                 Rows = rows
             }
         };
@@ -211,7 +218,8 @@ public static class DreV2Mapper
             .OrderBy(month => month == 13 ? int.MaxValue : month)
             .ToArray();
 
-        return monthNumbers.Select(month =>
+        var sourceColumns = GetSourcePeriodColumns(legacy);
+        var periods = monthNumbers.Select(month =>
         {
             if (month == 13)
             {
@@ -222,7 +230,8 @@ public static class DreV2Mapper
                     Year = year,
                     Month = null,
                     Type = "accumulated",
-                    DisplayOrder = 13
+                    DisplayOrder = 13,
+                    Columns = sourceColumns
                 };
             }
 
@@ -236,10 +245,52 @@ public static class DreV2Mapper
                 Year = year,
                 Month = month,
                 Type = "month",
-                DisplayOrder = month
+                DisplayOrder = month,
+                Columns = sourceColumns
             };
-        }).ToArray();
+        }).ToList();
+
+        if (EnumerateScenarioPanels(legacy)
+            .SelectMany(item => item.Panel.Months ?? new List<MonthPainelContabilRespone>())
+            .Any(month => month.DateMonth is >= 1 and <= 12))
+        {
+            periods.Add(new DrePeriodDto
+            {
+                Key = RollingPeriodKey,
+                Label = year.ToString(),
+                Year = year,
+                Month = null,
+                Type = RollingContract.PeriodType,
+                DisplayOrder = RollingContract.AnnualDisplayOrder,
+                Columns = new[]
+                {
+                    new DrePeriodColumnDto { Key = RollingContract.BudgetKey, Label = "Orçado", Type = "budget", DisplayOrder = 1 },
+                    new DrePeriodColumnDto { Key = RollingContract.RollingKey, Label = "Rolling", Type = RollingContract.PeriodType, DisplayOrder = 2 },
+                    new DrePeriodColumnDto { Key = RollingContract.VariationKey, Label = "Variação", Type = "variation", DisplayOrder = 3 }
+                }
+            });
+        }
+
+        return periods;
     }
+
+    private static IReadOnlyList<DrePeriodColumnDto> GetSourcePeriodColumns(
+        PainelBalancoComparativoResponse legacy) =>
+        ScenarioDefinitions
+            .Where(definition => HasScenarioData(GetScenarioPanel(legacy, definition.Key)))
+            .Select(definition => new DrePeriodColumnDto
+            {
+                Key = definition.Key,
+                Label = definition.Label,
+                Type = definition.Key switch
+                {
+                    "realizado" => "actual",
+                    "orcado" => "budget",
+                    _ => "variation"
+                },
+                DisplayOrder = definition.Order
+            })
+            .ToArray();
 
     private static DreRowDto MapRow(
         DreBoundRowDefinition bound,
@@ -269,6 +320,9 @@ public static class DreV2Mapper
 
             foreach (var period in periods)
             {
+                if (period.Type == RollingContract.PeriodType)
+                    continue;
+
                 var month = FindMonth(panel, period.Key, period.Year ?? 0);
                 if (month is null)
                     continue;
@@ -325,6 +379,161 @@ public static class DreV2Mapper
             Values = values
         };
     }
+
+    private static void ApplyRollingValues(
+        IReadOnlyList<DreRowDto> rows,
+        PainelBalancoComparativoResponse legacy,
+        int year)
+    {
+        var realizedMonths = GetMonthlyNumbers(legacy.Realizado);
+        var budgetMonths = GetMonthlyNumbers(legacy.Orcado);
+        var rollingSelection = RollingPeriodSelector.Select(realizedMonths, budgetMonths);
+        var annualBudgetMonths = RollingPeriodSelector.SelectBudgetMonths(budgetMonths);
+        var hasBudget = annualBudgetMonths.Count > 0;
+
+        foreach (var row in rows.Where(row => row.ValueType != "percentage"))
+        {
+            var budget = hasBudget
+                ? SumMonths(row, RollingContract.BudgetKey, annualBudgetMonths, year)
+                : (decimal?)null;
+            var rolling = rollingSelection.Count > 0
+                ? SumSelection(row, rollingSelection, year)
+                : (decimal?)null;
+
+            SetAnnualValue(row, RollingContract.BudgetKey, budget);
+            SetAnnualValue(row, RollingContract.RollingKey, rolling);
+            SetAnnualValue(row, RollingContract.VariationKey,
+                rolling.HasValue && budget.HasValue ? rolling.Value - budget.Value : null);
+        }
+
+        var rowsByCode = rows.ToDictionary(row => row.Code, StringComparer.Ordinal);
+        foreach (var row in rows.Where(row => row.ValueType == "percentage"))
+        {
+            foreach (var scenario in new[] { RollingContract.BudgetKey, RollingContract.RollingKey, RollingContract.VariationKey })
+            {
+                var value = CalculateAnnualPercentage(row.Code, scenario, rowsByCode);
+                SetAnnualValue(row, scenario, value);
+            }
+        }
+
+        foreach (var row in rows.Where(row => row.Expandable))
+        {
+            foreach (var scenario in new[] { RollingContract.BudgetKey, RollingContract.RollingKey, RollingContract.VariationKey })
+            {
+                if (!row.Details.Counts.TryGetValue(scenario, out var counts))
+                {
+                    counts = new Dictionary<string, int>(StringComparer.Ordinal);
+                    row.Details.Counts[scenario] = counts;
+                }
+
+                counts[RollingPeriodKey] = 0;
+
+                if (row.Details.Data is not null)
+                {
+                    if (!row.Details.Data.TryGetValue(scenario, out var data))
+                    {
+                        data = new Dictionary<string, IReadOnlyList<DreDetailEntryDto>>(StringComparer.Ordinal);
+                        row.Details.Data[scenario] = data;
+                    }
+
+                    data[RollingPeriodKey] = Array.Empty<DreDetailEntryDto>();
+                }
+            }
+        }
+    }
+
+    private static IReadOnlyList<int> GetMonthlyNumbers(PainelBalancoContabilRespone? panel) =>
+        panel?.Months?
+            .Where(month => month.DateMonth is >= 1 and <= 12)
+            .Select(month => month.DateMonth)
+            .Distinct()
+            .OrderBy(month => month)
+            .ToArray()
+        ?? Array.Empty<int>();
+
+    private static decimal SumMonths(
+        DreRowDto row,
+        string scenario,
+        IEnumerable<int> months,
+        int year) =>
+        months.Sum(month => GetMonthlyValue(row, scenario, month, year));
+
+    private static decimal SumSelection(
+        DreRowDto row,
+        IEnumerable<RollingPeriodSelection> selection,
+        int year) =>
+        selection.Sum(item => GetMonthlyValue(
+            row,
+            item.Source == RollingPeriodSource.Realized ? RollingContract.RealizedKey : RollingContract.BudgetKey,
+            item.Month,
+            year));
+
+    private static decimal GetMonthlyValue(DreRowDto row, string scenario, int month, int year)
+    {
+        var period = $"{year:D4}-{month:D2}";
+        if (row.Values.TryGetValue(scenario, out var values) &&
+            values.TryGetValue(period, out var value) &&
+            value.HasValue)
+        {
+            return value.Value;
+        }
+
+        throw new DreV2MappingException(
+            $"Valor mensal necessário ao Rolling não encontrado. " +
+            $"Scenario: {scenario}; Period: {period}; Code: {row.Code}.");
+    }
+
+    private static void SetAnnualValue(DreRowDto row, string scenario, decimal? value)
+    {
+        if (!row.Values.TryGetValue(scenario, out var values))
+        {
+            values = new Dictionary<string, decimal?>(StringComparer.Ordinal);
+            row.Values[scenario] = values;
+        }
+
+        values[RollingPeriodKey] = value;
+    }
+
+    private static decimal? CalculateAnnualPercentage(
+        string percentageCode,
+        string scenario,
+        IReadOnlyDictionary<string, DreRowDto> rows)
+    {
+        var numeratorCode = percentageCode switch
+        {
+            "GROSS_MARGIN_PERCENT" => "GROSS_PROFIT",
+            "CONTRIBUTION_MARGIN_PERCENT" => "CONTRIBUTION_MARGIN",
+            "OPERATING_MARGIN_PERCENT" => "OPERATING_PROFIT",
+            "EBIT_MARGIN_PERCENT" => "EBIT",
+            "EBT_MARGIN_PERCENT" => "EBT",
+            "NET_MARGIN_PERCENT" => "NET_INCOME",
+            "EBITDA_MARGIN_PERCENT" => "EBITDA",
+            "NOPAT_MARGIN_PERCENT" => "NOPAT",
+            _ => null
+        };
+
+        if (numeratorCode is null ||
+            !rows.TryGetValue(numeratorCode, out var numeratorRow) ||
+            !rows.TryGetValue("NET_REVENUE", out var denominatorRow))
+        {
+            return null;
+        }
+
+        var numerator = GetAnnualValue(numeratorRow, scenario);
+        var denominator = GetAnnualValue(denominatorRow, scenario);
+        if (!numerator.HasValue || !denominator.HasValue)
+            return null;
+
+        return denominator.Value == 0m
+            ? 0m
+            : Math.Round(numerator.Value / denominator.Value * 100m, 2);
+    }
+
+    private static decimal? GetAnnualValue(DreRowDto row, string scenario) =>
+        row.Values.TryGetValue(scenario, out var values) &&
+        values.TryGetValue(RollingPeriodKey, out var value)
+            ? value
+            : null;
 
     private static bool TryGetValue(
         MonthPainelContabilRespone month,
